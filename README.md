@@ -1,2 +1,4 @@
-# KIS
-Kerbal Inventory System
+KIS - Kerbal Inventory System
+===
+
+(Under construction)
