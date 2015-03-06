@@ -1,7 +1,8 @@
 KIS - Kerbal Inventory System
 ===
 
-KIS introduce new gameplay mechanics by adding a brand new inventory sytem and EVA usables items as tools. You want to build a rover on Duna from scratch? Now you can...
+KIS introduce new gameplay mechanics by adding a brand new inventory sytem and EVA usables items as tools. 
+You want to build a rover on Duna from scratch? Now you can...
 
 Main features
 
