@@ -15,4 +15,4 @@ Main features
 - Item stacking.
 - Sounds effects.
 - Clear code and .cfg modules to help other modders items creation.
-- Standalone (KAS and ModuleManager is not needed) 
+- Standalone (KAS and ModuleManager is not needed).
