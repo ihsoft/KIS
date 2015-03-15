@@ -88,7 +88,10 @@ namespace KIS
             instance = this;
             if (HighLogic.LoadedSceneIsEditor)
             {
-                EditorPartList.Instance.iconPrefab.gameObject.AddComponent<EditorClickListener>();
+                if (EditorPartList.Instance)
+                {
+                    EditorPartList.Instance.iconPrefab.gameObject.AddComponent<EditorClickListener>();
+                }
             }
             GameEvents.onVesselChange.Add(new EventData<Vessel>.OnEvent(this.OnVesselChange));
         }
@@ -643,7 +646,7 @@ namespace KIS
                             {
                                 newPart = KIS_Shared.CreatePart(draggedItem.availablePart, pos, rot, hitPart);
                             }
-                            StartCoroutine(WaitAndCouple(newPart, hitPart, pos,rot));
+                            StartCoroutine(WaitAndCouple(newPart, hitPart, pos, rot));
                         }
                         else
                         {
@@ -676,13 +679,13 @@ namespace KIS
                 srcPart = targetPart;
                 targetPart = tmpPart;
             }
-            
+
             GameEvents.onActiveJointNeedUpdate.Fire(srcPart.vessel);
             GameEvents.onActiveJointNeedUpdate.Fire(targetPart.vessel);
             // For fuel feed
             srcPart.attachMode = AttachModes.SRF_ATTACH;
             srcPart.srfAttachNode.attachedPart = targetPart;
- 
+
             /* doesn't work
             if (KISAddonPointer.GetCurrentAttachNode().nodeType == AttachNode.NodeType.Surface)
             {
