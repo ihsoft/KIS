@@ -816,13 +816,13 @@ namespace KIS
             // Disable Click through
             if (HighLogic.LoadedSceneIsEditor)
             {
-                if (guiMainWindowPos.Contains(Input.mousePosition) && !clickThroughLocked)
+                if (guiMainWindowPos.Contains(Event.current.mousePosition) && !clickThroughLocked)
                 {
                     EditorTooltip.Instance.HideToolTip();
                     EditorLogic.fetch.Lock(true, true, true, "KISInventoryEditorLock");
                     clickThroughLocked = true;
                 }
-                if (!guiMainWindowPos.Contains(Input.mousePosition) && clickThroughLocked)
+                if (!guiMainWindowPos.Contains(Event.current.mousePosition) && clickThroughLocked)
                 {
                     EditorLogic.fetch.Unlock("KISInventoryEditorLock");
                     clickThroughLocked = false;
@@ -830,12 +830,12 @@ namespace KIS
             }
             else if (HighLogic.LoadedSceneIsFlight)
             {
-                if (guiMainWindowPos.Contains(Input.mousePosition) && !clickThroughLocked)
+                if (guiMainWindowPos.Contains(Event.current.mousePosition) && !clickThroughLocked)
                 {
                     InputLockManager.SetControlLock(ControlTypes.CAMERACONTROLS | ControlTypes.MAP, "KISInventoryFlightLock");
                     clickThroughLocked = true;
                 }
-                if (!guiMainWindowPos.Contains(Input.mousePosition) && clickThroughLocked)
+                if (!guiMainWindowPos.Contains(Event.current.mousePosition) && clickThroughLocked)
                 {
                     InputLockManager.RemoveControlLock("KISInventoryFlightLock");
                     clickThroughLocked = false;
