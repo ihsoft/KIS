@@ -441,8 +441,8 @@ namespace KIS
                 this.part.mass = 0.094f;
             }
             else
-            {
-                this.part.mass = this.part.partInfo.partPrefab.mass + this.part.GetResourceMass();
+            { 
+                this.part.mass = PartLoader.getPartInfoByName(this.part.name).partPrefab.mass + this.part.GetResourceMass();
             }
 
             // Update mass
