@@ -610,7 +610,7 @@ namespace KIS
                     float newTotalVolume = GetContentVolume() + mItem.volumeOverride;
                     if (newTotalVolume > maxVolume)
                     {
-                        ScreenMessages.PostScreenMessage("Max destination volume reached. Part volume is : " + KIS_Shared.GetVolumeText(mItem.volumeOverride) + " (+" + KIS_Shared.GetVolumeText((newTotalVolume - maxVolume)) + ")", 5, ScreenMessageStyle.UPPER_CENTER);
+                        ScreenMessages.PostScreenMessage("Max destination volume reached. Part volume is : " + mItem.volumeOverride.ToString("0.00") + " (+" + (newTotalVolume - maxVolume).ToString("0.00") + ")", 5, ScreenMessageStyle.UPPER_CENTER);
                         return false;
                     }
                     else
@@ -623,7 +623,7 @@ namespace KIS
             float newTotalVolume2 = GetContentVolume() + KIS_Shared.GetPartVolume(p.partInfo.partPrefab);
             if (newTotalVolume2 > maxVolume)
             {
-                ScreenMessages.PostScreenMessage("Max destination volume reached. Part volume is : " + KIS_Shared.GetVolumeText(KIS_Shared.GetPartVolume(p.partInfo.partPrefab)) + " (+" + KIS_Shared.GetVolumeText((newTotalVolume2 - maxVolume)) + ")", 5, ScreenMessageStyle.UPPER_CENTER);
+                ScreenMessages.PostScreenMessage("Max destination volume reached. Part volume is : " + KIS_Shared.GetPartVolume(p.partInfo.partPrefab).ToString("0.00") + " (+" + (newTotalVolume2 - maxVolume).ToString("0.00") + ")", 5, ScreenMessageStyle.UPPER_CENTER);
                 return false;
             }
             else
@@ -645,7 +645,7 @@ namespace KIS
                 float newTotalVolume = GetContentVolume() + item.stackVolume;
                 if (newTotalVolume > maxVolume)
                 {
-                    ScreenMessages.PostScreenMessage("Max destination volume reached. Part volume is : " + KIS_Shared.GetVolumeText(item.stackVolume) + " (+" + KIS_Shared.GetVolumeText((newTotalVolume - maxVolume)) + ")", 5, ScreenMessageStyle.UPPER_CENTER);
+                    ScreenMessages.PostScreenMessage("Max destination volume reached. Part volume is : " + item.stackVolume.ToString("0.00") + " (+" + (newTotalVolume - maxVolume).ToString("0.00") + ")", 5, ScreenMessageStyle.UPPER_CENTER);
                     return false;
                 }
                 else
@@ -878,7 +878,7 @@ namespace KIS
             GUILayout.Label(title, guiStyleTitle, GUILayout.Width(width), GUILayout.Height(10));
             string text = kerbalTrait + "\n";
             text += "Mass : " + this.part.mass.ToString("0.000") + "\n";
-            text += "Volume : " + KIS_Shared.GetVolumeText(this.totalVolume) + "/" + KIS_Shared.GetVolumeText(this.maxVolume) + "\n";
+            text += "Volume : " + this.totalVolume.ToString("0.00") + "/" + this.maxVolume.ToString("0.00") + "\n";
             GUILayout.Box(text, boxStyle, GUILayout.Width(width), GUILayout.Height(50));
 
             bool closeInv = false;
@@ -1119,7 +1119,7 @@ namespace KIS
 
             GUILayout.BeginVertical();
             string text = "Cost : " + tooltipItem.availablePart.cost + " √" + "\n";
-            text += "Volume : " + KIS_Shared.GetVolumeText(tooltipItem.volume) + "\n";
+            text += "Volume : " + tooltipItem.volume.ToString("0.00") + "\n";
             text += "Stackable : " + tooltipItem.stackable + "\n";
             text += "Dry mass : " + tooltipItem.availablePart.partPrefab.mass + "\n";
             if (tooltipItem.equipSlot != null)
@@ -1143,7 +1143,7 @@ namespace KIS
                 // Show total if stacked
                 GUI.Label(textureRect, "x" + tooltipItem.quantity.ToString() + " ", lowerRightStyle);
                 text2 += "Total cost : " + tooltipItem.stackCost + " √" + "\n";
-                text2 += "Total volume : " + KIS_Shared.GetVolumeText(tooltipItem.stackVolume) + "\n";
+                text2 += "Total volume : " + tooltipItem.stackVolume.ToString("0.00") + "\n";
                 text2 += "Total mass : " + tooltipItem.stackMass + "\n";
             }
             else
