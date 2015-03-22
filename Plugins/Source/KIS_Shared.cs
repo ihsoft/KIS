@@ -397,7 +397,23 @@ namespace KIS
             Bounds[] rendererBounds = PartGeometryUtil.GetRendererBounds(partPrefab);
             Vector3 boundsSize = PartGeometryUtil.MergeBounds(rendererBounds, partPrefab.transform).size;
             float volume = boundsSize.x * boundsSize.y * boundsSize.z;           
-            return volume * 1000;
+            return volume;
+        }
+
+        public static string GetVolumeText(float volume, bool showUnit = true)
+        {
+            if (volume >= 1)
+            {
+                string text = volume.ToString("0.00");
+                if (showUnit) text += " m3";
+                return text;
+            }
+            else
+            {
+                string text = (volume * 100).ToString("0.00");
+                if (showUnit) text += " cm3";
+                return text;
+            }
         }
 
         public static ConfigNode GetBaseConfigNode(PartModule partModule)
