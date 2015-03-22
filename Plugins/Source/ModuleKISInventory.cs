@@ -58,6 +58,7 @@ namespace KIS
         private Rect defaultFlightPos = new Rect(0, 50, 10, 10);
         private Vector2 scrollPositionDbg;
         private float splitQty = 1;
+        private bool clickThroughLocked = false;
 
         //Tooltip
         private KIS_Item tooltipItem;
@@ -812,37 +813,36 @@ namespace KIS
                 guiDebugWindowPos = GUILayout.Window(GetInstanceID() + 782, guiDebugWindowPos, GuiDebugItem, "Debug item");
             }
 
-            // Disable Editor Click through
+            // Disable Click through
             if (HighLogic.LoadedSceneIsEditor)
             {
-                if (guiMainWindowPos.Contains(Input.mousePosition))
+                if (guiMainWindowPos.Contains(Input.mousePosition) && !clickThroughLocked)
                 {
                     EditorTooltip.Instance.HideToolTip();
-                    EditorLogic.fetch.Lock(false, false, false, "KISInventoryLock");
+                    EditorLogic.fetch.Lock(true, true, true, "KISInventoryEditorLock");
+                    clickThroughLocked = true;
                 }
-                else if (!guiMainWindowPos.Contains(Input.mousePosition))
+                if (!guiMainWindowPos.Contains(Input.mousePosition) && clickThroughLocked)
                 {
-                    EditorLogic.fetch.Unlock("KISInventoryLock");
+                    EditorLogic.fetch.Unlock("KISInventoryEditorLock");
+                    clickThroughLocked = false;
                 }
             }
             else if (HighLogic.LoadedSceneIsFlight)
             {
-                // Hide part rightclick menu.
-                //if (!GUIUtility.hotControl.IsNull())
-                //{
-                if (guiMainWindowPos.Contains(Input.mousePosition) && GUIUtility.hotControl == 0)
+                if (guiMainWindowPos.Contains(Input.mousePosition) && !clickThroughLocked)
                 {
-                    foreach (var window in GameObject.FindObjectsOfType(typeof(UIPartActionWindow))
-                                  .OfType<UIPartActionWindow>().Where(p => p.Display == UIPartActionWindow.DisplayType.Selected))
-                    {
-                        window.enabled = false;
-                        window.displayDirty = true;
-                    }
+                    InputLockManager.SetControlLock(ControlTypes.CAMERACONTROLS | ControlTypes.MAP, "KISInventoryFlightLock");
+                    clickThroughLocked = true;
                 }
-                //}
+                if (!guiMainWindowPos.Contains(Input.mousePosition) && clickThroughLocked)
+                {
+                    InputLockManager.RemoveControlLock("KISInventoryFlightLock");
+                    clickThroughLocked = false;
+                }
             }
         }
-
+        
         private void GuiMain(int windowID)
         {
             GUIStyle guiStyleTitle = new GUIStyle(GUI.skin.label);
