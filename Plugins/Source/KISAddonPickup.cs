@@ -464,7 +464,11 @@ namespace KIS
         {
             RaycastHit hit;
             Part part = null;
-            if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit, 1000, 557059))
+            Camera cam = null;
+            if (HighLogic.LoadedSceneIsEditor) cam = EditorLogic.fetch.editorCamera;
+            if (HighLogic.LoadedSceneIsFlight) cam = FlightCamera.fetch.mainCamera;
+
+            if (Physics.Raycast(cam.ScreenPointToRay(Input.mousePosition), out hit, 1000, 557059))
             {
                 //part = hit.transform.gameObject.GetComponent<Part>();
                 part = (Part)UIPartActionController.GetComponentUpwards("Part", hit.collider.gameObject);
