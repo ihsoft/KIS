@@ -31,9 +31,9 @@ namespace KIS
         [KSPField]
         public string equipMode = "model";
         [KSPField]
-        public string equipSlot = null;
+        public string equipSlot = "";
         [KSPField]
-        public string equipTrait = null;
+        public string equipTrait = "";
         [KSPField]
         public bool equipRemoveHelmet = false;
         [KSPField]
