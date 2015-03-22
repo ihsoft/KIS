@@ -693,6 +693,9 @@ namespace KIS
                 {
                     PlaySound(closeSndPath, false, false);
                 }
+                clickThroughLocked = false;
+                EditorLogic.fetch.Unlock("KISInventoryEditorLock");
+                InputLockManager.RemoveControlLock("KISInventoryFlightLock");
             }
             else
             {
