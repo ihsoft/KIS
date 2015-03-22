@@ -694,8 +694,8 @@ namespace KIS
                     PlaySound(closeSndPath, false, false);
                 }
                 clickThroughLocked = false;
-                EditorLogic.fetch.Unlock("KISInventoryEditorLock");
-                InputLockManager.RemoveControlLock("KISInventoryFlightLock");
+                if (HighLogic.LoadedSceneIsFlight) InputLockManager.RemoveControlLock("KISInventoryFlightLock");
+                if (HighLogic.LoadedSceneIsEditor) EditorLogic.fetch.Unlock("KISInventoryEditorLock");         
             }
             else
             {
