@@ -86,7 +86,7 @@ namespace KIS
         public override string GetInfo()
         {
             var sb = new StringBuilder();
-            sb.AppendFormat("<b>Max Volume</b>: {0:F0}", maxVolume); sb.AppendLine();
+            sb.AppendFormat("<b>Max Volume</b>: {0:F2} L", maxVolume); sb.AppendLine();
             sb.AppendFormat("<b>Internal access </b>", internalAccess); sb.AppendLine();
             sb.AppendFormat("<b>External access </b>", externalAccess); sb.AppendLine();
             return sb.ToString();
