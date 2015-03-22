@@ -909,50 +909,69 @@ namespace KIS
             }
         }
 
-        private void GuiDebugItem(int windowID)
+        private void GuiTooltip(int windowID)
         {
-            if (debugItem != null)
-            {
-                KIS_Shared.EditField("moveSndPath", ref debugItem.prefabModule.moveSndPath);
-                KIS_Shared.EditField("shortcutKeyAction(drop,equip,custom)", ref debugItem.prefabModule.shortcutKeyAction);
-                KIS_Shared.EditField("usableFromEva", ref debugItem.prefabModule.usableFromEva);
-                KIS_Shared.EditField("usableFromContainer", ref debugItem.prefabModule.usableFromContainer);
-                KIS_Shared.EditField("usableFromPod", ref debugItem.prefabModule.usableFromPod);
-                KIS_Shared.EditField("usableFromEditor", ref debugItem.prefabModule.usableFromEditor);
-                KIS_Shared.EditField("useName", ref debugItem.prefabModule.useName);
-                KIS_Shared.EditField("equipMode(model,physic)", ref debugItem.prefabModule.equipMode);
-                KIS_Shared.EditField("equipSlot", ref debugItem.prefabModule.equipSlot);
-                KIS_Shared.EditField("equipable", ref debugItem.prefabModule.equipable);
-                KIS_Shared.EditField("stackable", ref debugItem.prefabModule.stackable);
-                KIS_Shared.EditField("equipTrait(<blank>,pilot,scientist,engineer)", ref debugItem.prefabModule.equipTrait);
-                KIS_Shared.EditField("equipRemoveHelmet", ref debugItem.prefabModule.equipRemoveHelmet);
-                KIS_Shared.EditField("volumeOverride(0 = auto)", ref debugItem.prefabModule.volumeOverride);
+            if (tooltipItem == null) return;
 
-                scrollPositionDbg = GUILayout.BeginScrollView(scrollPositionDbg, GUILayout.Width(400), GUILayout.Height(200));
-                List<SkinnedMeshRenderer> skmrs = new List<SkinnedMeshRenderer>(this.part.GetComponentsInChildren<SkinnedMeshRenderer>() as SkinnedMeshRenderer[]);
-                foreach (SkinnedMeshRenderer skmr in skmrs)
+            GUILayout.BeginHorizontal();
+
+            GUILayout.BeginVertical();
+            GUILayout.Box("", GUILayout.Width(100), GUILayout.Height(100));
+            Rect textureRect = GUILayoutUtility.GetLastRect();
+            GUI.DrawTexture(textureRect, tooltipItem.icon.texture, ScaleMode.ScaleToFit);
+            GUILayout.EndVertical();
+
+            GUILayout.BeginVertical();
+            string text = "Cost : " + tooltipItem.availablePart.cost + " √" + "\n";
+            text += "Volume : " + tooltipItem.volume.ToString("0.00 L") + "\n";
+            text += "Stackable : " + tooltipItem.stackable + "\n";
+            text += "Dry mass : " + tooltipItem.availablePart.partPrefab.mass + "\n";
+            if (tooltipItem.equipSlot != null)
+            {
+                text += "Equip slot : " + tooltipItem.equipSlot + "\n";
+                if (tooltipItem.equipSlot == "rightHand") text += "Press [" + evaRightHandKey + "] to use (equipped)" + "\n";
+            }
+            float rscMass = tooltipItem.availablePart.partPrefab.GetResourceMass();
+            if (rscMass == 0)
+            {
+                text += "Ressource mass : " + tooltipItem.availablePart.partPrefab.GetResourceMass() + "\n";
+            }
+            GUILayout.Box(text, boxStyle, GUILayout.Width(150), GUILayout.Height(100));
+            GUILayout.EndVertical();
+
+            GUILayout.BeginVertical();
+            string text2 = "";
+
+            if (tooltipItem.quantity > 1)
+            {
+                // Show total if stacked
+                GUI.Label(textureRect, "x" + tooltipItem.quantity.ToString() + " ", lowerRightStyle);
+                text2 += "Total cost : " + tooltipItem.stackCost + " √" + "\n";
+                text2 += "Total volume : " + tooltipItem.stackVolume.ToString("0.00 L") + "\n";
+                text2 += "Total mass : " + tooltipItem.stackMass + "\n";
+            }
+            else
+            {
+                // Show resource if not stacked
+                List<KIS_Item.ResourceInfo> resources = tooltipItem.GetResources();
+                if (resources.Count > 0)
                 {
-                    GUILayout.Label("--- " + skmr.name + " ---");
-                    foreach (Transform bone in skmr.bones)
+                    foreach (KIS_Item.ResourceInfo resource in resources)
                     {
-                        if (GUILayout.Button(new GUIContent(bone.name, "")))
-                        {
-                            debugItem.prefabModule.equipMeshName = skmr.name;
-                            debugItem.prefabModule.equipBoneName = bone.name;
-                            debugItem.ReEquip();
-                        }
+                        text2 += resource.resourceName + " : " + resource.amount.ToString("0.000") + " / " + resource.maxAmount.ToString("0.000") + "\n";
                     }
                 }
+                else
+                {
+                    text2 = "Part has no resources";
+                }
+            }
+            GUILayout.Box(text2, boxStyle, GUILayout.Width(200), GUILayout.Height(100));
+            GUILayout.EndVertical();
 
-                GUILayout.EndScrollView();
-                if (KIS_Shared.EditField("equipPos", ref debugItem.prefabModule.equipPos)) debugItem.ReEquip();
-                if (KIS_Shared.EditField("equipDir", ref debugItem.prefabModule.equipDir)) debugItem.ReEquip();
-            }
-            if (GUILayout.Button("Close"))
-            {
-                debugItem = null;
-            }
-            GUI.DragWindow();
+            GUILayout.EndHorizontal();
+            GUILayout.Space(10);
+            GUILayout.Box(tooltipItem.availablePart.description, boxStyle, GUILayout.Width(450), GUILayout.Height(100));
         }
 
         private void GuiContextMenu(int windowID)
@@ -1108,69 +1127,50 @@ namespace KIS
             }
         }
 
-        private void GuiTooltip(int windowID)
+        private void GuiDebugItem(int windowID)
         {
-            if (tooltipItem == null) return;
-
-            GUILayout.BeginHorizontal();
-
-            GUILayout.BeginVertical();
-            GUILayout.Box("", GUILayout.Width(100), GUILayout.Height(100));
-            Rect textureRect = GUILayoutUtility.GetLastRect();
-            GUI.DrawTexture(textureRect, tooltipItem.icon.texture, ScaleMode.ScaleToFit);
-            GUILayout.EndVertical();
-
-            GUILayout.BeginVertical();
-            string text = "Cost : " + tooltipItem.availablePart.cost + " √" + "\n";
-            text += "Volume : " + tooltipItem.volume.ToString("0.00 L") + "\n";
-            text += "Stackable : " + tooltipItem.stackable + "\n";
-            text += "Dry mass : " + tooltipItem.availablePart.partPrefab.mass + "\n";
-            if (tooltipItem.equipSlot != null)
+            if (debugItem != null)
             {
-                text += "Equip slot : " + tooltipItem.equipSlot + "\n";
-                if (tooltipItem.equipSlot == "rightHand") text += "Press [" + evaRightHandKey + "] to use (equipped)" + "\n";
-            }
-            float rscMass = tooltipItem.availablePart.partPrefab.GetResourceMass();
-            if (rscMass == 0)
-            {
-                text += "Ressource mass : " + tooltipItem.availablePart.partPrefab.GetResourceMass() + "\n";
-            }
-            GUILayout.Box(text, boxStyle, GUILayout.Width(150), GUILayout.Height(100));
-            GUILayout.EndVertical();
+                KIS_Shared.EditField("moveSndPath", ref debugItem.prefabModule.moveSndPath);
+                KIS_Shared.EditField("shortcutKeyAction(drop,equip,custom)", ref debugItem.prefabModule.shortcutKeyAction);
+                KIS_Shared.EditField("usableFromEva", ref debugItem.prefabModule.usableFromEva);
+                KIS_Shared.EditField("usableFromContainer", ref debugItem.prefabModule.usableFromContainer);
+                KIS_Shared.EditField("usableFromPod", ref debugItem.prefabModule.usableFromPod);
+                KIS_Shared.EditField("usableFromEditor", ref debugItem.prefabModule.usableFromEditor);
+                KIS_Shared.EditField("useName", ref debugItem.prefabModule.useName);
+                KIS_Shared.EditField("equipMode(model,physic)", ref debugItem.prefabModule.equipMode);
+                KIS_Shared.EditField("equipSlot", ref debugItem.prefabModule.equipSlot);
+                KIS_Shared.EditField("equipable", ref debugItem.prefabModule.equipable);
+                KIS_Shared.EditField("stackable", ref debugItem.prefabModule.stackable);
+                KIS_Shared.EditField("equipTrait(<blank>,pilot,scientist,engineer)", ref debugItem.prefabModule.equipTrait);
+                KIS_Shared.EditField("equipRemoveHelmet", ref debugItem.prefabModule.equipRemoveHelmet);
+                KIS_Shared.EditField("volumeOverride(0 = auto)", ref debugItem.prefabModule.volumeOverride);
 
-            GUILayout.BeginVertical();
-            string text2 = "";
-
-            if (tooltipItem.quantity > 1)
-            {
-                // Show total if stacked
-                GUI.Label(textureRect, "x" + tooltipItem.quantity.ToString() + " ", lowerRightStyle);
-                text2 += "Total cost : " + tooltipItem.stackCost + " √" + "\n";
-                text2 += "Total volume : " + tooltipItem.stackVolume.ToString("0.00 L") + "\n";
-                text2 += "Total mass : " + tooltipItem.stackMass + "\n";
-            }
-            else
-            {
-                // Show resource if not stacked
-                List<KIS_Item.ResourceInfo> resources = tooltipItem.GetResources();
-                if (resources.Count > 0)
+                scrollPositionDbg = GUILayout.BeginScrollView(scrollPositionDbg, GUILayout.Width(400), GUILayout.Height(200));
+                List<SkinnedMeshRenderer> skmrs = new List<SkinnedMeshRenderer>(this.part.GetComponentsInChildren<SkinnedMeshRenderer>() as SkinnedMeshRenderer[]);
+                foreach (SkinnedMeshRenderer skmr in skmrs)
                 {
-                    foreach (KIS_Item.ResourceInfo resource in resources)
+                    GUILayout.Label("--- " + skmr.name + " ---");
+                    foreach (Transform bone in skmr.bones)
                     {
-                        text2 += resource.resourceName + " : " + resource.amount.ToString("0.000") + " / " + resource.maxAmount.ToString("0.000") + "\n";
+                        if (GUILayout.Button(new GUIContent(bone.name, "")))
+                        {
+                            debugItem.prefabModule.equipMeshName = skmr.name;
+                            debugItem.prefabModule.equipBoneName = bone.name;
+                            debugItem.ReEquip();
+                        }
                     }
                 }
-                else
-                {
-                    text2 = "Part has no resources";
-                }
-            }
-            GUILayout.Box(text2, boxStyle, GUILayout.Width(200), GUILayout.Height(100));
-            GUILayout.EndVertical();
 
-            GUILayout.EndHorizontal();
-            GUILayout.Space(10);
-            GUILayout.Box(tooltipItem.availablePart.description, boxStyle, GUILayout.Width(450), GUILayout.Height(100));
+                GUILayout.EndScrollView();
+                if (KIS_Shared.EditField("equipPos", ref debugItem.prefabModule.equipPos)) debugItem.ReEquip();
+                if (KIS_Shared.EditField("equipDir", ref debugItem.prefabModule.equipDir)) debugItem.ReEquip();
+            }
+            if (GUILayout.Button("Close"))
+            {
+                debugItem = null;
+            }
+            GUI.DragWindow();
         }
 
         private void GuiInventory(int windowID)
