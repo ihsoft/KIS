@@ -46,6 +46,7 @@ namespace KIS
         public delegate void DelayedActionMethod(KIS_Item item);
         public string kerbalTrait;
         private List<KIS_Item> startEquip = new List<KIS_Item>();
+        public static float kerbalDefaultMass = 0.094f;
 
         // GUI
         public bool showGui = false;
@@ -438,7 +439,7 @@ namespace KIS
             {
                 //partPrefab seem to don't exist on eva
                 //AssetBase.GetPrefab("kerbal") or PartLoader.getPartInfoByName("kerbalEVA").partPrefab.mass;
-                this.part.mass = 0.094f;
+                this.part.mass = kerbalDefaultMass;
             }
             else
             {

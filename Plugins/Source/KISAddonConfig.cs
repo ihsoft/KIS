@@ -21,10 +21,8 @@ namespace KIS
 
             // Set global settings
             ConfigNode nodeGlobal = nodeSettings.GetNode("Global");
-            if (nodeGlobal.HasValue("itemDebug"))
-            {
-                ModuleKISInventory.debugContextMenu = bool.Parse(nodeGlobal.GetValue("itemDebug"));
-            }
+            if (nodeGlobal.HasValue("itemDebug")) ModuleKISInventory.debugContextMenu = bool.Parse(nodeGlobal.GetValue("itemDebug"));
+            if (nodeGlobal.HasValue("kerbalDefaultMass")) ModuleKISInventory.kerbalDefaultMass = float.Parse(nodeGlobal.GetValue("kerbalDefaultMass"));
 
             ConfigNode nodeEvaInventory = nodeSettings.GetNode("EvaInventory");
             ConfigNode nodeEvaPickup = nodeSettings.GetNode("EvaPickup");
