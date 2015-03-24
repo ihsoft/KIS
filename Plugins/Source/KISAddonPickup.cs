@@ -218,7 +218,10 @@ namespace KIS
                         ModuleKISPartDrag pDrag = null;
                         if (hoveredPart)
                         {
-                            pDrag = hoveredPart.GetComponent<ModuleKISPartDrag>();
+                            if (hoveredPart != draggedPart)
+                            {
+                                pDrag = hoveredPart.GetComponent<ModuleKISPartDrag>();
+                            }
                         }
                         if (pDrag)
                         {
