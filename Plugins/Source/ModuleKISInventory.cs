@@ -46,7 +46,7 @@ namespace KIS
         public delegate void DelayedActionMethod(KIS_Item item);
         public string kerbalTrait;
         private List<KIS_Item> startEquip = new List<KIS_Item>();
-        public static float kerbalDefaultMass = 0.094f;
+        public float kerbalDefaultMass = 0.094f;
 
         // GUI
         public bool showGui = false;
@@ -138,7 +138,7 @@ namespace KIS
                 item.Equip();
             }
 
-            RefreshInfo();
+            RefreshMassAndVolume();
         }
 
         void Update()
@@ -349,8 +349,8 @@ namespace KIS
                         KIS_Shared.DebugLog("Item transfer | source " + this.part.name + " (" + this.podSeat + ")");
                         KIS_Shared.DebugLog("Item transfer | destination :" + destInventory.part.name);
                         MoveItems(this.items, destInventory);
-                        this.RefreshInfo();
-                        destInventory.RefreshInfo();
+                        this.RefreshMassAndVolume();
+                        destInventory.RefreshMassAndVolume();
                     }
                 }
                 if (invType == InventoryType.Pod && !fromToAction.to.vessel.isEVA)
@@ -395,8 +395,8 @@ namespace KIS
             {
                 MoveItems(transferedItems, this);
                 KIS_Shared.DebugLog("Item transfer | destination :" + this.part.name + " (" + this.podSeat + ")");
-                this.RefreshInfo();
-                if (srcInventory) srcInventory.RefreshInfo();
+                this.RefreshMassAndVolume();
+                if (srcInventory) srcInventory.RefreshMassAndVolume();
             }
         }
 
@@ -432,7 +432,7 @@ namespace KIS
             }
         }
 
-        public void RefreshInfo()
+        public void RefreshMassAndVolume()
         {
             // Reset mass to default
             if (invType == InventoryType.Eva)
@@ -508,7 +508,7 @@ namespace KIS
                 item = new KIS_Item(availablePart, partNode, this, qty);
                 items.Add(slot, item);
                 if (showGui) items[slot].EnableIcon(itemIconResolution);
-                RefreshInfo();
+                RefreshMassAndVolume();
             }
             return item;
         }
@@ -525,7 +525,7 @@ namespace KIS
                 item = new KIS_Item(part, this, qty);
                 items.Add(slot, item);
                 if (showGui) items[slot].EnableIcon(itemIconResolution);
-                RefreshInfo();
+                RefreshMassAndVolume();
             }
             return item;
         }
@@ -642,7 +642,7 @@ namespace KIS
 
         private bool VolumeAvailableFor(KIS_Item item)
         {
-            RefreshInfo();
+            RefreshMassAndVolume();
             if (KISAddonPickup.draggedItem.inventory == this)
             {
                 return true;
@@ -1283,13 +1283,13 @@ namespace KIS
                                             destInventory.items.Remove(destSlot);
                                             destInventory.items.Add(destSlot, srcItem);
                                             srcItem.inventory = destInventory;
-                                            destInventory.RefreshInfo();
+                                            destInventory.RefreshMassAndVolume();
 
                                             // Move dest to src
                                             srcInventory.items.Remove(srcSlot);
                                             srcInventory.items.Add(srcSlot, destItem);
                                             destItem.inventory = srcInventory;
-                                            srcInventory.RefreshInfo();
+                                            srcInventory.RefreshMassAndVolume();
                                         }
                                     }
                                 }
@@ -1314,9 +1314,9 @@ namespace KIS
                                     int slot = movingItem.slot;
                                     this.items.Add(i, movingItem);
                                     movingItem.inventory.items.Remove(slot);
-                                    movingItem.inventory.RefreshInfo();
+                                    movingItem.inventory.RefreshMassAndVolume();
                                     movingItem.inventory = this;
-                                    RefreshInfo();
+                                    RefreshMassAndVolume();
                                     items[i].OnMove(srcInventory, this);
                                 }
                             }
