@@ -33,7 +33,7 @@ namespace KIS
         [KSPField]
         public string equipSlot = "";
         [KSPField]
-        public string equipTrait = "";
+        public string equipSkill = "";
         [KSPField]
         public bool equipRemoveHelmet = false;
         [KSPField]

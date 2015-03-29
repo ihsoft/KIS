@@ -302,15 +302,27 @@ namespace KIS
         public void Equip()
         {
             if (!prefabModule) return;
-            if (prefabModule.equipTrait != null && prefabModule.equipTrait != "")
+
+            //Check skill if needed
+            if (prefabModule.equipSkill != null && prefabModule.equipSkill != "")
             {
-                if (inventory.kerbalTrait != prefabModule.equipTrait)
+                bool skillFound = false;
+                List<ProtoCrewMember> protoCrewMembers = inventory.vessel.GetVesselCrew();
+                foreach (Experience.ExperienceEffect expEffect in protoCrewMembers[0].experienceTrait.Effects)
                 {
-                    ScreenMessages.PostScreenMessage("This item can only be used by a kerbal with the trait : " + prefabModule.equipTrait, 5f, ScreenMessageStyle.UPPER_CENTER);
+                    if (expEffect.ToString().Replace("Experience.Effects.", "") == prefabModule.equipSkill)
+                    {
+                        skillFound = true;
+                    }
+                }
+                if (!skillFound)
+                {
+                    ScreenMessages.PostScreenMessage("This item can only be used by a kerbal with the skill : " + prefabModule.equipSkill, 5f, ScreenMessageStyle.UPPER_CENTER);
                     PlaySound(KIS_Shared.bipWrongSndPath);
                     return;
                 }
             }
+
             if (equipSlot != null)
             {
                 KIS_Item equippedItem = inventory.GetEquipedItem(equipSlot);

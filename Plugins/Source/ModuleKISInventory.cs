@@ -1148,7 +1148,7 @@ namespace KIS
                 KIS_Shared.EditField("equipSlot", ref debugItem.prefabModule.equipSlot);
                 KIS_Shared.EditField("equipable", ref debugItem.prefabModule.equipable);
                 KIS_Shared.EditField("stackable", ref debugItem.prefabModule.stackable);
-                KIS_Shared.EditField("equipTrait(<blank>,pilot,scientist,engineer)", ref debugItem.prefabModule.equipTrait);
+                KIS_Shared.EditField("equipSkill(<blank>,RepairSkill,ScienceSkill,etc...)", ref debugItem.prefabModule.equipSkill);
                 KIS_Shared.EditField("equipRemoveHelmet", ref debugItem.prefabModule.equipRemoveHelmet);
                 KIS_Shared.EditField("volumeOverride(0 = auto)", ref debugItem.prefabModule.volumeOverride);
 
