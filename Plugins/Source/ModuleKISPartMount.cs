@@ -74,9 +74,14 @@ namespace KIS
                 KIS_Shared.DebugError("(PartBay) Node : " + bayNodeName + " not found !");
                 return;
             }
-            Part tmpPart = bayNode.attachedPart;
-            bayNode.attachedPart.decouple();
-            //Physics.IgnoreCollision(tmpPart.collider, this.part.collider);
+            if (bayNode.attachedPart)
+            {
+                bayNode.attachedPart.decouple();
+            }
+            else
+            {
+                ScreenMessages.PostScreenMessage("There is nothing to release", 2, ScreenMessageStyle.UPPER_CENTER);
+            }
         }
 
         [KSPAction("Release")]
