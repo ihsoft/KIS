@@ -203,6 +203,18 @@ namespace KIS
 
             }
 
+            if (HighLogic.LoadedSceneIsEditor)
+            {  
+                if (Input.GetMouseButtonDown(0))
+                {
+                    Part part = GetPartUnderCursor();
+                    if (part)
+                    {
+                        OnMousePartClick(part);
+                    }
+                }
+            }
+
             if (HighLogic.LoadedSceneIsEditor || HighLogic.LoadedSceneIsFlight)
             {
                 // On drag released
@@ -267,12 +279,18 @@ namespace KIS
 
         void OnMousePartClick(Part part)
         {
-            if (!HighLogic.LoadedSceneIsFlight) return;
             if (KISAddonPointer.isRunning) return;
             if (hoverInventoryGui()) return;
-            if (grabOk && HasActivePickupInRange(part))
+            if (HighLogic.LoadedSceneIsFlight)
             {
-                Pickup(part);
+                if (grabOk && HasActivePickupInRange(part))
+                {
+                    Pickup(part);
+                }
+            }
+            if (HighLogic.LoadedSceneIsEditor)
+            {
+                OnEditorPartClick(part.partInfo.partPrefab);
             }
         }
 
