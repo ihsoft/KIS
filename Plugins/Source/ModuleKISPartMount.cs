@@ -132,6 +132,9 @@ namespace KIS
                 KIS_Shared.DebugError("(PartMount) Dragged part node not found !");
                 return;
             }
+            KIS_Shared.DebugLog("(PartMount) Decouple part if needed...");
+            KIS_Shared.DecoupleFromAll(draggedPart);
+
             KIS_Shared.DebugLog("(PartMount) Add node transform if not exist...");
             KIS_Shared.AddNodeTransform(draggedPart, draggedPartAn);
 
