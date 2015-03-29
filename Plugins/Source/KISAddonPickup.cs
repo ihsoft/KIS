@@ -734,9 +734,9 @@ namespace KIS
         {
             Vector3 toPartLocalPos = toPart.transform.InverseTransformPoint(pos);
             Quaternion toPartLocalRot = Quaternion.Inverse(toPart.transform.rotation) * rot;
-            while (!partToAttach.rigidbody || (!partToAttach.started && partToAttach.State != PartStates.DEAD))
+            while (!partToAttach.rigidbody || (!partToAttach.started && partToAttach.State != PartStates.DEAD) || partToAttach.packed)
             {
-                KIS_Shared.DebugLog("WaitAndCouple - Waiting part to initialize...");
+                KIS_Shared.DebugLog("WaitAndCouple - Waiting initialization of the part...");
                 partToAttach.transform.position = toPart.transform.TransformPoint(toPartLocalPos);
                 partToAttach.transform.rotation = toPart.transform.rotation * toPartLocalRot;
                 yield return new WaitForFixedUpdate();
