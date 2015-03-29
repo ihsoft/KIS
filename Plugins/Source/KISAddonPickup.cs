@@ -12,18 +12,19 @@ namespace KIS
     {
         class EditorClickListener : MonoBehaviour
         {
-            AvailablePart editorPart;
+            EditorPartIcon editorPaction;
             void Start()
             {
                 GetComponent<UIButton>().AddInputDelegate(new EZInputDelegate(OnInput));
-                editorPart = GetComponent<EditorPartIcon>().partInfo;
+                editorPaction = GetComponent<EditorPartIcon>();
+
             }
 
             void OnInput(ref POINTER_INFO ptr)
             {
                 if (ptr.evt == POINTER_INFO.INPUT_EVENT.PRESS)
                 {
-                    KISAddonPickup.instance.OnEditorPartClick(editorPart.partPrefab);
+                    if (!editorPaction.isGrey) KISAddonPickup.instance.OnEditorPartClick(editorPaction.partInfo.partPrefab);
                 }
             }
         }
