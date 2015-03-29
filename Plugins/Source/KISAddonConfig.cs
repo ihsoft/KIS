@@ -22,7 +22,6 @@ namespace KIS
             // Set global settings
             ConfigNode nodeGlobal = nodeSettings.GetNode("Global");
             if (nodeGlobal.HasValue("itemDebug")) ModuleKISInventory.debugContextMenu = bool.Parse(nodeGlobal.GetValue("itemDebug"));
-            if (nodeGlobal.HasValue("kerbalDefaultMass")) ModuleKISInventory.kerbalDefaultMass = float.Parse(nodeGlobal.GetValue("kerbalDefaultMass"));
 
             ConfigNode nodeEvaInventory = nodeSettings.GetNode("EvaInventory");
             ConfigNode nodeEvaPickup = nodeSettings.GetNode("EvaPickup");
@@ -65,6 +64,7 @@ namespace KIS
             ModuleKISInventory evaInventory = evaPrefab.GetComponent<ModuleKISInventory>();
             if (evaInventory)
             {
+                if (nodeGlobal.HasValue("kerbalDefaultMass")) evaInventory.kerbalDefaultMass = float.Parse(nodeGlobal.GetValue("kerbalDefaultMass"));
                 SetInventoryConfig(nodeEvaInventory, evaInventory);
                 evaInventory.invType = ModuleKISInventory.InventoryType.Eva;
                 KIS_Shared.DebugLog("Eva inventory module loaded successfully");
