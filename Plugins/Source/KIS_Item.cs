@@ -19,6 +19,7 @@ namespace KIS
         public bool usableFromContainer = false;
         public bool usableFromPod = false;
         public bool usableFromEditor = false;
+        public bool carryable = false;
         public float volume;
         public bool equipable = false;
         public bool equipped = false;
@@ -74,15 +75,28 @@ namespace KIS
             }
         }
 
+        public bool carried
+        {
+            get
+            {
+                if (carryable && inventory.invType == ModuleKISInventory.InventoryType.Eva && HighLogic.LoadedSceneIsFlight)
+                {
+                    return true;
+                }
+                return false;
+            }
+        }
+
         public int slot { get { return inventory.items.FirstOrDefault(x => x.Value == this).Key; } }
         public float stackCost { get { return availablePart.cost * quantity; } }
         public float stackVolume { get { return volume * quantity; } }
         public float stackDryMass { get { return availablePart.partPrefab.mass * quantity; } }
         public float stackResourceMass { get { return availablePart.partPrefab.GetResourceMass() * quantity; } }
         public float stackMass { get { return stackDryMass + stackResourceMass; } }
-
+        
         public KIS_Item(AvailablePart availablePart, ConfigNode partNode, ModuleKISInventory inventory, float quantity = 1)
         {
+            // Part from save
             this.availablePart = availablePart;
             this.InitConfig(availablePart, inventory, quantity);
             this.configNode = new ConfigNode();
@@ -93,6 +107,7 @@ namespace KIS
 
         public KIS_Item(Part part, ModuleKISInventory inventory, float quantity = 1)
         {
+            // New part from scene
             this.availablePart = part.partInfo;
             this.InitConfig(availablePart, inventory, quantity);
             this.configNode = new ConfigNode();
@@ -121,6 +136,7 @@ namespace KIS
                 this.usableFromContainer = prefabModule.usableFromContainer;
                 this.usableFromPod = prefabModule.usableFromPod;
                 this.usableFromEditor = prefabModule.usableFromEditor;
+                this.carryable = prefabModule.carryable;
             }
 
             int nonStackableModule = 0;
@@ -142,7 +158,7 @@ namespace KIS
                 KIS_Shared.DebugLog("Part name present in settings.cfg (node StackableItemOverride), force item as stackable");
                 this.stackable = true;
             }
-           }
+        }
 
         public List<ResourceInfo> GetResources()
         {
@@ -224,7 +240,7 @@ namespace KIS
             else
             {
                 quantity += qty;
-                inventory.RefreshInfo();
+                inventory.RefreshMassAndVolume();
                 return true;
             }
         }
@@ -240,7 +256,7 @@ namespace KIS
             else
             {
                 quantity -= qty;
-                inventory.RefreshInfo();
+                inventory.RefreshMassAndVolume();
                 return true;
             }
         }
@@ -250,7 +266,7 @@ namespace KIS
             if (inventory.showGui) DisableIcon();
             if (equipped) Unequip();
             inventory.items.Remove(slot);
-            inventory.RefreshInfo();
+            inventory.RefreshMassAndVolume();
         }
 
         public void ShowHelmet()
@@ -302,7 +318,7 @@ namespace KIS
         public void Equip()
         {
             if (!prefabModule) return;
-
+            KIS_Shared.DebugLog("Equip item " + this.availablePart.name);
             //Check skill if needed
             if (prefabModule.equipSkill != null && prefabModule.equipSkill != "")
             {
@@ -323,14 +339,22 @@ namespace KIS
                 }
             }
 
+            // Check if already carried
             if (equipSlot != null)
             {
                 KIS_Item equippedItem = inventory.GetEquipedItem(equipSlot);
                 if (equippedItem != null)
                 {
+                    if (equippedItem.carryable)
+                    {
+                        ScreenMessages.PostScreenMessage("Cannot equip item, slot <" + equipSlot + "> already used for carrying " + equippedItem.availablePart.title, 5f, ScreenMessageStyle.UPPER_CENTER);
+                        PlaySound(KIS_Shared.bipWrongSndPath);
+                        return;
+                    }
                     equippedItem.Unequip();
                 }
             }
+
             if (equipMode == EquipMode.Model)
             {
                 GameObject modelGo = availablePart.partPrefab.FindModelTransform("model").gameObject;
