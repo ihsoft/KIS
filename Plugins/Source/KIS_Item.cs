@@ -31,6 +31,9 @@ namespace KIS
         public enum ActionType { Drop, Equip, Custom }
         public enum UseFrom { KeyDown, KeyUp, InventoryShortcut, ContextMenu }
         public enum EquipMode { Model, Physic }
+        public float resourceMass = 0;
+        public float contentMass = 0;
+        public float contentCost = 0;
 
         public struct ResourceInfo
         {
@@ -88,20 +91,28 @@ namespace KIS
         }
 
         public int slot { get { return inventory.items.FirstOrDefault(x => x.Value == this).Key; } }
-        public float stackCost { get { return availablePart.cost * quantity; } }
         public float stackVolume { get { return volume * quantity; } }
-        public float stackDryMass { get { return availablePart.partPrefab.mass * quantity; } }
-        public float stackResourceMass { get { return availablePart.partPrefab.GetResourceMass() * quantity; } }
-        public float stackMass { get { return stackDryMass + stackResourceMass; } }
+        public float dryMass { get { return availablePart.partPrefab.mass; } }
+        public float stackDryMass { get { return dryMass * quantity; } }
+        public float cost { get { return availablePart.cost; } }
+        public float totalCost { get { return (cost + contentCost) * quantity; } }
+        public float totalMass { get { return stackDryMass + resourceMass + contentMass; } }
         
-        public KIS_Item(AvailablePart availablePart, ConfigNode partNode, ModuleKISInventory inventory, float quantity = 1)
+        public KIS_Item(AvailablePart availablePart, ConfigNode itemNode, ModuleKISInventory inventory, float quantity = 1)
         {
             // Part from save
             this.availablePart = availablePart;
             this.InitConfig(availablePart, inventory, quantity);
+            // Get mass
+            if (itemNode.HasValue("resourceMass")) resourceMass = float.Parse(itemNode.GetValue("resourceMass"));
+            else resourceMass = availablePart.partPrefab.GetResourceMass();
+            if (itemNode.HasValue("contentMass")) contentMass = float.Parse(itemNode.GetValue("contentMass"));
+            if (itemNode.HasValue("contentCost")) contentCost = float.Parse(itemNode.GetValue("contentCost"));
+            // Get part node
             this.configNode = new ConfigNode();
             this.configNode.AddValue("partName", this.availablePart.name);
             ConfigNode newPartNode = this.configNode.AddNode("PART");
+            ConfigNode partNode = itemNode.GetNode("PART");
             partNode.CopyTo(newPartNode);
         }
 
@@ -110,6 +121,15 @@ namespace KIS
             // New part from scene
             this.availablePart = part.partInfo;
             this.InitConfig(availablePart, inventory, quantity);
+            // Get mass
+            this.resourceMass = part.GetResourceMass();
+            ModuleKISInventory itemInventory = part.GetComponent<ModuleKISInventory>();
+            if (itemInventory)
+            {
+                this.contentMass = itemInventory.GetContentMass();
+                this.contentCost = itemInventory.GetContentCost();
+            }
+            // Get part node
             this.configNode = new ConfigNode();
             this.configNode.AddValue("partName", this.availablePart.name);
             ConfigNode newPartNode = this.configNode.AddNode("PART");
@@ -142,6 +162,9 @@ namespace KIS
             int nonStackableModule = 0;
             foreach (PartModule pModule in availablePart.partPrefab.Modules)
             {
+                //KIS_Shared.DebugLog("module " + pModule.moduleName);
+                //KIS_Shared.DebugLog("resourceInfos " + availablePart.resourceInfos.Count);
+                
                 if (!KISAddonConfig.stackableModules.Contains(pModule.moduleName))
                 {
                     KIS_Shared.DebugLog("Module <" + pModule.moduleName + "> is not set as stackable in settings.cfg");

@@ -233,14 +233,12 @@ namespace KIS
                             KIS_Item item = null;
                             if (cn.HasNode("PART"))
                             {
-                                ConfigNode partNode = cn.GetNode("PART");
-                                item = AddItem(availablePart, partNode, qty, slot);
+                                item = AddItem(availablePart, cn, qty, slot);
                             }
                             else
                             {
                                 KIS_Shared.DebugWarning("No part node found on item " + availablePartName + ", creating new one from prefab");
                                 item = AddItem(availablePart.partPrefab, qty, slot);
-
                             }
                             if (cn.HasValue("equipped"))
                             {
@@ -272,6 +270,9 @@ namespace KIS
                 nodeD.AddValue("slot", item.Key);
                 nodeD.AddValue("quantity", item.Value.quantity);
                 nodeD.AddValue("equipped", item.Value.equipped);
+                nodeD.AddValue("resourceMass", item.Value.resourceMass);
+                nodeD.AddValue("contentMass", item.Value.contentMass);
+                nodeD.AddValue("contentCost", item.Value.contentCost);
                 item.Value.configNode.CopyTo(nodeD);
 
                 // Science recovery works by retrieving all MODULE/ScienceData 
@@ -289,16 +290,6 @@ namespace KIS
                     }
                 }
             }
-        }
-
-        public float GetModuleCost(float defaultCost)
-        {
-            float itemsCost = 0;
-            foreach (KeyValuePair<int, KIS_Item> item in items)
-            {
-                itemsCost += item.Value.stackCost;
-            }
-            return itemsCost;
         }
 
         public void PlaySound(string sndPath, bool loop = false, bool uiSnd = true)
@@ -604,7 +595,7 @@ namespace KIS
             float contentMass = 0;
             foreach (KeyValuePair<int, KIS_Item> item in items)
             {
-                contentMass += item.Value.stackMass;
+                contentMass += item.Value.totalMass;
             }
             return contentMass;
         }
@@ -625,6 +616,21 @@ namespace KIS
 
             }
             return contentVolume;
+        }
+
+        public float GetContentCost()
+        {
+            float contentCost = 0;
+            foreach (KeyValuePair<int, KIS_Item> item in items)
+            {
+                contentCost += item.Value.totalCost;
+            }
+            return contentCost;
+        }
+
+        public float GetModuleCost(float defaultCost)
+        {
+            return GetContentCost();
         }
 
         private bool VolumeAvailableFor(Part p)
@@ -877,7 +883,7 @@ namespace KIS
             GUIStyle guiStyleTitle = new GUIStyle(GUI.skin.label);
             guiStyleTitle.normal.textColor = Color.yellow;
             guiStyleTitle.fontStyle = FontStyle.Bold;
-            guiStyleTitle.fontSize = 14;
+            guiStyleTitle.fontSize = 13;
             guiStyleTitle.alignment = TextAnchor.MiddleCenter;
 
             GUILayout.BeginHorizontal();
@@ -905,10 +911,13 @@ namespace KIS
                 }
             }
             GUILayout.Label(title, guiStyleTitle, GUILayout.Width(width), GUILayout.Height(10));
-            string text = kerbalTrait + "\n";
-            text += "Mass : " + this.part.mass.ToString("0.000") + "\n";
-            text += "Volume : " + this.totalVolume.ToString("0.00") + "/" + this.maxVolume.ToString("0.00 L") + "\n";
-            GUILayout.Box(text, boxStyle, GUILayout.Width(width), GUILayout.Height(50));
+            //GUI.Label(textureRect, title, guiStyleTitle);
+
+            StringBuilder sb = new StringBuilder();
+            if (kerbalTrait != "" && kerbalTrait != null) sb.AppendLine(kerbalTrait);
+            sb.AppendLine("Mass : " + this.part.mass.ToString("0.000") + " | " + "Cost : " + (this.GetContentCost() + part.partInfo.cost) + " √");
+            sb.AppendLine("Volume : " + this.totalVolume.ToString("0.00") + "/" + this.maxVolume.ToString("0.00 L"));
+            GUILayout.Box(sb.ToString(), boxStyle, GUILayout.Width(width), GUILayout.Height(50));
 
             bool closeInv = false;
             if (GUILayout.Button(new GUIContent("Close", "Close container"), GUILayout.Width(width), GUILayout.Height(25)))
@@ -948,21 +957,29 @@ namespace KIS
             GUILayout.EndVertical();
 
             GUILayout.BeginVertical();
-            string text = "Cost : " + tooltipItem.availablePart.cost + " √" + "\n";
-            text += "Volume : " + tooltipItem.volume.ToString("0.00 L") + "\n";
-            text += "Stackable : " + tooltipItem.stackable + "\n";
-            text += "Dry mass : " + tooltipItem.availablePart.partPrefab.mass + "\n";
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine("Cost : " + tooltipItem.availablePart.cost + " √");
+            if (tooltipItem.contentCost > 0)
+            {
+                sb.AppendLine("Content cost : " + tooltipItem.contentCost + " √");
+            }
+            sb.AppendLine("Volume : " + tooltipItem.volume.ToString("0.00 L"));
+            sb.AppendLine("Dry mass : " + tooltipItem.dryMass.ToString("0.000"));
+            if (tooltipItem.availablePart.partPrefab.Resources.Count > 0)
+            {
+                sb.AppendLine("Ressource mass : " + tooltipItem.resourceMass.ToString("0.000"));
+            }
+            if (tooltipItem.contentMass > 0)
+            {
+                sb.AppendLine("Content mass : " + tooltipItem.contentMass.ToString("0.000"));
+            }
+
             if (tooltipItem.equipSlot != null)
             {
-                text += "Equip slot : " + tooltipItem.equipSlot + "\n";
-                if (tooltipItem.equipSlot == "rightHand") text += "Press [" + evaRightHandKey + "] to use (equipped)" + "\n";
+                sb.AppendLine("Equip slot : " + tooltipItem.equipSlot);
+                if (tooltipItem.equipSlot == "rightHand") sb.AppendLine("Press [" + evaRightHandKey + "] to use (equipped)");
             }
-            float rscMass = tooltipItem.availablePart.partPrefab.GetResourceMass();
-            if (rscMass == 0)
-            {
-                text += "Ressource mass : " + tooltipItem.availablePart.partPrefab.GetResourceMass() + "\n";
-            }
-            GUILayout.Box(text, boxStyle, GUILayout.Width(150), GUILayout.Height(100));
+            GUILayout.Box(sb.ToString(), boxStyle, GUILayout.Width(150), GUILayout.Height(100));
             GUILayout.EndVertical();
 
             GUILayout.BeginVertical();
@@ -972,9 +989,9 @@ namespace KIS
             {
                 // Show total if stacked
                 GUI.Label(textureRect, "x" + tooltipItem.quantity.ToString() + " ", lowerRightStyle);
-                text2 += "Total cost : " + tooltipItem.stackCost + " √" + "\n";
+                text2 += "Total cost : " + tooltipItem.totalCost + " √" + "\n";
                 text2 += "Total volume : " + tooltipItem.stackVolume.ToString("0.00 L") + "\n";
-                text2 += "Total mass : " + tooltipItem.stackMass + "\n";
+                text2 += "Total mass : " + tooltipItem.totalMass + "\n";
             }
             else
             {
