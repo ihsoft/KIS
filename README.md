@@ -1,6 +1,8 @@
 KIS - Kerbal Inventory System
 ===
 
+Mod for [Kerbal Space Program](http://www.kerbalspaceprogram.com/)
+
 KIS introduce new gameplay mechanics by adding a brand new inventory sytem and EVA usables items as tools. 
 You want to build a rover on Duna from scratch? Now you can...
 
