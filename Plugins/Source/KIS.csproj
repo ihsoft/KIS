@@ -44,7 +44,6 @@
     <Compile Include="CompatibilityChecker.cs" />
     <Compile Include="KIS_IconViewer.cs" />
     <Compile Include="ModuleKISItemBook.cs" />
-    <Compile Include="ModuleKISItemEvaTweaker.cs" />
     <Compile Include="ModuleKISPickup.cs" />
     <Compile Include="ModuleKISItemSoundPlayer.cs" />
     <Compile Include="KISAddonEditorFilter.cs" />
