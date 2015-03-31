@@ -224,7 +224,7 @@ namespace KIS
             else
             {
                 quantity += qty;
-                inventory.RefreshInfo();
+                inventory.RefreshMassAndVolume();
                 return true;
             }
         }
@@ -240,7 +240,7 @@ namespace KIS
             else
             {
                 quantity -= qty;
-                inventory.RefreshInfo();
+                inventory.RefreshMassAndVolume();
                 return true;
             }
         }
@@ -250,7 +250,7 @@ namespace KIS
             if (inventory.showGui) DisableIcon();
             if (equipped) Unequip();
             inventory.items.Remove(slot);
-            inventory.RefreshInfo();
+            inventory.RefreshMassAndVolume();
         }
 
         public void ShowHelmet()
