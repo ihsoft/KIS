@@ -47,8 +47,6 @@ namespace KIS
         [KSPField]
         public float volumeOverride = 0;
         [KSPField]
-        public bool carryable = false;
-        [KSPField]
         public bool editorItemsCategory = true;
 
 
