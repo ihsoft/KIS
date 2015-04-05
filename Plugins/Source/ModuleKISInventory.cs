@@ -446,11 +446,11 @@ namespace KIS
                 AvailablePart avPart = PartLoader.getPartInfoByName(this.part.name);
                 if (avPart != null)
                 {
-                    this.part.mass = avPart.partPrefab.mass + this.part.GetResourceMass();
+                    this.part.mass = avPart.partPrefab.mass;
                 }
                 else
                 {
-                    this.part.mass = this.part.partInfo.partPrefab.mass + this.part.GetResourceMass();
+                    this.part.mass = this.part.partInfo.partPrefab.mass;
                 }
             }
             // Update mass
