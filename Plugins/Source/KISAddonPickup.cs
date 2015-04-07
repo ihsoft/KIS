@@ -197,13 +197,16 @@ namespace KIS
             }
 
             if (HighLogic.LoadedSceneIsEditor)
-            {  
+            {
                 if (Input.GetMouseButtonDown(0))
                 {
-                    Part part = GetPartUnderCursor();
-                    if (part)
+                    if (!UIManager.instance.DidPointerHitUI(0) && InputLockManager.IsUnlocked(ControlTypes.EDITOR_PAD_PICK_PLACE))
                     {
-                        OnMousePartClick(part);
+                        Part part = GetPartUnderCursor();
+                        if (part)
+                        {
+                            OnMousePartClick(part);
+                        }
                     }
                 }
             }

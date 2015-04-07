@@ -460,7 +460,7 @@ namespace KIS
             GameEvents.onCrewTransferred.Remove(new EventData<GameEvents.HostedFromToAction<ProtoCrewMember, Part>>.OnEvent(this.OnCrewTransferred));
             GameEvents.onVesselChange.Remove(new EventData<Vessel>.OnEvent(this.OnVesselChange));
             GameEvents.onPartActionUICreate.Remove(new EventData<Part>.OnEvent(this.OnPartActionUICreate));
-            if (HighLogic.LoadedSceneIsEditor) EditorLogic.fetch.Unlock("KISInventoryLock");
+            if (HighLogic.LoadedSceneIsEditor) InputLockManager.RemoveControlLock("KISInventoryLock");
         }
 
         private void slotKeyPress(KeyCode kc, int slot, int delay = 1)
@@ -727,7 +727,7 @@ namespace KIS
                 }
                 clickThroughLocked = false;
                 if (HighLogic.LoadedSceneIsFlight) InputLockManager.RemoveControlLock("KISInventoryFlightLock");
-                if (HighLogic.LoadedSceneIsEditor) EditorLogic.fetch.Unlock("KISInventoryEditorLock");
+                if (HighLogic.LoadedSceneIsEditor) InputLockManager.RemoveControlLock("KISInventoryEditorLock");
             }
             else
             {
@@ -854,12 +854,12 @@ namespace KIS
                 if (guiMainWindowPos.Contains(Event.current.mousePosition) && !clickThroughLocked)
                 {
                     EditorTooltip.Instance.HideToolTip();
-                    EditorLogic.fetch.Lock(true, true, true, "KISInventoryEditorLock");
+                    InputLockManager.SetControlLock(ControlTypes.EDITOR_PAD_PICK_PLACE, "KISInventoryEditorLock");
                     clickThroughLocked = true;
                 }
                 if (!guiMainWindowPos.Contains(Event.current.mousePosition) && clickThroughLocked)
                 {
-                    EditorLogic.fetch.Unlock("KISInventoryEditorLock");
+                    InputLockManager.RemoveControlLock("KISInventoryEditorLock");
                     clickThroughLocked = false;
                 }
             }
