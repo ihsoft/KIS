@@ -1285,7 +1285,7 @@ namespace KIS
                             if (KISAddonPickup.draggedItem != items[i])
                             {
                                 ModuleKISInventory srcInventory = null;
-                                if (items[i].stackable && items[i].availablePart == KISAddonPickup.draggedPart.partInfo)
+                                if (items[i].stackable && items[i].availablePart.name == KISAddonPickup.draggedPart.partInfo.name)
                                 {
                                     // Stack similar item
                                     if (KISAddonPickup.draggedItem != null)
