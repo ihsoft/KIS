@@ -97,29 +97,34 @@ namespace KIS
         public float cost { get { return availablePart.cost; } }
         public float totalCost { get { return (cost + contentCost) * quantity; } }
         public float totalMass { get { return stackDryMass + resourceMass + contentMass; } }
-        
-        public KIS_Item(AvailablePart availablePart, ConfigNode itemNode, ModuleKISInventory inventory, float quantity = 1)
-        {
-            // Part from save
+
+        public KIS_Item(AvailablePart availablePart, ConfigNode itemNode, ModuleKISInventory inventory, float quantity = 1) // Part from save
+        { 
+            // Get part node
             this.availablePart = availablePart;
+            this.configNode = new ConfigNode();
+            this.configNode.AddValue("partName", this.availablePart.name);
+            ConfigNode newPartNode = this.configNode.AddNode("PART");
+            ConfigNode partNode = itemNode.GetNode("PART");
+            partNode.CopyTo(newPartNode);
+            // init config
             this.InitConfig(availablePart, inventory, quantity);
             // Get mass
             if (itemNode.HasValue("resourceMass")) resourceMass = float.Parse(itemNode.GetValue("resourceMass"));
             else resourceMass = availablePart.partPrefab.GetResourceMass();
             if (itemNode.HasValue("contentMass")) contentMass = float.Parse(itemNode.GetValue("contentMass"));
             if (itemNode.HasValue("contentCost")) contentCost = float.Parse(itemNode.GetValue("contentCost"));
+        }
+
+        public KIS_Item(Part part, ModuleKISInventory inventory, float quantity = 1) // New part from scene
+        {  
             // Get part node
+            this.availablePart = part.partInfo;
             this.configNode = new ConfigNode();
             this.configNode.AddValue("partName", this.availablePart.name);
             ConfigNode newPartNode = this.configNode.AddNode("PART");
-            ConfigNode partNode = itemNode.GetNode("PART");
-            partNode.CopyTo(newPartNode);
-        }
-
-        public KIS_Item(Part part, ModuleKISInventory inventory, float quantity = 1)
-        {
-            // New part from scene
-            this.availablePart = part.partInfo;
+            KIS_Shared.PartSnapshot(part).CopyTo(newPartNode);
+            // init config
             this.InitConfig(availablePart, inventory, quantity);
             // Get mass
             this.resourceMass = part.GetResourceMass();
@@ -129,11 +134,6 @@ namespace KIS
                 this.contentMass = itemInventory.GetContentMass();
                 this.contentCost = itemInventory.GetContentCost();
             }
-            // Get part node
-            this.configNode = new ConfigNode();
-            this.configNode.AddValue("partName", this.availablePart.name);
-            ConfigNode newPartNode = this.configNode.AddNode("PART");
-            KIS_Shared.PartSnapshot(part).CopyTo(newPartNode);
         }
 
         private void InitConfig(AvailablePart availablePart, ModuleKISInventory inventory, float quantity)
@@ -158,20 +158,16 @@ namespace KIS
                 this.usableFromEditor = prefabModule.usableFromEditor;
                 this.carryable = prefabModule.carryable;
             }
-
             int nonStackableModule = 0;
             foreach (PartModule pModule in availablePart.partPrefab.Modules)
             {
-                //KIS_Shared.DebugLog("module " + pModule.moduleName);
-                //KIS_Shared.DebugLog("resourceInfos " + availablePart.resourceInfos.Count);
-                
                 if (!KISAddonConfig.stackableModules.Contains(pModule.moduleName))
                 {
                     KIS_Shared.DebugLog("Module <" + pModule.moduleName + "> is not set as stackable in settings.cfg");
                     nonStackableModule++;
                 }
             }
-            if (nonStackableModule == 0 && availablePart.resourceInfos.Count == 0)
+            if (nonStackableModule == 0 && GetResources().Count == 0)
             {
                 KIS_Shared.DebugLog("No non-stackable module and ressource found on the part, set item as stackable");
                 this.stackable = true;

@@ -24,7 +24,7 @@ namespace KIS
             {
                 if (ptr.evt == POINTER_INFO.INPUT_EVENT.PRESS)
                 {
-                    if (!editorPaction.isGrey) KISAddonPickup.instance.OnEditorPartClick(editorPaction.partInfo.partPrefab);
+                    if (!editorPaction.isGrey) KISAddonPickup.instance.OnMousePartClick(editorPaction.partInfo.partPrefab);
                 }
             }
         }
@@ -112,13 +112,6 @@ namespace KIS
             movingPart = null;
             //grabMode = GrabMode.Default;
             CursorDefault();
-        }
-
-        public void OnEditorPartClick(Part part)
-        {
-            // Editor part pickup
-            if (ModuleKISInventory.OpenInventory == 0) return;
-            Pickup(part);
         }
 
         void Update()
@@ -290,7 +283,8 @@ namespace KIS
             }
             if (HighLogic.LoadedSceneIsEditor)
             {
-                OnEditorPartClick(part.partInfo.partPrefab);
+                if (ModuleKISInventory.OpenInventory == 0) return;
+                Pickup(part);
             }
         }
 
