@@ -1399,7 +1399,7 @@ namespace KIS
                                         }
                                     }
                                 }
-                                else
+                                else if (KISAddonPickup.draggedPart != this.part)
                                 {
                                     // Picked part from scene
                                     if (carryPart)
