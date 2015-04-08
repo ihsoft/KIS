@@ -367,12 +367,24 @@ namespace KIS
                     // eva to pod
                     KIS_Shared.DebugLog("Eva to pod");
                     ModuleKISInventory evaInventory = fromToAction.from.GetComponent<ModuleKISInventory>();
-                    Dictionary<int, KIS_Item> transferedItems = new Dictionary<int, KIS_Item>(evaInventory.items);
                     KIS_Shared.DebugLog("Item transfer | source " + fromToAction.host.name);
+                    List<KIS_Item> itemsToDrop = new List<KIS_Item>();
                     foreach (KeyValuePair<int, KIS_Item> item in evaInventory.items)
                     {
-                        if (item.Value.equipped) item.Value.Unequip();
+                        if (item.Value.carryable)
+                        {
+                            itemsToDrop.Add(item.Value);
+                        }
+                        else if (item.Value.equipped)
+                        {
+                            item.Value.Unequip();
+                        }
                     }
+                    foreach (KIS_Item item in itemsToDrop)
+                    {
+                        item.Drop(this.part);
+                    }
+                    Dictionary<int, KIS_Item> transferedItems = new Dictionary<int, KIS_Item>(evaInventory.items);
                     StartCoroutine(WaitAndTransferItems(transferedItems, fromToAction.host));
                 }
             }
@@ -1044,6 +1056,20 @@ namespace KIS
                             contextItem.Equip();
                             contextItem = null;
                         }
+                    }
+                }
+            }
+
+            //Carryable
+            if (contextItem != null)
+            {
+                if (contextItem.carryable && invType == InventoryType.Eva)
+                {
+                    noAction = false;
+                    if (GUILayout.Button("Drop"))
+                    {
+                        contextItem.Drop();
+                        contextItem = null;
                     }
                 }
             }

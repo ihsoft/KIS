@@ -99,7 +99,7 @@ namespace KIS
         public float totalMass { get { return stackDryMass + resourceMass + contentMass; } }
 
         public KIS_Item(AvailablePart availablePart, ConfigNode itemNode, ModuleKISInventory inventory, float quantity = 1) // Part from save
-        { 
+        {
             // Get part node
             this.availablePart = availablePart;
             this.configNode = new ConfigNode();
@@ -117,7 +117,7 @@ namespace KIS
         }
 
         public KIS_Item(Part part, ModuleKISInventory inventory, float quantity = 1) // New part from scene
-        {  
+        {
             // Get part node
             this.availablePart = part.partInfo;
             this.configNode = new ConfigNode();
@@ -462,6 +462,34 @@ namespace KIS
             equipped = false;
             PlaySound(prefabModule.moveSndPath);
             prefabModule.OnUnEquip(this);
+        }
+
+        public void Drop(Part fromPart = null)
+        {
+            KIS_Shared.DebugLog("Drop item");
+            if (fromPart == null) fromPart = inventory.part;
+            Quaternion rot;
+            Vector3 pos;
+            if (prefabModule)
+            {
+                rot = evaTransform.rotation * Quaternion.Euler(prefabModule.equipDir);
+                pos = evaTransform.TransformPoint(prefabModule.equipPos);
+            }
+            else
+            {
+                rot = inventory.part.transform.rotation;
+                pos = inventory.part.transform.position + new Vector3(0, 1, 0);
+            }
+            if (configNode.HasNode("PART"))
+            {
+                ConfigNode partNode = configNode.GetNode("PART");
+                KIS_Shared.CreatePart(partNode, pos, rot, fromPart);
+            }
+            else
+            {
+                KIS_Shared.CreatePart(availablePart, pos, rot, fromPart);
+            }
+            StackRemove(1);
         }
 
         public void EquipToogle()
