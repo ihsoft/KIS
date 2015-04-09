@@ -156,7 +156,7 @@ namespace KIS
 
             if ((grabActive || draggedPart) && HighLogic.LoadedSceneIsFlight)
             {
-                Part part = GetPartUnderCursor();
+                Part part = KIS_Shared.GetPartUnderCursor();
                 // OnMouseDown
                 if (Input.GetMouseButtonDown(0))
                 {
@@ -202,7 +202,7 @@ namespace KIS
                 {
                     if (!UIManager.instance.DidPointerHitUI(0) && InputLockManager.IsUnlocked(ControlTypes.EDITOR_PAD_PICK_PLACE))
                     {
-                        Part part = GetPartUnderCursor();
+                        Part part = KIS_Shared.GetPartUnderCursor();
                         if (part)
                         {
                             OnMousePartClick(part);
@@ -477,22 +477,6 @@ namespace KIS
         public void CursorDefaultGrab()
         {
             CursorEnable("KIS/Textures/grab", "Grab", "");
-        }
-
-        private Part GetPartUnderCursor()
-        {
-            RaycastHit hit;
-            Part part = null;
-            Camera cam = null;
-            if (HighLogic.LoadedSceneIsEditor) cam = EditorLogic.fetch.editorCamera;
-            if (HighLogic.LoadedSceneIsFlight) cam = FlightCamera.fetch.mainCamera;
-
-            if (Physics.Raycast(cam.ScreenPointToRay(Input.mousePosition), out hit, 1000, 557059))
-            {
-                //part = hit.transform.gameObject.GetComponent<Part>();
-                part = (Part)UIPartActionController.GetComponentUpwards("Part", hit.collider.gameObject);
-            }
-            return part;
         }
 
         public void Pickup(Part part)
