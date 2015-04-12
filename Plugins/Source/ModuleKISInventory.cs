@@ -63,7 +63,6 @@ namespace KIS
 
         //Tooltip
         private KIS_Item tooltipItem;
-        private bool mouseOverIcon = false;
 
         // Context menu
         private KIS_Item contextItem;
@@ -833,7 +832,7 @@ namespace KIS
 
             guiMainWindowPos = GUILayout.Window(GetInstanceID(), guiMainWindowPos, GuiMain, "Inventory");
 
-            if (mouseOverIcon)
+            if (tooltipItem != null)
             {
                 if (contextItem == null)
                 {
@@ -944,11 +943,6 @@ namespace KIS
 
             GUILayout.EndHorizontal();
 
-            if (Event.current.type == EventType.Repaint && mouseOverIcon == false && tooltipItem != null)
-            {
-                tooltipItem.icon.ResetPos();
-                tooltipItem = null;
-            }
             if (contextItem == null) GUI.DragWindow(new Rect(0, 0, 10000, 30));
             if (closeInv)
             {
@@ -1245,8 +1239,8 @@ namespace KIS
 
         private void GuiInventory(int windowID)
         {
-            mouseOverIcon = false;
             int i = 0;
+            KIS_Item mouseOverItem = null;
             for (int x = 0; x < slotsY; x++)
             {
                 GUILayout.BeginHorizontal();
@@ -1301,10 +1295,9 @@ namespace KIS
                         // Mouse over a slot
                         if (Event.current.type == EventType.Repaint && textureRect.Contains(Event.current.mousePosition) && !KISAddonPickup.draggedPart)
                         {
-                            mouseOverIcon = true;
-                            tooltipItem = items[i];
-                            tooltipItem.icon.Rotate();
+                            mouseOverItem = items[i];
                         }
+
                         // Mouse up on used slot
                         if (Event.current.type == EventType.MouseUp && Event.current.button == 0 && textureRect.Contains(Event.current.mousePosition) && KISAddonPickup.draggedPart)
                         {
@@ -1452,6 +1445,22 @@ namespace KIS
                     i++;
                 }
                 GUILayout.EndHorizontal();
+            }
+            // item icon rotation
+            if (Event.current.type == EventType.Repaint)
+            {
+                if (mouseOverItem != null)
+                {
+                    mouseOverItem.icon.Rotate();
+                }
+                if (mouseOverItem != tooltipItem)
+                {
+                    if (tooltipItem != null)
+                    {
+                        tooltipItem.icon.ResetPos();
+                    }
+                    tooltipItem = mouseOverItem;
+                }
             }
         }
 
