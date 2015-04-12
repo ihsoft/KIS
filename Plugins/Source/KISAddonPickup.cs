@@ -66,19 +66,19 @@ namespace KIS
 
                 if (value == PointerMode.Drop)
                 {
-                    KIS_Shared.DebugLog("Change pointer mode to drop");
                     CursorEnable("KIS/Textures/drop", "Drop", "(Press " + keyRotate + " to rotate, " + keyResetRot + " to reset orientation", keyAnchor + " to change anchor point, [echap] to cancel)");
                     KISAddonPointer.allowPart = true;
                     KISAddonPointer.allowStatic = true;
                     KISAddonPointer.allowEva = true;
+                    KISAddonPointer.useAttachRules = false;
                 }
                 if (value == PointerMode.Attach)
                 {
-                    KIS_Shared.DebugLog("Change pointer mode to attach");
                     CursorEnable("KIS/Textures/attachOk", "Attach", "(Press " + keyRotate + " to rotate, " + keyResetRot + " to reset orientation", keyAnchor + " to change anchor point, [echap] to cancel)");
                     KISAddonPointer.allowPart = true;
                     KISAddonPointer.allowStatic = false;
                     KISAddonPointer.allowEva = false;
+                    KISAddonPointer.useAttachRules = true;
                 }
                 this._pointerMode = value;
             }
@@ -178,7 +178,7 @@ namespace KIS
                     {
                         if (hoveredPart)
                         {
-                            OnMouseExitPart(part);
+                            OnMouseExitPart(hoveredPart);
                         }
                         OnMouseEnterPart(part);
                         hoveredPart = part;
@@ -189,7 +189,7 @@ namespace KIS
                     // OnMouseExit
                     if (part != hoveredPart)
                     {
-                        OnMouseExitPart(part);
+                        OnMouseExitPart(hoveredPart);
                         hoveredPart = null;
                     }
                 }
@@ -512,7 +512,10 @@ namespace KIS
                 ModuleKISPickup pickupModule = GetActivePickupNearest(fromPart);
                 if (pickupModule)
                 {
-                    KISAddonPointer.StartPointer(part, OnPointerAction, true, true, true, true, pickupModule.maxDistance, pickupModule.transform);
+                    KISAddonPointer.allowPart = KISAddonPointer.allowEva = KISAddonPointer.allowMount = KISAddonPointer.allowStatic = true;
+                    KISAddonPointer.allowStack = false;
+                    KISAddonPointer.maxDist = pickupModule.maxDistance;
+                    KISAddonPointer.StartPointer(part, OnPointerAction, OnPointerState, pickupModule.transform);
                     pointerMode = PointerMode.Drop;
                 }
                 else
@@ -566,105 +569,62 @@ namespace KIS
             draggedPart = null;
         }
 
-        private void OnPointerAction(KISAddonPointer.PointerAction pointerAction, Vector3 pos, Quaternion rot, Part hitPart)
+        private void OnPointerState(KISAddonPointer.PointerTarget pTarget, KISAddonPointer.PointerState pState, Part hoverPart, AttachNode hoverNode)
         {
-            if (pointerAction == KISAddonPointer.PointerAction.ClickValid)
+            if (pState == KISAddonPointer.PointerState.OnMouseEnterNode && pTarget == KISAddonPointer.PointerTarget.PartMount)
             {
-                ModuleKISPickup modulePickup = GetActivePickupNearest(pos);
+                string keyAnchor = "[" + GameSettings.Editor_toggleSymMethod.name + "]";
+                CursorEnable("KIS/Textures/mount", "Mount", "(Press " + keyAnchor + " to change anchor point, [echap] to cancel)");
+            }
+            else if (pState == KISAddonPointer.PointerState.OnMouseExitNode)
+            {
+                pointerMode = pointerMode;
+            }
+        }
+
+        private void OnPointerAction(KISAddonPointer.PointerTarget pointerTarget, Vector3 pos, Quaternion rot, Part tgtPart, AttachNode srcAttachNode = null, AttachNode tgtAttachNode = null)
+        {
+            if (pointerTarget == KISAddonPointer.PointerTarget.PartMount)
+            {
+                if (movingPart)
+                {
+                    MoveAttach(tgtPart, pos, rot, srcAttachNode, tgtAttachNode);
+                }
+                else
+                {
+                    CreateAttach(tgtPart, pos, rot, srcAttachNode, tgtAttachNode);
+                }
+                ModuleKISPartMount pMount = tgtPart.GetComponent<ModuleKISPartMount>();
+                if (pMount) pMount.sndFxStore.audio.Play();
+            }
+
+            if (pointerTarget == KISAddonPointer.PointerTarget.Part
+                || pointerTarget == KISAddonPointer.PointerTarget.PartNode
+                || pointerTarget == KISAddonPointer.PointerTarget.Static
+                || pointerTarget == KISAddonPointer.PointerTarget.KerbalEva)
+            {
                 if (pointerMode == PointerMode.Drop)
                 {
                     if (movingPart)
                     {
-                        KIS_Shared.DebugLog("Move part");
-                        if (modulePickup)
-                        {
-                            if (movingPart.parent)
-                            {
-                                bool movingPartMounted = false;
-                                ModuleKISPartMount partM = movingPart.parent.GetComponent<ModuleKISPartMount>();
-                                if (partM)
-                                {
-                                    if (partM.GetPartMounted() == movingPart)
-                                    {
-                                        movingPartMounted = true;
-                                    }
-                                }
-                                if (!movingPartMounted) AudioSource.PlayClipAtPoint(GameDatabase.Instance.GetAudioClip(modulePickup.detachSndPath), movingPart.transform.position);
-                            }
-                            AudioSource.PlayClipAtPoint(GameDatabase.Instance.GetAudioClip(modulePickup.dropSndPath), pos);
-                        }
-                        KIS_Shared.DecoupleFromAll(movingPart);
-                        movingPart.transform.position = pos;
-                        movingPart.transform.rotation = rot;
-                        KISAddonPointer.StopPointer();
-                        movingPart = null;
+                        MoveDrop(tgtPart, pos, rot);
                     }
                     else
                     {
-                        KIS_Shared.DebugLog("Create & drop part");
-                        if (draggedItem.configNode.HasNode("PART"))
-                        {
-                            ConfigNode partNode = draggedItem.configNode.GetNode("PART");
-                            KIS_Shared.CreatePart(partNode, pos, rot, draggedItem.inventory.part);
-                        }
-                        else
-                        {
-                            KIS_Shared.CreatePart(draggedItem.availablePart, pos, rot, draggedItem.inventory.part);
-                        }
-                        KISAddonPointer.StopPointer();
-                        draggedItem.StackRemove(1);
-                        draggedItem = null;
-                        draggedPart = null;
-                        if (modulePickup) AudioSource.PlayClipAtPoint(GameDatabase.Instance.GetAudioClip(modulePickup.dropSndPath), pos);
+                        CreateDrop(tgtPart, pos, rot);
                     }
                 }
-
-
                 if (pointerMode == PointerMode.Attach)
                 {
                     if (movingPart)
                     {
-                        KIS_Shared.DebugLog("Move part & attach");
-                        if (hitPart)
-                        {
-                            KIS_Shared.DecoupleFromAll(movingPart);
-                            movingPart.transform.position = pos;
-                            movingPart.transform.rotation = rot;
-                            CouplePart(movingPart, hitPart);
-                            KISAddonPointer.StopPointer();
-                            movingPart = null;
-                            draggedItem = null;
-                            draggedPart = null;
-                        }
+                        MoveAttach(tgtPart, pos, rot, srcAttachNode, tgtAttachNode);
                     }
                     else
                     {
-                        KIS_Shared.DebugLog("Create part & attach");
-                        Part newPart;
-                        if (hitPart)
-                        {
-                            // If attaching to a part, move part away waiting initialisation for coupling
-                            if (draggedItem.configNode.HasNode("PART"))
-                            {
-                                ConfigNode partNode = draggedItem.configNode.GetNode("PART");
-                                newPart = KIS_Shared.CreatePart(partNode, pos, rot, hitPart);
-                            }
-                            else
-                            {
-                                newPart = KIS_Shared.CreatePart(draggedItem.availablePart, pos, rot, hitPart);
-                            }
-                            StartCoroutine(WaitAndCouple(newPart, hitPart, pos, rot));
-                        }
-                        else
-                        {
-                            newPart = KIS_Shared.CreatePart(draggedItem.configNode, pos, rot, draggedItem.inventory.part);
-                        }
-                        KISAddonPointer.StopPointer();
-                        draggedItem.StackRemove(1);
-                        movingPart = null;
-                        draggedItem = null;
-                        draggedPart = null;
+                        CreateAttach(tgtPart, pos, rot, srcAttachNode, tgtAttachNode);
                     }
+                    ModuleKISPickup modulePickup = GetActivePickupNearest(pos);
                     if (modulePickup) AudioSource.PlayClipAtPoint(GameDatabase.Instance.GetAudioClip(modulePickup.attachSndPath), pos);
                 }
             }
@@ -674,24 +634,136 @@ namespace KIS
             CursorDefault();
         }
 
-        private void CouplePart(Part srcPart, Part targetPart)
+        private void MoveDrop(Part tgtPart, Vector3 pos, Quaternion rot)
+        {
+            KIS_Shared.DebugLog("Move part");
+            ModuleKISPickup modulePickup = GetActivePickupNearest(pos);
+            if (modulePickup)
+            {
+                if (movingPart.parent)
+                {
+                    bool movingPartMounted = false;
+                    ModuleKISPartMount partM = movingPart.parent.GetComponent<ModuleKISPartMount>();
+                    if (partM)
+                    {
+                        if (partM.PartIsMounted(movingPart))
+                        {
+                            movingPartMounted = true;
+                        }
+                    }
+                    if (!movingPartMounted) AudioSource.PlayClipAtPoint(GameDatabase.Instance.GetAudioClip(modulePickup.detachSndPath), movingPart.transform.position);
+                }
+                AudioSource.PlayClipAtPoint(GameDatabase.Instance.GetAudioClip(modulePickup.dropSndPath), pos);
+            }
+            KIS_Shared.DecoupleFromAll(movingPart);
+            movingPart.transform.position = pos;
+            movingPart.transform.rotation = rot;
+            KISAddonPointer.StopPointer();
+            movingPart = null;
+        }
+
+        private void CreateDrop(Part tgtPart, Vector3 pos, Quaternion rot)
+        {
+            KIS_Shared.DebugLog("Create & drop part");
+            ModuleKISPickup modulePickup = GetActivePickupNearest(pos);
+            if (draggedItem.configNode.HasNode("PART"))
+            {
+                ConfigNode partNode = draggedItem.configNode.GetNode("PART");
+                KIS_Shared.CreatePart(partNode, pos, rot, draggedItem.inventory.part);
+            }
+            else
+            {
+                KIS_Shared.CreatePart(draggedItem.availablePart, pos, rot, draggedItem.inventory.part);
+            }
+            KISAddonPointer.StopPointer();
+            draggedItem.StackRemove(1);
+            draggedItem = null;
+            draggedPart = null;
+            if (modulePickup) AudioSource.PlayClipAtPoint(GameDatabase.Instance.GetAudioClip(modulePickup.dropSndPath), pos);
+        }
+
+        private void MoveAttach(Part tgtPart, Vector3 pos, Quaternion rot, AttachNode srcAttachNode = null, AttachNode tgtAttachNode = null)
+        {
+            KIS_Shared.DebugLog("Move part & attach");
+            if (tgtPart)
+            {
+                KIS_Shared.DecoupleFromAll(movingPart);
+                movingPart.transform.position = pos;
+                movingPart.transform.rotation = rot;
+                CouplePart(movingPart, tgtPart, srcAttachNode, tgtAttachNode);
+                KISAddonPointer.StopPointer();
+                movingPart = null;
+                draggedItem = null;
+                draggedPart = null;
+            }
+        }
+
+        private void CreateAttach(Part tgtPart, Vector3 pos, Quaternion rot, AttachNode srcAttachNode = null, AttachNode tgtAttachNode = null)
+        {
+            KIS_Shared.DebugLog("Create part & attach");
+            Part newPart;
+            if (tgtPart)
+            {
+                // If attaching to a part, move part away waiting initialisation for coupling
+                if (draggedItem.configNode.HasNode("PART"))
+                {
+                    ConfigNode partNode = draggedItem.configNode.GetNode("PART");
+                    newPart = KIS_Shared.CreatePart(partNode, pos, rot, tgtPart);
+                }
+                else
+                {
+                    newPart = KIS_Shared.CreatePart(draggedItem.availablePart, pos, rot, tgtPart);
+                }
+                StartCoroutine(WaitAndCouple(newPart, tgtPart, pos, rot, srcAttachNode, tgtAttachNode));
+            }
+            else
+            {
+                newPart = KIS_Shared.CreatePart(draggedItem.configNode, pos, rot, draggedItem.inventory.part);
+            }
+            KISAddonPointer.StopPointer();
+            draggedItem.StackRemove(1);
+            movingPart = null;
+            draggedItem = null;
+            draggedPart = null;
+        }
+
+        private IEnumerator WaitAndCouple(Part srcPart, Part tgtPart, Vector3 pos, Quaternion rot, AttachNode srcAttachNode = null, AttachNode tgtAttachNode = null)
+        {
+            Vector3 toPartLocalPos = tgtPart.transform.InverseTransformPoint(pos);
+            Quaternion toPartLocalRot = Quaternion.Inverse(tgtPart.transform.rotation) * rot;
+            while (!srcPart.rigidbody || (!srcPart.started && srcPart.State != PartStates.DEAD) || srcPart.packed)
+            {
+                KIS_Shared.DebugLog("WaitAndCouple - Waiting initialization of the part...");
+                srcPart.transform.position = tgtPart.transform.TransformPoint(toPartLocalPos);
+                srcPart.transform.rotation = tgtPart.transform.rotation * toPartLocalRot;
+                yield return new WaitForFixedUpdate();
+            }
+            srcPart.transform.position = tgtPart.transform.TransformPoint(toPartLocalPos);
+            srcPart.transform.rotation = tgtPart.transform.rotation * toPartLocalRot;
+            srcPart.rigidbody.velocity = tgtPart.rigidbody.velocity;
+            srcPart.rigidbody.angularVelocity = tgtPart.rigidbody.angularVelocity;
+            CouplePart(srcPart, tgtPart, srcAttachNode, tgtAttachNode);
+        }
+
+        private void CouplePart(Part srcPart, Part tgtPart, AttachNode srcAttachNode = null, AttachNode tgtAttachNode = null)
         {
             // Handle special case when you start constructing with an engine as root (fuel flow temp fix, waiting KSP 1.0 for fuel flow overhaul)
-            ModuleEngines targetEngine = targetPart.GetComponent<ModuleEngines>();
-            ModuleEnginesFX targetEngineFx = targetPart.GetComponent<ModuleEnginesFX>();
-            if ((targetEngine || targetEngineFx) && targetPart.vessel.rootPart == targetPart)
+            ModuleEngines targetEngine = tgtPart.GetComponent<ModuleEngines>();
+            ModuleEnginesFX targetEngineFx = tgtPart.GetComponent<ModuleEnginesFX>();
+            if ((targetEngine || targetEngineFx) && tgtPart.vessel.rootPart == tgtPart)
             {
                 KIS_Shared.DebugWarning("Target part is a root engine, invert couple action to enable fuel flow...");
                 Part tmpPart = srcPart;
-                srcPart = targetPart;
-                targetPart = tmpPart;
+                srcPart = tgtPart;
+                tgtPart = tmpPart;
             }
 
             GameEvents.onActiveJointNeedUpdate.Fire(srcPart.vessel);
-            GameEvents.onActiveJointNeedUpdate.Fire(targetPart.vessel);
+            GameEvents.onActiveJointNeedUpdate.Fire(tgtPart.vessel);
+
             // For fuel feed
             srcPart.attachMode = AttachModes.SRF_ATTACH;
-            srcPart.srfAttachNode.attachedPart = targetPart;
+            srcPart.srfAttachNode.attachedPart = tgtPart;
 
             /* doesn't work
             if (KISAddonPointer.GetCurrentAttachNode().nodeType == AttachNode.NodeType.Surface)
@@ -706,27 +778,11 @@ namespace KIS
                 srcPart.attachMode = AttachModes.STACK;
                 KISAddonPointer.GetCurrentAttachNode().attachedPart = targetPart;
             }*/
-            srcPart.Couple(targetPart);
+            srcPart.Couple(tgtPart);
+            if (tgtAttachNode != null) tgtAttachNode.attachedPart = srcPart;
+            if (srcAttachNode != null) srcAttachNode.attachedPart = tgtPart;
             KIS_Shared.ResetCollisionEnhancer(srcPart);
-            GameEvents.onVesselWasModified.Fire(targetPart.vessel);
-        }
-
-        private IEnumerator WaitAndCouple(Part partToAttach, Part toPart, Vector3 pos, Quaternion rot)
-        {
-            Vector3 toPartLocalPos = toPart.transform.InverseTransformPoint(pos);
-            Quaternion toPartLocalRot = Quaternion.Inverse(toPart.transform.rotation) * rot;
-            while (!partToAttach.rigidbody || (!partToAttach.started && partToAttach.State != PartStates.DEAD) || partToAttach.packed)
-            {
-                KIS_Shared.DebugLog("WaitAndCouple - Waiting initialization of the part...");
-                partToAttach.transform.position = toPart.transform.TransformPoint(toPartLocalPos);
-                partToAttach.transform.rotation = toPart.transform.rotation * toPartLocalRot;
-                yield return new WaitForFixedUpdate();
-            }
-            partToAttach.transform.position = toPart.transform.TransformPoint(toPartLocalPos);
-            partToAttach.transform.rotation = toPart.transform.rotation * toPartLocalRot;
-            partToAttach.rigidbody.velocity = toPart.rigidbody.velocity;
-            partToAttach.rigidbody.angularVelocity = toPart.rigidbody.angularVelocity;
-            CouplePart(partToAttach, toPart);
+            GameEvents.onVesselWasModified.Fire(tgtPart.vessel);
         }
 
     }

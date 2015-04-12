@@ -281,7 +281,7 @@ namespace KIS
             return newPart;
         }*/
 
-        
+
         public static Part CreatePart(AvailablePart avPart, Vector3 position, Quaternion rotation, Part fromPart, bool decouple = true)
         {
             ConfigNode partNode = new ConfigNode();
@@ -289,7 +289,7 @@ namespace KIS
             //return CreatePart(partNode, position, rotation, fromPart, decouple);
             return CreatePart(partNode, position, rotation, fromPart);
         }
-        
+
         public static Part CreatePart(ConfigNode partConfig, Vector3 position, Quaternion rotation, Part fromPart, bool decouple = true)
         {
             // Create and add part to a vessel and decouple it
@@ -347,7 +347,7 @@ namespace KIS
                     part.InitializeModules();
                     part.ResumeVelocity();
                 }
-          
+
                 GameEvents.onVesselWasModified.Fire(part.vessel);
                 if (decouple)
                 {
@@ -359,7 +359,7 @@ namespace KIS
                 GameEvents.onVesselWasModified.Fire(part.vessel);
             }
         }
-   
+
         public static void MoveAlign(Transform source, Transform childNode, RaycastHit hit, Quaternion adjust)
         {
             Vector3 refDirection = Vector3.up;
@@ -381,8 +381,12 @@ namespace KIS
             {
                 rotation = Quaternion.LookRotation(hit.normal, refDir);
             }
-
             MoveAlign(source, childNode, hit.point, rotation * adjust);
+        }
+
+        public static void MoveAlign(Transform source, Transform childNode, Transform target, Quaternion adjust)
+        {
+            MoveAlign(source, childNode, target.position, target.rotation * adjust);
         }
 
         public static void MoveAlign(Transform source, Transform childNode, Transform target)
@@ -413,7 +417,7 @@ namespace KIS
         {
             Bounds[] rendererBounds = PartGeometryUtil.GetRendererBounds(partPrefab);
             Vector3 boundsSize = PartGeometryUtil.MergeBounds(rendererBounds, partPrefab.transform).size;
-            float volume = boundsSize.x * boundsSize.y * boundsSize.z;           
+            float volume = boundsSize.x * boundsSize.y * boundsSize.z;
             return volume * 1000;
         }
 
@@ -462,7 +466,31 @@ namespace KIS
             {
                 attachNode.nodeTransform.localPosition = attachNode.position;
                 attachNode.nodeTransform.localRotation = rotation;
-                KIS_Shared.DebugLog("AddTransformToAttachNode - Node : " + attachNode.id + " already have a nodeTransform, only update");
+            }
+        }
+
+        public static void AssignAttachIcon(Part part, AttachNode node, Color iconColor, string name = null)
+        {
+            if (!node.icon)
+            {
+                node.icon = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                UnityEngine.Object.DestroyImmediate(node.icon.collider);
+                node.icon.renderer.material = new Material(Shader.Find("Transparent/Diffuse"));
+                iconColor.a = 0.5f;
+                node.icon.renderer.material.color = iconColor;
+                node.icon.transform.parent = part.transform;
+                if (name != null) node.icon.name = name;
+                double num;
+                if (node.size == 0)
+                {
+                    num = (double)node.size + 0.5;
+                }
+                else num = (double)node.size;
+                node.icon.transform.localScale = Vector3.one * node.radius * (float)num;
+                node.icon.transform.position = part.transform.TransformPoint(node.position);
+                node.icon.transform.up = part.transform.TransformDirection(node.orientation);
+                KIS_Shared.AddNodeTransform(part, node);
+                //node.icon.gameObject.SetActive(false);
             }
         }
 

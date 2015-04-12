@@ -18,24 +18,59 @@ namespace KIS
         public static bool allowPart = false;
         public static bool allowEva = false;
         public static bool allowStatic = false;
-        public static bool allowStackSnap = false;
+
+        private static bool _allowMount = false;
+        public static bool allowMount
+        {
+            get
+            {
+                return _allowMount;
+            }
+            set
+            {
+                ResetMouseOver();
+                _allowMount = value;
+            }
+        }
+
+        private static bool _allowStack = false;
+        public static bool allowStack
+        {
+            get
+            {
+                return _allowStack;
+            }
+            set
+            {
+                ResetMouseOver();
+                _allowStack = value;
+            }
+        }
+
         public static Part partToAttach;
-        private static float maxDist = 2f;
+        public static float maxDist = 2f;
+        public static bool useAttachRules = false;
         private static Transform sourceTransform;
+        private static RaycastHit hit;
 
         private static bool running = false;
+        public static Part hoveredPart = null;
+        public static AttachNode hoveredNode = null;
         private static GameObject pointer;
         private static List<MeshRenderer> allModelMr;
         private static Vector3 customRot = new Vector3(0f, 0f, 0f);
         private static Transform pointerNodeTransform;
-        private static bool ignoreAttachRules = false;
         private static List<AttachNode> attachNodes = new List<AttachNode>();
         private static int attachNodeIndex;
 
-        private static OnPointerAction pointerAction;
-        public enum PointerAction { ClickValid, Cancel }
-        public delegate void OnPointerAction(PointerAction pointerAction, Vector3 pos, Quaternion rot, Part pointerPart);
+        public static PointerTarget pointerTarget = PointerTarget.Nothing;
+        public enum PointerTarget { Nothing, Static, StaticRb, Part, PartNode, PartMount, KerbalEva }
+        private static OnPointerClick SendPointerClick;
+        public delegate void OnPointerClick(PointerTarget pTarget, Vector3 pos, Quaternion rot, Part pointerPart, AttachNode SrcAttachNode = null, AttachNode tgtAttachNode = null);
 
+        public enum PointerState { OnMouseEnterPart, OnMouseExitPart, OnMouseEnterNode, OnMouseExitNode }
+        private static OnPointerState SendPointerState;
+        public delegate void OnPointerState(PointerTarget pTarget, PointerState pState, Part hoverPart, AttachNode hoverNode);
 
         public static bool isRunning
         {
@@ -58,28 +93,17 @@ namespace KIS
             }
         }
 
-        public static void StartPointer(Part partToMoveAndAttach, OnPointerAction pClick, bool partIsValid, bool evaIsValid, bool staticIsValid, bool ignoreRule, float maxDistance = 0, Transform from = null)
+        public static void StartPointer(Part partToMoveAndAttach, OnPointerClick pClick, OnPointerState pState, Transform from = null)
         {
             if (!running)
             {
                 KIS_Shared.DebugLog("StartPointer(pointer)");
                 customRot = Vector3.zero;
-                allowPart = partIsValid;
-                allowEva = evaIsValid;
-                allowStatic = staticIsValid;
                 partToAttach = partToMoveAndAttach;
-                if (maxDistance == 0)
-                {
-                    maxDist = Mathf.Infinity;
-                }
-                else
-                {
-                    maxDist = maxDistance;
-                }
-                ignoreAttachRules = ignoreRule;
                 sourceTransform = from;
                 running = true;
-                pointerAction = pClick;
+                SendPointerClick = pClick;
+                SendPointerState = pState;
                 // Set possible attach nodes
                 attachNodes.Clear();
                 if (partToAttach.attachRules.srfAttach)
@@ -116,59 +140,205 @@ namespace KIS
         {
             KIS_Shared.DebugLog("StopPointer(pointer)");
             running = false;
+            ResetMouseOver();
             InputLockManager.RemoveControlLock("KISpointer");
         }
 
         void Update()
         {
+            UpdateHoverDetect();
             UpdatePointer();
             UpdateKey();
         }
 
-        private void UpdateKey()
+        public void UpdateHoverDetect()
         {
             if (isRunning)
             {
-                if (
-                Input.GetKeyDown(KeyCode.Escape)
-                || Input.GetKeyDown(KeyCode.Return)
-                )
+                //Cast ray
+                Ray ray = FlightCamera.fetch.mainCamera.ScreenPointToRay(Input.mousePosition);
+                if (!Physics.Raycast(ray, out hit, 500, 557059))
                 {
-                    KIS_Shared.DebugLog("Cancel key pressed, stop eva attach mode");
-                    StopPointer();
-                    pointerAction(PointerAction.Cancel, Vector3.zero, Quaternion.identity, null);
+                    pointerTarget = PointerTarget.Nothing;
+                    ResetMouseOver();
+                    return;
                 }
-                if (GameSettings.Editor_toggleSymMethod.GetKeyDown())
+
+                // Check target type
+                Part tgtPart = null;
+                KerbalEVA tgtKerbalEva = null;
+                AttachNode tgtAttachNode = null;
+                if (hit.rigidbody)
                 {
-                    if (pointer) UnityEngine.Object.Destroy(pointer);
-                    attachNodeIndex++;
-                    if (attachNodeIndex > (attachNodes.Count - 1))
+                    tgtPart = hit.rigidbody.GetComponent<Part>();
+                    tgtKerbalEva = hit.rigidbody.GetComponent<KerbalEVA>();
+                    if (tgtKerbalEva)
                     {
-                        attachNodeIndex = 0;
+                        pointerTarget = PointerTarget.KerbalEva;
                     }
-                    ScreenMessage scrMsg = new ScreenMessage("Attach pointer node changed to : " + GetCurrentAttachNode().id, 5, ScreenMessageStyle.UPPER_CENTER);
-                    ScreenMessages.PostScreenMessage(scrMsg, true);
+                    else
+                    {
+                        pointerTarget = PointerTarget.StaticRb;
+                        if (tgtPart)
+                        {
+                            foreach (AttachNode an in tgtPart.attachNodes)
+                            {
+                                if (an.icon)
+                                {
+                                    if (an.icon.renderer.bounds.IntersectRay(FlightCamera.fetch.mainCamera.ScreenPointToRay(Input.mousePosition)))
+                                    {
+                                        tgtAttachNode = an;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (tgtAttachNode != null)
+                            {
+                                if (tgtAttachNode.icon.name == "KISMount")
+                                {
+                                    pointerTarget = PointerTarget.PartMount;
+                                }
+                                else
+                                {
+                                    pointerTarget = PointerTarget.PartNode;
+                                }
+                            }
+                            else
+                            {
+                                pointerTarget = PointerTarget.Part;
+                            }
+                        }
+                    }
                 }
+                else
+                {
+                    pointerTarget = PointerTarget.Static;
+                }
+
+                if (tgtPart)
+                {
+                    if (tgtAttachNode != null)
+                    {
+                        // OnMouseEnter node
+                        if (tgtAttachNode != hoveredNode)
+                        {
+                            if (hoveredNode != null)
+                            {
+                                OnMouseExitNode(hoveredNode);
+                            }
+                            OnMouseEnterNode(tgtAttachNode);
+                            hoveredNode = tgtAttachNode;
+                        }
+                    }
+                    else
+                    {
+                        // OnMouseExit node
+                        if (tgtAttachNode != hoveredNode)
+                        {
+                            OnMouseExitNode(hoveredNode);
+                            hoveredNode = null;
+                        }
+                    }
+
+                    // OnMouseEnter part
+                    if (tgtPart != hoveredPart)
+                    {
+                        if (hoveredPart)
+                        {
+                            OnMouseExitPart(hoveredPart);
+                        }
+                        OnMouseEnterPart(tgtPart);
+                        hoveredPart = tgtPart;
+                    }
+                }
+                else
+                {
+                    // OnMouseExit part
+                    if (tgtPart != hoveredPart)
+                    {
+                        OnMouseExitPart(hoveredPart);
+                        hoveredPart = null;
+                    }
+                }
+
+            }
+        }
+
+        static void OnMouseEnterPart(Part hoverPart)
+        {
+            if (allowMount)
+            {
+                ModuleKISPartMount pMount = hoverPart.GetComponent<ModuleKISPartMount>();
+                if (pMount)
+                {
+                    foreach (KeyValuePair<AttachNode, List<string>> mount in pMount.GetMounts())
+                    {
+                        if (!mount.Key.attachedPart)
+                        {
+                            KIS_Shared.AssignAttachIcon(hoverPart, mount.Key, XKCDColors.Teal, "KISMount");
+                        }
+                    }
+                }
+            }
+            if (allowStack && GetCurrentAttachNode().nodeType != AttachNode.NodeType.Surface)
+            {
+                foreach (AttachNode an in hoverPart.attachNodes)
+                {
+                    if (!an.attachedPart)
+                    {
+                        KIS_Shared.AssignAttachIcon(hoverPart, an, XKCDColors.SeaGreen);
+                    }
+                }
+            }
+            SendPointerState(pointerTarget, PointerState.OnMouseEnterPart, hoverPart, null);
+        }
+
+        static void OnMouseExitPart(Part hoverPart)
+        {
+            foreach (AttachNode an in hoverPart.attachNodes)
+            {
+                if (an.icon)
+                {
+                    Destroy(an.icon);
+                }
+            }
+            SendPointerState(pointerTarget, PointerState.OnMouseExitPart, hoverPart, null);
+        }
+
+        static void OnMouseEnterNode(AttachNode hoverNode)
+        {
+            SendPointerState(pointerTarget, PointerState.OnMouseEnterNode, hoverNode.owner, hoverNode);
+        }
+
+        static void OnMouseExitNode(AttachNode hoverNode)
+        {
+            SendPointerState(pointerTarget, PointerState.OnMouseExitNode, hoverNode.owner, hoverNode);
+        }
+
+        static void ResetMouseOver()
+        {
+            if (hoveredPart)
+            {
+                OnMouseExitPart(hoveredPart);
+                hoveredPart = null;
+            }
+            if (hoveredNode != null)
+            {
+                OnMouseExitNode(hoveredNode);
+                hoveredNode = null;
             }
         }
 
         public void UpdatePointer()
         {
+            // Stop pointer on map
             if (running && MapView.MapIsEnabled)
             {
                 StopPointer();
             }
 
-            if (!running)
-            {
-                if (pointer) UnityEngine.Object.Destroy(pointer);
-                return;
-            }
-
-            //Cast ray
-            Ray ray = FlightCamera.fetch.mainCamera.ScreenPointToRay(Input.mousePosition);
-            RaycastHit hit;
-            if (!Physics.Raycast(ray, out hit, 500, 557059))
+            // Remove pointer if not running or if the raycast do not hit anything
+            if (!running || pointerTarget == PointerTarget.Nothing)
             {
                 if (pointer) UnityEngine.Object.Destroy(pointer);
                 return;
@@ -178,16 +348,20 @@ namespace KIS
             if (!pointer)
             {
                 GameObject modelGo = partToAttach.FindModelTransform("model").gameObject;
-                pointer = Mesh.Instantiate(modelGo, new Vector3(0, 0, 100), Quaternion.identity) as GameObject;
-                foreach (Collider col in pointer.GetComponentsInChildren<Collider>())
+                GameObject pointerModel = Mesh.Instantiate(modelGo, new Vector3(0, 0, 100), Quaternion.identity) as GameObject;
+                foreach (Collider col in pointerModel.GetComponentsInChildren<Collider>())
                 {
-
                     UnityEngine.Object.DestroyImmediate(col);
                 }
 
+                pointer = new GameObject("KISPointer");
+                pointerModel.transform.parent = pointer.transform;
+                pointerModel.transform.localPosition = modelGo.transform.localPosition;
+                pointerModel.transform.localRotation = modelGo.transform.localRotation;
+
                 allModelMr = new List<MeshRenderer>();
                 // Remove attached tube mesh renderer if any
-                List<MeshRenderer> tmpAllModelMr = new List<MeshRenderer>(pointer.GetComponentsInChildren<MeshRenderer>() as MeshRenderer[]);
+                List<MeshRenderer> tmpAllModelMr = new List<MeshRenderer>(pointerModel.GetComponentsInChildren<MeshRenderer>() as MeshRenderer[]);
                 foreach (MeshRenderer mr in tmpAllModelMr)
                 {
                     if (mr.name == "KAStube" || mr.name == "KASsrcSphere" || mr.name == "KASsrcTube" || mr.name == "KAStgtSphere" || mr.name == "KAStgtTube")
@@ -198,111 +372,27 @@ namespace KIS
                     allModelMr.Add(mr);
                     mr.material = new Material(Shader.Find("Transparent/Diffuse"));
                 }
+                // Set pointer attach node
                 pointerNodeTransform = new GameObject("KASPointerPartNode").transform;
                 pointerNodeTransform.parent = pointer.transform;
-            }
-
-            //Set default color
-            Color color = Color.green;
-
-            // Check if object is valid
-            bool isValidObj = false;
-            Part hitPart = null;
-            KerbalEVA hitEva = null;
-            if (hit.rigidbody)
-            {
-                hitPart = hit.rigidbody.GetComponent<Part>();
-                hitEva = hit.rigidbody.GetComponent<KerbalEVA>();
-                if (hitPart && allowPart && !hitEva & hitPart != partToAttach)
+                if (GetCurrentAttachNode() == partToAttach.srfAttachNode || GetCurrentAttachNode().id == "top")
                 {
-                    if (ignoreAttachRules)
-                    {
-                        isValidObj = true;
-                    }
-                    else
-                    {
-                        if (partToAttach.attachRules.srfAttach && hitPart.attachRules.allowSrfAttach)
-                        {
-                            isValidObj = true;
-                        }
-                    }
+                    pointerNodeTransform.localPosition = GetCurrentAttachNode().position;
+                    pointerNodeTransform.localRotation = Quaternion.Inverse(Quaternion.LookRotation(GetCurrentAttachNode().orientation, Vector3.up));
                 }
-                if (hitEva && allowEva) isValidObj = true;
-            }
-            if (!hitPart && !hitEva && allowStatic) isValidObj = true;
-
-            AttachNode targetAttachNode = null;
-            if (allowStackSnap)
-            {
-                if (hitPart)
+                else
                 {
-                    foreach (AttachNode an in hitPart.attachNodes)
-                    {
-                        if (!an.icon)
-                        {
-                            an.icon = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                            Destroy(an.icon.collider);
-                            an.icon.renderer.material = new Material(Shader.Find("Transparent/Diffuse"));
-                            Color colorNode = XKCDColors.GrassyGreen;
-                            colorNode.a = 0.5f;
-                            an.icon.renderer.material.color = colorNode;
-                            an.icon.transform.parent = hitPart.transform;
-
-                            double num;
-                            if (an.size == 0)
-                            {
-                                num = (double)an.size + 0.5;
-                            }
-                            else num = (double)an.size;
-                            an.icon.transform.localScale = Vector3.one * an.radius * (float)num;
-                            an.icon.transform.position = hitPart.transform.TransformPoint(an.position);
-                            an.icon.transform.up = hitPart.transform.TransformDirection(an.orientation);
-                            KIS_Shared.AddNodeTransform(hitPart, an);
-
-                            /*
-                            switch (an.nodeType)
-                            {
-                                case AttachNode.NodeType.Stack:
-                                    an.icon.renderer.material.color = XKCDColors.GrassyGreen;
-                                    return;
-                                case AttachNode.NodeType.Surface:
-                                    return;
-                                case AttachNode.NodeType.Dock:
-                                    an.icon.renderer.material.color = XKCDColors.AquaBlue;
-                                    return;
-                                default:
-                                    return;
-                            }*/
-                        }
-
-                        if (an.icon.renderer.bounds.IntersectRay(FlightCamera.fetch.mainCamera.ScreenPointToRay(Input.mousePosition)))
-                        {
-                            targetAttachNode = an;
-                            //current3.icon.renderer.bounds.Contains(selPart.transform.TransformPoint(current2.position)))
-                        }
-                    }
+                    pointerNodeTransform.localPosition = GetCurrentAttachNode().position;
+                    pointerNodeTransform.localRotation = Quaternion.LookRotation(GetCurrentAttachNode().orientation, Vector3.up);
                 }
             }
 
-            // Set pointer attach node
-            if (GetCurrentAttachNode() == partToAttach.srfAttachNode || GetCurrentAttachNode().id == "top")
-            {
-                pointerNodeTransform.localPosition = GetCurrentAttachNode().position;
-                pointerNodeTransform.localRotation = Quaternion.Inverse(Quaternion.LookRotation(GetCurrentAttachNode().orientation, Vector3.up));
-            }
-            else
-            {
-                pointerNodeTransform.localPosition = GetCurrentAttachNode().position;
-                pointerNodeTransform.localRotation = Quaternion.LookRotation(GetCurrentAttachNode().orientation, Vector3.up);
-            }
-
-
+            // Custom rotation
             float rotDegree = 15;
             if (Input.GetKey(KeyCode.LeftShift))
             {
                 rotDegree = 1;
             }
-
             if (GameSettings.Editor_rollLeft.GetKeyDown())
             {
                 customRot -= new Vector3(0, -1, 0) * rotDegree;
@@ -331,13 +421,23 @@ namespace KIS
             {
                 customRot = new Vector3(0, 0, 0);
             }
-
             Quaternion rotAdjust = Quaternion.Euler(0, 0, customRot.z) * Quaternion.Euler(customRot.x, customRot.y, 0);
-            if (targetAttachNode != null)
+
+            // Move to position
+            if (pointerTarget == PointerTarget.PartMount)
             {
-                //Stack attach (snap)
-                KIS_Shared.MoveAlign(pointer.transform, pointerNodeTransform, targetAttachNode.nodeTransform);
-                pointer.transform.rotation *= Quaternion.Euler(targetAttachNode.orientation);
+                //Mount snap
+                KIS_Shared.MoveAlign(pointer.transform, pointerNodeTransform, hoveredNode.nodeTransform);
+                pointer.transform.rotation *= Quaternion.Euler(hoveredNode.orientation);
+            }
+            else if (pointerTarget == PointerTarget.PartNode)
+            {
+                //Part node snap
+                if (hoveredNode.id == "bottom")
+                {
+                    rotAdjust *= Quaternion.Euler(0, 180, 0);
+                }
+                KIS_Shared.MoveAlign(pointer.transform, pointerNodeTransform, hoveredNode.nodeTransform, rotAdjust);
             }
             else
             {
@@ -354,38 +454,138 @@ namespace KIS
             bool isValidTargetDist = Vector3.Distance(FlightGlobals.ActiveVessel.transform.position, hit.point) <= maxDist;
 
             //Set color
-            if (!isValidObj)
+            Color color = Color.red;
+            bool valid = true;
+            bool allowedOnMount = true;
+            bool isValidSurfaceAttach = true;
+            switch (pointerTarget)
             {
-                color = Color.red;
+                case PointerTarget.Static:
+                    if (allowStatic) color = Color.green;
+                    else valid = false;
+                    break;
+                case PointerTarget.StaticRb:
+                    if (allowStatic) color = Color.green;
+                    else valid = false;
+                    break;
+                case PointerTarget.KerbalEva:
+                    if (allowEva) color = Color.green;
+                    else valid = false;
+                    break;
+                case PointerTarget.Part:
+                        if (allowPart) 
+                        {
+                            if (useAttachRules)
+                            {
+                                if (GetCurrentAttachNode().nodeType == AttachNode.NodeType.Surface)
+                                {
+                                    color = Color.green;
+                                }
+                                else isValidSurfaceAttach = false;        
+                            }
+                            else
+                            {
+                                color = Color.green;
+                            }
+                        }
+                        else valid = false;
+                    break;
+                case PointerTarget.PartMount:
+                    if (allowMount)
+                    {
+                        ModuleKISPartMount pMount = hoveredPart.GetComponent<ModuleKISPartMount>();
+                        List<string> allowedPartNames = new List<string>();
+                        pMount.GetMounts().TryGetValue(hoveredNode, out allowedPartNames);
+                        if (allowedPartNames.Contains(partToAttach.partInfo.name))
+                        {
+                            color = XKCDColors.Teal;
+                        }
+                        else
+                        {
+                            color = XKCDColors.LightOrange;
+                            allowedOnMount = false;
+                        }
+                    }
+                    break;
+                case PointerTarget.PartNode:
+                    if (allowStack) color = XKCDColors.SeaGreen;
+                    else valid = false;
+                    break;
+                default:
+                    break;
             }
-            else if (!isValidSourceDist || !isValidTargetDist)
+            if (!isValidSourceDist || !isValidTargetDist)
             {
                 color = Color.yellow;
             }
             color.a = 0.5f;
             foreach (MeshRenderer mr in allModelMr) mr.material.color = color;
 
-            //Attach on click
+
+            //On click
             if (Input.GetKeyDown(KeyCode.Mouse0))
             {
-                KIS_Shared.DebugLog("Attachment started...");
-                if (!isValidObj)
+                if (!valid)
                 {
-                    ScreenMessages.PostScreenMessage("Target is not allowed !");
+                    ScreenMessages.PostScreenMessage("Target object is not allowed !");
                     audioBipWrong.Play();
                     return;
                 }
-
-                if (!isValidSourceDist)
+                else if (!allowedOnMount)
+                {
+                    ScreenMessages.PostScreenMessage("This part is not allowed on the mount !");
+                    audioBipWrong.Play();
+                    return;
+                }
+                else if (!isValidSurfaceAttach)
+                {
+                    ScreenMessages.PostScreenMessage("This part cannot be surface attached !");
+                    audioBipWrong.Play();
+                    return;
+                }
+                else if (!isValidSourceDist)
                 {
                     ScreenMessages.PostScreenMessage("Too far from source !");
                     audioBipWrong.Play();
                     return;
                 }
-
-                if (isValidObj && isValidSourceDist && isValidTargetDist)
+                else if (!isValidTargetDist)
                 {
-                    pointerAction(PointerAction.ClickValid, pointer.transform.position, pointer.transform.rotation, hitPart);
+                    ScreenMessages.PostScreenMessage("Too far from target !");
+                    audioBipWrong.Play();
+                    return;
+                }
+                else
+                {
+                    SendPointerClick(pointerTarget, pointer.transform.position, pointer.transform.rotation, hoveredPart, GetCurrentAttachNode(), hoveredNode);
+                }
+            }
+        }
+
+        private void UpdateKey()
+        {
+            if (isRunning)
+            {
+                if (
+                Input.GetKeyDown(KeyCode.Escape)
+                || Input.GetKeyDown(KeyCode.Return)
+                )
+                {
+                    KIS_Shared.DebugLog("Cancel key pressed, stop eva attach mode");
+                    StopPointer();
+                    SendPointerClick(PointerTarget.Nothing, Vector3.zero, Quaternion.identity, null, null);
+                }
+                if (GameSettings.Editor_toggleSymMethod.GetKeyDown())
+                {
+                    if (pointer) UnityEngine.Object.Destroy(pointer);
+                    attachNodeIndex++;
+                    if (attachNodeIndex > (attachNodes.Count - 1))
+                    {
+                        attachNodeIndex = 0;
+                    }
+                    ScreenMessage scrMsg = new ScreenMessage("Attach pointer node changed to : " + GetCurrentAttachNode().id, 5, ScreenMessageStyle.UPPER_CENTER);
+                    ResetMouseOver();
+                    ScreenMessages.PostScreenMessage(scrMsg, true);
                 }
             }
         }

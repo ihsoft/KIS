@@ -37,12 +37,13 @@ namespace KIS
                     item.PlaySound(KIS_Shared.bipWrongSndPath);
                     ScreenMessages.PostScreenMessage("Use this tool while in drop mode to attach / Use grab key to detach", 5, ScreenMessageStyle.UPPER_CENTER);
                 }
-                if (KISAddonPointer.isRunning)
+                if (KISAddonPointer.isRunning && KISAddonPointer.pointerTarget != KISAddonPointer.PointerTarget.PartMount)
                 {
                     float attachPartMass = KISAddonPointer.partToAttach.mass + KISAddonPointer.partToAttach.GetResourceMass();
                     if (attachPartMass < attachMaxMass)
                     {
                         KISAddonPickup.instance.pointerMode = KISAddonPickup.PointerMode.Attach;
+                        KISAddonPointer.allowStack = true;
                         item.PlaySound(changeModeSndPath);
                     }
                     else
@@ -58,6 +59,7 @@ namespace KIS
                 if (KISAddonPointer.isRunning && KISAddonPickup.instance.pointerMode == KISAddonPickup.PointerMode.Attach)
                 {
                     KISAddonPickup.instance.pointerMode = KISAddonPickup.PointerMode.Drop;
+                    KISAddonPointer.allowStack = false;
                     item.PlaySound(changeModeSndPath);
                 }
             }
