@@ -181,14 +181,19 @@ namespace KIS
                         pointerTarget = PointerTarget.StaticRb;
                         if (tgtPart)
                         {
+                            float currentDist = Mathf.Infinity;
                             foreach (AttachNode an in tgtPart.attachNodes)
                             {
                                 if (an.icon)
                                 {
-                                    if (an.icon.renderer.bounds.IntersectRay(FlightCamera.fetch.mainCamera.ScreenPointToRay(Input.mousePosition)))
+                                    float dist;
+                                    if (an.icon.renderer.bounds.IntersectRay(FlightCamera.fetch.mainCamera.ScreenPointToRay(Input.mousePosition),out dist))
                                     {
-                                        tgtAttachNode = an;
-                                        break;
+                                        if (dist < currentDist)
+                                        {
+                                            tgtAttachNode = an;
+                                            currentDist = dist;
+                                        }
                                     }
                                 }
                             }
