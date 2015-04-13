@@ -478,7 +478,7 @@ namespace KIS
                         {
                             if (useAttachRules)
                             {
-                                if (GetCurrentAttachNode().nodeType == AttachNode.NodeType.Surface)
+                                if (hoveredPart.attachRules.allowSrfAttach && partToAttach.attachRules.srfAttach && GetCurrentAttachNode().nodeType == AttachNode.NodeType.Surface)
                                 {
                                     color = Color.green;
                                 }
@@ -540,7 +540,7 @@ namespace KIS
                 }
                 else if (!isValidSurfaceAttach)
                 {
-                    ScreenMessages.PostScreenMessage("This part cannot be surface attached !");
+                    ScreenMessages.PostScreenMessage("This part cannot be surface attached on this part !");
                     audioBipWrong.Play();
                     return;
                 }
