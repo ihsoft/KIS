@@ -571,12 +571,19 @@ namespace KIS
 
         private void OnPointerState(KISAddonPointer.PointerTarget pTarget, KISAddonPointer.PointerState pState, Part hoverPart, AttachNode hoverNode)
         {
-            if (pState == KISAddonPointer.PointerState.OnMouseEnterNode && pTarget == KISAddonPointer.PointerTarget.PartMount)
+            if (pState == KISAddonPointer.PointerState.OnMouseEnterNode)
             {
-                string keyAnchor = "[" + GameSettings.Editor_toggleSymMethod.name + "]";
-                CursorEnable("KIS/Textures/mount", "Mount", "(Press " + keyAnchor + " to change anchor point, [echap] to cancel)");
+                if (pTarget == KISAddonPointer.PointerTarget.PartMount)
+                {
+                    string keyAnchor = "[" + GameSettings.Editor_toggleSymMethod.name + "]";
+                    CursorEnable("KIS/Textures/mount", "Mount", "(Press " + keyAnchor + " to change anchor point, [echap] to cancel)");
+                }
+                if (pTarget == KISAddonPointer.PointerTarget.PartNode)
+                {
+                    cursorText = "Attach (" + hoverNode.id + ")";
+                }
             }
-            else if (pState == KISAddonPointer.PointerState.OnMouseExitNode)
+            if (pState == KISAddonPointer.PointerState.OnMouseExitNode)
             {
                 pointerMode = pointerMode;
             }
