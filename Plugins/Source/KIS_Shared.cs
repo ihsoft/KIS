@@ -360,28 +360,19 @@ namespace KIS
             }
         }
 
-        public static void MoveAlign(Transform source, Transform childNode, RaycastHit hit, Quaternion adjust)
+        public static void MoveAlign(Transform source, Transform childNode, RaycastHit hit, Quaternion adjust, bool inverse = false)
         {
-            Vector3 refDirection = Vector3.up;
-            Vector3 alterDirection = Vector3.forward;
-
-            Vector3 refDir = hit.transform.TransformDirection(refDirection);
-            Vector3 alterDir = hit.transform.TransformDirection(alterDirection);
-            Quaternion rotation;
-
-            if (hit.normal == refDir)
+            Vector3 refDir = hit.transform.TransformDirection(Vector3.up);
+            Quaternion rotation = Quaternion.LookRotation(hit.normal, refDir);
+            if (inverse)
             {
-                rotation = Quaternion.LookRotation(hit.normal, alterDir);
-            }
-            else if (hit.normal == -refDir)
-            {
-                rotation = Quaternion.LookRotation(hit.normal, -alterDir);
+                source.rotation = (rotation * adjust) * Quaternion.Inverse(childNode.localRotation);
             }
             else
             {
-                rotation = Quaternion.LookRotation(hit.normal, refDir);
+                source.rotation = (rotation * adjust) * childNode.localRotation;
             }
-            MoveAlign(source, childNode, hit.point, rotation * adjust);
+            source.position = source.position - (childNode.position - hit.point);
         }
 
         public static void MoveAlign(Transform source, Transform childNode, Transform target, Quaternion adjust)
@@ -396,7 +387,7 @@ namespace KIS
 
         public static void MoveAlign(Transform source, Transform childNode, Vector3 targetPos, Quaternion targetRot)
         {
-            source.rotation = targetRot * Quaternion.Inverse(childNode.localRotation);
+            source.rotation = targetRot * childNode.localRotation;
             source.position = source.position - (childNode.position - targetPos);
         }
 
@@ -445,22 +436,21 @@ namespace KIS
             return null;
         }
 
-        public static void AddNodeTransform(Part p, AttachNode attachNode)
+        public static Quaternion GetNodeRotation(AttachNode attachNode)
         {
             // Fix top node orientation if needed (top and bottom have same orientation on some part, squad config error ?)
-            if (attachNode.id == "top" && attachNode.orientation == new Vector3(0,1,0))
+            if (attachNode.id == "top" && attachNode.orientation == new Vector3(0, 1, 0))
             {
                 attachNode.orientation = new Vector3(0, -1, 0);
                 KIS_Shared.DebugLog("Top node orientation seem wrong, change it to (0,-1,0)");
             }
-
             Quaternion rotation = Quaternion.LookRotation(attachNode.orientation, Vector3.up);
+            return rotation;
+        }
 
-            if (attachNode.nodeType == AttachNode.NodeType.Surface)
-            {
-                rotation = Quaternion.Inverse(rotation);
-            }
-
+        public static void AddNodeTransform(Part p, AttachNode attachNode)
+        {
+            Quaternion rotation = GetNodeRotation(attachNode);
             if (attachNode.nodeTransform == null)
             {
                 Transform nodeTransform = new GameObject("KASNodeTransf").transform;

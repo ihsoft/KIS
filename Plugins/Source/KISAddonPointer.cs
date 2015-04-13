@@ -187,7 +187,7 @@ namespace KIS
                                 if (an.icon)
                                 {
                                     float dist;
-                                    if (an.icon.renderer.bounds.IntersectRay(FlightCamera.fetch.mainCamera.ScreenPointToRay(Input.mousePosition),out dist))
+                                    if (an.icon.renderer.bounds.IntersectRay(FlightCamera.fetch.mainCamera.ScreenPointToRay(Input.mousePosition), out dist))
                                     {
                                         if (dist < currentDist)
                                         {
@@ -380,16 +380,8 @@ namespace KIS
                 // Set pointer attach node
                 pointerNodeTransform = new GameObject("KASPointerPartNode").transform;
                 pointerNodeTransform.parent = pointer.transform;
-                if (GetCurrentAttachNode() == partToAttach.srfAttachNode || GetCurrentAttachNode().id == "top")
-                {
-                    pointerNodeTransform.localPosition = GetCurrentAttachNode().position;
-                    pointerNodeTransform.localRotation = Quaternion.Inverse(Quaternion.LookRotation(GetCurrentAttachNode().orientation, Vector3.up));
-                }
-                else
-                {
-                    pointerNodeTransform.localPosition = GetCurrentAttachNode().position;
-                    pointerNodeTransform.localRotation = Quaternion.LookRotation(GetCurrentAttachNode().orientation, Vector3.up);
-                }
+                pointerNodeTransform.localPosition = GetCurrentAttachNode().position;
+                pointerNodeTransform.localRotation = KIS_Shared.GetNodeRotation(GetCurrentAttachNode());
             }
 
             // Custom rotation
@@ -443,7 +435,14 @@ namespace KIS
             else
             {
                 //Surface attach
-                KIS_Shared.MoveAlign(pointer.transform, pointerNodeTransform, hit, rotAdjust);
+                if (GetCurrentAttachNode().nodeType == AttachNode.NodeType.Surface)
+                {
+                    KIS_Shared.MoveAlign(pointer.transform, pointerNodeTransform, hit, rotAdjust);
+                }
+                else
+                {
+                    KIS_Shared.MoveAlign(pointer.transform, pointerNodeTransform, hit, rotAdjust, true);
+                }
             }
 
             //Check distance
@@ -474,22 +473,22 @@ namespace KIS
                     else valid = false;
                     break;
                 case PointerTarget.Part:
-                        if (allowPart) 
+                    if (allowPart)
+                    {
+                        if (useAttachRules)
                         {
-                            if (useAttachRules)
-                            {
-                                if (hoveredPart.attachRules.allowSrfAttach && partToAttach.attachRules.srfAttach && GetCurrentAttachNode().nodeType == AttachNode.NodeType.Surface)
-                                {
-                                    color = Color.green;
-                                }
-                                else isValidSurfaceAttach = false;        
-                            }
-                            else
+                            if (hoveredPart.attachRules.allowSrfAttach && partToAttach.attachRules.srfAttach && GetCurrentAttachNode().nodeType == AttachNode.NodeType.Surface)
                             {
                                 color = Color.green;
                             }
+                            else isValidSurfaceAttach = false;
                         }
-                        else valid = false;
+                        else
+                        {
+                            color = Color.green;
+                        }
+                    }
+                    else valid = false;
                     break;
                 case PointerTarget.PartMount:
                     if (allowMount)
