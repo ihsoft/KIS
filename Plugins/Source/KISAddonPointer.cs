@@ -438,10 +438,6 @@ namespace KIS
             else if (pointerTarget == PointerTarget.PartNode)
             {
                 //Part node snap
-                if (hoveredNode.id == "bottom")
-                {
-                    rotAdjust *= Quaternion.Euler(0, 180, 0);
-                }
                 KIS_Shared.MoveAlign(pointer.transform, pointerNodeTransform, hoveredNode.nodeTransform, rotAdjust);
             }
             else
