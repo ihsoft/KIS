@@ -447,6 +447,13 @@ namespace KIS
 
         public static void AddNodeTransform(Part p, AttachNode attachNode)
         {
+            // Fix top node orientation if needed (top and bottom have same orientation on some part, squad config error ?)
+            if (attachNode.id == "top" && attachNode.orientation == new Vector3(0,1,0))
+            {
+                attachNode.orientation = new Vector3(0, -1, 0);
+                KIS_Shared.DebugLog("Top node orientation seem wrong, change it to (0,-1,0)");
+            }
+
             Quaternion rotation = Quaternion.LookRotation(attachNode.orientation, Vector3.up);
 
             if (attachNode.nodeType == AttachNode.NodeType.Surface)
