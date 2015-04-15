@@ -68,7 +68,7 @@ namespace KIS
         private static OnPointerClick SendPointerClick;
         public delegate void OnPointerClick(PointerTarget pTarget, Vector3 pos, Quaternion rot, Part pointerPart, AttachNode SrcAttachNode = null, AttachNode tgtAttachNode = null);
 
-        public enum PointerState { OnMouseEnterPart, OnMouseExitPart, OnMouseEnterNode, OnMouseExitNode }
+        public enum PointerState { OnMouseEnterPart, OnMouseExitPart, OnMouseEnterNode, OnMouseExitNode, OnChangeAttachNode }
         private static OnPointerState SendPointerState;
         public delegate void OnPointerState(PointerTarget pTarget, PointerState pState, Part hoverPart, AttachNode hoverNode);
 
@@ -583,9 +583,8 @@ namespace KIS
                     {
                         attachNodeIndex = 0;
                     }
-                    ScreenMessage scrMsg = new ScreenMessage("Attach pointer node changed to : " + GetCurrentAttachNode().id, 5, ScreenMessageStyle.UPPER_CENTER);
                     ResetMouseOver();
-                    ScreenMessages.PostScreenMessage(scrMsg, true);
+                    SendPointerState(pointerTarget, PointerState.OnChangeAttachNode, null, null);
                 }
             }
         }

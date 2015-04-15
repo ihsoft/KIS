@@ -66,7 +66,7 @@ namespace KIS
 
                 if (value == PointerMode.Drop)
                 {
-                    CursorEnable("KIS/Textures/drop", "Drop", "(Press " + keyRotate + " to rotate, " + keyResetRot + " to reset orientation", keyAnchor + " to change anchor point, [echap] to cancel)");
+                    CursorEnable("KIS/Textures/drop", "Drop (" + KISAddonPointer.GetCurrentAttachNode().id + ")", "(Press " + keyRotate + " to rotate, " + keyResetRot + " to reset orientation", keyAnchor + " to change node, [echap] to cancel)");
                     KISAddonPointer.allowPart = true;
                     KISAddonPointer.allowStatic = true;
                     KISAddonPointer.allowEva = true;
@@ -74,7 +74,7 @@ namespace KIS
                 }
                 if (value == PointerMode.Attach)
                 {
-                    CursorEnable("KIS/Textures/attachOk", "Attach", "(Press " + keyRotate + " to rotate, " + keyResetRot + " to reset orientation", keyAnchor + " to change anchor point, [echap] to cancel)");
+                    CursorEnable("KIS/Textures/attachOk", "Attach (" + KISAddonPointer.GetCurrentAttachNode().id + ")", "(Press " + keyRotate + " to rotate, " + keyResetRot + " to reset orientation", keyAnchor + " to change node, [echap] to cancel)");
                     KISAddonPointer.allowPart = true;
                     KISAddonPointer.allowStatic = false;
                     KISAddonPointer.allowEva = false;
@@ -576,14 +576,14 @@ namespace KIS
                 if (pTarget == KISAddonPointer.PointerTarget.PartMount)
                 {
                     string keyAnchor = "[" + GameSettings.Editor_toggleSymMethod.name + "]";
-                    CursorEnable("KIS/Textures/mount", "Mount", "(Press " + keyAnchor + " to change anchor point, [echap] to cancel)");
+                    CursorEnable("KIS/Textures/mount", "Mount", "(Press " + keyAnchor + " to change node, [echap] to cancel)");
                 }
                 if (pTarget == KISAddonPointer.PointerTarget.PartNode)
                 {
-                    cursorText = "Attach (" + hoverNode.id + ")";
+                    pointerMode = pointerMode;
                 }
             }
-            if (pState == KISAddonPointer.PointerState.OnMouseExitNode)
+            if (pState == KISAddonPointer.PointerState.OnMouseExitNode || pState == KISAddonPointer.PointerState.OnChangeAttachNode)
             {
                 pointerMode = pointerMode;
             }
