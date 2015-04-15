@@ -127,9 +127,12 @@ namespace KIS
                     attachNodes.Add(partToAttach.attachNodes[0]);
                 }
                 foreach (AttachNode an in partToMoveAndAttach.attachNodes)
-                {
-                    KIS_Shared.DebugLog("Node : " + an.id + " added");
-                    attachNodes.Add(an);
+                {    
+                    if (!attachNodes.Contains(an))
+                    {
+                        attachNodes.Add(an);
+                        KIS_Shared.DebugLog("Node : " + an.id + " added");
+                    }
                 }
                 attachNodeIndex = 0;
                 InputLockManager.SetControlLock(ControlTypes.ALLBUTCAMERAS, "KISpointer");
