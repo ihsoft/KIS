@@ -432,6 +432,8 @@ namespace KIS
                 Events["ShowInventory"].guiActive = Events["ShowInventory"].guiActiveUnfocused = true;
                 Events["ShowInventory"].guiName = "Open inventory";
             }
+            ModuleKISPickup mPickup = KISAddonPickup.instance.GetActivePickupNearest(this.part);
+            if (mPickup) Events["ShowInventory"].unfocusedRange = mPickup.maxDistance; 
         }
 
         public void RefreshMassAndVolume()
