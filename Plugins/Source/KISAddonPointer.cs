@@ -127,7 +127,7 @@ namespace KIS
                     attachNodes.Add(partToAttach.attachNodes[0]);
                 }
                 foreach (AttachNode an in partToMoveAndAttach.attachNodes)
-                {    
+                {
                     if (!attachNodes.Contains(an))
                     {
                         attachNodes.Add(an);
@@ -458,40 +458,48 @@ namespace KIS
 
             //Set color
             Color color = Color.red;
-            bool valid = true;
-            bool allowedOnMount = true;
-            bool isValidSurfaceAttach = true;
+            bool invalidTarget = false;
+            bool notAllowedOnMount = false;
+            bool cannotSurfaceAttach = false;
+            bool invalidCurrentNode = false;
             switch (pointerTarget)
             {
                 case PointerTarget.Static:
                     if (allowStatic) color = Color.green;
-                    else valid = false;
+                    else invalidTarget = true;
                     break;
                 case PointerTarget.StaticRb:
                     if (allowStatic) color = Color.green;
-                    else valid = false;
+                    else invalidTarget = true;
                     break;
                 case PointerTarget.KerbalEva:
                     if (allowEva) color = Color.green;
-                    else valid = false;
+                    else invalidTarget = true;
                     break;
                 case PointerTarget.Part:
                     if (allowPart)
                     {
                         if (useAttachRules)
                         {
-                            if (hoveredPart.attachRules.allowSrfAttach && partToAttach.attachRules.srfAttach && GetCurrentAttachNode().nodeType == AttachNode.NodeType.Surface)
+                            if (hoveredPart.attachRules.allowSrfAttach)
                             {
-                                color = Color.green;
+                                if (GetCurrentAttachNode().nodeType == AttachNode.NodeType.Surface)
+                                {
+                                    color = Color.green;
+                                }
+                                else
+                                {
+                                    invalidCurrentNode = true;
+                                }
                             }
-                            else isValidSurfaceAttach = false;
+                            else cannotSurfaceAttach = true;
                         }
                         else
                         {
                             color = Color.green;
                         }
                     }
-                    else valid = false;
+                    else invalidTarget = true;
                     break;
                 case PointerTarget.PartMount:
                     if (allowMount)
@@ -506,13 +514,13 @@ namespace KIS
                         else
                         {
                             color = XKCDColors.LightOrange;
-                            allowedOnMount = false;
+                            notAllowedOnMount = true;
                         }
                     }
                     break;
                 case PointerTarget.PartNode:
                     if (allowStack) color = XKCDColors.SeaGreen;
-                    else valid = false;
+                    else invalidTarget = true;
                     break;
                 default:
                     break;
@@ -528,21 +536,27 @@ namespace KIS
             //On click
             if (Input.GetKeyDown(KeyCode.Mouse0))
             {
-                if (!valid)
+                if (invalidTarget)
                 {
                     ScreenMessages.PostScreenMessage("Target object is not allowed !");
                     audioBipWrong.Play();
                     return;
                 }
-                else if (!allowedOnMount)
+                else if (notAllowedOnMount)
                 {
                     ScreenMessages.PostScreenMessage("This part is not allowed on the mount !");
                     audioBipWrong.Play();
                     return;
                 }
-                else if (!isValidSurfaceAttach)
+                else if (cannotSurfaceAttach)
                 {
-                    ScreenMessages.PostScreenMessage("This part cannot be surface attached on this part !");
+                    ScreenMessages.PostScreenMessage("Target part do not allow surface attach !");
+                    audioBipWrong.Play();
+                    return;
+                }
+                else if (invalidCurrentNode)
+                {
+                    ScreenMessages.PostScreenMessage("This node cannot be used for surface attach !");
                     audioBipWrong.Play();
                     return;
                 }
