@@ -595,14 +595,5 @@ namespace KIS
             return attachNodes[attachNodeIndex];
         }
 
-        private static void RotatePointer(float dist)
-        {
-            customRot.Set(customRot.x, customRot.y, customRot.z + dist);
-            //battery orientation, illuminator (0.0, 0.0, -1.0) orient nok rotate nok
-            //radial cport/pipe/strut/round rcs orientation (0.0, -1.3, 0.0) orient ok rotate ok
-            //telus bay / rover  orientation (1.0, 0.0, 0.0) orient ok rotate nok
-            // rcs block orientation (0.1, 0.0, 0.0) orient ok rotate nok
-        }
-
     }
 }
