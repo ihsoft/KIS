@@ -16,8 +16,10 @@ namespace KIS
 
         // Pointer parameters
         public static bool allowPart = false;
+        public static bool allowPartItself = false;
         public static bool allowEva = false;
         public static bool allowStatic = false;
+
 
         private static bool _allowMount = false;
         public static bool allowMount
@@ -274,6 +276,7 @@ namespace KIS
 
         static void OnMouseEnterPart(Part hoverPart)
         {
+            if (hoverPart == partToAttach) return;
             if (allowMount)
             {
                 ModuleKISPartMount pMount = hoverPart.GetComponent<ModuleKISPartMount>();
@@ -303,6 +306,7 @@ namespace KIS
 
         static void OnMouseExitPart(Part hoverPart)
         {
+            if (hoverPart == partToAttach) return;
             foreach (AttachNode an in hoverPart.attachNodes)
             {
                 if (an.icon)
@@ -462,6 +466,7 @@ namespace KIS
             bool notAllowedOnMount = false;
             bool cannotSurfaceAttach = false;
             bool invalidCurrentNode = false;
+            bool itselfIsInvalid = false;
             switch (pointerTarget)
             {
                 case PointerTarget.Static:
@@ -479,24 +484,31 @@ namespace KIS
                 case PointerTarget.Part:
                     if (allowPart)
                     {
-                        if (useAttachRules)
+                        if (hoveredPart == partToAttach && !allowPartItself)
                         {
-                            if (hoveredPart.attachRules.allowSrfAttach)
-                            {
-                                if (GetCurrentAttachNode().nodeType == AttachNode.NodeType.Surface)
-                                {
-                                    color = Color.green;
-                                }
-                                else
-                                {
-                                    invalidCurrentNode = true;
-                                }
-                            }
-                            else cannotSurfaceAttach = true;
+                            itselfIsInvalid = true;
                         }
                         else
                         {
-                            color = Color.green;
+                            if (useAttachRules)
+                            {
+                                if (hoveredPart.attachRules.allowSrfAttach)
+                                {
+                                    if (GetCurrentAttachNode().nodeType == AttachNode.NodeType.Surface)
+                                    {
+                                        color = Color.green;
+                                    }
+                                    else
+                                    {
+                                        invalidCurrentNode = true;
+                                    }
+                                }
+                                else cannotSurfaceAttach = true;
+                            }
+                            else
+                            {
+                                color = Color.green;
+                            }
                         }
                     }
                     else invalidTarget = true;
@@ -539,6 +551,12 @@ namespace KIS
                 if (invalidTarget)
                 {
                     ScreenMessages.PostScreenMessage("Target object is not allowed !");
+                    audioBipWrong.Play();
+                    return;
+                }
+                else if (itselfIsInvalid)
+                {
+                    ScreenMessages.PostScreenMessage("Cannot attach on itself !");
                     audioBipWrong.Play();
                     return;
                 }

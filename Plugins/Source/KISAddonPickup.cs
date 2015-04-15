@@ -70,6 +70,7 @@ namespace KIS
                     KISAddonPointer.allowPart = true;
                     KISAddonPointer.allowStatic = true;
                     KISAddonPointer.allowEva = true;
+                    KISAddonPointer.allowPartItself = true;
                     KISAddonPointer.useAttachRules = false;
                 }
                 if (value == PointerMode.Attach)
@@ -78,6 +79,7 @@ namespace KIS
                     KISAddonPointer.allowPart = true;
                     KISAddonPointer.allowStatic = false;
                     KISAddonPointer.allowEva = false;
+                    KISAddonPointer.allowPartItself = false;
                     KISAddonPointer.useAttachRules = true;
                 }
                 this._pointerMode = value;
