@@ -54,7 +54,6 @@ namespace KIS
         public Rect guiMainWindowPos;
         private Rect guiDebugWindowPos = new Rect(0, 50, 500, 300);
         private KIS_IconViewer icon;
-        public static int OpenInventory = 0;
         private Rect defaultEditorPos = new Rect(Screen.width / 3, 40, 10, 10);
         private Rect defaultFlightPos = new Rect(0, 50, 10, 10);
         private Vector2 scrollPositionDbg;
@@ -314,6 +313,17 @@ namespace KIS
                 ScreenMessages.PostScreenMessage("Sound file : " + sndPath + " as not been found, please check installation path !", 10, ScreenMessageStyle.UPPER_CENTER);
             }
             sndFx.audio.Play();
+        }
+
+        public static List<ModuleKISInventory> GetAllOpenInventories()
+        {
+            List<ModuleKISInventory> openInventories = new List<ModuleKISInventory>(); ;
+            ModuleKISInventory[] allInventory = FindObjectsOfType(typeof(ModuleKISInventory)) as ModuleKISInventory[];
+            foreach (ModuleKISInventory inventory in allInventory)
+            {
+                if (inventory.showGui) openInventories.Add(inventory);
+            }
+            return openInventories;
         }
 
         void OnVesselChange(Vessel vess)
@@ -732,7 +742,6 @@ namespace KIS
                 }
                 icon = null;
                 showGui = false;
-                OpenInventory--;
                 if (HighLogic.LoadedSceneIsEditor)
                 {
                     PlaySound(closeSndPath);
@@ -769,7 +778,7 @@ namespace KIS
                 }
                 icon = new KIS_IconViewer(this.part, selfIconResolution);
 
-                if (OpenInventory == 1 && guiMainWindowPos.x == defaultFlightPos.x && guiMainWindowPos.y == defaultFlightPos.y)
+                if (GetAllOpenInventories().Count == 1 && guiMainWindowPos.x == defaultFlightPos.x && guiMainWindowPos.y == defaultFlightPos.y)
                 {
                     guiMainWindowPos.y += 250;
                 }
@@ -779,7 +788,6 @@ namespace KIS
                     openAnim.Play(openAnimName);
                 }
                 showGui = true;
-                OpenInventory++;
                 if (HighLogic.LoadedSceneIsEditor)
                 {
                     PlaySound(openSndPath);

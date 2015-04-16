@@ -288,7 +288,7 @@ namespace KIS
             }
             if (HighLogic.LoadedSceneIsEditor)
             {
-                if (ModuleKISInventory.OpenInventory == 0) return;
+                if (ModuleKISInventory.GetAllOpenInventories().Count == 0) return;
                 Pickup(part);
             }
         }
