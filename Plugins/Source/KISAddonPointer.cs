@@ -68,7 +68,7 @@ namespace KIS
         public static PointerTarget pointerTarget = PointerTarget.Nothing;
         public enum PointerTarget { Nothing, Static, StaticRb, Part, PartNode, PartMount, KerbalEva }
         private static OnPointerClick SendPointerClick;
-        public delegate void OnPointerClick(PointerTarget pTarget, Vector3 pos, Quaternion rot, Part pointerPart, AttachNode SrcAttachNode = null, AttachNode tgtAttachNode = null);
+        public delegate void OnPointerClick(PointerTarget pTarget, Vector3 pos, Quaternion rot, Part pointerPart, string SrcAttachNodeID = null, AttachNode tgtAttachNode = null);
 
         public enum PointerState { OnMouseEnterPart, OnMouseExitPart, OnMouseEnterNode, OnMouseExitNode, OnChangeAttachNode }
         private static OnPointerState SendPointerState;
@@ -592,7 +592,7 @@ namespace KIS
                 }
                 else
                 {
-                    SendPointerClick(pointerTarget, pointer.transform.position, pointer.transform.rotation, hoveredPart, GetCurrentAttachNode(), hoveredNode);
+                    SendPointerClick(pointerTarget, pointer.transform.position, pointer.transform.rotation, hoveredPart, GetCurrentAttachNode().id, hoveredNode);
                 }
             }
         }
