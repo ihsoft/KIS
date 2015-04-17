@@ -727,12 +727,11 @@ namespace KIS
         {
             KIS_Shared.DebugLog("Create part & attach");
             Part newPart;
+            ConfigNode partNode = draggedItem.configNode.GetNode("PART");
             if (tgtPart)
             {
-                // If attaching to a part, move part away waiting initialisation for coupling
                 if (draggedItem.configNode.HasNode("PART"))
                 {
-                    ConfigNode partNode = draggedItem.configNode.GetNode("PART");
                     newPart = KIS_Shared.CreatePart(partNode, pos, rot, tgtPart);
                 }
                 else
@@ -743,7 +742,7 @@ namespace KIS
             }
             else
             {
-                newPart = KIS_Shared.CreatePart(draggedItem.configNode, pos, rot, draggedItem.inventory.part);
+                newPart = KIS_Shared.CreatePart(partNode, pos, rot, draggedItem.inventory.part);
                 newPart.SendMessage("OnAttachStatic", SendMessageOptions.DontRequireReceiver);
             }
             KISAddonPointer.StopPointer();
