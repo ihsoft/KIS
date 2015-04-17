@@ -106,19 +106,29 @@ namespace KIS
 
         public static ConfigNode PartSnapshot(Part part)
         {
-            // Seems fine with a null vessel in 0.23 if some empty lists are allocated below
-            ProtoPartSnapshot snapshot = new ProtoPartSnapshot(part, null);
-
             ConfigNode node = new ConfigNode("PART");
-
+            ProtoPartSnapshot snapshot = null;
+            try
+            {
+                // Seems fine with a null vessel in 0.23 if some empty lists are allocated below
+                snapshot = new ProtoPartSnapshot(part, null);
+            }
+            catch
+            {
+                // workaround for command module
+                KIS_Shared.DebugWarning("Error during part snapshot, spawning part for snapshot (workaround for command module)");
+                Part p = (Part)UnityEngine.Object.Instantiate(part.partInfo.partPrefab);
+                p.gameObject.SetActive(true);
+                p.name = part.partInfo.name;
+                p.InitializeModules();
+                snapshot = new ProtoPartSnapshot(p, null);
+                UnityEngine.Object.Destroy(p.gameObject);
+            }
             snapshot.attachNodes = new List<AttachNodeSnapshot>();
             snapshot.srfAttachNode = new AttachNodeSnapshot("attach,-1");
             snapshot.symLinks = new List<ProtoPartSnapshot>();
             snapshot.symLinkIdxs = new List<int>();
-
             snapshot.Save(node);
-
-            //node.AddValue("kas_total_mass", part.mass + part.GetResourceMass());
 
             // Prune unimportant data
             node.RemoveValues("parent");
