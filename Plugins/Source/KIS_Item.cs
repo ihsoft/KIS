@@ -20,6 +20,7 @@ namespace KIS
         public bool usableFromPod = false;
         public bool usableFromEditor = false;
         public bool carryable = false;
+        public bool allowAttachOnStatic = false;
         public float volume;
         public bool equipable = false;
         public bool equipped = false;
@@ -157,6 +158,7 @@ namespace KIS
                 this.usableFromPod = prefabModule.usableFromPod;
                 this.usableFromEditor = prefabModule.usableFromEditor;
                 this.carryable = prefabModule.carryable;
+                this.allowAttachOnStatic = prefabModule.allowAttachOnStatic;
             }
             int nonStackableModule = 0;
             foreach (PartModule pModule in availablePart.partPrefab.Modules)

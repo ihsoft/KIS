@@ -78,6 +78,18 @@ namespace KIS
                     CursorEnable("KIS/Textures/attachOk", "Attach (" + KISAddonPointer.GetCurrentAttachNode().id + ")", "(Press " + keyRotate + " to rotate, " + keyResetRot + " to reset orientation", keyAnchor + " to change node, [echap] to cancel)");
                     KISAddonPointer.allowPart = true;
                     KISAddonPointer.allowStatic = false;
+                    if (movingPart)
+                    {
+                        ModuleKISItem item = movingPart.GetComponent<ModuleKISItem>();
+                        if (item)
+                        {
+                            KISAddonPointer.allowStatic = item.allowAttachOnStatic;
+                        }
+                    }
+                    if (draggedItem != null)
+                    {
+                        KISAddonPointer.allowStatic = draggedItem.allowAttachOnStatic;
+                    }
                     KISAddonPointer.allowEva = false;
                     KISAddonPointer.allowPartItself = false;
                     KISAddonPointer.useAttachRules = true;
@@ -694,17 +706,21 @@ namespace KIS
         private void MoveAttach(Part tgtPart, Vector3 pos, Quaternion rot, string srcAttachNodeID = null, AttachNode tgtAttachNode = null)
         {
             KIS_Shared.DebugLog("Move part & attach");
+            KIS_Shared.DecoupleFromAll(movingPart);
+            movingPart.transform.position = pos;
+            movingPart.transform.rotation = rot;
             if (tgtPart)
             {
-                KIS_Shared.DecoupleFromAll(movingPart);
-                movingPart.transform.position = pos;
-                movingPart.transform.rotation = rot;
                 CouplePart(movingPart, tgtPart, srcAttachNodeID, tgtAttachNode);
-                KISAddonPointer.StopPointer();
-                movingPart = null;
-                draggedItem = null;
-                draggedPart = null;
             }
+            else
+            {
+                movingPart.SendMessage("OnAttachStatic", SendMessageOptions.DontRequireReceiver);
+            }
+            KISAddonPointer.StopPointer();
+            movingPart = null;
+            draggedItem = null;
+            draggedPart = null;
         }
 
         private void CreateAttach(Part tgtPart, Vector3 pos, Quaternion rot, string srcAttachNodeID = null, AttachNode tgtAttachNode = null)
@@ -728,6 +744,7 @@ namespace KIS
             else
             {
                 newPart = KIS_Shared.CreatePart(draggedItem.configNode, pos, rot, draggedItem.inventory.part);
+                newPart.SendMessage("OnAttachStatic", SendMessageOptions.DontRequireReceiver);
             }
             KISAddonPointer.StopPointer();
             draggedItem.StackRemove(1);

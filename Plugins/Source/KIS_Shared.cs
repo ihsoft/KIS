@@ -81,6 +81,7 @@ namespace KIS
 
         public static void DecoupleFromAll(Part p)
         {
+            p.SendMessage("OnDecoupleFromAll", SendMessageOptions.DontRequireReceiver);
             if (p.parent)
             {
                 p.decouple();

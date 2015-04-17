@@ -49,6 +49,8 @@ namespace KIS
         [KSPField]
         public bool carryable = false;
         [KSPField]
+        public bool allowAttachOnStatic = false;
+        [KSPField]
         public bool editorItemsCategory = true;
 
 
@@ -86,5 +88,11 @@ namespace KIS
         {
 
         }
+
+        public virtual void OnAttachStatic(KIS_Item item)
+        {
+
+        }
+
     }
 }
