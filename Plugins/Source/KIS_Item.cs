@@ -36,6 +36,7 @@ namespace KIS
         public float resourceMass = 0;
         public float contentMass = 0;
         public float contentCost = 0;
+        public string inventoryName = "";
 
         public struct ResourceInfo
         {
@@ -115,6 +116,7 @@ namespace KIS
             else resourceMass = availablePart.partPrefab.GetResourceMass();
             if (itemNode.HasValue("contentMass")) contentMass = float.Parse(itemNode.GetValue("contentMass"));
             if (itemNode.HasValue("contentCost")) contentCost = float.Parse(itemNode.GetValue("contentCost"));
+            if (itemNode.HasValue("inventoryName")) inventoryName = itemNode.GetValue("inventoryName");
         }
 
         public KIS_Item(Part part, ModuleKISInventory inventory, float quantity = 1) // New part from scene
@@ -134,6 +136,7 @@ namespace KIS
             {
                 this.contentMass = itemInventory.GetContentMass();
                 this.contentCost = itemInventory.GetContentCost();
+                if (itemInventory.invName != "") this.inventoryName = itemInventory.invName;
             }
         }
 

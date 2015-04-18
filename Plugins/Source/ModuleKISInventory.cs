@@ -34,6 +34,8 @@ namespace KIS
         public string closeSndPath = "KIS/Sounds/containerClose";
         [KSPField]
         public string defaultMoveSndPath = "KIS/Sounds/itemMove";
+        [KSPField(isPersistant = true)]
+        public string invName = "";
 
         public string evaInventoryKey = "tab";
         public string evaRightHandKey = "x";
@@ -59,6 +61,7 @@ namespace KIS
         private Vector2 scrollPositionDbg;
         private float splitQty = 1;
         private bool clickThroughLocked = false;
+        private bool guiSetName = false;
 
         //Tooltip
         private KIS_Item tooltipItem;
@@ -271,6 +274,7 @@ namespace KIS
                 nodeD.AddValue("resourceMass", item.Value.resourceMass);
                 nodeD.AddValue("contentMass", item.Value.contentMass);
                 nodeD.AddValue("contentCost", item.Value.contentCost);
+                if (item.Value.inventoryName != "") nodeD.AddValue("inventoryName", item.Value.inventoryName);
                 item.Value.configNode.CopyTo(nodeD);
 
                 // Science recovery works by retrieving all MODULE/ScienceData 
@@ -421,7 +425,7 @@ namespace KIS
                 if (HighLogic.LoadedSceneIsEditor)
                 {
                     Events["ShowInventory"].guiActive = Events["ShowInventory"].guiActiveUnfocused = true;
-                    Events["ShowInventory"].guiName = "Open seat " + podSeat + " inventory";
+                    Events["ShowInventory"].guiName = "Seat " + podSeat + " inventory";
                 }
                 else
                 {
@@ -432,7 +436,7 @@ namespace KIS
                         {
                             string kerbalName = pcm.name.Split(' ').FirstOrDefault();
                             Events["ShowInventory"].guiActive = Events["ShowInventory"].guiActiveUnfocused = true;
-                            Events["ShowInventory"].guiName = "Open " + kerbalName + "'s inventory";// (" + podSeat + ")";
+                            Events["ShowInventory"].guiName = kerbalName + "'s inventory";
                         }
                     }
                 }
@@ -440,7 +444,8 @@ namespace KIS
             else
             {
                 Events["ShowInventory"].guiActive = Events["ShowInventory"].guiActiveUnfocused = true;
-                Events["ShowInventory"].guiName = "Open inventory";
+                Events["ShowInventory"].guiName = "Inventory";
+                if (invName != "") Events["ShowInventory"].guiName = "Inventory | " + invName;
             }
             if (HighLogic.LoadedSceneIsFlight)
             {
@@ -836,13 +841,41 @@ namespace KIS
 
             GUIStyles();
 
-            guiMainWindowPos = GUILayout.Window(GetInstanceID(), guiMainWindowPos, GuiMain, "Inventory");
+            // Set title
+            string title = this.part.partInfo.title;
+            if (invType == InventoryType.Pod)
+            {
+                title = this.part.partInfo.title + " | Seat " + podSeat;
+                if (!HighLogic.LoadedSceneIsEditor)
+                {
+                    if (this.part.internalModel)
+                    {
+                        InternalSeat seat = this.part.internalModel.seats[podSeat];
+                        if (seat.taken)
+                        {
+                            title = seat.kerbalRef.crewMemberName;
+                        }
+                    }
+                }
+            }
+            if (invType == InventoryType.Eva)
+            {
+                title = this.part.partInfo.title + " | " + kerbalTrait;
+            }
+            if (invType == InventoryType.Container && invName != "")
+            {
+                title = this.part.partInfo.title + " | " + invName;
+            }
+
+            guiMainWindowPos = GUILayout.Window(GetInstanceID(), guiMainWindowPos, GuiMain, title);
 
             if (tooltipItem != null)
             {
                 if (contextItem == null)
                 {
-                    GUILayout.Window(GetInstanceID() + 780, new Rect(Event.current.mousePosition.x + 5, Event.current.mousePosition.y + 5, 400, 1), GuiTooltip, tooltipItem.availablePart.title);
+                    string tooltipName = tooltipItem.availablePart.title;
+                    if (tooltipItem.inventoryName != "") tooltipName += " | " + tooltipItem.inventoryName;
+                    GUILayout.Window(GetInstanceID() + 780, new Rect(Event.current.mousePosition.x + 5, Event.current.mousePosition.y + 5, 400, 1), GuiTooltip, tooltipName);
                 }
             }
             if (contextItem != null)
@@ -906,38 +939,44 @@ namespace KIS
             GUILayout.BeginHorizontal();
 
             GUILayout.BeginVertical();
-            int width = 150;
+            int width = 160;
             GUILayout.Box("", GUILayout.Width(width), GUILayout.Height(100));
             Rect textureRect = GUILayoutUtility.GetLastRect();
             GUI.DrawTexture(textureRect, icon.texture, ScaleMode.ScaleToFit);
-            GUILayout.Space(2);
-            string title = this.part.partInfo.title;
-            if (invType == InventoryType.Pod)
+
+            //Set inventory name
+            if (invType == InventoryType.Container)
             {
-                title = this.part.partInfo.title + " (" + podSeat + ")";
-                if (!HighLogic.LoadedSceneIsEditor)
+                if (guiSetName)
                 {
-                    if (this.part.internalModel)
+                    GUILayout.BeginHorizontal();
+                    invName = GUILayout.TextField(invName, 14, GUILayout.Height(22));
+                    if (GUILayout.Button(new GUIContent("OK", ""), GUILayout.Width(30), GUILayout.Height(22)))
                     {
-                        InternalSeat seat = this.part.internalModel.seats[podSeat];
-                        if (seat.taken)
-                        {
-                            title = seat.kerbalRef.crewMemberName;
-                        }
+                        guiSetName = false;
+                    }
+                    GUILayout.EndHorizontal();
+                }
+                else
+                {
+                    if (GUILayout.Button(new GUIContent("Set name", ""), GUILayout.Width(width), GUILayout.Height(22)))
+                    {
+                        guiSetName = true;
                     }
                 }
             }
-            GUILayout.Label(title, guiStyleTitle, GUILayout.Width(width), GUILayout.Height(10));
-            //GUI.Label(textureRect, title, guiStyleTitle);
+            else
+            {
+                GUILayout.Space(30);
+            }
 
             StringBuilder sb = new StringBuilder();
-            if (kerbalTrait != "" && kerbalTrait != null) sb.AppendLine(kerbalTrait);
-            sb.AppendLine("Mass : " + this.part.mass.ToString("0.000") + " | " + "Cost : " + (this.GetContentCost() + part.partInfo.cost) + " √");
             sb.AppendLine("Volume : " + this.totalVolume.ToString("0.00") + "/" + this.maxVolume.ToString("0.00 L"));
-            GUILayout.Box(sb.ToString(), boxStyle, GUILayout.Width(width), GUILayout.Height(50));
-
+            sb.AppendLine("Mass : " + this.part.mass.ToString("0.000"));
+            sb.AppendLine("Cost : " + (this.GetContentCost() + part.partInfo.cost) + " √");
+            GUILayout.Box(sb.ToString(), boxStyle, GUILayout.Width(width), GUILayout.Height(45));
             bool closeInv = false;
-            if (GUILayout.Button(new GUIContent("Close", "Close container"), GUILayout.Width(width), GUILayout.Height(25)))
+            if (GUILayout.Button(new GUIContent("Close", "Close container"), GUILayout.Width(width), GUILayout.Height(21)))
             {
                 closeInv = true;
             }
@@ -970,22 +1009,21 @@ namespace KIS
 
             GUILayout.BeginVertical();
             StringBuilder sb = new StringBuilder();
-            sb.AppendLine("Cost : " + tooltipItem.cost + " √");
-            if (tooltipItem.contentCost > 0)
-            {
-                sb.AppendLine("Content cost : " + tooltipItem.contentCost + " √");
-            }
             sb.AppendLine("Volume : " + tooltipItem.volume.ToString("0.00 L"));
             sb.AppendLine("Dry mass : " + tooltipItem.dryMass.ToString("0.000"));
             if (tooltipItem.availablePart.partPrefab.Resources.Count > 0)
             {
                 sb.AppendLine("Ressource mass : " + tooltipItem.resourceMass.ToString("0.000"));
             }
+            sb.AppendLine("Cost : " + tooltipItem.cost + " √");
+            if (tooltipItem.contentCost > 0)
+            {
+                sb.AppendLine("Content cost : " + tooltipItem.contentCost + " √");
+            }
             if (tooltipItem.contentMass > 0)
             {
                 sb.AppendLine("Content mass : " + tooltipItem.contentMass.ToString("0.000"));
             }
-
             if (tooltipItem.equipSlot != null)
             {
                 sb.AppendLine("Equip slot : " + tooltipItem.equipSlot);
