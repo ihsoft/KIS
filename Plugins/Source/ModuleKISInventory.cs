@@ -1084,52 +1084,55 @@ namespace KIS
             //Set stack quantity (editor only)
             if (contextItem != null && HighLogic.LoadedSceneIsEditor)
             {
-                noAction = false;
-                GUILayout.BeginHorizontal();
-                if (GUILayout.Button("-", buttonStyle, GUILayout.Width(20)))
+                if (contextItem.stackable)
                 {
-                    if (Input.GetKey(KeyCode.LeftShift))
-                    {
-                        if (contextItem.quantity - 10 > 0)
-                        {
-                            if (contextItem.StackRemove(10) == false) contextItem = null;
-                        }
-                    }
-                    else if (Input.GetKey(KeyCode.LeftControl))
-                    {
-                        if (contextItem.quantity - 100 > 0)
-                        {
-                            if (contextItem.StackRemove(100) == false) contextItem = null;
-                        }
-                    }
-                    else
-                    {
-                        if (contextItem.quantity - 1 > 0)
-                        {
-                            if (contextItem.StackRemove(1) == false) contextItem = null;
-                        }
-                    }
-                }
-                if (GUILayout.Button("+", buttonStyle, GUILayout.Width(20)))
-                {
-                    if (contextItem.stackable)
+                    noAction = false;
+                    GUILayout.BeginHorizontal();
+                    if (GUILayout.Button("-", buttonStyle, GUILayout.Width(20)))
                     {
                         if (Input.GetKey(KeyCode.LeftShift))
                         {
-                            contextItem.StackAdd(10);
+                            if (contextItem.quantity - 10 > 0)
+                            {
+                                if (contextItem.StackRemove(10) == false) contextItem = null;
+                            }
                         }
                         else if (Input.GetKey(KeyCode.LeftControl))
                         {
-                            contextItem.StackAdd(100);
+                            if (contextItem.quantity - 100 > 0)
+                            {
+                                if (contextItem.StackRemove(100) == false) contextItem = null;
+                            }
                         }
                         else
                         {
-                            contextItem.StackAdd(1);
+                            if (contextItem.quantity - 1 > 0)
+                            {
+                                if (contextItem.StackRemove(1) == false) contextItem = null;
+                            }
                         }
                     }
+                    if (GUILayout.Button("+", buttonStyle, GUILayout.Width(20)))
+                    {
+                        if (contextItem.stackable)
+                        {
+                            if (Input.GetKey(KeyCode.LeftShift))
+                            {
+                                contextItem.StackAdd(10);
+                            }
+                            else if (Input.GetKey(KeyCode.LeftControl))
+                            {
+                                contextItem.StackAdd(100);
+                            }
+                            else
+                            {
+                                contextItem.StackAdd(1);
+                            }
+                        }
+                    }
+                    if (contextItem != null) GUILayout.Label("Quantity : " + contextItem.quantity, GUILayout.Width(100));
+                    GUILayout.EndHorizontal();
                 }
-                if (contextItem != null) GUILayout.Label("Quantity : " + contextItem.quantity, GUILayout.Width(100));
-                GUILayout.EndHorizontal();
             }
 
             //Split
