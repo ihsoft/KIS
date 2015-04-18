@@ -460,15 +460,8 @@ namespace KIS
             }
             else
             {
-                AvailablePart avPart = PartLoader.getPartInfoByName(this.part.name);
-                if (avPart != null)
-                {
-                    this.part.mass = avPart.partPrefab.mass + this.part.GetResourceMass();
-                }
-                else
-                {
-                    this.part.mass = this.part.partInfo.partPrefab.mass + this.part.GetResourceMass();
-                }
+                AvailablePart avPart = PartLoader.getPartInfoByName(this.part.partInfo.name);
+                this.part.mass = avPart.partPrefab.mass + this.part.GetResourceMass();
             }
             // Update mass
             foreach (ModuleKISInventory inventory in this.part.GetComponents<ModuleKISInventory>())
