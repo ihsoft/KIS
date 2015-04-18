@@ -124,7 +124,6 @@ namespace KIS
             draggedItem = null;
             draggedPart = null;
             movingPart = null;
-            //grabMode = GrabMode.Default;
             CursorDefault();
         }
 
@@ -143,7 +142,6 @@ namespace KIS
                         {
                             if (!draggedPart)
                             {
-                                //grabMode = GrabMode.Default;
                                 CursorDefaultGrab();
                                 grabActive = true;
                             }
@@ -231,6 +229,8 @@ namespace KIS
                 if (draggedPart && Input.GetMouseButtonUp(0))
                 {
                     CursorDefault();
+                    KIS_Shared.DebugLog("Unlock eva control input...");
+                    InputLockManager.RemoveControlLock("KISpickup");
                     if (hoverInventoryGui())
                     {
                         // Couroutine to let time to KISModuleInventory to catch the draggedPart
@@ -497,20 +497,27 @@ namespace KIS
         {
             draggedPart = part;
             draggedItem = null;
-            icon = new KIS_IconViewer(part, draggedIconResolution);
-            hoveredPart = null;
-            grabActive = false;
-            CursorDisable();
+            Pickup(); 
         }
 
         public void Pickup(KIS_Item item)
         {
             draggedPart = item.availablePart.partPrefab;
             draggedItem = item;
-            icon = new KIS_IconViewer(item.availablePart.partPrefab, draggedIconResolution);
+            Pickup();
+        }
+
+        private void Pickup()
+        {
+            icon = new KIS_IconViewer(draggedPart, draggedIconResolution);
             hoveredPart = null;
             grabActive = false;
             CursorDisable();
+            if (HighLogic.LoadedSceneIsFlight)
+            {
+                KIS_Shared.DebugLog("Lock eva control input during drag...");
+                InputLockManager.SetControlLock(ControlTypes.EVA_INPUT, "KISpickup");
+            }  
         }
 
         public void Drop(KIS_Item item)
