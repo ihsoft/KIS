@@ -50,6 +50,7 @@ namespace KIS
         }
 
         public static Part partToAttach;
+        public static float scale = 1;
         public static float maxDist = 2f;
         public static bool useAttachRules = false;
         private static Transform sourceTransform;
@@ -370,6 +371,7 @@ namespace KIS
                 pointerModel.transform.parent = pointer.transform;
                 pointerModel.transform.localPosition = modelGo.transform.localPosition;
                 pointerModel.transform.localRotation = modelGo.transform.localRotation;
+                pointer.transform.localScale = new Vector3(scale, scale, scale);
 
                 allModelMr = new List<MeshRenderer>();
                 // Remove attached tube mesh renderer if any

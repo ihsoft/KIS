@@ -977,7 +977,7 @@ namespace KIS
 
             GUILayout.BeginVertical();
             StringBuilder sb = new StringBuilder();
-            sb.AppendLine("Cost : " + tooltipItem.availablePart.cost + " √");
+            sb.AppendLine("Cost : " + tooltipItem.cost + " √");
             if (tooltipItem.contentCost > 0)
             {
                 sb.AppendLine("Content cost : " + tooltipItem.contentCost + " √");

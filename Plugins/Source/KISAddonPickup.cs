@@ -229,8 +229,10 @@ namespace KIS
                 if (draggedPart && Input.GetMouseButtonUp(0))
                 {
                     CursorDefault();
-                    KIS_Shared.DebugLog("Unlock eva control input...");
-                    InputLockManager.RemoveControlLock("KISpickup");
+                    if (HighLogic.LoadedSceneIsFlight)
+                    {
+                        InputLockManager.RemoveControlLock("KISpickup");
+                    }
                     if (hoverInventoryGui())
                     {
                         // Couroutine to let time to KISModuleInventory to catch the draggedPart
@@ -515,7 +517,6 @@ namespace KIS
             CursorDisable();
             if (HighLogic.LoadedSceneIsFlight)
             {
-                KIS_Shared.DebugLog("Lock eva control input during drag...");
                 InputLockManager.SetControlLock(ControlTypes.EVA_INPUT, "KISpickup");
             }  
         }
@@ -536,6 +537,14 @@ namespace KIS
                     KISAddonPointer.allowPart = KISAddonPointer.allowEva = KISAddonPointer.allowMount = KISAddonPointer.allowStatic = true;
                     KISAddonPointer.allowStack = false;
                     KISAddonPointer.maxDist = pickupModule.maxDistance;
+                    if (draggedItem != null)
+                    {
+                        KISAddonPointer.scale = draggedItem.GetScale();
+                    }
+                    else
+                    {
+                        KISAddonPointer.scale = 1;
+                    }
                     KISAddonPointer.StartPointer(part, OnPointerAction, OnPointerState, pickupModule.transform);
                     pointerMode = PointerMode.Drop;
                 }

@@ -22,6 +22,7 @@ namespace KIS
         public bool carryable = false;
         public bool allowAttachOnStatic = false;
         public float volume;
+        public float cost;
         public bool equipable = false;
         public bool equipped = false;
         public ModuleKISInventory inventory;
@@ -95,7 +96,6 @@ namespace KIS
         public float stackVolume { get { return volume * quantity; } }
         public float dryMass { get { return availablePart.partPrefab.mass; } }
         public float stackDryMass { get { return dryMass * quantity; } }
-        public float cost { get { return availablePart.cost; } }
         public float totalCost { get { return (cost + contentCost) * quantity; } }
         public float totalMass { get { return stackDryMass + resourceMass + contentMass; } }
 
@@ -120,7 +120,7 @@ namespace KIS
         public KIS_Item(Part part, ModuleKISInventory inventory, float quantity = 1) // New part from scene
         {
             // Get part node
-            this.availablePart = part.partInfo;
+            this.availablePart = PartLoader.getPartInfoByName(part.partInfo.name);
             this.configNode = new ConfigNode();
             this.configNode.AddValue("partName", this.availablePart.name);
             ConfigNode newPartNode = this.configNode.AddNode("PART");
@@ -142,7 +142,8 @@ namespace KIS
             this.inventory = inventory;
             this.quantity = quantity;
             this.prefabModule = availablePart.partPrefab.GetComponent<ModuleKISItem>();
-            this.volume = KIS_Shared.GetPartVolume(availablePart.partPrefab);
+            this.volume = GetVolume();
+            this.cost = GetCost();
 
             if (this.prefabModule)
             {
@@ -199,6 +200,70 @@ namespace KIS
                 }
             }
             return resources;
+        }
+
+        public float GetScale()
+        {
+            // TweakScale compatibility
+            if (this.configNode.HasNode("PART"))
+            {
+                foreach (ConfigNode node in this.configNode.GetNode("PART").GetNodes("MODULE"))
+                {
+                    if (node.HasValue("name"))
+                    {
+                        if (node.GetValue("name") == "TweakScale" && node.HasValue("currentScale") && node.HasValue("defaultScale"))
+                        {
+                            double scaleRatio = (1 / double.Parse(node.GetValue("defaultScale"))) * double.Parse(node.GetValue("currentScale"));
+                            return (float)scaleRatio;
+                        }
+                    }
+                }
+            }
+            return 1;
+        }
+
+        public float GetVolume()
+        {
+            // TweakScale compatibility
+            if (this.configNode.HasNode("PART"))
+            {
+                foreach (ConfigNode node in this.configNode.GetNode("PART").GetNodes("MODULE"))
+                {
+                    if (node.HasValue("name"))
+                    {
+                        if (node.GetValue("name") == "TweakScale" && node.HasValue("currentScale") && node.HasValue("defaultScale"))
+                        {
+                            return KIS_Shared.GetPartVolume(availablePart.partPrefab) * (float)Math.Pow(double.Parse(node.GetValue("currentScale")) / double.Parse(node.GetValue("defaultScale")), 3);
+                        }
+                    }
+                }
+            }
+            return KIS_Shared.GetPartVolume(availablePart.partPrefab);
+        }
+
+        public float GetCost()
+        {
+            // TweakScale compatibility
+            if (this.configNode.HasNode("PART"))
+            {
+                foreach (ConfigNode node in this.configNode.GetNode("PART").GetNodes("MODULE"))
+                {
+                    if (node.HasValue("name"))
+                    {
+                        if (node.GetValue("name") == "TweakScale" && node.HasValue("DryCost"))
+                        {
+                            double ressourcesCost = 0;
+                            foreach (ResourceInfo resource in GetResources())
+                            {
+                                PartResourceDefinition pRessourceDef = PartResourceLibrary.Instance.GetDefinition(resource.resourceName);
+                                ressourcesCost += resource.amount * pRessourceDef.unitCost;
+                            }
+                            return float.Parse(node.GetValue("DryCost")) + (float)ressourcesCost;
+                        }
+                    }
+                }
+            }
+            return availablePart.cost;
         }
 
         public void SetResource(string name, double amount)
