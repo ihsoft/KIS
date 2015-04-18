@@ -1358,7 +1358,9 @@ namespace KIS
                                     {
                                         srcInventory = KISAddonPickup.draggedItem.inventory;
                                         // Part come from inventory
-                                        if (items[i].StackAdd(KISAddonPickup.draggedItem.quantity))
+                                        bool checkVolume = true;
+                                        if (srcInventory == this) checkVolume = false;
+                                        if (items[i].StackAdd(KISAddonPickup.draggedItem.quantity, checkVolume))
                                         {
                                             KISAddonPickup.draggedItem.Delete();
                                         }

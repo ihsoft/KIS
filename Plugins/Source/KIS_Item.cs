@@ -317,11 +317,11 @@ namespace KIS
             inventory.PlaySound(sndPath, loop);
         }
 
-        public bool StackAdd(float qty)
+        public bool StackAdd(float qty, bool checkVolume = true)
         {
             if (qty <= 0) return false;
             float newVolume = inventory.totalVolume + (volume * qty);
-            if (newVolume > inventory.maxVolume)
+            if (checkVolume && newVolume > inventory.maxVolume)
             {
                 ScreenMessages.PostScreenMessage("Max destination volume reached (+" + (newVolume - inventory.maxVolume).ToString("0.0000") + ")", 5f);
                 return false;
