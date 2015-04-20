@@ -85,6 +85,19 @@ namespace KIS
             if (p.parent)
             {
                 p.decouple();
+                //name container if needed
+                ModuleKISInventory inv = p.GetComponent<ModuleKISInventory>();
+                if (inv)
+                {
+                    if (inv.invName != "")
+                    {
+                        p.vessel.vesselName = inv.part.partInfo.title + " | " + inv.invName;
+                    }
+                    else
+                    {
+                        p.vessel.vesselName = inv.part.partInfo.title;
+                    }
+                }
             }
             if (p.children.Count != 0)
             {
@@ -368,6 +381,19 @@ namespace KIS
                 part.rigidbody.angularVelocity = fromPart.rigidbody.angularVelocity;
                 part.vessel.vesselType = VesselType.Unknown;
                 GameEvents.onVesselWasModified.Fire(part.vessel);
+                //name container if needed
+                ModuleKISInventory inv = part.GetComponent<ModuleKISInventory>();
+                if (inv)
+                {
+                    if (inv.invName != "")
+                    {
+                        part.vessel.vesselName = inv.part.partInfo.title + " | " + inv.invName;
+                    }
+                    else
+                    {
+                        part.vessel.vesselName = inv.part.partInfo.title;
+                    }
+                }
             }
         }
 
