@@ -12,6 +12,7 @@ namespace KIS
     {
         public static bool debugLog = true;
         public static string bipWrongSndPath = "KIS/Sounds/bipwrong";
+        public delegate void OnPartCreated();
 
         public static void DebugLog(string text)
         {
@@ -306,15 +307,15 @@ namespace KIS
         }*/
 
 
-        public static Part CreatePart(AvailablePart avPart, Vector3 position, Quaternion rotation, Part fromPart, bool decouple = true)
+
+        public static Part CreatePart(AvailablePart avPart, Vector3 position, Quaternion rotation, Part fromPart, Part tgtPart = null, string srcAttachNodeID = null, AttachNode tgtAttachNode = null, OnPartCreated onPartCreated = null)
         {
             ConfigNode partNode = new ConfigNode();
             PartSnapshot(avPart.partPrefab).CopyTo(partNode);
-            //return CreatePart(partNode, position, rotation, fromPart, decouple);
             return CreatePart(partNode, position, rotation, fromPart);
         }
 
-        public static Part CreatePart(ConfigNode partConfig, Vector3 position, Quaternion rotation, Part fromPart, bool decouple = true)
+        public static Part CreatePart(ConfigNode partConfig, Vector3 position, Quaternion rotation, Part fromPart, Part tgtPart = null, string srcAttachNodeID = null, AttachNode tgtAttachNode = null, OnPartCreated onPartCreated = null)
         {
             // Create and add part to a vessel and decouple it
             ConfigNode node_copy = new ConfigNode();
@@ -348,53 +349,137 @@ namespace KIS
             // Request initialization as nonphysical to prevent explosions and velocity reset at high velocity (ex : orbiting moon)
             newPart.physicalSignificance = Part.PhysicalSignificance.NONE;
 
-            newPart.StartCoroutine(WaitAndUnpack(newPart, decouple, fromPart));
+            newPart.StartCoroutine(DelayedCreation(newPart, position, rotation, fromPart, tgtPart, srcAttachNodeID, tgtAttachNode, onPartCreated));
 
             return newPart;
         }
 
-        private static IEnumerator<YieldInstruction> WaitAndUnpack(Part part, bool decouple, Part fromPart)
+        private static IEnumerator DelayedCreation(Part newPart, Vector3 position, Quaternion rotation, Part fromPart, Part tgtPart = null, string srcAttachNodeID = null, AttachNode tgtAttachNode = null, OnPartCreated onPartCreated = null)
         {
-            while (!part.started && part.State != PartStates.DEAD)
+            Vector3 toPartLocalPos = Vector3.zero;
+            Quaternion toPartLocalRot = Quaternion.identity;
+            if (tgtPart)
             {
+                toPartLocalPos = tgtPart.transform.InverseTransformPoint(position);
+                toPartLocalRot = Quaternion.Inverse(tgtPart.transform.rotation) * rotation;
+            }
+
+            while (!newPart.started && newPart.State != PartStates.DEAD)
+            {
+                KIS_Shared.DebugLog("CreatePart - Waiting initialization of the part...");
+                if (tgtPart)
+                {
+                    newPart.transform.position = tgtPart.transform.TransformPoint(toPartLocalPos);
+                    newPart.transform.rotation = tgtPart.transform.rotation * toPartLocalRot;
+                }
+                else
+                {
+                    newPart.transform.position = position;
+                    newPart.transform.rotation = rotation;
+                }
                 yield return null;
             }
 
-            if (part.vessel && part.State != PartStates.DEAD)
+            newPart.PromoteToPhysicalPart();
+            if (newPart.packed && !newPart.vessel.packed)
             {
-                //FinishDelayedCreation(part, re_enable);
-                part.PromoteToPhysicalPart();
-                if (part.packed && !part.vessel.packed)
-                {
-                    KIS_Shared.DebugLog("WaitAndUnpack - Part is packed");
-                    part.Unpack();
-                    part.InitializeModules();
-                    part.ResumeVelocity();
-                }
+                KIS_Shared.DebugLog("CreatePart - Part is packed, unpacking it...");
+                newPart.Unpack();
+                newPart.InitializeModules();
+                newPart.ResumeVelocity();
+            }
 
-                GameEvents.onVesselWasModified.Fire(part.vessel);
-                if (decouple)
-                {
-                    part.decouple();
-                }
-                part.rigidbody.velocity = fromPart.rigidbody.velocity;
-                part.rigidbody.angularVelocity = fromPart.rigidbody.angularVelocity;
-                part.vessel.vesselType = VesselType.Unknown;
-                GameEvents.onVesselWasModified.Fire(part.vessel);
-                //name container if needed
-                ModuleKISInventory inv = part.GetComponent<ModuleKISInventory>();
+            GameEvents.onVesselWasModified.Fire(newPart.vessel);
+
+            newPart.decouple();
+
+            if (tgtPart)
+            {
+                newPart.transform.position = tgtPart.transform.TransformPoint(toPartLocalPos);
+                newPart.transform.rotation = tgtPart.transform.rotation * toPartLocalRot;
+                newPart.rigidbody.velocity = tgtPart.rigidbody.velocity;
+                newPart.rigidbody.angularVelocity = tgtPart.rigidbody.angularVelocity;
+            }
+            else
+            {
+                newPart.transform.position = position;
+                newPart.transform.rotation = rotation;
+                newPart.rigidbody.velocity = fromPart.rigidbody.velocity;
+                newPart.rigidbody.angularVelocity = fromPart.rigidbody.angularVelocity;
+            }
+
+            GameEvents.onVesselWasModified.Fire(newPart.vessel);
+
+            if (tgtPart)
+            {
+                KIS_Shared.DebugLog("CreatePart - Coupling part...");
+                CouplePart(newPart, tgtPart, srcAttachNodeID, tgtAttachNode);
+            }
+            else
+            {
+                newPart.vessel.vesselType = VesselType.Unknown;
+                //name container
+                ModuleKISInventory inv = newPart.GetComponent<ModuleKISInventory>();
                 if (inv)
                 {
                     if (inv.invName != "")
                     {
-                        part.vessel.vesselName = inv.part.partInfo.title + " | " + inv.invName;
+                        newPart.vessel.vesselName = inv.part.partInfo.title + " | " + inv.invName;
                     }
                     else
                     {
-                        part.vessel.vesselName = inv.part.partInfo.title;
+                        newPart.vessel.vesselName = inv.part.partInfo.title;
                     }
                 }
             }
+            if (onPartCreated != null)
+            {
+                onPartCreated();
+            }
+        }
+
+        public static void CouplePart(Part srcPart, Part tgtPart, string srcAttachNodeID = null, AttachNode tgtAttachNode = null)
+        {
+            GameEvents.onActiveJointNeedUpdate.Fire(srcPart.vessel);
+            GameEvents.onActiveJointNeedUpdate.Fire(tgtPart.vessel);
+
+            // Node links
+            if (srcAttachNodeID != null)
+            {
+                if (srcAttachNodeID == "srfAttach")
+                {
+                    KIS_Shared.DebugLog("Attach type : " + srcPart.srfAttachNode.nodeType + " | ID : " + srcPart.srfAttachNode.id);
+                    srcPart.attachMode = AttachModes.SRF_ATTACH;
+                    srcPart.srfAttachNode.attachedPart = tgtPart;
+                }
+                else
+                {
+                    AttachNode srcAttachNode = srcPart.findAttachNode(srcAttachNodeID);
+                    if (srcAttachNode != null)
+                    {
+                        KIS_Shared.DebugLog("Attach type : " + srcPart.srfAttachNode.nodeType + " | ID : " + srcAttachNode.id);
+                        srcPart.attachMode = AttachModes.STACK;
+                        srcAttachNode.attachedPart = tgtPart;
+                        if (tgtAttachNode != null)
+                        {
+                            tgtAttachNode.attachedPart = srcPart;
+                        }
+                    }
+                    else
+                    {
+                        KIS_Shared.DebugError("Source attach node not found !");
+                    }
+                }
+            }
+            else
+            {
+                KIS_Shared.DebugWarning("Missing source attach node !");
+            }
+
+            srcPart.Couple(tgtPart);
+
+            KIS_Shared.ResetCollisionEnhancer(srcPart);
+            GameEvents.onVesselWasModified.Fire(tgtPart.vessel);
         }
 
         public static void MoveAlign(Transform source, Transform childNode, RaycastHit hit, Quaternion adjust, bool inverse = false)

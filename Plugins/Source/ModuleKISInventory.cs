@@ -267,28 +267,18 @@ namespace KIS
             base.OnSave(node);
             foreach (KeyValuePair<int, KIS_Item> item in items)
             {
-                ConfigNode nodeD = node.AddNode("ITEM");
-                nodeD.AddValue("slot", item.Key);
-                nodeD.AddValue("quantity", item.Value.quantity);
-                nodeD.AddValue("equipped", item.Value.equipped);
-                nodeD.AddValue("resourceMass", item.Value.resourceMass);
-                nodeD.AddValue("contentMass", item.Value.contentMass);
-                nodeD.AddValue("contentCost", item.Value.contentCost);
-                if (item.Value.inventoryName != "") nodeD.AddValue("inventoryName", item.Value.inventoryName);
-                item.Value.configNode.CopyTo(nodeD);
+                ConfigNode itemNode = node.AddNode("ITEM");
+                item.Value.OnSave(itemNode);
 
                 // Science recovery works by retrieving all MODULE/ScienceData 
                 // subnodes from the part node, so copy all experiments from 
                 // contained parts to where it expects to find them. 
                 // This duplicates data but allows recovery to work properly. 
-                if (item.Value.configNode.HasNode("PART"))
+                foreach (ConfigNode module in item.Value.partNode.GetNodes("MODULE"))
                 {
-                    foreach (ConfigNode module in item.Value.configNode.GetNode("PART").GetNodes("MODULE"))
+                    foreach (ConfigNode experiment in module.GetNodes("ScienceData"))
                     {
-                        foreach (ConfigNode experiment in module.GetNodes("ScienceData"))
-                        {
-                            experiment.CopyTo(node.AddNode("ScienceData"));
-                        }
+                        experiment.CopyTo(node.AddNode("ScienceData"));
                     }
                 }
             }

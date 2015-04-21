@@ -499,7 +499,7 @@ namespace KIS
         {
             draggedPart = part;
             draggedItem = null;
-            Pickup(); 
+            Pickup();
         }
 
         public void Pickup(KIS_Item item)
@@ -518,7 +518,7 @@ namespace KIS
             if (HighLogic.LoadedSceneIsFlight)
             {
                 InputLockManager.SetControlLock(ControlTypes.EVA_INPUT, "KISpickup");
-            }  
+            }
         }
 
         public void Drop(KIS_Item item)
@@ -703,15 +703,7 @@ namespace KIS
         {
             KIS_Shared.DebugLog("Create & drop part");
             ModuleKISPickup modulePickup = GetActivePickupNearest(pos);
-            if (draggedItem.configNode.HasNode("PART"))
-            {
-                ConfigNode partNode = draggedItem.configNode.GetNode("PART");
-                KIS_Shared.CreatePart(partNode, pos, rot, draggedItem.inventory.part);
-            }
-            else
-            {
-                KIS_Shared.CreatePart(draggedItem.availablePart, pos, rot, draggedItem.inventory.part);
-            }
+            KIS_Shared.CreatePart(draggedItem.partNode, pos, rot, draggedItem.inventory.part);
             KISAddonPointer.StopPointer();
             draggedItem.StackRemove(1);
             draggedItem = null;
@@ -727,7 +719,7 @@ namespace KIS
             movingPart.transform.rotation = rot;
             if (tgtPart)
             {
-                CouplePart(movingPart, tgtPart, srcAttachNodeID, tgtAttachNode);
+                KIS_Shared.CouplePart(movingPart, tgtPart, srcAttachNodeID, tgtAttachNode);
             }
             else
             {
@@ -743,22 +735,13 @@ namespace KIS
         {
             KIS_Shared.DebugLog("Create part & attach");
             Part newPart;
-            ConfigNode partNode = draggedItem.configNode.GetNode("PART");
             if (tgtPart)
             {
-                if (draggedItem.configNode.HasNode("PART"))
-                {
-                    newPart = KIS_Shared.CreatePart(partNode, pos, rot, tgtPart);
-                }
-                else
-                {
-                    newPart = KIS_Shared.CreatePart(draggedItem.availablePart, pos, rot, tgtPart);
-                }
-                StartCoroutine(WaitAndCouple(newPart, tgtPart, pos, rot, srcAttachNodeID, tgtAttachNode));
+                newPart = KIS_Shared.CreatePart(draggedItem.partNode, pos, rot, draggedItem.inventory.part, tgtPart, srcAttachNodeID, tgtAttachNode);
             }
             else
             {
-                newPart = KIS_Shared.CreatePart(partNode, pos, rot, draggedItem.inventory.part);
+                newPart = KIS_Shared.CreatePart(draggedItem.partNode, pos, rot, draggedItem.inventory.part);
                 newPart.SendMessage("OnAttachStatic", SendMessageOptions.DontRequireReceiver);
             }
             KISAddonPointer.StopPointer();
@@ -766,68 +749,6 @@ namespace KIS
             movingPart = null;
             draggedItem = null;
             draggedPart = null;
-        }
-
-        private IEnumerator WaitAndCouple(Part srcPart, Part tgtPart, Vector3 pos, Quaternion rot, string srcAttachNodeID = null, AttachNode tgtAttachNode = null)
-        {
-            Vector3 toPartLocalPos = tgtPart.transform.InverseTransformPoint(pos);
-            Quaternion toPartLocalRot = Quaternion.Inverse(tgtPart.transform.rotation) * rot;
-            while (!srcPart.rigidbody || (!srcPart.started && srcPart.State != PartStates.DEAD) || srcPart.packed)
-            {
-                KIS_Shared.DebugLog("WaitAndCouple - Waiting initialization of the part...");
-                srcPart.transform.position = tgtPart.transform.TransformPoint(toPartLocalPos);
-                srcPart.transform.rotation = tgtPart.transform.rotation * toPartLocalRot;
-                yield return new WaitForFixedUpdate();
-            }
-            srcPart.transform.position = tgtPart.transform.TransformPoint(toPartLocalPos);
-            srcPart.transform.rotation = tgtPart.transform.rotation * toPartLocalRot;
-            srcPart.rigidbody.velocity = tgtPart.rigidbody.velocity;
-            srcPart.rigidbody.angularVelocity = tgtPart.rigidbody.angularVelocity;
-            CouplePart(srcPart, tgtPart, srcAttachNodeID, tgtAttachNode);
-        }
-
-        private void CouplePart(Part srcPart, Part tgtPart, string srcAttachNodeID = null, AttachNode tgtAttachNode = null)
-        {
-            GameEvents.onActiveJointNeedUpdate.Fire(srcPart.vessel);
-            GameEvents.onActiveJointNeedUpdate.Fire(tgtPart.vessel);
-
-            // Node links
-            if (srcAttachNodeID != null)
-            {
-                if (srcAttachNodeID == "srfAttach")
-                {
-                    KIS_Shared.DebugLog("Attach type : " + srcPart.srfAttachNode.nodeType + " | ID : " + srcPart.srfAttachNode.id);
-                    srcPart.attachMode = AttachModes.SRF_ATTACH;
-                    srcPart.srfAttachNode.attachedPart = tgtPart;
-                }
-                else
-                {
-                    AttachNode srcAttachNode = srcPart.findAttachNode(srcAttachNodeID);
-                    if (srcAttachNode != null)
-                    {
-                        KIS_Shared.DebugLog("Attach type : " + srcPart.srfAttachNode.nodeType + " | ID : " + srcAttachNode.id);
-                        srcPart.attachMode = AttachModes.STACK;
-                        srcAttachNode.attachedPart = tgtPart;
-                        if (tgtAttachNode != null)
-                        {
-                            tgtAttachNode.attachedPart = srcPart;
-                        }
-                    }
-                    else
-                    {
-                        KIS_Shared.DebugError("Source attach node not found !");
-                    }
-                }
-            }
-            else
-            {
-                KIS_Shared.DebugError("Missing source attach node !");
-            }
-
-            srcPart.Couple(tgtPart);
-
-            KIS_Shared.ResetCollisionEnhancer(srcPart);
-            GameEvents.onVesselWasModified.Fire(tgtPart.vessel);
         }
     }
 }

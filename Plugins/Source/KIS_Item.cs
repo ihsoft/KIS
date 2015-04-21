@@ -9,7 +9,7 @@ namespace KIS
 {
     public class KIS_Item
     {
-        public ConfigNode configNode;
+        public ConfigNode partNode;
         public AvailablePart availablePart;
         public float quantity;
         public KIS_IconViewer icon;
@@ -27,12 +27,12 @@ namespace KIS
         public bool equipped = false;
         public ModuleKISInventory inventory;
         public ModuleKISItem prefabModule;
-        private GameObject equippedModel;
+        private GameObject equippedGameObj;
         private Part equippedPart;
         Transform evaTransform;
         public enum ActionType { Drop, Equip, Custom }
         public enum UseFrom { KeyDown, KeyUp, InventoryShortcut, ContextMenu }
-        public enum EquipMode { Model, Physic }
+        public enum EquipMode { Model, Part, Physic }
         public float resourceMass = 0;
         public float contentMass = 0;
         public float contentCost = 0;
@@ -55,6 +55,10 @@ namespace KIS
                     if (prefabModule.equipMode == "physic")
                     {
                         mode = EquipMode.Physic;
+                    }
+                    if (prefabModule.equipMode == "part")
+                    {
+                        mode = EquipMode.Part;
                     }
                 }
                 return mode;
@@ -104,11 +108,9 @@ namespace KIS
         {
             // Get part node
             this.availablePart = availablePart;
-            this.configNode = new ConfigNode();
-            this.configNode.AddValue("partName", this.availablePart.name);
-            ConfigNode newPartNode = this.configNode.AddNode("PART");
-            ConfigNode partNode = itemNode.GetNode("PART");
-            partNode.CopyTo(newPartNode);
+            this.partNode = new ConfigNode();
+            ConfigNode savedPartNode = itemNode.GetNode("PART");
+            savedPartNode.CopyTo(partNode);
             // init config
             this.InitConfig(availablePart, inventory, quantity);
             // Get mass
@@ -123,10 +125,8 @@ namespace KIS
         {
             // Get part node
             this.availablePart = PartLoader.getPartInfoByName(part.partInfo.name);
-            this.configNode = new ConfigNode();
-            this.configNode.AddValue("partName", this.availablePart.name);
-            ConfigNode newPartNode = this.configNode.AddNode("PART");
-            KIS_Shared.PartSnapshot(part).CopyTo(newPartNode);
+            this.partNode = new ConfigNode();
+            KIS_Shared.PartSnapshot(part).CopyTo(this.partNode);
             // init config
             this.InitConfig(availablePart, inventory, quantity);
             // Get mass
@@ -185,21 +185,37 @@ namespace KIS
             }
         }
 
+        public void OnSave(ConfigNode node)
+        {
+            node.AddValue("partName", this.availablePart.name);
+            node.AddValue("slot", slot);
+            node.AddValue("quantity", quantity);
+            node.AddValue("equipped", equipped);
+            node.AddValue("resourceMass", resourceMass);
+            node.AddValue("contentMass", contentMass);
+            node.AddValue("contentCost", contentCost);
+            if (inventoryName != "") node.AddValue("inventoryName", inventoryName);
+            if (equipped && (equipMode == EquipMode.Part || equipMode == EquipMode.Physic))
+            {
+                KIS_Shared.DebugLog("Update config node of equipped part : " + this.availablePart.title);
+                partNode.ClearData();
+                KIS_Shared.PartSnapshot(equippedPart).CopyTo(partNode);
+            }
+            partNode.CopyTo(node.AddNode("PART"));
+        }
+
         public List<ResourceInfo> GetResources()
         {
             List<ResourceInfo> resources = new List<ResourceInfo>();
-            if (this.configNode.HasNode("PART"))
+            foreach (ConfigNode node in this.partNode.GetNodes("RESOURCE"))
             {
-                foreach (ConfigNode node in this.configNode.GetNode("PART").GetNodes("RESOURCE"))
+                if (node.HasValue("name") && node.HasValue("amount") && node.HasValue("maxAmount"))
                 {
-                    if (node.HasValue("name") && node.HasValue("amount") && node.HasValue("maxAmount"))
-                    {
-                        ResourceInfo rInfo = new ResourceInfo();
-                        rInfo.resourceName = node.GetValue("name");
-                        rInfo.amount = double.Parse(node.GetValue("amount"));
-                        rInfo.maxAmount = double.Parse(node.GetValue("maxAmount"));
-                        resources.Add(rInfo);
-                    }
+                    ResourceInfo rInfo = new ResourceInfo();
+                    rInfo.resourceName = node.GetValue("name");
+                    rInfo.amount = double.Parse(node.GetValue("amount"));
+                    rInfo.maxAmount = double.Parse(node.GetValue("maxAmount"));
+                    resources.Add(rInfo);
                 }
             }
             return resources;
@@ -208,17 +224,14 @@ namespace KIS
         public float GetScale()
         {
             // TweakScale compatibility
-            if (this.configNode.HasNode("PART"))
+            foreach (ConfigNode node in this.partNode.GetNodes("MODULE"))
             {
-                foreach (ConfigNode node in this.configNode.GetNode("PART").GetNodes("MODULE"))
+                if (node.HasValue("name"))
                 {
-                    if (node.HasValue("name"))
+                    if (node.GetValue("name") == "TweakScale" && node.HasValue("currentScale") && node.HasValue("defaultScale"))
                     {
-                        if (node.GetValue("name") == "TweakScale" && node.HasValue("currentScale") && node.HasValue("defaultScale"))
-                        {
-                            double scaleRatio = (1 / double.Parse(node.GetValue("defaultScale"))) * double.Parse(node.GetValue("currentScale"));
-                            return (float)scaleRatio;
-                        }
+                        double scaleRatio = (1 / double.Parse(node.GetValue("defaultScale"))) * double.Parse(node.GetValue("currentScale"));
+                        return (float)scaleRatio;
                     }
                 }
             }
@@ -228,16 +241,13 @@ namespace KIS
         public float GetVolume()
         {
             // TweakScale compatibility
-            if (this.configNode.HasNode("PART"))
+            foreach (ConfigNode node in this.partNode.GetNodes("MODULE"))
             {
-                foreach (ConfigNode node in this.configNode.GetNode("PART").GetNodes("MODULE"))
+                if (node.HasValue("name"))
                 {
-                    if (node.HasValue("name"))
+                    if (node.GetValue("name") == "TweakScale" && node.HasValue("currentScale") && node.HasValue("defaultScale"))
                     {
-                        if (node.GetValue("name") == "TweakScale" && node.HasValue("currentScale") && node.HasValue("defaultScale"))
-                        {
-                            return KIS_Shared.GetPartVolume(availablePart.partPrefab) * (float)Math.Pow(double.Parse(node.GetValue("currentScale")) / double.Parse(node.GetValue("defaultScale")), 3);
-                        }
+                        return KIS_Shared.GetPartVolume(availablePart.partPrefab) * (float)Math.Pow(double.Parse(node.GetValue("currentScale")) / double.Parse(node.GetValue("defaultScale")), 3);
                     }
                 }
             }
@@ -247,22 +257,19 @@ namespace KIS
         public float GetCost()
         {
             // TweakScale compatibility
-            if (this.configNode.HasNode("PART"))
+            foreach (ConfigNode node in this.partNode.GetNodes("MODULE"))
             {
-                foreach (ConfigNode node in this.configNode.GetNode("PART").GetNodes("MODULE"))
+                if (node.HasValue("name"))
                 {
-                    if (node.HasValue("name"))
+                    if (node.GetValue("name") == "TweakScale" && node.HasValue("DryCost"))
                     {
-                        if (node.GetValue("name") == "TweakScale" && node.HasValue("DryCost"))
+                        double ressourcesCost = 0;
+                        foreach (ResourceInfo resource in GetResources())
                         {
-                            double ressourcesCost = 0;
-                            foreach (ResourceInfo resource in GetResources())
-                            {
-                                PartResourceDefinition pRessourceDef = PartResourceLibrary.Instance.GetDefinition(resource.resourceName);
-                                ressourcesCost += resource.amount * pRessourceDef.unitCost;
-                            }
-                            return float.Parse(node.GetValue("DryCost")) + (float)ressourcesCost;
+                            PartResourceDefinition pRessourceDef = PartResourceLibrary.Instance.GetDefinition(resource.resourceName);
+                            ressourcesCost += resource.amount * pRessourceDef.unitCost;
                         }
+                        return float.Parse(node.GetValue("DryCost")) + (float)ressourcesCost;
                     }
                 }
             }
@@ -271,17 +278,14 @@ namespace KIS
 
         public void SetResource(string name, double amount)
         {
-            if (this.configNode.HasNode("PART"))
+            foreach (ConfigNode node in this.partNode.GetNodes("RESOURCE"))
             {
-                foreach (ConfigNode node in this.configNode.GetNode("PART").GetNodes("RESOURCE"))
+                if (node.HasValue("name") && node.HasValue("amount") && node.HasValue("maxAmount"))
                 {
-                    if (node.HasValue("name") && node.HasValue("amount") && node.HasValue("maxAmount"))
+                    if (node.GetValue("name") == name)
                     {
-                        if (node.GetValue("name") == name)
-                        {
-                            node.SetValue("amount", amount.ToString());
-                            return;
-                        }
+                        node.SetValue("amount", amount.ToString());
+                        return;
                     }
                 }
             }
@@ -299,10 +303,11 @@ namespace KIS
 
         public void Update()
         {
-            if (evaTransform)
+            if (equippedGameObj)
             {
-                equippedModel.transform.rotation = evaTransform.rotation * Quaternion.Euler(prefabModule.equipDir);
-                equippedModel.transform.position = evaTransform.TransformPoint(prefabModule.equipPos);
+                equippedGameObj.transform.rotation = evaTransform.rotation * Quaternion.Euler(prefabModule.equipDir);
+                equippedGameObj.transform.position = evaTransform.TransformPoint(prefabModule.equipPos);
+                if (equippedPart) if (equippedPart.rigidbody) equippedPart.rigidbody.velocity = equippedPart.vessel.rootPart.rigidbody.velocity;
             }
             if (prefabModule) prefabModule.OnItemUpdate(this);
         }
@@ -408,6 +413,7 @@ namespace KIS
         {
             if (!prefabModule) return;
             KIS_Shared.DebugLog("Equip item " + this.availablePart.name);
+
             //Check skill if needed
             if (prefabModule.equipSkill != null && prefabModule.equipSkill != "")
             {
@@ -447,8 +453,8 @@ namespace KIS
             if (equipMode == EquipMode.Model)
             {
                 GameObject modelGo = availablePart.partPrefab.FindModelTransform("model").gameObject;
-                equippedModel = Mesh.Instantiate(modelGo) as GameObject;
-                foreach (Collider col in equippedModel.GetComponentsInChildren<Collider>())
+                equippedGameObj = Mesh.Instantiate(modelGo) as GameObject;
+                foreach (Collider col in equippedGameObj.GetComponentsInChildren<Collider>())
                 {
                     UnityEngine.Object.DestroyImmediate(col);
                 }
@@ -468,7 +474,7 @@ namespace KIS
                 if (!evaTransform)
                 {
                     KIS_Shared.DebugError("evaTransform not found ! ");
-                    UnityEngine.Object.Destroy(equippedModel);
+                    UnityEngine.Object.Destroy(equippedGameObj);
                     return;
                 }
 
@@ -477,35 +483,47 @@ namespace KIS
                     HideHelmet();
                 }
             }
+            if (equipMode == EquipMode.Part)
+            {
+                evaTransform = null;
+                List<SkinnedMeshRenderer> skmrs = new List<SkinnedMeshRenderer>(inventory.part.GetComponentsInChildren<SkinnedMeshRenderer>() as SkinnedMeshRenderer[]);
+                foreach (SkinnedMeshRenderer skmr in skmrs)
+                {
+                    if (skmr.name != prefabModule.equipMeshName) continue;
+                    foreach (Transform bone in skmr.bones)
+                    {
+                        if (bone.name != prefabModule.equipBoneName) continue;
+                        evaTransform = bone.transform;
+                        break;
+                    }
+                }
+
+                if (!evaTransform)
+                {
+                    KIS_Shared.DebugError("evaTransform not found ! ");
+                    return;
+                }
+
+                Part alreadyEquippedPart = this.inventory.part.vessel.Parts.Find(p => p.partInfo.name == this.availablePart.name);
+                if (alreadyEquippedPart)
+                {
+                    KIS_Shared.DebugLog("Part : " + this.availablePart.name + " already found on eva, removing it to re-equip");
+                    alreadyEquippedPart.Die();
+                }
+
+                equippedPart = KIS_Shared.CreatePart(partNode, Vector3.zero, Quaternion.identity, this.inventory.part, this.inventory.part, null, null, OnEquippedPartCreated);
+                equippedGameObj = equippedPart.gameObject;
+
+                if (prefabModule.equipRemoveHelmet)
+                {
+                    HideHelmet();
+                }
+            }
             if (equipMode == EquipMode.Physic)
             {
-                Collider evaCollider = KIS_Shared.GetEvaCollider(inventory.part.vessel, "jetpackCollider");
-                Vector3 pos = evaCollider.transform.TransformPoint(prefabModule.equipPos);
-                Quaternion rot = evaCollider.transform.rotation * Quaternion.Euler(prefabModule.equipDir);
-                if (this.configNode.HasNode("PART"))
-                {
-                    ConfigNode partNode = this.configNode.GetNode("PART");
-                    equippedPart = KIS_Shared.CreatePart(partNode, pos, rot, this.inventory.part, false);
-                }
-                else
-                {
-                    equippedPart = KIS_Shared.CreatePart(this.availablePart, pos, rot, this.inventory.part, false);
-                }
-                //Destroy joint to avoid buggy eva move
-                if (equippedPart.attachJoint)
-                {
-                    equippedPart.attachJoint.DestroyJoint();
-                }
-                if (this.inventory.part.attachJoint)
-                {
-                    this.inventory.part.attachJoint.DestroyJoint();
-                }
-
-                FixedJoint evaJoint = equippedPart.gameObject.AddComponent<FixedJoint>();
-                evaJoint.connectedBody = evaCollider.attachedRigidbody;
-                evaJoint.breakForce = 5;
-                evaJoint.breakTorque = 5;
-
+                Vector3 pos = inventory.part.transform.TransformPoint(prefabModule.equipPos);
+                Quaternion rot = inventory.part.transform.rotation * Quaternion.Euler(prefabModule.equipDir);
+                equippedPart = KIS_Shared.CreatePart(partNode, pos, rot, this.inventory.part, this.inventory.part, null, null, OnEquippedPartCreated);
             }
             PlaySound(prefabModule.moveSndPath);
             equipped = true;
@@ -517,21 +535,61 @@ namespace KIS
             if (!prefabModule) return;
             if (equipMode == EquipMode.Model)
             {
-                evaTransform = null;
-                UnityEngine.Object.Destroy(equippedModel);
+                UnityEngine.Object.Destroy(equippedGameObj);
                 if (prefabModule.equipRemoveHelmet)
                 {
                     ShowHelmet();
                 }
             }
-            if (equipMode == EquipMode.Physic)
+            if (equipMode == EquipMode.Part || equipMode == EquipMode.Physic)
             {
+                KIS_Shared.DebugLog("Update config node of equipped part : " + this.availablePart.title);
+                partNode.ClearData();
+                KIS_Shared.PartSnapshot(equippedPart).CopyTo(partNode);
                 equippedPart.Die();
-                equippedPart = null;
             }
+            evaTransform = null;
+            equippedPart = null;
+            equippedGameObj = null;
             equipped = false;
             PlaySound(prefabModule.moveSndPath);
             prefabModule.OnUnEquip(this);
+        }
+
+        private void OnEquippedPartCreated()
+        {
+            if (equipMode == EquipMode.Part)
+            {
+                //Disable colliders
+                equippedPart.mass = 0.001f;
+                foreach (Collider col in equippedPart.gameObject.GetComponentsInChildren<Collider>())
+                {
+                    col.isTrigger = true;
+                }
+
+                //Destroy joint to avoid buggy eva move
+                if (equippedPart.attachJoint)
+                {
+                    equippedPart.attachJoint.DestroyJoint();
+                }
+
+                //Destroy rigidbody
+                equippedPart.physicalSignificance = Part.PhysicalSignificance.NONE;
+                if (equippedPart.collisionEnhancer)
+                {
+                    UnityEngine.Object.DestroyImmediate(equippedPart.collisionEnhancer);
+                }
+                UnityEngine.Object.Destroy(equippedPart.rigidbody);
+            }
+            
+            if (equipMode == EquipMode.Physic)
+            {
+                //Disable colliders
+                foreach (Collider col in equippedPart.gameObject.GetComponentsInChildren<Collider>())
+                {
+                    col.isTrigger = true;
+                }
+            }
         }
 
         public void Drop(Part fromPart = null)
@@ -550,15 +608,7 @@ namespace KIS
                 rot = inventory.part.transform.rotation;
                 pos = inventory.part.transform.position + new Vector3(0, 1, 0);
             }
-            if (configNode.HasNode("PART"))
-            {
-                ConfigNode partNode = configNode.GetNode("PART");
-                KIS_Shared.CreatePart(partNode, pos, rot, fromPart);
-            }
-            else
-            {
-                KIS_Shared.CreatePart(availablePart, pos, rot, fromPart);
-            }
+            KIS_Shared.CreatePart(partNode, pos, rot, fromPart);
             StackRemove(1);
         }
 
