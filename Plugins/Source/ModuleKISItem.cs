@@ -47,7 +47,7 @@ namespace KIS
         [KSPField]
         public float volumeOverride = 0;
         [KSPField]
-        public bool carryable = false;
+        public bool carriable = false;
         [KSPField]
         public bool allowAttachOnStatic = false;
         [KSPField]

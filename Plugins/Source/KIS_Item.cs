@@ -19,7 +19,7 @@ namespace KIS
         public bool usableFromContainer = false;
         public bool usableFromPod = false;
         public bool usableFromEditor = false;
-        public bool carryable = false;
+        public bool carriable = false;
         public bool allowAttachOnStatic = false;
         public float volume;
         public float cost;
@@ -89,7 +89,7 @@ namespace KIS
         {
             get
             {
-                if (carryable && inventory.invType == ModuleKISInventory.InventoryType.Eva && HighLogic.LoadedSceneIsFlight)
+                if (carriable && inventory.invType == ModuleKISInventory.InventoryType.Eva && HighLogic.LoadedSceneIsFlight)
                 {
                     return true;
                 }
@@ -161,7 +161,7 @@ namespace KIS
                 this.usableFromContainer = prefabModule.usableFromContainer;
                 this.usableFromPod = prefabModule.usableFromPod;
                 this.usableFromEditor = prefabModule.usableFromEditor;
-                this.carryable = prefabModule.carryable;
+                this.carriable = prefabModule.carriable;
                 this.allowAttachOnStatic = prefabModule.allowAttachOnStatic;
             }
             int nonStackableModule = 0;
@@ -430,7 +430,7 @@ namespace KIS
                 KIS_Item equippedItem = inventory.GetEquipedItem(equipSlot);
                 if (equippedItem != null)
                 {
-                    if (equippedItem.carryable)
+                    if (equippedItem.carriable)
                     {
                         ScreenMessages.PostScreenMessage("Cannot equip item, slot <" + equipSlot + "> already used for carrying " + equippedItem.availablePart.title, 5f, ScreenMessageStyle.UPPER_CENTER);
                         PlaySound(KIS_Shared.bipWrongSndPath);

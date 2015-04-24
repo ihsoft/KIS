@@ -384,7 +384,7 @@ namespace KIS
                     List<KIS_Item> itemsToDrop = new List<KIS_Item>();
                     foreach (KeyValuePair<int, KIS_Item> item in evaInventory.items)
                     {
-                        if (item.Value.carryable)
+                        if (item.Value.carriable)
                         {
                             itemsToDrop.Add(item.Value);
                         }
@@ -629,7 +629,7 @@ namespace KIS
             float contentVolume = 0;
             foreach (KeyValuePair<int, KIS_Item> item in items)
             {
-                if (item.Value.carryable && invType == InventoryType.Eva)
+                if (item.Value.carriable && invType == InventoryType.Eva)
                 {
                     contentVolume += 0;
                 }
@@ -1163,10 +1163,10 @@ namespace KIS
                 }
             }
 
-            //Carryable
+            //Carriable
             if (contextItem != null)
             {
-                if (contextItem.carryable && invType == InventoryType.Eva)
+                if (contextItem.carriable && invType == InventoryType.Eva)
                 {
                     noAction = false;
                     if (GUILayout.Button("Drop"))
@@ -1317,7 +1317,7 @@ namespace KIS
                 KIS_Shared.EditField("equipSlot", ref debugItem.prefabModule.equipSlot);
                 KIS_Shared.EditField("equipable", ref debugItem.prefabModule.equipable);
                 KIS_Shared.EditField("stackable", ref debugItem.prefabModule.stackable);
-                KIS_Shared.EditField("carryable", ref debugItem.prefabModule.carryable);
+                KIS_Shared.EditField("carriable", ref debugItem.prefabModule.carriable);
                 KIS_Shared.EditField("equipSkill(<blank>,RepairSkill,ScienceSkill,etc...)", ref debugItem.prefabModule.equipSkill);
                 KIS_Shared.EditField("equipRemoveHelmet", ref debugItem.prefabModule.equipRemoveHelmet);
                 KIS_Shared.EditField("volumeOverride(0 = auto)", ref debugItem.prefabModule.volumeOverride);
@@ -1483,12 +1483,12 @@ namespace KIS
                             ModuleKISItem draggedItemModule = KISAddonPickup.draggedPart.GetComponent<ModuleKISItem>();
                             if (draggedItemModule)
                             {
-                                if (draggedItemModule.carryable && invType == InventoryType.Eva && HighLogic.LoadedSceneIsFlight)
+                                if (draggedItemModule.carriable && invType == InventoryType.Eva && HighLogic.LoadedSceneIsFlight)
                                 {
                                     carryPart = true;
                                     foreach (KeyValuePair<int, KIS_Item> enumeratedItem in items)
                                     {
-                                        if (enumeratedItem.Value.equipSlot == draggedItemModule.equipSlot && enumeratedItem.Value.carryable)
+                                        if (enumeratedItem.Value.equipSlot == draggedItemModule.equipSlot && enumeratedItem.Value.carriable)
                                         {
                                             if (KISAddonPickup.draggedItem != null)
                                             {
