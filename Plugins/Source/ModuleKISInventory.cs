@@ -33,9 +33,15 @@ namespace KIS
         [KSPField]
         public string closeSndPath = "KIS/Sounds/containerClose";
         [KSPField]
+        public string helmetOnSndPath = "KIS/Sounds/helmetOn";
+        [KSPField]
+        public string helmetOffSndPath = "KIS/Sounds/helmetOff";
+        [KSPField]
         public string defaultMoveSndPath = "KIS/Sounds/itemMove";
         [KSPField(isPersistant = true)]
         public string invName = "";
+        [KSPField(isPersistant = true)]
+        public bool helmetEquipped = true;
 
         public string evaInventoryKey = "tab";
         public string evaRightHandKey = "x";
@@ -138,8 +144,12 @@ namespace KIS
                 KIS_Shared.DebugLog("equip " + item.availablePart.name);
                 item.Equip();
             }
-
             RefreshMassAndVolume();
+
+            if (!helmetEquipped)
+            {
+                SetHelmet(false, true);
+            }
         }
 
         void Update()
@@ -787,6 +797,36 @@ namespace KIS
             }
         }
 
+        public bool SetHelmet(bool active, bool checkAtmo = false)
+        {
+            if (checkAtmo)
+            {
+                if (!this.part.vessel.mainBody.atmosphereContainsOxygen)
+                {
+                    helmetEquipped = true;
+                    ScreenMessages.PostScreenMessage("Cannot remove helmet, atmosphere do not contain oxygen !", 5, ScreenMessageStyle.UPPER_CENTER);
+                    return false;
+                }
+                if (FlightGlobals.getStaticPressure() < KISAddonConfig.breathableAtmoPressure)
+                {
+                    helmetEquipped = true;
+                    ScreenMessages.PostScreenMessage("Cannot remove helmet, pressure is less than " + KISAddonConfig.breathableAtmoPressure + " ! (Current : " + FlightGlobals.getStaticPressure() + ")", 5, ScreenMessageStyle.UPPER_CENTER);
+                    return false;
+                }
+            }
+
+            List<SkinnedMeshRenderer> skmrs = new List<SkinnedMeshRenderer>(this.part.GetComponentsInChildren<SkinnedMeshRenderer>() as SkinnedMeshRenderer[]);
+            foreach (SkinnedMeshRenderer skmr in skmrs)
+            {
+                if (skmr.name == "helmet" || skmr.name == "visor")
+                {
+                    skmr.renderer.enabled = active;
+                    helmetEquipped = active;
+                }
+            }
+            return true;
+        }
+
         private void GUIStyles()
         {
             GUI.skin = HighLogic.Skin;
@@ -952,6 +992,25 @@ namespace KIS
                     if (GUILayout.Button(new GUIContent("Set name", ""), GUILayout.Width(width), GUILayout.Height(22)))
                     {
                         guiSetName = true;
+                    }
+                }
+            }
+            else if (invType == InventoryType.Eva)
+            {
+                if (helmetEquipped)
+                {
+                    if (GUILayout.Button(new GUIContent("Remove Helmet", ""), GUILayout.Width(width), GUILayout.Height(22)))
+                    {
+                        PlaySound(helmetOffSndPath);
+                        SetHelmet(false, true);
+                    }
+                }
+                else
+                {
+                    if (GUILayout.Button(new GUIContent("Put Helmet", ""), GUILayout.Width(width), GUILayout.Height(22)))
+                    {
+                        PlaySound(helmetOnSndPath);
+                        SetHelmet(true);
                     }
                 }
             }

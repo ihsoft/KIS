@@ -12,6 +12,7 @@ namespace KIS
     {
         public static List<string> stackableList = new List<string>();
         public static List<string> stackableModules = new List<string>();
+        public static float breathableAtmoPressure = 0.5f;
 
         public void Awake()
         {
@@ -22,6 +23,7 @@ namespace KIS
             // Set global settings
             ConfigNode nodeGlobal = nodeSettings.GetNode("Global");
             if (nodeGlobal.HasValue("itemDebug")) ModuleKISInventory.debugContextMenu = bool.Parse(nodeGlobal.GetValue("itemDebug"));
+            if (nodeGlobal.HasValue("breathableAtmoPressure")) breathableAtmoPressure = float.Parse(nodeGlobal.GetValue("breathableAtmoPressure"));
 
             ConfigNode nodeEvaInventory = nodeSettings.GetNode("EvaInventory");
             ConfigNode nodeEvaPickup = nodeSettings.GetNode("EvaPickup");

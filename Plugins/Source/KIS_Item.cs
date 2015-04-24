@@ -363,30 +363,6 @@ namespace KIS
             inventory.RefreshMassAndVolume();
         }
 
-        public void ShowHelmet()
-        {
-            List<SkinnedMeshRenderer> skmrs = new List<SkinnedMeshRenderer>(inventory.part.GetComponentsInChildren<SkinnedMeshRenderer>() as SkinnedMeshRenderer[]);
-            foreach (SkinnedMeshRenderer skmr in skmrs)
-            {
-                if (skmr.name == "helmet" || skmr.name == "visor")
-                {
-                    skmr.renderer.enabled = true;
-                }
-            }
-        }
-
-        public void HideHelmet()
-        {
-            List<SkinnedMeshRenderer> skmrs = new List<SkinnedMeshRenderer>(inventory.part.GetComponentsInChildren<SkinnedMeshRenderer>() as SkinnedMeshRenderer[]);
-            foreach (SkinnedMeshRenderer skmr in skmrs)
-            {
-                if (skmr.name == "helmet" || skmr.name == "visor")
-                {
-                    skmr.renderer.enabled = false;
-                }
-            }
-        }
-
         public void ShortcutKeyPress()
         {
             if (shortcutAction == ActionType.Drop)
@@ -480,7 +456,7 @@ namespace KIS
 
                 if (prefabModule.equipRemoveHelmet)
                 {
-                    HideHelmet();
+                    inventory.SetHelmet(false);
                 }
             }
             if (equipMode == EquipMode.Part)
@@ -516,7 +492,7 @@ namespace KIS
 
                 if (prefabModule.equipRemoveHelmet)
                 {
-                    HideHelmet();
+                    inventory.SetHelmet(false);
                 }
             }
             if (equipMode == EquipMode.Physic)
@@ -538,7 +514,7 @@ namespace KIS
                 UnityEngine.Object.Destroy(equippedGameObj);
                 if (prefabModule.equipRemoveHelmet)
                 {
-                    ShowHelmet();
+                    inventory.SetHelmet(true);
                 }
             }
             if (equipMode == EquipMode.Part || equipMode == EquipMode.Physic)
