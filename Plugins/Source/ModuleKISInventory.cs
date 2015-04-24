@@ -1082,15 +1082,15 @@ namespace KIS
             GUILayout.EndVertical();
 
             GUILayout.BeginVertical();
-            string text2 = "";
+            StringBuilder text2 = new StringBuilder();
 
             if (tooltipItem.quantity > 1)
             {
                 // Show total if stacked
                 GUI.Label(textureRect, "x" + tooltipItem.quantity.ToString() + " ", lowerRightStyle);
-                text2 += "Total cost : " + tooltipItem.totalCost + " √" + "\n";
-                text2 += "Total volume : " + tooltipItem.stackVolume.ToString("0.00 L") + "\n";
-                text2 += "Total mass : " + tooltipItem.totalMass + "\n";
+                text2.AppendLine("Total cost : " + tooltipItem.totalCost + " √");
+                text2.AppendLine("Total volume : " + tooltipItem.stackVolume.ToString("0.00 L"));
+                text2.AppendLine("Total mass : " + tooltipItem.totalMass);
             }
             else
             {
@@ -1100,15 +1100,31 @@ namespace KIS
                 {
                     foreach (KIS_Item.ResourceInfo resource in resources)
                     {
-                        text2 += resource.resourceName + " : " + resource.amount.ToString("0.000") + " / " + resource.maxAmount.ToString("0.000") + "\n";
+                        text2.AppendLine(resource.resourceName + " : " + resource.amount.ToString("0.000") + " / " + resource.maxAmount.ToString("0.000"));
                     }
                 }
                 else
                 {
-                    text2 = "Part has no resources";
+                    text2.AppendLine("Part has no resources");
                 }
             }
-            GUILayout.Box(text2, boxStyle, GUILayout.Width(200), GUILayout.Height(100));
+
+            // Show science data
+            List<ScienceData> sciences = tooltipItem.GetSciences();
+            if (sciences.Count > 0)
+            {
+                foreach (ScienceData scienceData in sciences)
+                {
+                    text2.AppendLine(scienceData.title + " (Data=" + scienceData.dataAmount.ToString("0.00") + ",Value=" + scienceData.transmitValue.ToString("0.00") + ")");
+                }
+            }
+            else
+            {
+                text2.AppendLine("Part has no science data");
+            }
+
+
+            GUILayout.Box(text2.ToString(), boxStyle, GUILayout.Width(200), GUILayout.Height(100));
             GUILayout.EndVertical();
 
             GUILayout.EndHorizontal();

@@ -221,6 +221,20 @@ namespace KIS
             return resources;
         }
 
+        public List<ScienceData> GetSciences()
+        {
+            List<ScienceData> sciences = new List<ScienceData>();
+            foreach (ConfigNode module in this.partNode.GetNodes("MODULE"))
+            {
+                foreach (ConfigNode experiment in module.GetNodes("ScienceData"))
+                {
+                    ScienceData scienceData = new ScienceData(experiment);
+                    sciences.Add(scienceData);
+                }
+            }
+            return sciences;
+        }
+
         public float GetScale()
         {
             // TweakScale compatibility
@@ -557,7 +571,7 @@ namespace KIS
                 }
                 UnityEngine.Object.Destroy(equippedPart.rigidbody);
             }
-            
+
             if (equipMode == EquipMode.Physic)
             {
                 //Disable colliders
