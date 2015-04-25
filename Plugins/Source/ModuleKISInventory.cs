@@ -988,6 +988,7 @@ namespace KIS
             Rect textureRect = GUILayoutUtility.GetLastRect();
             GUI.DrawTexture(textureRect, icon.texture, ScaleMode.ScaleToFit);
 
+            int extraSpace = 0;
             //Set inventory name
             if (invType == InventoryType.Container)
             {
@@ -1030,15 +1031,18 @@ namespace KIS
             }
             else
             {
-                GUILayout.Space(30);
+                extraSpace = 30;
             }
+
+            if (slotsY == 5 && slotSize == 50) extraSpace += 50;
 
             StringBuilder sb = new StringBuilder();
             sb.AppendLine("Volume : " + this.totalVolume.ToString("0.00") + "/" + this.maxVolume.ToString("0.00 L"));
             sb.AppendLine("Mass : " + this.part.mass.ToString("0.000"));
             sb.AppendLine("Cost : " + (this.GetContentCost() + part.partInfo.cost) + " √");
-            GUILayout.Box(sb.ToString(), boxStyle, GUILayout.Width(width), GUILayout.Height(45));
+            GUILayout.Box(sb.ToString(), boxStyle, GUILayout.Width(width), GUILayout.Height(45 + extraSpace));
             bool closeInv = false;
+            
             if (GUILayout.Button(new GUIContent("Close", "Close container"), GUILayout.Width(width), GUILayout.Height(21)))
             {
                 closeInv = true;
