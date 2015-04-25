@@ -18,7 +18,12 @@ namespace KIS
         {
             // Set inventory module for every eva kerbal
             KIS_Shared.DebugLog("Set KIS config...");
-            ConfigNode nodeSettings = ConfigNode.Load(KSPUtil.ApplicationRootPath + "GameData/KIS/settings.cfg") ?? new ConfigNode();
+            ConfigNode nodeSettings = GameDatabase.Instance.GetConfigNode("KIS/settings/KISConfig");
+            if (nodeSettings == null)
+            {
+                KIS_Shared.DebugError("KIS settings.cfg not found or invalid !");
+                return;
+            }
 
             // Set global settings
             ConfigNode nodeGlobal = nodeSettings.GetNode("Global");
