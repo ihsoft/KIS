@@ -516,14 +516,15 @@ namespace KIS
             KIS_Item item = null;
             if (items.ContainsKey(slot))
             {
-                KIS_Shared.DebugError("AddItem error : Slot " + slot + " already used !");
+                slot = -1;
             }
-            if (slot < 0)
+            int maxSlot = (slotsX * slotsY) - 1;
+            if (slot < 0 || slot > maxSlot)
             {
                 slot = GetFreeSlot();
                 if (slot == -1)
                 {
-                    KIS_Shared.DebugError("AddItem error : No free slot available !");
+                    KIS_Shared.DebugError("AddItem error : No free slot available for " + availablePart.title);
                     return null;
                 }
             }
@@ -539,14 +540,15 @@ namespace KIS
             KIS_Item item = null;
             if (items.ContainsKey(slot))
             {
-                KIS_Shared.DebugError("AddItem error : Slot " + slot + " already used !");
+                slot = -1;
             }
-            if (slot < 0)
+            int maxSlot = (slotsX * slotsY) - 1;
+            if (slot < 0 || slot > maxSlot)
             {
                 slot = GetFreeSlot();
                 if (slot == -1)
                 {
-                    KIS_Shared.DebugError("AddItem error : No free slot available !");
+                    KIS_Shared.DebugError("AddItem error : No free slot available for " + part.partInfo.title);
                     return null;
                 }
             }
@@ -615,8 +617,8 @@ namespace KIS
 
         public int GetFreeSlot()
         {
-            int nbSlot = slotsX * slotsY;
-            for (int i = 0; i <= nbSlot - 1; i++)
+            int maxSlot = (slotsX * slotsY) - 1;
+            for (int i = 0; i <= maxSlot; i++)
             {
                 if (items.ContainsKey(i) == false)
                 {

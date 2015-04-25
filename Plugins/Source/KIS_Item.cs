@@ -169,7 +169,6 @@ namespace KIS
             {
                 if (!KISAddonConfig.stackableModules.Contains(pModule.moduleName))
                 {
-                    KIS_Shared.DebugLog("Module <" + pModule.moduleName + "> is not set as stackable in settings.cfg");
                     nonStackableModule++;
                 }
             }
