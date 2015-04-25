@@ -251,7 +251,7 @@ namespace KIS
                                 KIS_Shared.DebugWarning("No part node found on item " + availablePartName + ", creating new one from prefab");
                                 item = AddItem(availablePart.partPrefab, qty, slot);
                             }
-                            if (cn.HasValue("equipped"))
+                            if (cn.HasValue("equipped") && item != null)
                             {
                                 if (bool.Parse(cn.GetValue("equipped")) && this.invType == InventoryType.Eva)
                                 {
@@ -514,34 +514,46 @@ namespace KIS
         public KIS_Item AddItem(AvailablePart availablePart, ConfigNode partNode, float qty = 1, int slot = -1)
         {
             KIS_Item item = null;
+            if (items.ContainsKey(slot))
+            {
+                KIS_Shared.DebugError("AddItem error : Slot " + slot + " already used !");
+            }
             if (slot < 0)
             {
                 slot = GetFreeSlot();
+                if (slot == -1)
+                {
+                    KIS_Shared.DebugError("AddItem error : No free slot available !");
+                    return null;
+                }
             }
-            if (slot >= 0)
-            {
-                item = new KIS_Item(availablePart, partNode, this, qty);
-                items.Add(slot, item);
-                if (showGui) items[slot].EnableIcon(itemIconResolution);
-                RefreshMassAndVolume();
-            }
+            item = new KIS_Item(availablePart, partNode, this, qty);
+            items.Add(slot, item);
+            if (showGui) items[slot].EnableIcon(itemIconResolution);
+            RefreshMassAndVolume();
             return item;
         }
 
         public KIS_Item AddItem(Part part, float qty = 1, int slot = -1)
         {
             KIS_Item item = null;
+            if (items.ContainsKey(slot))
+            {
+                KIS_Shared.DebugError("AddItem error : Slot " + slot + " already used !");
+            }
             if (slot < 0)
             {
                 slot = GetFreeSlot();
+                if (slot == -1)
+                {
+                    KIS_Shared.DebugError("AddItem error : No free slot available !");
+                    return null;
+                }
             }
-            if (slot >= 0)
-            {
-                item = new KIS_Item(part, this, qty);
-                items.Add(slot, item);
-                if (showGui) items[slot].EnableIcon(itemIconResolution);
-                RefreshMassAndVolume();
-            }
+            item = new KIS_Item(part, this, qty);
+            items.Add(slot, item);
+            if (showGui) items[slot].EnableIcon(itemIconResolution);
+            RefreshMassAndVolume();
             return item;
         }
 
