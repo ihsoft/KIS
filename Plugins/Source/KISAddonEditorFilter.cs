@@ -51,8 +51,7 @@ namespace KIS
 
         private void SubCategories()
         {
-
-            PartCategorizer.Icon icon = PartCategorizer.Instance.GetIcon(iconName);
+            RUI.Icons.Selectable.Icon icon = PartCategorizer.Instance.iconLoader.GetIcon(iconName);
             PartCategorizer.Category Filter = PartCategorizer.Instance.filters.Find(f => f.button.categoryName == category);
             PartCategorizer.AddCustomSubcategoryFilter(Filter, subCategoryTitle, icon, p => EditorItemsFilter(p));
 
