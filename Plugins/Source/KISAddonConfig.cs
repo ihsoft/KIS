@@ -12,16 +12,23 @@ namespace KIS
     {
         public static List<string> stackableList = new List<string>();
         public static List<string> stackableModules = new List<string>();
+        public static float breathableAtmoPressure = 0.5f;
 
         public void Awake()
         {
             // Set inventory module for every eva kerbal
             KIS_Shared.DebugLog("Set KIS config...");
-            ConfigNode nodeSettings = ConfigNode.Load(KSPUtil.ApplicationRootPath + "GameData/KIS/settings.cfg") ?? new ConfigNode();
+            ConfigNode nodeSettings = GameDatabase.Instance.GetConfigNode("KIS/settings/KISConfig");
+            if (nodeSettings == null)
+            {
+                KIS_Shared.DebugError("KIS settings.cfg not found or invalid !");
+                return;
+            }
 
             // Set global settings
             ConfigNode nodeGlobal = nodeSettings.GetNode("Global");
             if (nodeGlobal.HasValue("itemDebug")) ModuleKISInventory.debugContextMenu = bool.Parse(nodeGlobal.GetValue("itemDebug"));
+            if (nodeGlobal.HasValue("breathableAtmoPressure")) breathableAtmoPressure = float.Parse(nodeGlobal.GetValue("breathableAtmoPressure"));
 
             ConfigNode nodeEvaInventory = nodeSettings.GetNode("EvaInventory");
             ConfigNode nodeEvaPickup = nodeSettings.GetNode("EvaPickup");
@@ -42,24 +49,14 @@ namespace KIS
                 stackableModules.Add(moduleName);
             }
 
+            //-------Male Kerbal
+            // Adding module to EVA cause an unknown error but work
             Part evaPrefab = PartLoader.getPartInfoByName("kerbalEVA").partPrefab;
-            try
-            {
-                // Adding module to EVA cause an unknown error but work
-                evaPrefab.AddModule("ModuleKISInventory");
-            }
-            catch
-            {
-            }
-            try
-            {
-                // Adding module to EVA cause an unknown error but work
-                evaPrefab.AddModule("ModuleKISPickup");
-            }
-            catch
-            {
-            }
-
+            try {evaPrefab.AddModule("ModuleKISInventory");}
+            catch{}
+            try {evaPrefab.AddModule("ModuleKISPickup");}
+            catch { }
+            
             // Set inventory module for eva
             ModuleKISInventory evaInventory = evaPrefab.GetComponent<ModuleKISInventory>();
             if (evaInventory)
@@ -84,15 +81,48 @@ namespace KIS
                 KIS_Shared.DebugLog("Eva pickup module loaded successfully");
             }
 
+            //-------Female Kerbal
+            // Adding module to EVA cause an unknown error but work
+            Part evaFemalePrefab = PartLoader.getPartInfoByName("kerbalEVAfemale").partPrefab;
+            try { evaFemalePrefab.AddModule("ModuleKISInventory"); }
+            catch { }
+            try { evaFemalePrefab.AddModule("ModuleKISPickup"); }
+            catch { }
+
+            // Set inventory module for eva
+            ModuleKISInventory evaFemaleInventory = evaFemalePrefab.GetComponent<ModuleKISInventory>();
+            if (evaFemaleInventory)
+            {
+                if (nodeGlobal.HasValue("kerbalDefaultMass")) evaFemaleInventory.kerbalDefaultMass = float.Parse(nodeGlobal.GetValue("kerbalDefaultMass"));
+                SetInventoryConfig(nodeEvaInventory, evaFemaleInventory);
+                evaFemaleInventory.invType = ModuleKISInventory.InventoryType.Eva;
+                KIS_Shared.DebugLog("Eva inventory module loaded successfully");
+            }
+
+            // Set pickup module for eva
+            ModuleKISPickup evaFemalePickup = evaFemalePrefab.GetComponent<ModuleKISPickup>();
+            if (evaFemalePickup)
+            {
+                if (nodeEvaPickup.HasValue("grabKey")) KISAddonPickup.grabKey = nodeEvaPickup.GetValue("grabKey");
+                if (nodeEvaPickup.HasValue("canDetach")) evaFemalePickup.canDetach = bool.Parse(nodeEvaPickup.GetValue("canDetach"));
+                if (nodeEvaPickup.HasValue("maxDistance")) evaFemalePickup.maxDistance = float.Parse(nodeEvaPickup.GetValue("maxDistance"));
+                if (nodeEvaPickup.HasValue("maxMass")) evaFemalePickup.maxMass = float.Parse(nodeEvaPickup.GetValue("maxMass"));
+                if (nodeEvaPickup.HasValue("dropSndPath")) evaFemalePickup.dropSndPath = nodeEvaPickup.GetValue("dropSndPath");
+                if (nodeEvaPickup.HasValue("attachSndPath")) evaFemalePickup.attachSndPath = nodeEvaPickup.GetValue("attachSndPath");
+                if (nodeEvaPickup.HasValue("draggedIconResolution")) KISAddonPickup.draggedIconResolution = int.Parse(nodeEvaPickup.GetValue("draggedIconResolution"));
+                KIS_Shared.DebugLog("Eva pickup module loaded successfully");
+            }
+
             // Set inventory module for every pod with crew capacity
             KIS_Shared.DebugLog("Loading pod inventory...");
             foreach (AvailablePart avPart in PartLoader.LoadedPartsList)
             {
                 if (avPart.name == "kerbalEVA") continue;
                 if (avPart.name == "kerbalEVA_RD") continue;
+                if (avPart.name == "kerbalEVAfemale") continue;
                 if (!avPart.partPrefab) continue;
                 if (avPart.partPrefab.CrewCapacity < 1) continue;
-                KIS_Shared.DebugLog("Found part with CrewCapacity : " + avPart.partPrefab.name);
+                KIS_Shared.DebugLog("Found part with CrewCapacity : " + avPart.name);
 
 
                 for (int i = 0; i < avPart.partPrefab.CrewCapacity; i++)

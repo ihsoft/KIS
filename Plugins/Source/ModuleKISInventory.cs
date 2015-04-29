@@ -33,7 +33,15 @@ namespace KIS
         [KSPField]
         public string closeSndPath = "KIS/Sounds/containerClose";
         [KSPField]
+        public string helmetOnSndPath = "KIS/Sounds/helmetOn";
+        [KSPField]
+        public string helmetOffSndPath = "KIS/Sounds/helmetOff";
+        [KSPField]
         public string defaultMoveSndPath = "KIS/Sounds/itemMove";
+        [KSPField(isPersistant = true)]
+        public string invName = "";
+        [KSPField(isPersistant = true)]
+        public bool helmetEquipped = true;
 
         public string evaInventoryKey = "tab";
         public string evaRightHandKey = "x";
@@ -54,16 +62,15 @@ namespace KIS
         public Rect guiMainWindowPos;
         private Rect guiDebugWindowPos = new Rect(0, 50, 500, 300);
         private KIS_IconViewer icon;
-        public static int OpenInventory = 0;
         private Rect defaultEditorPos = new Rect(Screen.width / 3, 40, 10, 10);
         private Rect defaultFlightPos = new Rect(0, 50, 10, 10);
         private Vector2 scrollPositionDbg;
         private float splitQty = 1;
         private bool clickThroughLocked = false;
+        private bool guiSetName = false;
 
         //Tooltip
         private KIS_Item tooltipItem;
-        private bool mouseOverIcon = false;
 
         // Context menu
         private KIS_Item contextItem;
@@ -137,8 +144,12 @@ namespace KIS
                 KIS_Shared.DebugLog("equip " + item.availablePart.name);
                 item.Equip();
             }
-
             RefreshMassAndVolume();
+
+            if (!helmetEquipped)
+            {
+                SetHelmet(false, true);
+            }
         }
 
         void Update()
@@ -233,16 +244,14 @@ namespace KIS
                             KIS_Item item = null;
                             if (cn.HasNode("PART"))
                             {
-                                ConfigNode partNode = cn.GetNode("PART");
-                                item = AddItem(availablePart, partNode, qty, slot);
+                                item = AddItem(availablePart, cn, qty, slot);
                             }
                             else
                             {
                                 KIS_Shared.DebugWarning("No part node found on item " + availablePartName + ", creating new one from prefab");
                                 item = AddItem(availablePart.partPrefab, qty, slot);
-
                             }
-                            if (cn.HasValue("equipped"))
+                            if (cn.HasValue("equipped") && item != null)
                             {
                                 if (bool.Parse(cn.GetValue("equipped")) && this.invType == InventoryType.Eva)
                                 {
@@ -268,37 +277,21 @@ namespace KIS
             base.OnSave(node);
             foreach (KeyValuePair<int, KIS_Item> item in items)
             {
-                ConfigNode nodeD = node.AddNode("ITEM");
-                nodeD.AddValue("slot", item.Key);
-                nodeD.AddValue("quantity", item.Value.quantity);
-                nodeD.AddValue("equipped", item.Value.equipped);
-                item.Value.configNode.CopyTo(nodeD);
+                ConfigNode itemNode = node.AddNode("ITEM");
+                item.Value.OnSave(itemNode);
 
                 // Science recovery works by retrieving all MODULE/ScienceData 
                 // subnodes from the part node, so copy all experiments from 
                 // contained parts to where it expects to find them. 
                 // This duplicates data but allows recovery to work properly. 
-                if (item.Value.configNode.HasNode("PART"))
+                foreach (ConfigNode module in item.Value.partNode.GetNodes("MODULE"))
                 {
-                    foreach (ConfigNode module in item.Value.configNode.GetNode("PART").GetNodes("MODULE"))
+                    foreach (ConfigNode experiment in module.GetNodes("ScienceData"))
                     {
-                        foreach (ConfigNode experiment in module.GetNodes("ScienceData"))
-                        {
-                            experiment.CopyTo(node.AddNode("ScienceData"));
-                        }
+                        experiment.CopyTo(node.AddNode("ScienceData"));
                     }
                 }
             }
-        }
-
-        public float GetModuleCost(float defaultCost)
-        {
-            float itemsCost = 0;
-            foreach (KeyValuePair<int, KIS_Item> item in items)
-            {
-                itemsCost += item.Value.stackCost;
-            }
-            return itemsCost;
         }
 
         public void PlaySound(string sndPath, bool loop = false, bool uiSnd = true)
@@ -324,6 +317,17 @@ namespace KIS
                 ScreenMessages.PostScreenMessage("Sound file : " + sndPath + " as not been found, please check installation path !", 10, ScreenMessageStyle.UPPER_CENTER);
             }
             sndFx.audio.Play();
+        }
+
+        public static List<ModuleKISInventory> GetAllOpenInventories()
+        {
+            List<ModuleKISInventory> openInventories = new List<ModuleKISInventory>(); ;
+            ModuleKISInventory[] allInventory = FindObjectsOfType(typeof(ModuleKISInventory)) as ModuleKISInventory[];
+            foreach (ModuleKISInventory inventory in allInventory)
+            {
+                if (inventory.showGui) openInventories.Add(inventory);
+            }
+            return openInventories;
         }
 
         void OnVesselChange(Vessel vess)
@@ -376,12 +380,24 @@ namespace KIS
                     // eva to pod
                     KIS_Shared.DebugLog("Eva to pod");
                     ModuleKISInventory evaInventory = fromToAction.from.GetComponent<ModuleKISInventory>();
-                    Dictionary<int, KIS_Item> transferedItems = new Dictionary<int, KIS_Item>(evaInventory.items);
                     KIS_Shared.DebugLog("Item transfer | source " + fromToAction.host.name);
+                    List<KIS_Item> itemsToDrop = new List<KIS_Item>();
                     foreach (KeyValuePair<int, KIS_Item> item in evaInventory.items)
                     {
-                        if (item.Value.equipped) item.Value.Unequip();
+                        if (item.Value.carriable)
+                        {
+                            itemsToDrop.Add(item.Value);
+                        }
+                        else if (item.Value.equipped)
+                        {
+                            item.Value.Unequip();
+                        }
                     }
+                    foreach (KIS_Item item in itemsToDrop)
+                    {
+                        item.Drop(this.part);
+                    }
+                    Dictionary<int, KIS_Item> transferedItems = new Dictionary<int, KIS_Item>(evaInventory.items);
                     StartCoroutine(WaitAndTransferItems(transferedItems, fromToAction.host));
                 }
             }
@@ -409,7 +425,7 @@ namespace KIS
                 if (HighLogic.LoadedSceneIsEditor)
                 {
                     Events["ShowInventory"].guiActive = Events["ShowInventory"].guiActiveUnfocused = true;
-                    Events["ShowInventory"].guiName = "Open seat " + podSeat + " inventory";
+                    Events["ShowInventory"].guiName = "Seat " + podSeat + " inventory";
                 }
                 else
                 {
@@ -420,7 +436,7 @@ namespace KIS
                         {
                             string kerbalName = pcm.name.Split(' ').FirstOrDefault();
                             Events["ShowInventory"].guiActive = Events["ShowInventory"].guiActiveUnfocused = true;
-                            Events["ShowInventory"].guiName = "Open " + kerbalName + "'s inventory";// (" + podSeat + ")";
+                            Events["ShowInventory"].guiName = kerbalName + "'s inventory";
                         }
                     }
                 }
@@ -428,7 +444,13 @@ namespace KIS
             else
             {
                 Events["ShowInventory"].guiActive = Events["ShowInventory"].guiActiveUnfocused = true;
-                Events["ShowInventory"].guiName = "Open inventory";
+                Events["ShowInventory"].guiName = "Inventory";
+                if (invName != "") Events["ShowInventory"].guiName = "Inventory | " + invName;
+            }
+            if (HighLogic.LoadedSceneIsFlight)
+            {
+                ModuleKISPickup mPickup = KISAddonPickup.instance.GetActivePickupNearest(this.part);
+                if (mPickup) Events["ShowInventory"].unfocusedRange = mPickup.maxDistance;
             }
         }
 
@@ -443,6 +465,7 @@ namespace KIS
             }
             else
             {
+<<<<<<< HEAD
                 AvailablePart avPart = PartLoader.getPartInfoByName(this.part.name);
                 if (avPart != null)
                 {
@@ -452,6 +475,10 @@ namespace KIS
                 {
                     this.part.mass = this.part.partInfo.partPrefab.mass;
                 }
+=======
+                AvailablePart avPart = PartLoader.getPartInfoByName(this.part.partInfo.name);
+                this.part.mass = avPart.partPrefab.mass + this.part.GetResourceMass();
+>>>>>>> origin/develop
             }
             // Update mass
             foreach (ModuleKISInventory inventory in this.part.GetComponents<ModuleKISInventory>())
@@ -469,7 +496,7 @@ namespace KIS
             GameEvents.onCrewTransferred.Remove(new EventData<GameEvents.HostedFromToAction<ProtoCrewMember, Part>>.OnEvent(this.OnCrewTransferred));
             GameEvents.onVesselChange.Remove(new EventData<Vessel>.OnEvent(this.OnVesselChange));
             GameEvents.onPartActionUICreate.Remove(new EventData<Part>.OnEvent(this.OnPartActionUICreate));
-            if (HighLogic.LoadedSceneIsEditor) EditorLogic.fetch.Unlock("KISInventoryLock");
+            if (HighLogic.LoadedSceneIsEditor) InputLockManager.RemoveControlLock("KISInventoryLock");
         }
 
         private void slotKeyPress(KeyCode kc, int slot, int delay = 1)
@@ -499,34 +526,48 @@ namespace KIS
         public KIS_Item AddItem(AvailablePart availablePart, ConfigNode partNode, float qty = 1, int slot = -1)
         {
             KIS_Item item = null;
-            if (slot < 0)
+            if (items.ContainsKey(slot))
+            {
+                slot = -1;
+            }
+            int maxSlot = (slotsX * slotsY) - 1;
+            if (slot < 0 || slot > maxSlot)
             {
                 slot = GetFreeSlot();
+                if (slot == -1)
+                {
+                    KIS_Shared.DebugError("AddItem error : No free slot available for " + availablePart.title);
+                    return null;
+                }
             }
-            if (slot >= 0)
-            {
-                item = new KIS_Item(availablePart, partNode, this, qty);
-                items.Add(slot, item);
-                if (showGui) items[slot].EnableIcon(itemIconResolution);
-                RefreshMassAndVolume();
-            }
+            item = new KIS_Item(availablePart, partNode, this, qty);
+            items.Add(slot, item);
+            if (showGui) items[slot].EnableIcon(itemIconResolution);
+            RefreshMassAndVolume();
             return item;
         }
 
         public KIS_Item AddItem(Part part, float qty = 1, int slot = -1)
         {
             KIS_Item item = null;
-            if (slot < 0)
+            if (items.ContainsKey(slot))
+            {
+                slot = -1;
+            }
+            int maxSlot = (slotsX * slotsY) - 1;
+            if (slot < 0 || slot > maxSlot)
             {
                 slot = GetFreeSlot();
+                if (slot == -1)
+                {
+                    KIS_Shared.DebugError("AddItem error : No free slot available for " + part.partInfo.title);
+                    return null;
+                }
             }
-            if (slot >= 0)
-            {
-                item = new KIS_Item(part, this, qty);
-                items.Add(slot, item);
-                if (showGui) items[slot].EnableIcon(itemIconResolution);
-                RefreshMassAndVolume();
-            }
+            item = new KIS_Item(part, this, qty);
+            items.Add(slot, item);
+            if (showGui) items[slot].EnableIcon(itemIconResolution);
+            RefreshMassAndVolume();
             return item;
         }
 
@@ -564,8 +605,8 @@ namespace KIS
 
         public int GetFreeSlot()
         {
-            int nbSlot = slotsX * slotsY;
-            for (int i = 0; i <= nbSlot - 1; i++)
+            int maxSlot = (slotsX * slotsY) - 1;
+            for (int i = 0; i <= maxSlot; i++)
             {
                 if (items.ContainsKey(i) == false)
                 {
@@ -592,7 +633,7 @@ namespace KIS
             float contentMass = 0;
             foreach (KeyValuePair<int, KIS_Item> item in items)
             {
-                contentMass += item.Value.stackMass;
+                contentMass += item.Value.totalMass;
             }
             return contentMass;
         }
@@ -602,9 +643,36 @@ namespace KIS
             float contentVolume = 0;
             foreach (KeyValuePair<int, KIS_Item> item in items)
             {
+<<<<<<< HEAD
                 contentVolume += item.Value.stackVolume;
+=======
+                if (item.Value.carriable && invType == InventoryType.Eva)
+                {
+                    contentVolume += 0;
+                }
+                else
+                {
+                    contentVolume += item.Value.stackVolume;
+                }
+
+>>>>>>> origin/develop
             }
             return contentVolume;
+        }
+
+        public float GetContentCost()
+        {
+            float contentCost = 0;
+            foreach (KeyValuePair<int, KIS_Item> item in items)
+            {
+                contentCost += item.Value.totalCost;
+            }
+            return contentCost;
+        }
+
+        public float GetModuleCost(float defaultCost)
+        {
+            return GetContentCost();
         }
 
         private bool VolumeAvailableFor(Part p)
@@ -690,7 +758,6 @@ namespace KIS
                 }
                 icon = null;
                 showGui = false;
-                OpenInventory--;
                 if (HighLogic.LoadedSceneIsEditor)
                 {
                     PlaySound(closeSndPath);
@@ -701,7 +768,11 @@ namespace KIS
                 }
                 clickThroughLocked = false;
                 if (HighLogic.LoadedSceneIsFlight) InputLockManager.RemoveControlLock("KISInventoryFlightLock");
+<<<<<<< HEAD
                 if (HighLogic.LoadedSceneIsEditor) EditorLogic.fetch.Unlock("KISInventoryEditorLock");         
+=======
+                if (HighLogic.LoadedSceneIsEditor) InputLockManager.RemoveControlLock("KISInventoryEditorLock");
+>>>>>>> origin/develop
             }
             else
             {
@@ -726,8 +797,13 @@ namespace KIS
                     item.Value.EnableIcon(itemIconResolution);
                 }
                 icon = new KIS_IconViewer(this.part, selfIconResolution);
+<<<<<<< HEAD
                 
                 if (OpenInventory == 1 && guiMainWindowPos.x == defaultFlightPos.x && guiMainWindowPos.y == defaultFlightPos.y)
+=======
+
+                if (GetAllOpenInventories().Count == 1 && guiMainWindowPos.x == defaultFlightPos.x && guiMainWindowPos.y == defaultFlightPos.y)
+>>>>>>> origin/develop
                 {
                     guiMainWindowPos.y += 250;
                 }
@@ -737,7 +813,6 @@ namespace KIS
                     openAnim.Play(openAnimName);
                 }
                 showGui = true;
-                OpenInventory++;
                 if (HighLogic.LoadedSceneIsEditor)
                 {
                     PlaySound(openSndPath);
@@ -747,6 +822,36 @@ namespace KIS
                     PlaySound(openSndPath, false, false);
                 }
             }
+        }
+
+        public bool SetHelmet(bool active, bool checkAtmo = false)
+        {
+            if (checkAtmo)
+            {
+                if (!this.part.vessel.mainBody.atmosphereContainsOxygen)
+                {
+                    helmetEquipped = true;
+                    ScreenMessages.PostScreenMessage("Cannot remove helmet, atmosphere do not contain oxygen !", 5, ScreenMessageStyle.UPPER_CENTER);
+                    return false;
+                }
+                if (FlightGlobals.getStaticPressure() < KISAddonConfig.breathableAtmoPressure)
+                {
+                    helmetEquipped = true;
+                    ScreenMessages.PostScreenMessage("Cannot remove helmet, pressure is less than " + KISAddonConfig.breathableAtmoPressure + " ! (Current : " + FlightGlobals.getStaticPressure() + ")", 5, ScreenMessageStyle.UPPER_CENTER);
+                    return false;
+                }
+            }
+
+            List<SkinnedMeshRenderer> skmrs = new List<SkinnedMeshRenderer>(this.part.GetComponentsInChildren<SkinnedMeshRenderer>() as SkinnedMeshRenderer[]);
+            foreach (SkinnedMeshRenderer skmr in skmrs)
+            {
+                if (skmr.name == "helmet" || skmr.name == "visor")
+                {
+                    skmr.renderer.enabled = active;
+                    helmetEquipped = active;
+                }
+            }
+            return true;
         }
 
         private void GUIStyles()
@@ -793,13 +898,47 @@ namespace KIS
 
             GUIStyles();
 
+<<<<<<< HEAD
             guiMainWindowPos = GUILayout.Window(GetInstanceID(), guiMainWindowPos, GuiMain, "Inventory");
             
             if (mouseOverIcon)
+=======
+            // Set title
+            string title = this.part.partInfo.title;
+            if (invType == InventoryType.Pod)
+            {
+                title = this.part.partInfo.title + " | Seat " + podSeat;
+                if (!HighLogic.LoadedSceneIsEditor)
+                {
+                    if (this.part.internalModel)
+                    {
+                        InternalSeat seat = this.part.internalModel.seats[podSeat];
+                        if (seat.taken)
+                        {
+                            title = seat.kerbalRef.crewMemberName;
+                        }
+                    }
+                }
+            }
+            if (invType == InventoryType.Eva)
+            {
+                title = this.part.partInfo.title + " | " + kerbalTrait;
+            }
+            if (invType == InventoryType.Container && invName != "")
+            {
+                title = this.part.partInfo.title + " | " + invName;
+            }
+
+            guiMainWindowPos = GUILayout.Window(GetInstanceID(), guiMainWindowPos, GuiMain, title);
+
+            if (tooltipItem != null)
+>>>>>>> origin/develop
             {
                 if (contextItem == null)
                 {
-                    GUILayout.Window(GetInstanceID() + 780, new Rect(Event.current.mousePosition.x + 5, Event.current.mousePosition.y + 5, 400, 1), GuiTooltip, tooltipItem.availablePart.title);
+                    string tooltipName = tooltipItem.availablePart.title;
+                    if (tooltipItem.inventoryName != "") tooltipName += " | " + tooltipItem.inventoryName;
+                    GUILayout.Window(GetInstanceID() + 780, new Rect(Event.current.mousePosition.x + 5, Event.current.mousePosition.y + 5, 400, 1), GuiTooltip, tooltipName);
                 }
             }
             if (contextItem != null)
@@ -828,12 +967,12 @@ namespace KIS
                 if (guiMainWindowPos.Contains(Event.current.mousePosition) && !clickThroughLocked)
                 {
                     EditorTooltip.Instance.HideToolTip();
-                    EditorLogic.fetch.Lock(true, true, true, "KISInventoryEditorLock");
+                    InputLockManager.SetControlLock(ControlTypes.EDITOR_PAD_PICK_PLACE, "KISInventoryEditorLock");
                     clickThroughLocked = true;
                 }
                 if (!guiMainWindowPos.Contains(Event.current.mousePosition) && clickThroughLocked)
                 {
-                    EditorLogic.fetch.Unlock("KISInventoryEditorLock");
+                    InputLockManager.RemoveControlLock("KISInventoryEditorLock");
                     clickThroughLocked = false;
                 }
             }
@@ -857,41 +996,73 @@ namespace KIS
             GUIStyle guiStyleTitle = new GUIStyle(GUI.skin.label);
             guiStyleTitle.normal.textColor = Color.yellow;
             guiStyleTitle.fontStyle = FontStyle.Bold;
-            guiStyleTitle.fontSize = 14;
+            guiStyleTitle.fontSize = 13;
             guiStyleTitle.alignment = TextAnchor.MiddleCenter;
 
             GUILayout.BeginHorizontal();
 
             GUILayout.BeginVertical();
-            int width = 150;
+            int width = 160;
             GUILayout.Box("", GUILayout.Width(width), GUILayout.Height(100));
             Rect textureRect = GUILayoutUtility.GetLastRect();
             GUI.DrawTexture(textureRect, icon.texture, ScaleMode.ScaleToFit);
-            GUILayout.Space(2);
-            string title = this.part.partInfo.title;
-            if (invType == InventoryType.Pod)
+
+            int extraSpace = 0;
+            //Set inventory name
+            if (invType == InventoryType.Container)
             {
-                title = this.part.partInfo.title + " (" + podSeat + ")";
-                if (!HighLogic.LoadedSceneIsEditor)
+                if (guiSetName)
                 {
-                    if (this.part.internalModel)
+                    GUILayout.BeginHorizontal();
+                    invName = GUILayout.TextField(invName, 14, GUILayout.Height(22));
+                    if (GUILayout.Button(new GUIContent("OK", ""), GUILayout.Width(30), GUILayout.Height(22)))
                     {
-                        InternalSeat seat = this.part.internalModel.seats[podSeat];
-                        if (seat.taken)
-                        {
-                            title = seat.kerbalRef.crewMemberName;
-                        }
+                        guiSetName = false;
+                    }
+                    GUILayout.EndHorizontal();
+                }
+                else
+                {
+                    if (GUILayout.Button(new GUIContent("Set name", ""), GUILayout.Width(width), GUILayout.Height(22)))
+                    {
+                        guiSetName = true;
                     }
                 }
             }
-            GUILayout.Label(title, guiStyleTitle, GUILayout.Width(width), GUILayout.Height(10));
-            string text = kerbalTrait + "\n";
-            text += "Mass : " + this.part.mass.ToString("0.000") + "\n";
-            text += "Volume : " + this.totalVolume.ToString("0.00") + "/" + this.maxVolume.ToString("0.00 L") + "\n";
-            GUILayout.Box(text, boxStyle, GUILayout.Width(width), GUILayout.Height(50));
+            else if (invType == InventoryType.Eva)
+            {
+                if (helmetEquipped)
+                {
+                    if (GUILayout.Button(new GUIContent("Remove Helmet", ""), GUILayout.Width(width), GUILayout.Height(22)))
+                    {
+                        PlaySound(helmetOffSndPath);
+                        SetHelmet(false, true);
+                    }
+                }
+                else
+                {
+                    if (GUILayout.Button(new GUIContent("Put Helmet", ""), GUILayout.Width(width), GUILayout.Height(22)))
+                    {
+                        PlaySound(helmetOnSndPath);
+                        SetHelmet(true);
+                    }
+                }
+            }
+            else
+            {
+                extraSpace = 30;
+            }
 
+            if (slotsY == 5 && slotSize == 50) extraSpace += 50;
+
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine("Volume : " + this.totalVolume.ToString("0.00") + "/" + this.maxVolume.ToString("0.00 L"));
+            sb.AppendLine("Mass : " + this.part.mass.ToString("0.000"));
+            sb.AppendLine("Cost : " + (this.GetContentCost() + part.partInfo.cost) + " √");
+            GUILayout.Box(sb.ToString(), boxStyle, GUILayout.Width(width), GUILayout.Height(45 + extraSpace));
             bool closeInv = false;
-            if (GUILayout.Button(new GUIContent("Close", "Close container"), GUILayout.Width(width), GUILayout.Height(25)))
+            
+            if (GUILayout.Button(new GUIContent("Close", "Close container"), GUILayout.Width(width), GUILayout.Height(21)))
             {
                 closeInv = true;
             }
@@ -903,11 +1074,6 @@ namespace KIS
 
             GUILayout.EndHorizontal();
 
-            if (Event.current.type == EventType.Repaint && mouseOverIcon == false && tooltipItem != null)
-            {
-                tooltipItem.icon.ResetPos();
-                tooltipItem = null;
-            }
             if (contextItem == null) GUI.DragWindow(new Rect(0, 0, 10000, 30));
             if (closeInv)
             {
@@ -928,33 +1094,40 @@ namespace KIS
             GUILayout.EndVertical();
 
             GUILayout.BeginVertical();
-            string text = "Cost : " + tooltipItem.availablePart.cost + " √" + "\n";
-            text += "Volume : " + tooltipItem.volume.ToString("0.00 L") + "\n";
-            text += "Stackable : " + tooltipItem.stackable + "\n";
-            text += "Dry mass : " + tooltipItem.availablePart.partPrefab.mass + "\n";
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine("Volume : " + tooltipItem.volume.ToString("0.00 L"));
+            sb.AppendLine("Dry mass : " + tooltipItem.dryMass.ToString("0.000"));
+            if (tooltipItem.availablePart.partPrefab.Resources.Count > 0)
+            {
+                sb.AppendLine("Ressource mass : " + tooltipItem.resourceMass.ToString("0.000"));
+            }
+            sb.AppendLine("Cost : " + tooltipItem.cost + " √");
+            if (tooltipItem.contentCost > 0)
+            {
+                sb.AppendLine("Content cost : " + tooltipItem.contentCost + " √");
+            }
+            if (tooltipItem.contentMass > 0)
+            {
+                sb.AppendLine("Content mass : " + tooltipItem.contentMass.ToString("0.000"));
+            }
             if (tooltipItem.equipSlot != null)
             {
-                text += "Equip slot : " + tooltipItem.equipSlot + "\n";
-                if (tooltipItem.equipSlot == "rightHand") text += "Press [" + evaRightHandKey + "] to use (equipped)" + "\n";
+                sb.AppendLine("Equip slot : " + tooltipItem.equipSlot);
+                if (tooltipItem.equipSlot == "rightHand") sb.AppendLine("Press [" + evaRightHandKey + "] to use (equipped)");
             }
-            float rscMass = tooltipItem.availablePart.partPrefab.GetResourceMass();
-            if (rscMass == 0)
-            {
-                text += "Ressource mass : " + tooltipItem.availablePart.partPrefab.GetResourceMass() + "\n";
-            }
-            GUILayout.Box(text, boxStyle, GUILayout.Width(150), GUILayout.Height(100));
+            GUILayout.Box(sb.ToString(), boxStyle, GUILayout.Width(150), GUILayout.Height(100));
             GUILayout.EndVertical();
 
             GUILayout.BeginVertical();
-            string text2 = "";
+            StringBuilder text2 = new StringBuilder();
 
             if (tooltipItem.quantity > 1)
             {
                 // Show total if stacked
                 GUI.Label(textureRect, "x" + tooltipItem.quantity.ToString() + " ", lowerRightStyle);
-                text2 += "Total cost : " + tooltipItem.stackCost + " √" + "\n";
-                text2 += "Total volume : " + tooltipItem.stackVolume.ToString("0.00 L") + "\n";
-                text2 += "Total mass : " + tooltipItem.stackMass + "\n";
+                text2.AppendLine("Total cost : " + tooltipItem.totalCost + " √");
+                text2.AppendLine("Total volume : " + tooltipItem.stackVolume.ToString("0.00 L"));
+                text2.AppendLine("Total mass : " + tooltipItem.totalMass);
             }
             else
             {
@@ -964,15 +1137,31 @@ namespace KIS
                 {
                     foreach (KIS_Item.ResourceInfo resource in resources)
                     {
-                        text2 += resource.resourceName + " : " + resource.amount.ToString("0.000") + " / " + resource.maxAmount.ToString("0.000") + "\n";
+                        text2.AppendLine(resource.resourceName + " : " + resource.amount.ToString("0.000") + " / " + resource.maxAmount.ToString("0.000"));
                     }
                 }
                 else
                 {
-                    text2 = "Part has no resources";
+                    text2.AppendLine("Part has no resources");
                 }
             }
-            GUILayout.Box(text2, boxStyle, GUILayout.Width(200), GUILayout.Height(100));
+
+            // Show science data
+            List<ScienceData> sciences = tooltipItem.GetSciences();
+            if (sciences.Count > 0)
+            {
+                foreach (ScienceData scienceData in sciences)
+                {
+                    text2.AppendLine(scienceData.title + " (Data=" + scienceData.dataAmount.ToString("0.00") + ",Value=" + scienceData.transmitValue.ToString("0.00") + ")");
+                }
+            }
+            else
+            {
+                text2.AppendLine("Part has no science data");
+            }
+
+
+            GUILayout.Box(text2.ToString(), boxStyle, GUILayout.Width(200), GUILayout.Height(100));
             GUILayout.EndVertical();
 
             GUILayout.EndHorizontal();
@@ -1011,55 +1200,72 @@ namespace KIS
                 }
             }
 
+            //Carriable
+            if (contextItem != null)
+            {
+                if (contextItem.carriable && invType == InventoryType.Eva)
+                {
+                    noAction = false;
+                    if (GUILayout.Button("Drop"))
+                    {
+                        contextItem.Drop();
+                        contextItem = null;
+                    }
+                }
+            }
+
             //Set stack quantity (editor only)
             if (contextItem != null && HighLogic.LoadedSceneIsEditor)
             {
-                noAction = false;
-                GUILayout.BeginHorizontal();
-                if (GUILayout.Button("-", buttonStyle, GUILayout.Width(20)))
+                if (contextItem.stackable)
                 {
-                    if (Input.GetKey(KeyCode.LeftShift))
-                    {
-                        if (contextItem.quantity - 10 > 0)
-                        {
-                            if (contextItem.StackRemove(10) == false) contextItem = null;
-                        }
-                    }
-                    else if (Input.GetKey(KeyCode.LeftControl))
-                    {
-                        if (contextItem.quantity - 100 > 0)
-                        {
-                            if (contextItem.StackRemove(100) == false) contextItem = null;
-                        }
-                    }
-                    else
-                    {
-                        if (contextItem.quantity - 1 > 0)
-                        {
-                            if (contextItem.StackRemove(1) == false) contextItem = null;
-                        }
-                    }
-                }
-                if (GUILayout.Button("+", buttonStyle, GUILayout.Width(20)))
-                {
-                    if (contextItem.stackable)
+                    noAction = false;
+                    GUILayout.BeginHorizontal();
+                    if (GUILayout.Button("-", buttonStyle, GUILayout.Width(20)))
                     {
                         if (Input.GetKey(KeyCode.LeftShift))
                         {
-                            contextItem.StackAdd(10);
+                            if (contextItem.quantity - 10 > 0)
+                            {
+                                if (contextItem.StackRemove(10) == false) contextItem = null;
+                            }
                         }
                         else if (Input.GetKey(KeyCode.LeftControl))
                         {
-                            contextItem.StackAdd(100);
+                            if (contextItem.quantity - 100 > 0)
+                            {
+                                if (contextItem.StackRemove(100) == false) contextItem = null;
+                            }
                         }
                         else
                         {
-                            contextItem.StackAdd(1);
+                            if (contextItem.quantity - 1 > 0)
+                            {
+                                if (contextItem.StackRemove(1) == false) contextItem = null;
+                            }
                         }
                     }
+                    if (GUILayout.Button("+", buttonStyle, GUILayout.Width(20)))
+                    {
+                        if (contextItem.stackable)
+                        {
+                            if (Input.GetKey(KeyCode.LeftShift))
+                            {
+                                contextItem.StackAdd(10);
+                            }
+                            else if (Input.GetKey(KeyCode.LeftControl))
+                            {
+                                contextItem.StackAdd(100);
+                            }
+                            else
+                            {
+                                contextItem.StackAdd(1);
+                            }
+                        }
+                    }
+                    if (contextItem != null) GUILayout.Label("Quantity : " + contextItem.quantity, GUILayout.Width(100));
+                    GUILayout.EndHorizontal();
                 }
-                if (contextItem != null) GUILayout.Label("Quantity : " + contextItem.quantity, GUILayout.Width(100));
-                GUILayout.EndHorizontal();
             }
 
             //Split
@@ -1148,6 +1354,10 @@ namespace KIS
                 KIS_Shared.EditField("equipSlot", ref debugItem.prefabModule.equipSlot);
                 KIS_Shared.EditField("equipable", ref debugItem.prefabModule.equipable);
                 KIS_Shared.EditField("stackable", ref debugItem.prefabModule.stackable);
+<<<<<<< HEAD
+=======
+                KIS_Shared.EditField("carriable", ref debugItem.prefabModule.carriable);
+>>>>>>> origin/develop
                 KIS_Shared.EditField("equipSkill(<blank>,RepairSkill,ScienceSkill,etc...)", ref debugItem.prefabModule.equipSkill);
                 KIS_Shared.EditField("equipRemoveHelmet", ref debugItem.prefabModule.equipRemoveHelmet);
                 KIS_Shared.EditField("volumeOverride(0 = auto)", ref debugItem.prefabModule.volumeOverride);
@@ -1181,8 +1391,8 @@ namespace KIS
 
         private void GuiInventory(int windowID)
         {
-            mouseOverIcon = false;
             int i = 0;
+            KIS_Item mouseOverItem = null;
             for (int x = 0; x < slotsY; x++)
             {
                 GUILayout.BeginHorizontal();
@@ -1233,24 +1443,25 @@ namespace KIS
                         // Mouse over a slot
                         if (Event.current.type == EventType.Repaint && textureRect.Contains(Event.current.mousePosition) && !KISAddonPickup.draggedPart)
                         {
-                            mouseOverIcon = true;
-                            tooltipItem = items[i];
-                            tooltipItem.icon.Rotate();
+                            mouseOverItem = items[i];
                         }
+
                         // Mouse up on used slot
                         if (Event.current.type == EventType.MouseUp && Event.current.button == 0 && textureRect.Contains(Event.current.mousePosition) && KISAddonPickup.draggedPart)
                         {
                             if (KISAddonPickup.draggedItem != items[i])
                             {
                                 ModuleKISInventory srcInventory = null;
-                                if (items[i].stackable && items[i].availablePart == KISAddonPickup.draggedPart.partInfo)
+                                if (items[i].stackable && items[i].availablePart.name == KISAddonPickup.draggedPart.partInfo.name)
                                 {
                                     // Stack similar item
                                     if (KISAddonPickup.draggedItem != null)
                                     {
                                         srcInventory = KISAddonPickup.draggedItem.inventory;
                                         // Part come from inventory
-                                        if (items[i].StackAdd(KISAddonPickup.draggedItem.quantity))
+                                        bool checkVolume = true;
+                                        if (srcInventory == this) checkVolume = false;
+                                        if (items[i].StackAdd(KISAddonPickup.draggedItem.quantity, checkVolume))
                                         {
                                             KISAddonPickup.draggedItem.Delete();
                                         }
@@ -1306,6 +1517,7 @@ namespace KIS
                             ModuleKISInventory srcInventory = null;
                             if (KISAddonPickup.draggedItem != null)
                             {
+<<<<<<< HEAD
                                 srcInventory = KISAddonPickup.draggedItem.inventory;
                                 if (VolumeAvailableFor(KISAddonPickup.draggedItem))
                                 {
@@ -1318,17 +1530,85 @@ namespace KIS
                                     movingItem.inventory = this;
                                     RefreshMassAndVolume();
                                     items[i].OnMove(srcInventory, this);
+=======
+                                if (draggedItemModule.carriable && invType == InventoryType.Eva && HighLogic.LoadedSceneIsFlight)
+                                {
+                                    carryPart = true;
+                                    foreach (KeyValuePair<int, KIS_Item> enumeratedItem in items)
+                                    {
+                                        if (enumeratedItem.Value.equipSlot == draggedItemModule.equipSlot && enumeratedItem.Value.carriable)
+                                        {
+                                            if (KISAddonPickup.draggedItem != null)
+                                            {
+                                                // Ignore self
+                                                if (enumeratedItem.Value == KISAddonPickup.draggedItem)
+                                                {
+                                                    break;
+                                                }
+                                            }
+                                            else
+                                            {
+                                                carryPart = false;
+                                                storePart = false;
+                                                ScreenMessages.PostScreenMessage("Another part is already carried on slot <" + draggedItemModule.equipSlot + ">", 5, ScreenMessageStyle.UPPER_CENTER);
+                                                break;
+                                            }
+                                        }
+                                    }
+>>>>>>> origin/develop
                                 }
                             }
                             else
                             {
+<<<<<<< HEAD
                                 if (VolumeAvailableFor(KISAddonPickup.draggedPart))
+=======
+                                if (KISAddonPickup.draggedItem != null)
+                                {
+                                    // Picked part from an inventory
+                                    if (carryPart)
+                                    {
+                                        MoveItem(KISAddonPickup.draggedItem, this, i);
+                                        if (!KISAddonPickup.draggedItem.equipped)
+                                        {
+                                            KISAddonPickup.draggedItem.Equip();
+                                        }
+                                    }
+                                    else
+                                    {
+                                        if (VolumeAvailableFor(KISAddonPickup.draggedItem))
+                                        {
+                                            MoveItem(KISAddonPickup.draggedItem, this, i);
+                                        }
+                                    }
+                                }
+                                else if (KISAddonPickup.draggedPart != this.part)
+>>>>>>> origin/develop
                                 {
                                     // Picked part from scene
                                     AddItem(KISAddonPickup.draggedPart, 1, i);
                                     if (HighLogic.LoadedSceneIsEditor == false)
                                     {
+<<<<<<< HEAD
                                         KISAddonPickup.draggedPart.Die();
+=======
+                                        KISAddonPickup.draggedPart.SendMessage("OnKISPartStored", SendMessageOptions.DontRequireReceiver);
+                                        KIS_Item carryItem = AddItem(KISAddonPickup.draggedPart, 1, i);
+                                        KISAddonPickup.draggedPart.Die();
+                                        carryItem.Equip();
+                                    }
+                                    else
+                                    {
+                                        if (VolumeAvailableFor(KISAddonPickup.draggedPart))
+                                        {
+                                            KISAddonPickup.draggedPart.SendMessage("OnKISPartStored", SendMessageOptions.DontRequireReceiver);
+                                            AddItem(KISAddonPickup.draggedPart, 1, i);
+                                            if (HighLogic.LoadedSceneIsEditor == false)
+                                            {
+                                                KISAddonPickup.draggedPart.Die();
+                                            }
+                                        }
+>>>>>>> origin/develop
                                     }
                                     items[i].OnMove(srcInventory, this);
                                 }
@@ -1338,6 +1618,22 @@ namespace KIS
                     i++;
                 }
                 GUILayout.EndHorizontal();
+            }
+            // item icon rotation
+            if (Event.current.type == EventType.Repaint)
+            {
+                if (mouseOverItem != null)
+                {
+                    mouseOverItem.icon.Rotate();
+                }
+                if (mouseOverItem != tooltipItem)
+                {
+                    if (tooltipItem != null)
+                    {
+                        tooltipItem.icon.ResetPos();
+                    }
+                    tooltipItem = mouseOverItem;
+                }
             }
         }
 

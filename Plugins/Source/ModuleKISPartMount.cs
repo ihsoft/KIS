@@ -7,21 +7,13 @@ using UnityEngine;
 
 namespace KIS
 {
-    public class ModuleKISPartMount : ModuleKISPartDrag
+    public class ModuleKISPartMount : PartModule
     {
-        [KSPField]
-        public string bayNodeName = "top";
         [KSPField]
         public string sndStorePath = "KIS/Sounds/containerMount";
         [KSPField]
         public bool allowRelease = true;
         public FXGroup sndFxStore;
-        public List<string> allowedPartNames = new List<string>();
-
-        public override string GetInfo()
-        {
-            return "Releasable : " + allowRelease;
-        }
 
         public override void OnStart(StartState state)
         {
@@ -53,34 +45,59 @@ namespace KIS
             sndFxStore.audio.loop = false;
             sndFxStore.audio.playOnAwake = false;
             sndFxStore.audio.clip = GameDatabase.Instance.GetAudioClip(sndStorePath);
-            dragIconPath = "KIS/Textures/mount";
-            dragText = "Mount";
-            dragText2 = "Release mouse to mount";
+        }
 
-            allowedPartNames.Clear();
-            ConfigNode node = KIS_Shared.GetBaseConfigNode(this);
-            foreach (string partName in node.GetValues("allowedPartName"))
+        public bool PartIsMounted(Part mountedPart)
+        {
+            foreach (KeyValuePair<AttachNode, List<string>> mount in GetMounts())
             {
-                allowedPartNames.Add(partName.Replace('_', '.'));
+                if (mount.Key.attachedPart)
+                {
+                    if (mount.Key.attachedPart == mountedPart)
+                    {
+                        return true;
+                    }
+                }
             }
+            return false;
+        }
+
+        public Dictionary<AttachNode, List<string>> GetMounts()
+        {
+            Dictionary<AttachNode, List<string>> mounts = new Dictionary<AttachNode, List<string>>();
+            ConfigNode node = KIS_Shared.GetBaseConfigNode(this);
+            foreach (ConfigNode mountNode in node.GetNodes("MOUNT"))
+            {
+                if (mountNode.HasValue("attachNode") && mountNode.HasValue("allowedPartName"))
+                {
+                    string attachNodeName = mountNode.GetValue("attachNode");
+                    AttachNode an = this.part.findAttachNode(attachNodeName);
+                    if (an == null)
+                    {
+                        KIS_Shared.DebugError("GetMountNodes - Node : " + attachNodeName + " not found !");
+                        continue;
+                    }
+
+                    List<string> allowedPartNames = new List<string>();
+                    foreach(string partName in mountNode.GetValues("allowedPartName"))
+                    {
+                        allowedPartNames.Add(partName.Replace('_', '.'));
+                    }
+                    mounts.Add(an, allowedPartNames);
+                }
+            }
+            return mounts;
         }
 
         [KSPEvent(name = "ContextMenuRelease", active = true, guiActive = true, guiActiveUnfocused = true, guiName = "Release")]
         public void ContextMenuRelease()
         {
-            AttachNode bayNode = this.part.findAttachNode(bayNodeName);
-            if (bayNode == null)
+            foreach (KeyValuePair<AttachNode, List<string>> mount in GetMounts())
             {
-                KIS_Shared.DebugError("(PartBay) Node : " + bayNodeName + " not found !");
-                return;
-            }
-            if (bayNode.attachedPart)
-            {
-                bayNode.attachedPart.decouple();
-            }
-            else
-            {
-                ScreenMessages.PostScreenMessage("There is nothing to release", 2, ScreenMessageStyle.UPPER_CENTER);
+                if (mount.Key.attachedPart)
+                {
+                    mount.Key.attachedPart.decouple();
+                }
             }
         }
 
@@ -92,70 +109,5 @@ namespace KIS
                 ContextMenuRelease();
             }
         }
-
-        public Part GetPartMounted()
-        {
-            AttachNode bayNode = this.part.findAttachNode(bayNodeName);
-            return bayNode.attachedPart;
-        }
-
-        public override void OnPartDragged(Part draggedPart)
-        {
-            AttachNode bayNode = this.part.findAttachNode(bayNodeName);
-            if (bayNode == null)
-            {
-                KIS_Shared.DebugError("Node : " + bayNodeName + " not found !");
-                return;
-            }
-            KIS_Shared.AddNodeTransform(this.part, bayNode);
-
-            if (bayNode.attachedPart)
-            {
-                ScreenMessages.PostScreenMessage("A part is already stored", 2, ScreenMessageStyle.UPPER_CENTER);
-                KIS_Shared.DebugWarning("(PartMount) This node are used");
-                return;
-            }
-
-            if (!KISAddonPickup.instance.HasActivePickupInRange(bayNode.nodeTransform.position))
-            {
-                ScreenMessages.PostScreenMessage("Part is too far", 2, ScreenMessageStyle.UPPER_CENTER);
-                KIS_Shared.DebugWarning("(PartMount) Too far");
-                return;
-            }
-
-            // Check if part is allowed
-            if (!allowedPartNames.Contains(draggedPart.partInfo.name))
-            {
-                ScreenMessages.PostScreenMessage("Dragged part is not allowed", 2, ScreenMessageStyle.UPPER_CENTER);
-                KIS_Shared.DebugWarning("(PartMount) Dragged part is not allowed !");
-                return;
-            }
-
-            AttachNode draggedPartAn = draggedPart.findAttachNode("bottom");
-            if (draggedPartAn == null)
-            {
-                KIS_Shared.DebugError("(PartMount) Dragged part node not found !");
-                return;
-            }
-            KIS_Shared.DebugLog("(PartMount) Decouple part if needed...");
-            KIS_Shared.DecoupleFromAll(draggedPart);
-
-            KIS_Shared.DebugLog("(PartMount) Add node transform if not exist...");
-            KIS_Shared.AddNodeTransform(draggedPart, draggedPartAn);
-
-            KIS_Shared.DebugLog("(PartMount) Move part...");
-            KIS_Shared.MoveAlign(draggedPart.transform, draggedPartAn.nodeTransform, bayNode.nodeTransform);
-            draggedPart.transform.rotation *= Quaternion.Euler(bayNode.orientation);
-
-            //Couple part with bay
-            KIS_Shared.DebugLog("(PartMount) Couple part with bay...");
-            draggedPart.Couple(this.part);
-            bayNode.attachedPart = draggedPart;
-
-            sndFxStore.audio.Play();
-        }
-
-
-
     }
 }

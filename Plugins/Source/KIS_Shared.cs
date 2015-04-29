@@ -12,6 +12,7 @@ namespace KIS
     {
         public static bool debugLog = true;
         public static string bipWrongSndPath = "KIS/Sounds/bipwrong";
+        public delegate void OnPartCreated();
 
         public static void DebugLog(string text)
         {
@@ -39,6 +40,23 @@ namespace KIS
             }
         }
 
+        public static Part GetPartUnderCursor()
+        {
+            RaycastHit hit;
+            Part part = null;
+            Camera cam = null;
+            if (HighLogic.LoadedSceneIsEditor) cam = EditorLogic.fetch.editorCamera;
+            if (HighLogic.LoadedSceneIsFlight) cam = FlightCamera.fetch.mainCamera;
+
+            if (Physics.Raycast(cam.ScreenPointToRay(Input.mousePosition), out hit, 1000, 557059))
+            {
+                //part = hit.transform.gameObject.GetComponent<Part>();
+                part = (Part)UIPartActionController.GetComponentUpwards("Part", hit.collider.gameObject);
+            }
+            return part;
+        }
+
+
         public static bool createFXSound(Part part, FXGroup group, string sndPath, bool loop, float maxDistance = 30f)
         {
             group.audio = part.gameObject.AddComponent<AudioSource>();
@@ -64,9 +82,23 @@ namespace KIS
 
         public static void DecoupleFromAll(Part p)
         {
+            p.SendMessage("OnKISDecoupleFromAll", SendMessageOptions.DontRequireReceiver);
             if (p.parent)
             {
                 p.decouple();
+                //name container if needed
+                ModuleKISInventory inv = p.GetComponent<ModuleKISInventory>();
+                if (inv)
+                {
+                    if (inv.invName != "")
+                    {
+                        p.vessel.vesselName = inv.part.partInfo.title + " | " + inv.invName;
+                    }
+                    else
+                    {
+                        p.vessel.vesselName = inv.part.partInfo.title;
+                    }
+                }
             }
             if (p.children.Count != 0)
             {
@@ -89,19 +121,29 @@ namespace KIS
 
         public static ConfigNode PartSnapshot(Part part)
         {
-            // Seems fine with a null vessel in 0.23 if some empty lists are allocated below
-            ProtoPartSnapshot snapshot = new ProtoPartSnapshot(part, null);
-
             ConfigNode node = new ConfigNode("PART");
-
+            ProtoPartSnapshot snapshot = null;
+            try
+            {
+                // Seems fine with a null vessel in 0.23 if some empty lists are allocated below
+                snapshot = new ProtoPartSnapshot(part, null);
+            }
+            catch
+            {
+                // workaround for command module
+                KIS_Shared.DebugWarning("Error during part snapshot, spawning part for snapshot (workaround for command module)");
+                Part p = (Part)UnityEngine.Object.Instantiate(part.partInfo.partPrefab);
+                p.gameObject.SetActive(true);
+                p.name = part.partInfo.name;
+                p.InitializeModules();
+                snapshot = new ProtoPartSnapshot(p, null);
+                UnityEngine.Object.Destroy(p.gameObject);
+            }
             snapshot.attachNodes = new List<AttachNodeSnapshot>();
             snapshot.srfAttachNode = new AttachNodeSnapshot("attach,-1");
             snapshot.symLinks = new List<ProtoPartSnapshot>();
             snapshot.symLinkIdxs = new List<int>();
-
             snapshot.Save(node);
-
-            //node.AddValue("kas_total_mass", part.mass + part.GetResourceMass());
 
             // Prune unimportant data
             node.RemoveValues("parent");
@@ -264,16 +306,16 @@ namespace KIS
             return newPart;
         }*/
 
-        
-        public static Part CreatePart(AvailablePart avPart, Vector3 position, Quaternion rotation, Part fromPart, bool decouple = true)
+
+
+        public static Part CreatePart(AvailablePart avPart, Vector3 position, Quaternion rotation, Part fromPart, Part tgtPart = null, string srcAttachNodeID = null, AttachNode tgtAttachNode = null, OnPartCreated onPartCreated = null)
         {
             ConfigNode partNode = new ConfigNode();
             PartSnapshot(avPart.partPrefab).CopyTo(partNode);
-            //return CreatePart(partNode, position, rotation, fromPart, decouple);
             return CreatePart(partNode, position, rotation, fromPart);
         }
-        
-        public static Part CreatePart(ConfigNode partConfig, Vector3 position, Quaternion rotation, Part fromPart, bool decouple = true)
+
+        public static Part CreatePart(ConfigNode partConfig, Vector3 position, Quaternion rotation, Part fromPart, Part tgtPart = null, string srcAttachNodeID = null, AttachNode tgtAttachNode = null, OnPartCreated onPartCreated = null)
         {
             // Create and add part to a vessel and decouple it
             ConfigNode node_copy = new ConfigNode();
@@ -307,65 +349,150 @@ namespace KIS
             // Request initialization as nonphysical to prevent explosions and velocity reset at high velocity (ex : orbiting moon)
             newPart.physicalSignificance = Part.PhysicalSignificance.NONE;
 
-            newPart.StartCoroutine(WaitAndUnpack(newPart, decouple, fromPart));
+            newPart.StartCoroutine(DelayedCreation(newPart, position, rotation, fromPart, tgtPart, srcAttachNodeID, tgtAttachNode, onPartCreated));
 
             return newPart;
         }
 
-        private static IEnumerator<YieldInstruction> WaitAndUnpack(Part part, bool decouple, Part fromPart)
+        private static IEnumerator DelayedCreation(Part newPart, Vector3 position, Quaternion rotation, Part fromPart, Part tgtPart = null, string srcAttachNodeID = null, AttachNode tgtAttachNode = null, OnPartCreated onPartCreated = null)
         {
-            while (!part.started && part.State != PartStates.DEAD)
+            Vector3 toPartLocalPos = Vector3.zero;
+            Quaternion toPartLocalRot = Quaternion.identity;
+            if (tgtPart)
             {
+                toPartLocalPos = tgtPart.transform.InverseTransformPoint(position);
+                toPartLocalRot = Quaternion.Inverse(tgtPart.transform.rotation) * rotation;
+            }
+
+            while (!newPart.started && newPart.State != PartStates.DEAD)
+            {
+                KIS_Shared.DebugLog("CreatePart - Waiting initialization of the part...");
+                if (tgtPart)
+                {
+                    newPart.transform.position = tgtPart.transform.TransformPoint(toPartLocalPos);
+                    newPart.transform.rotation = tgtPart.transform.rotation * toPartLocalRot;
+                }
+                else
+                {
+                    newPart.transform.position = position;
+                    newPart.transform.rotation = rotation;
+                }
                 yield return null;
             }
 
-            if (part.vessel && part.State != PartStates.DEAD)
+            newPart.PromoteToPhysicalPart();
+            if (newPart.packed && !newPart.vessel.packed)
             {
-                //FinishDelayedCreation(part, re_enable);
-                part.PromoteToPhysicalPart();
-                if (part.packed && !part.vessel.packed)
-                {
-                    KIS_Shared.DebugLog("WaitAndUnpack - Part is packed");
-                    part.Unpack();
-                    part.InitializeModules();
-                    part.ResumeVelocity();
-                }
-          
-                GameEvents.onVesselWasModified.Fire(part.vessel);
-                if (decouple)
-                {
-                    part.decouple();
-                }
-                part.rigidbody.velocity = fromPart.rigidbody.velocity;
-                part.rigidbody.angularVelocity = fromPart.rigidbody.angularVelocity;
-                part.vessel.vesselType = VesselType.Unknown;
-                GameEvents.onVesselWasModified.Fire(part.vessel);
+                KIS_Shared.DebugLog("CreatePart - Part is packed, unpacking it...");
+                newPart.Unpack();
+                newPart.InitializeModules();
+                newPart.ResumeVelocity();
             }
-        }
-   
-        public static void MoveAlign(Transform source, Transform childNode, RaycastHit hit, Quaternion adjust)
-        {
-            Vector3 refDirection = Vector3.up;
-            Vector3 alterDirection = Vector3.forward;
 
-            Vector3 refDir = hit.transform.TransformDirection(refDirection);
-            Vector3 alterDir = hit.transform.TransformDirection(alterDirection);
-            Quaternion rotation;
+            GameEvents.onVesselWasModified.Fire(newPart.vessel);
 
-            if (hit.normal == refDir)
+            newPart.decouple();
+
+            if (tgtPart)
             {
-                rotation = Quaternion.LookRotation(hit.normal, alterDir);
-            }
-            else if (hit.normal == -refDir)
-            {
-                rotation = Quaternion.LookRotation(hit.normal, -alterDir);
+                newPart.transform.position = tgtPart.transform.TransformPoint(toPartLocalPos);
+                newPart.transform.rotation = tgtPart.transform.rotation * toPartLocalRot;
+                newPart.rigidbody.velocity = tgtPart.rigidbody.velocity;
+                newPart.rigidbody.angularVelocity = tgtPart.rigidbody.angularVelocity;
             }
             else
             {
-                rotation = Quaternion.LookRotation(hit.normal, refDir);
+                newPart.transform.position = position;
+                newPart.transform.rotation = rotation;
+                newPart.rigidbody.velocity = fromPart.rigidbody.velocity;
+                newPart.rigidbody.angularVelocity = fromPart.rigidbody.angularVelocity;
             }
 
-            MoveAlign(source, childNode, hit.point, rotation * adjust);
+            GameEvents.onVesselWasModified.Fire(newPart.vessel);
+
+            if (tgtPart)
+            {
+                KIS_Shared.DebugLog("CreatePart - Coupling part...");
+                CouplePart(newPart, tgtPart, srcAttachNodeID, tgtAttachNode);
+            }
+            else
+            {
+                newPart.vessel.vesselType = VesselType.Unknown;
+                //name container
+                ModuleKISInventory inv = newPart.GetComponent<ModuleKISInventory>();
+                if (inv)
+                {
+                    if (inv.invName != "")
+                    {
+                        newPart.vessel.vesselName = inv.part.partInfo.title + " | " + inv.invName;
+                    }
+                    else
+                    {
+                        newPart.vessel.vesselName = inv.part.partInfo.title;
+                    }
+                }
+            }
+            if (onPartCreated != null)
+            {
+                onPartCreated();
+            }
+        }
+
+        public static void CouplePart(Part srcPart, Part tgtPart, string srcAttachNodeID = null, AttachNode tgtAttachNode = null)
+        {
+            GameEvents.onActiveJointNeedUpdate.Fire(srcPart.vessel);
+            GameEvents.onActiveJointNeedUpdate.Fire(tgtPart.vessel);
+
+            // Node links
+            if (srcAttachNodeID != null)
+            {
+                if (srcAttachNodeID == "srfAttach")
+                {
+                    KIS_Shared.DebugLog("Attach type : " + srcPart.srfAttachNode.nodeType + " | ID : " + srcPart.srfAttachNode.id);
+                    srcPart.attachMode = AttachModes.SRF_ATTACH;
+                    srcPart.srfAttachNode.attachedPart = tgtPart;
+                }
+                else
+                {
+                    AttachNode srcAttachNode = srcPart.findAttachNode(srcAttachNodeID);
+                    if (srcAttachNode != null)
+                    {
+                        KIS_Shared.DebugLog("Attach type : " + srcPart.srfAttachNode.nodeType + " | ID : " + srcAttachNode.id);
+                        srcPart.attachMode = AttachModes.STACK;
+                        srcAttachNode.attachedPart = tgtPart;
+                        if (tgtAttachNode != null)
+                        {
+                            tgtAttachNode.attachedPart = srcPart;
+                        }
+                    }
+                    else
+                    {
+                        KIS_Shared.DebugError("Source attach node not found !");
+                    }
+                }
+            }
+            else
+            {
+                KIS_Shared.DebugWarning("Missing source attach node !");
+            }
+
+            srcPart.Couple(tgtPart);
+
+            KIS_Shared.ResetCollisionEnhancer(srcPart);
+            GameEvents.onVesselWasModified.Fire(tgtPart.vessel);
+        }
+
+        public static void MoveAlign(Transform source, Transform childNode, RaycastHit hit, Quaternion adjust)
+        {
+            Vector3 refDir = hit.transform.TransformDirection(Vector3.up);
+            Quaternion rotation = Quaternion.LookRotation(hit.normal, refDir);
+            source.rotation = (rotation * adjust) * childNode.localRotation;
+            source.position = source.position - (childNode.position - hit.point);
+        }
+
+        public static void MoveAlign(Transform source, Transform childNode, Transform target, Quaternion adjust)
+        {
+            MoveAlign(source, childNode, target.position, target.rotation * adjust);
         }
 
         public static void MoveAlign(Transform source, Transform childNode, Transform target)
@@ -375,7 +502,7 @@ namespace KIS
 
         public static void MoveAlign(Transform source, Transform childNode, Vector3 targetPos, Quaternion targetRot)
         {
-            source.rotation = targetRot * Quaternion.Inverse(childNode.localRotation);
+            source.rotation = targetRot * childNode.localRotation;
             source.position = source.position - (childNode.position - targetPos);
         }
 
@@ -396,7 +523,7 @@ namespace KIS
         {
             Bounds[] rendererBounds = PartGeometryUtil.GetRendererBounds(partPrefab);
             Vector3 boundsSize = PartGeometryUtil.MergeBounds(rendererBounds, partPrefab.transform).size;
-            float volume = boundsSize.x * boundsSize.y * boundsSize.z;           
+            float volume = boundsSize.x * boundsSize.y * boundsSize.z;
             return volume * 1000;
         }
 
@@ -424,29 +551,63 @@ namespace KIS
             return null;
         }
 
-        public static void AddNodeTransform(Part p, AttachNode attachNode)
+        public static Quaternion GetNodeRotation(AttachNode attachNode)
         {
-            Quaternion rotation = Quaternion.LookRotation(attachNode.orientation, Vector3.up);
-
+            Quaternion rotation;
+            rotation = Quaternion.LookRotation(attachNode.orientation);
+            // A fix for The Not-Rockomax Micronode if needed (orientation is wrong, squad need to fix it)
+            /*
             if (attachNode.nodeType == AttachNode.NodeType.Surface)
             {
-                rotation = Quaternion.Inverse(rotation);
+                rotation = Quaternion.LookRotation(attachNode.orientation);
             }
-
-            if (attachNode.nodeTransform == null)
+            else if (attachNode.orientation == Vector3.up || attachNode.orientation == Vector3.down)
             {
-                Transform nodeTransform = new GameObject("KASNodeTransf").transform;
-                nodeTransform.parent = p.transform;
-                nodeTransform.localPosition = attachNode.position;
-                nodeTransform.localRotation = rotation;
-                attachNode.nodeTransform = nodeTransform;
+                rotation = Quaternion.LookRotation(attachNode.orientation);
+            }
+            else if (attachNode.orientation == Vector3.left || attachNode.orientation == Vector3.right)
+            {
+                rotation = Quaternion.Inverse(Quaternion.LookRotation(attachNode.orientation));
             }
             else
             {
-                attachNode.nodeTransform.localPosition = attachNode.position;
-                attachNode.nodeTransform.localRotation = rotation;
-                KIS_Shared.DebugLog("AddTransformToAttachNode - Node : " + attachNode.id + " already have a nodeTransform, only update");
+                rotation = Quaternion.LookRotation(-attachNode.orientation);
+            }*/
+            return rotation;
+        }
+
+        public static void AssignAttachIcon(Part part, AttachNode node, Color iconColor, string name = null)
+        {
+            if (!node.icon)
+            {
+                node.icon = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                if (node.icon.collider) UnityEngine.Object.DestroyImmediate(node.icon.collider);
+                if (node.icon.renderer)
+                {
+                    node.icon.renderer.material = new Material(Shader.Find("Transparent/Diffuse"));
+                    iconColor.a = 0.5f;
+                    node.icon.renderer.material.color = iconColor;
+                }
+                node.icon.transform.parent = part.transform;
+                if (name != null) node.icon.name = name;
+                double num;
+                if (node.size == 0)
+                {
+                    num = (double)node.size + 0.5;
+                }
+                else num = (double)node.size;
+                node.icon.transform.localScale = Vector3.one * node.radius * (float)num;
+                node.icon.transform.localPosition = node.position;
+                node.icon.transform.localRotation = KIS_Shared.GetNodeRotation(node);
             }
+            // NodeTransform
+            if (node.nodeTransform == null)
+            {
+                node.nodeTransform = new GameObject("KISNodeTransf").transform;
+                node.nodeTransform.parent = part.transform;
+            }
+            node.nodeTransform.localPosition = node.position;
+            node.nodeTransform.localRotation = KIS_Shared.GetNodeRotation(node);
         }
 
         public static void EditField(string label, ref bool value, int maxLenght = 50)

@@ -44,6 +44,11 @@
     <Compile Include="CompatibilityChecker.cs" />
     <Compile Include="KIS_IconViewer.cs" />
     <Compile Include="ModuleKISItemBook.cs" />
+<<<<<<< HEAD
+=======
+    <Compile Include="ModuleKISItemStatic.cs" />
+    <Compile Include="ModuleKISItemEvaTweaker.cs" />
+>>>>>>> origin/develop
     <Compile Include="ModuleKISPickup.cs" />
     <Compile Include="ModuleKISItemSoundPlayer.cs" />
     <Compile Include="KISAddonEditorFilter.cs" />

@@ -13,6 +13,8 @@ namespace KIS
         [KSPField]
         public float attachMaxMass = 0.5f;
         [KSPField]
+        public bool allowStack = false;
+        [KSPField]
         public string attachSndPath = "KIS/Sounds/attach";
         [KSPField]
         public string detachSndPath = "KIS/Sounds/detach";
@@ -24,7 +26,10 @@ namespace KIS
 
         public override string GetInfo()
         {
-            return String.Format("<b>Maximum mass</b>: {0:F0}", attachMaxMass);
+            var sb = new StringBuilder();
+            sb.AppendFormat("<b>Maximum mass</b>: {0:F0}", attachMaxMass); sb.AppendLine();
+            sb.AppendFormat("<b>Stacking</b>", allowStack); sb.AppendLine();
+            return sb.ToString();
         }
 
         public override void OnItemUse(KIS_Item item, KIS_Item.UseFrom useFrom)
@@ -37,12 +42,13 @@ namespace KIS
                     item.PlaySound(KIS_Shared.bipWrongSndPath);
                     ScreenMessages.PostScreenMessage("Use this tool while in drop mode to attach / Use grab key to detach", 5, ScreenMessageStyle.UPPER_CENTER);
                 }
-                if (KISAddonPointer.isRunning)
+                if (KISAddonPointer.isRunning && KISAddonPointer.pointerTarget != KISAddonPointer.PointerTarget.PartMount)
                 {
                     float attachPartMass = KISAddonPointer.partToAttach.mass + KISAddonPointer.partToAttach.GetResourceMass();
                     if (attachPartMass < attachMaxMass)
                     {
                         KISAddonPickup.instance.pointerMode = KISAddonPickup.PointerMode.Attach;
+                        KISAddonPointer.allowStack = allowStack;
                         item.PlaySound(changeModeSndPath);
                     }
                     else
@@ -58,6 +64,7 @@ namespace KIS
                 if (KISAddonPointer.isRunning && KISAddonPickup.instance.pointerMode == KISAddonPickup.PointerMode.Attach)
                 {
                     KISAddonPickup.instance.pointerMode = KISAddonPickup.PointerMode.Drop;
+                    KISAddonPointer.allowStack = false;
                     item.PlaySound(changeModeSndPath);
                 }
             }
