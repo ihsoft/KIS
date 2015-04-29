@@ -19,11 +19,8 @@ namespace KIS
         public bool usableFromContainer = false;
         public bool usableFromPod = false;
         public bool usableFromEditor = false;
-<<<<<<< HEAD
-=======
         public bool carriable = false;
         public bool allowAttachOnStatic = false;
->>>>>>> origin/develop
         public float volume;
         public float cost;
         public bool equipable = false;
@@ -88,8 +85,6 @@ namespace KIS
             }
         }
 
-<<<<<<< HEAD
-=======
         public bool carried
         {
             get
@@ -102,17 +97,8 @@ namespace KIS
             }
         }
 
->>>>>>> origin/develop
         public int slot { get { return inventory.items.FirstOrDefault(x => x.Value == this).Key; } }
         public float stackVolume { get { return volume * quantity; } }
-<<<<<<< HEAD
-        public float stackDryMass { get { return availablePart.partPrefab.mass * quantity; } }
-        public float stackResourceMass { get { return availablePart.partPrefab.GetResourceMass() * quantity; } }
-        public float stackMass { get { return stackDryMass + stackResourceMass; } }
-
-        public KIS_Item(AvailablePart availablePart, ConfigNode partNode, ModuleKISInventory inventory, float quantity = 1)
-        {
-=======
         public float dryMass { get { return availablePart.partPrefab.mass; } }
         public float stackDryMass { get { return dryMass * quantity; } }
         public float totalCost { get { return (cost + contentCost) * quantity; } }
@@ -121,7 +107,6 @@ namespace KIS
         public KIS_Item(AvailablePart availablePart, ConfigNode itemNode, ModuleKISInventory inventory, float quantity = 1) // Part from save
         {
             // Get part node
->>>>>>> origin/develop
             this.availablePart = availablePart;
             this.partNode = new ConfigNode();
             ConfigNode savedPartNode = itemNode.GetNode("PART");
@@ -138,15 +123,11 @@ namespace KIS
 
         public KIS_Item(Part part, ModuleKISInventory inventory, float quantity = 1) // New part from scene
         {
-<<<<<<< HEAD
-            this.availablePart = part.partInfo;
-=======
             // Get part node
             this.availablePart = PartLoader.getPartInfoByName(part.partInfo.name);
             this.partNode = new ConfigNode();
             KIS_Shared.PartSnapshot(part).CopyTo(this.partNode);
             // init config
->>>>>>> origin/develop
             this.InitConfig(availablePart, inventory, quantity);
             // Get mass
             this.resourceMass = part.GetResourceMass();
@@ -180,11 +161,8 @@ namespace KIS
                 this.usableFromContainer = prefabModule.usableFromContainer;
                 this.usableFromPod = prefabModule.usableFromPod;
                 this.usableFromEditor = prefabModule.usableFromEditor;
-<<<<<<< HEAD
-=======
                 this.carriable = prefabModule.carriable;
                 this.allowAttachOnStatic = prefabModule.allowAttachOnStatic;
->>>>>>> origin/develop
             }
             int nonStackableModule = 0;
             foreach (PartModule pModule in availablePart.partPrefab.Modules)
@@ -204,7 +182,7 @@ namespace KIS
                 KIS_Shared.DebugLog("Part name present in settings.cfg (node StackableItemOverride), force item as stackable");
                 this.stackable = true;
             }
-           }
+        }
 
         public void OnSave(ConfigNode node)
         {
@@ -423,10 +401,7 @@ namespace KIS
         public void Equip()
         {
             if (!prefabModule) return;
-<<<<<<< HEAD
-=======
             KIS_Shared.DebugLog("Equip item " + this.availablePart.name);
->>>>>>> origin/develop
 
             //Check skill if needed
             if (prefabModule.equipSkill != null && prefabModule.equipSkill != "")
@@ -448,23 +423,22 @@ namespace KIS
                 }
             }
 
+            // Check if already carried
             if (equipSlot != null)
             {
                 KIS_Item equippedItem = inventory.GetEquipedItem(equipSlot);
                 if (equippedItem != null)
                 {
-<<<<<<< HEAD
-=======
                     if (equippedItem.carriable)
                     {
                         ScreenMessages.PostScreenMessage("Cannot equip item, slot <" + equipSlot + "> already used for carrying " + equippedItem.availablePart.title, 5f, ScreenMessageStyle.UPPER_CENTER);
                         PlaySound(KIS_Shared.bipWrongSndPath);
                         return;
                     }
->>>>>>> origin/develop
                     equippedItem.Unequip();
                 }
             }
+
             if (equipMode == EquipMode.Model)
             {
                 GameObject modelGo = availablePart.partPrefab.FindModelTransform("model").gameObject;

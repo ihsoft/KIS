@@ -465,20 +465,8 @@ namespace KIS
             }
             else
             {
-<<<<<<< HEAD
-                AvailablePart avPart = PartLoader.getPartInfoByName(this.part.name);
-                if (avPart != null)
-                {
-                    this.part.mass = avPart.partPrefab.mass;
-                }
-                else
-                {
-                    this.part.mass = this.part.partInfo.partPrefab.mass;
-                }
-=======
                 AvailablePart avPart = PartLoader.getPartInfoByName(this.part.partInfo.name);
                 this.part.mass = avPart.partPrefab.mass + this.part.GetResourceMass();
->>>>>>> origin/develop
             }
             // Update mass
             foreach (ModuleKISInventory inventory in this.part.GetComponents<ModuleKISInventory>())
@@ -571,6 +559,30 @@ namespace KIS
             return item;
         }
 
+        public static void MoveItem(KIS_Item srcItem, ModuleKISInventory tgtInventory, int tgtSlot)
+        {
+            ModuleKISInventory srcInventory = srcItem.inventory;
+            int srcSlot = srcItem.slot;
+            tgtInventory.items.Add(tgtSlot, srcItem);
+            srcItem.inventory.items.Remove(srcSlot);
+            srcItem.inventory = tgtInventory;
+            tgtInventory.items[tgtSlot].OnMove(srcInventory, tgtInventory);
+            srcInventory.RefreshMassAndVolume();
+            tgtInventory.RefreshMassAndVolume();
+        }
+
+        public void MoveItems(Dictionary<int, KIS_Item> srcItems, ModuleKISInventory destInventory)
+        {
+            destInventory.items.Clear();
+            destInventory.items = new Dictionary<int, KIS_Item>(srcItems);
+            foreach (KeyValuePair<int, KIS_Item> item in destInventory.items)
+            {
+                item.Value.inventory = destInventory;
+            }
+            srcItems.Clear();
+            srcItems = null;
+        }
+
         public void DeleteItem(int slot)
         {
             if (items.ContainsKey(slot))
@@ -616,18 +628,6 @@ namespace KIS
             return -1;
         }
 
-        public void MoveItems(Dictionary<int, KIS_Item> srcItems, ModuleKISInventory destInventory)
-        {
-            destInventory.items.Clear();
-            destInventory.items = new Dictionary<int, KIS_Item>(srcItems);
-            foreach (KeyValuePair<int, KIS_Item> item in destInventory.items)
-            {
-                item.Value.inventory = destInventory;
-            }
-            srcItems.Clear();
-            srcItems = null;
-        }
-
         public float GetContentMass()
         {
             float contentMass = 0;
@@ -643,9 +643,6 @@ namespace KIS
             float contentVolume = 0;
             foreach (KeyValuePair<int, KIS_Item> item in items)
             {
-<<<<<<< HEAD
-                contentVolume += item.Value.stackVolume;
-=======
                 if (item.Value.carriable && invType == InventoryType.Eva)
                 {
                     contentVolume += 0;
@@ -655,7 +652,6 @@ namespace KIS
                     contentVolume += item.Value.stackVolume;
                 }
 
->>>>>>> origin/develop
             }
             return contentVolume;
         }
@@ -768,11 +764,7 @@ namespace KIS
                 }
                 clickThroughLocked = false;
                 if (HighLogic.LoadedSceneIsFlight) InputLockManager.RemoveControlLock("KISInventoryFlightLock");
-<<<<<<< HEAD
-                if (HighLogic.LoadedSceneIsEditor) EditorLogic.fetch.Unlock("KISInventoryEditorLock");         
-=======
                 if (HighLogic.LoadedSceneIsEditor) InputLockManager.RemoveControlLock("KISInventoryEditorLock");
->>>>>>> origin/develop
             }
             else
             {
@@ -797,13 +789,8 @@ namespace KIS
                     item.Value.EnableIcon(itemIconResolution);
                 }
                 icon = new KIS_IconViewer(this.part, selfIconResolution);
-<<<<<<< HEAD
-                
-                if (OpenInventory == 1 && guiMainWindowPos.x == defaultFlightPos.x && guiMainWindowPos.y == defaultFlightPos.y)
-=======
 
                 if (GetAllOpenInventories().Count == 1 && guiMainWindowPos.x == defaultFlightPos.x && guiMainWindowPos.y == defaultFlightPos.y)
->>>>>>> origin/develop
                 {
                     guiMainWindowPos.y += 250;
                 }
@@ -898,11 +885,6 @@ namespace KIS
 
             GUIStyles();
 
-<<<<<<< HEAD
-            guiMainWindowPos = GUILayout.Window(GetInstanceID(), guiMainWindowPos, GuiMain, "Inventory");
-            
-            if (mouseOverIcon)
-=======
             // Set title
             string title = this.part.partInfo.title;
             if (invType == InventoryType.Pod)
@@ -932,7 +914,6 @@ namespace KIS
             guiMainWindowPos = GUILayout.Window(GetInstanceID(), guiMainWindowPos, GuiMain, title);
 
             if (tooltipItem != null)
->>>>>>> origin/develop
             {
                 if (contextItem == null)
                 {
@@ -990,7 +971,7 @@ namespace KIS
                 }
             }
         }
-        
+
         private void GuiMain(int windowID)
         {
             GUIStyle guiStyleTitle = new GUIStyle(GUI.skin.label);
@@ -1354,10 +1335,7 @@ namespace KIS
                 KIS_Shared.EditField("equipSlot", ref debugItem.prefabModule.equipSlot);
                 KIS_Shared.EditField("equipable", ref debugItem.prefabModule.equipable);
                 KIS_Shared.EditField("stackable", ref debugItem.prefabModule.stackable);
-<<<<<<< HEAD
-=======
                 KIS_Shared.EditField("carriable", ref debugItem.prefabModule.carriable);
->>>>>>> origin/develop
                 KIS_Shared.EditField("equipSkill(<blank>,RepairSkill,ScienceSkill,etc...)", ref debugItem.prefabModule.equipSkill);
                 KIS_Shared.EditField("equipRemoveHelmet", ref debugItem.prefabModule.equipRemoveHelmet);
                 KIS_Shared.EditField("volumeOverride(0 = auto)", ref debugItem.prefabModule.volumeOverride);
@@ -1411,7 +1389,11 @@ namespace KIS
                                 // Keyboard shortcut
                                 int slotNb = i + 1;
                                 GUI.Label(textureRect, " " + slotNb.ToString(), upperLeftStyle);
-                                if (items[i].equipped)
+                                if (items[i].carried)
+                                {
+                                    GUI.Label(textureRect, " Carried  ", upperRightStyle);
+                                }
+                                else if (items[i].equipped)
                                 {
                                     GUI.Label(textureRect, " Equip.  ", upperRightStyle);
                                 }
@@ -1511,26 +1493,14 @@ namespace KIS
                     else
                     {
                         // Mouse up on a free slot
-                        //if (Event.current.type == EventType.Repaint && Input.GetMouseButtonUp(0) && textureRect.Contains(Event.current.mousePosition) && KISAddonPickup.draggedPart)
                         if (Event.current.type == EventType.MouseUp && Event.current.button == 0 && textureRect.Contains(Event.current.mousePosition) && KISAddonPickup.draggedPart)
                         {
-                            ModuleKISInventory srcInventory = null;
-                            if (KISAddonPickup.draggedItem != null)
+                            // Check if part can be carried
+                            bool carryPart = false;
+                            bool storePart = true;
+                            ModuleKISItem draggedItemModule = KISAddonPickup.draggedPart.GetComponent<ModuleKISItem>();
+                            if (draggedItemModule)
                             {
-<<<<<<< HEAD
-                                srcInventory = KISAddonPickup.draggedItem.inventory;
-                                if (VolumeAvailableFor(KISAddonPickup.draggedItem))
-                                {
-                                    // Picked part from an inventory
-                                    KIS_Item movingItem = KISAddonPickup.draggedItem;
-                                    int slot = movingItem.slot;
-                                    this.items.Add(i, movingItem);
-                                    movingItem.inventory.items.Remove(slot);
-                                    movingItem.inventory.RefreshMassAndVolume();
-                                    movingItem.inventory = this;
-                                    RefreshMassAndVolume();
-                                    items[i].OnMove(srcInventory, this);
-=======
                                 if (draggedItemModule.carriable && invType == InventoryType.Eva && HighLogic.LoadedSceneIsFlight)
                                 {
                                     carryPart = true;
@@ -1555,14 +1525,12 @@ namespace KIS
                                             }
                                         }
                                     }
->>>>>>> origin/develop
                                 }
                             }
-                            else
+
+                            // Store item or part
+                            if (storePart)
                             {
-<<<<<<< HEAD
-                                if (VolumeAvailableFor(KISAddonPickup.draggedPart))
-=======
                                 if (KISAddonPickup.draggedItem != null)
                                 {
                                     // Picked part from an inventory
@@ -1583,15 +1551,10 @@ namespace KIS
                                     }
                                 }
                                 else if (KISAddonPickup.draggedPart != this.part)
->>>>>>> origin/develop
                                 {
                                     // Picked part from scene
-                                    AddItem(KISAddonPickup.draggedPart, 1, i);
-                                    if (HighLogic.LoadedSceneIsEditor == false)
+                                    if (carryPart)
                                     {
-<<<<<<< HEAD
-                                        KISAddonPickup.draggedPart.Die();
-=======
                                         KISAddonPickup.draggedPart.SendMessage("OnKISPartStored", SendMessageOptions.DontRequireReceiver);
                                         KIS_Item carryItem = AddItem(KISAddonPickup.draggedPart, 1, i);
                                         KISAddonPickup.draggedPart.Die();
@@ -1608,11 +1571,9 @@ namespace KIS
                                                 KISAddonPickup.draggedPart.Die();
                                             }
                                         }
->>>>>>> origin/develop
                                     }
-                                    items[i].OnMove(srcInventory, this);
                                 }
-                            }           
+                            }
                         }
                     }
                     i++;

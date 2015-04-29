@@ -47,13 +47,10 @@ namespace KIS
         [KSPField]
         public float volumeOverride = 0;
         [KSPField]
-<<<<<<< HEAD
-=======
         public bool carriable = false;
         [KSPField]
         public bool allowAttachOnStatic = false;
         [KSPField]
->>>>>>> origin/develop
         public bool editorItemsCategory = true;
 
 
