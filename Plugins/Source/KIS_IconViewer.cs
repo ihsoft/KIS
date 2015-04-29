@@ -24,7 +24,30 @@ namespace KIS
 
         public KIS_IconViewer(Part p, int resolution)
         {
-            if (p.partInfo.name != "kerbalEVA")
+            if (p.partInfo.name == "kerbalEVA" || p.partInfo.name == "kerbalEVAfemale")
+            {
+                // Icon Camera
+                GameObject camGo = new GameObject("KASCamItem" + camStaticIndex);
+                camGo.transform.parent = p.transform;
+                camGo.transform.localPosition = Vector3.zero + new Vector3(0, 0.35f, 0.7f);
+                camGo.transform.localRotation = Quaternion.identity;
+                camGo.transform.Rotate(0.0f, 180f, 0.0f);
+                cam = camGo.AddComponent<Camera>();
+                cam.orthographic = true;
+                cam.orthographicSize = 0.35f;
+                cam.clearFlags = CameraClearFlags.Color;
+                // Render texture
+                RenderTexture tex = new RenderTexture(resolution, resolution, 8);
+                this.texture = tex;
+
+                cam.cullingMask = Camera.main.cullingMask;
+                cam.farClipPlane = 1f;
+
+                // Texture
+                cam.targetTexture = tex;
+                cam.ResetAspect();
+            }
+            else
             {
                 // Instantiate part icon
                 iconPrefab = UnityEngine.Object.Instantiate((UnityEngine.Object)p.partInfo.iconPrefab) as GameObject;
@@ -64,29 +87,6 @@ namespace KIS
                 this.camIndex = camStaticIndex;
                 camStaticIndex += 2;
                 ResetPos();
-            }
-            else
-            {
-                // Icon Camera
-                GameObject camGo = new GameObject("KASCamItem" + camStaticIndex);
-                camGo.transform.parent = p.transform;
-                camGo.transform.localPosition = Vector3.zero + new Vector3(0, 0.35f, 0.7f);
-                camGo.transform.localRotation = Quaternion.identity;
-                camGo.transform.Rotate(0.0f, 180f, 0.0f);
-                cam = camGo.AddComponent<Camera>();
-                cam.orthographic = true;
-                cam.orthographicSize = 0.35f;
-                cam.clearFlags = CameraClearFlags.Color;
-                // Render texture
-                RenderTexture tex = new RenderTexture(resolution, resolution, 8);
-                this.texture = tex;
-
-                cam.cullingMask = Camera.main.cullingMask;
-                cam.farClipPlane = 1f;
-
-                // Texture
-                cam.targetTexture = tex;
-                cam.ResetAspect();
             }
             iconCount += 1;
         }
