@@ -443,15 +443,7 @@ namespace KIS
             }
             else
             {
-                //Surface attach
-                if (GetCurrentAttachNode().nodeType == AttachNode.NodeType.Surface)
-                {
-                    KIS_Shared.MoveAlign(pointer.transform, pointerNodeTransform, hit, rotAdjust);
-                }
-                else
-                {
-                    KIS_Shared.MoveAlign(pointer.transform, pointerNodeTransform, hit, rotAdjust, true);
-                }
+                KIS_Shared.MoveAlign(pointer.transform, pointerNodeTransform, hit, rotAdjust);
             }
 
             //Check distance

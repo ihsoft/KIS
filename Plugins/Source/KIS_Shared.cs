@@ -482,18 +482,11 @@ namespace KIS
             GameEvents.onVesselWasModified.Fire(tgtPart.vessel);
         }
 
-        public static void MoveAlign(Transform source, Transform childNode, RaycastHit hit, Quaternion adjust, bool inverse = false)
+        public static void MoveAlign(Transform source, Transform childNode, RaycastHit hit, Quaternion adjust)
         {
             Vector3 refDir = hit.transform.TransformDirection(Vector3.up);
             Quaternion rotation = Quaternion.LookRotation(hit.normal, refDir);
-            if (inverse)
-            {
-                source.rotation = (rotation * adjust) * Quaternion.Inverse(childNode.localRotation);
-            }
-            else
-            {
-                source.rotation = (rotation * adjust) * childNode.localRotation;
-            }
+            source.rotation = (rotation * adjust) * childNode.localRotation;
             source.position = source.position - (childNode.position - hit.point);
         }
 
@@ -560,32 +553,27 @@ namespace KIS
 
         public static Quaternion GetNodeRotation(AttachNode attachNode)
         {
-            // Fix top node orientation if needed (top and bottom have same orientation on some part, squad config error ?)
-            if (attachNode.id == "top" && attachNode.orientation == new Vector3(0, 1, 0))
+            Quaternion rotation;
+            rotation = Quaternion.LookRotation(attachNode.orientation);
+            // A fix for The Not-Rockomax Micronode if needed (orientation is wrong, squad need to fix it)
+            /*
+            if (attachNode.nodeType == AttachNode.NodeType.Surface)
             {
-                attachNode.orientation = new Vector3(0, -1, 0);
-                KIS_Shared.DebugLog("Top node orientation seem wrong, change it to (0,-1,0)");
+                rotation = Quaternion.LookRotation(attachNode.orientation);
             }
-            Quaternion rotation = Quaternion.LookRotation(attachNode.orientation, Vector3.up);
-            return rotation;
-        }
-
-        public static void AddNodeTransform(Part p, AttachNode attachNode)
-        {
-            Quaternion rotation = GetNodeRotation(attachNode);
-            if (attachNode.nodeTransform == null)
+            else if (attachNode.orientation == Vector3.up || attachNode.orientation == Vector3.down)
             {
-                Transform nodeTransform = new GameObject("KASNodeTransf").transform;
-                nodeTransform.parent = p.transform;
-                nodeTransform.localPosition = attachNode.position;
-                nodeTransform.localRotation = rotation;
-                attachNode.nodeTransform = nodeTransform;
+                rotation = Quaternion.LookRotation(attachNode.orientation);
+            }
+            else if (attachNode.orientation == Vector3.left || attachNode.orientation == Vector3.right)
+            {
+                rotation = Quaternion.Inverse(Quaternion.LookRotation(attachNode.orientation));
             }
             else
             {
-                attachNode.nodeTransform.localPosition = attachNode.position;
-                attachNode.nodeTransform.localRotation = rotation;
-            }
+                rotation = Quaternion.LookRotation(-attachNode.orientation);
+            }*/
+            return rotation;
         }
 
         public static void AssignAttachIcon(Part part, AttachNode node, Color iconColor, string name = null)
@@ -593,10 +581,13 @@ namespace KIS
             if (!node.icon)
             {
                 node.icon = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                UnityEngine.Object.DestroyImmediate(node.icon.collider);
-                node.icon.renderer.material = new Material(Shader.Find("Transparent/Diffuse"));
-                iconColor.a = 0.5f;
-                node.icon.renderer.material.color = iconColor;
+                if (node.icon.collider) UnityEngine.Object.DestroyImmediate(node.icon.collider);
+                if (node.icon.renderer)
+                {
+                    node.icon.renderer.material = new Material(Shader.Find("Transparent/Diffuse"));
+                    iconColor.a = 0.5f;
+                    node.icon.renderer.material.color = iconColor;
+                }
                 node.icon.transform.parent = part.transform;
                 if (name != null) node.icon.name = name;
                 double num;
@@ -606,11 +597,17 @@ namespace KIS
                 }
                 else num = (double)node.size;
                 node.icon.transform.localScale = Vector3.one * node.radius * (float)num;
-                node.icon.transform.position = part.transform.TransformPoint(node.position);
-                node.icon.transform.up = part.transform.TransformDirection(node.orientation);
-                KIS_Shared.AddNodeTransform(part, node);
-                //node.icon.gameObject.SetActive(false);
+                node.icon.transform.localPosition = node.position;
+                node.icon.transform.localRotation = KIS_Shared.GetNodeRotation(node);
             }
+            // NodeTransform
+            if (node.nodeTransform == null)
+            {
+                node.nodeTransform = new GameObject("KISNodeTransf").transform;
+                node.nodeTransform.parent = part.transform;
+            }
+            node.nodeTransform.localPosition = node.position;
+            node.nodeTransform.localRotation = KIS_Shared.GetNodeRotation(node);
         }
 
         public static void EditField(string label, ref bool value, int maxLenght = 50)
