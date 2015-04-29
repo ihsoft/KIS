@@ -13,41 +13,10 @@ namespace KIS
         [KSPField(isPersistant = true)]
         public bool groundAttached = false;
         [KSPField]
-        public bool useJoint = false;
-        [KSPField]
-        public float jointBreakForce = 10;
+        public float breakForce = 10;
 
         private FixedJoint fixedJoint;
         private GameObject connectedGameObject;
-
-        public void OnAttachStatic()
-        {
-            if (useJoint)
-            {
-                KIS_Shared.DebugLog("Create kinematic rigidbody");
-                if (connectedGameObject) Destroy(connectedGameObject);
-                GameObject obj = new GameObject("KISBody");
-                obj.AddComponent<Rigidbody>();
-                obj.rigidbody.isKinematic = true;
-                obj.transform.position = this.part.transform.position;
-                obj.transform.rotation = this.part.transform.rotation;
-                connectedGameObject = obj;
-
-                KIS_Shared.DebugLog("Create fixed joint on the kinematic rigidbody");
-                if (fixedJoint) Destroy(fixedJoint);
-                FixedJoint CurJoint = this.part.gameObject.AddComponent<FixedJoint>();
-                CurJoint.breakForce = jointBreakForce;
-                CurJoint.breakTorque = jointBreakForce;
-                CurJoint.connectedBody = obj.rigidbody;
-                fixedJoint = CurJoint;
-            }
-            else
-            {
-                KIS_Shared.DebugLog("Set part as kinematic");
-                this.part.rigidbody.isKinematic = true;
-            }
-            groundAttached = true;
-        }
 
         public virtual void OnPartUnpack()
         {
@@ -58,21 +27,51 @@ namespace KIS
             }
         }
 
-        public void OnDecoupleFromAll()
+        public void OnAttachStatic()
         {
-            if (useJoint)
-            {
-                KIS_Shared.DebugLog("Removing static rigidbody and fixed joint on " + this.part.partInfo.title);
-                if (fixedJoint) Destroy(fixedJoint);
-                if (connectedGameObject) Destroy(connectedGameObject);
-                fixedJoint = null;
-                connectedGameObject = null;
-            }
-            else
-            {
-                KIS_Shared.DebugLog("Unset part as kinematic");
-                this.part.rigidbody.isKinematic = false;
-            }
+            GroundAttach();
+        }
+
+        public void OnKISDecoupleFromAll()
+        {
+            GroundDetach();
+        }
+
+        public void OnKISPartStored()
+        {
+            GroundDetach();
+        }
+
+        public void GroundAttach()
+        {
+            KIS_Shared.DebugLog("Create kinematic rigidbody");
+            if (connectedGameObject) Destroy(connectedGameObject);
+            GameObject obj = new GameObject("KISBody");
+            obj.AddComponent<Rigidbody>();
+            obj.rigidbody.mass = 100;
+            obj.rigidbody.isKinematic = true;
+            obj.transform.position = this.part.transform.position;
+            obj.transform.rotation = this.part.transform.rotation;
+            connectedGameObject = obj;
+
+            KIS_Shared.DebugLog("Create fixed joint on the kinematic rigidbody");
+            if (fixedJoint) Destroy(fixedJoint);
+            FixedJoint CurJoint = this.part.gameObject.AddComponent<FixedJoint>();
+            CurJoint.breakForce = breakForce;
+            CurJoint.breakTorque = breakForce;
+            CurJoint.connectedBody = obj.rigidbody;
+            fixedJoint = CurJoint;
+            this.part.vessel.Landed = true;
+            groundAttached = true;
+        }
+
+        public void GroundDetach()
+        {
+            KIS_Shared.DebugLog("Removing static rigidbody and fixed joint on " + this.part.partInfo.title);
+            if (fixedJoint) Destroy(fixedJoint);
+            if (connectedGameObject) Destroy(connectedGameObject);
+            fixedJoint = null;
+            connectedGameObject = null;
             groundAttached = false;
         }
 
