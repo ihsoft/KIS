@@ -1022,7 +1022,7 @@ namespace KIS
                 }
                 else
                 {
-                    if (GUILayout.Button(new GUIContent("Put Helmet", ""), GUILayout.Width(width), GUILayout.Height(22)))
+                    if (GUILayout.Button(new GUIContent("Put On Helmet", ""), GUILayout.Width(width), GUILayout.Height(22)))
                     {
                         PlaySound(helmetOnSndPath);
                         SetHelmet(true);
