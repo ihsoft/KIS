@@ -66,7 +66,7 @@ namespace KIS
 
                 if (value == PointerMode.Drop)
                 {
-                    CursorEnable("KIS/Textures/drop", "Drop (" + KISAddonPointer.GetCurrentAttachNode().id + ")", "(Press " + keyRotate + " to rotate, " + keyResetRot + " to reset orientation", keyAnchor + " to change node, [echap] to cancel)");
+                    CursorEnable("KIS/Textures/drop", "Drop (" + KISAddonPointer.GetCurrentAttachNode().id + ")", "(Press " + keyRotate + " to rotate, " + keyResetRot + " to reset orientation", keyAnchor + " to change node, [Escape] to cancel)");
                     KISAddonPointer.allowPart = true;
                     KISAddonPointer.allowStatic = true;
                     KISAddonPointer.allowEva = true;
@@ -75,7 +75,7 @@ namespace KIS
                 }
                 if (value == PointerMode.Attach)
                 {
-                    CursorEnable("KIS/Textures/attachOk", "Attach (" + KISAddonPointer.GetCurrentAttachNode().id + ")", "(Press " + keyRotate + " to rotate, " + keyResetRot + " to reset orientation", keyAnchor + " to change node, [echap] to cancel)");
+                    CursorEnable("KIS/Textures/attachOk", "Attach (" + KISAddonPointer.GetCurrentAttachNode().id + ")", "(Press " + keyRotate + " to rotate, " + keyResetRot + " to reset orientation", keyAnchor + " to change node, [Escape] to cancel)");
                     KISAddonPointer.allowPart = true;
                     KISAddonPointer.allowStatic = false;
                     if (movingPart)
@@ -606,7 +606,7 @@ namespace KIS
                 if (pTarget == KISAddonPointer.PointerTarget.PartMount)
                 {
                     string keyAnchor = "[" + GameSettings.Editor_toggleSymMethod.name + "]";
-                    CursorEnable("KIS/Textures/mount", "Mount", "(Press " + keyAnchor + " to change node, [echap] to cancel)");
+                    CursorEnable("KIS/Textures/mount", "Mount", "(Press " + keyAnchor + " to change node, [Escape] to cancel)");
                 }
                 if (pTarget == KISAddonPointer.PointerTarget.PartNode)
                 {
