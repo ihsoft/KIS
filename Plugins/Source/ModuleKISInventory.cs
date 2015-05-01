@@ -466,7 +466,7 @@ namespace KIS
             else
             {
                 AvailablePart avPart = PartLoader.getPartInfoByName(this.part.partInfo.name);
-                this.part.mass = avPart.partPrefab.mass + this.part.GetResourceMass();
+                this.part.mass = avPart.partPrefab.mass;
             }
             // Update mass
             foreach (ModuleKISInventory inventory in this.part.GetComponents<ModuleKISInventory>())
