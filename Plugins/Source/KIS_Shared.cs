@@ -8,11 +8,16 @@ using KSP.IO;
 
 namespace KIS
 {
+    public class LinkedObject : MonoBehaviour
+    {
+        public Part part;
+    }
+
     static public class KIS_Shared
     {
         public static bool debugLog = true;
         public static string bipWrongSndPath = "KIS/Sounds/bipwrong";
-        public delegate void OnPartCreated();
+        public delegate void OnPartCreated(Part createdPart, Part tgtPart = null, AttachNode tgtAttachNode = null);
 
         public static void DebugLog(string text)
         {
@@ -434,7 +439,7 @@ namespace KIS
             }
             if (onPartCreated != null)
             {
-                onPartCreated();
+                onPartCreated(newPart, tgtPart, tgtAttachNode);
             }
         }
 
@@ -578,6 +583,15 @@ namespace KIS
 
         public static void AssignAttachIcon(Part part, AttachNode node, Color iconColor, string name = null)
         {
+            // Create NodeTransform if needed
+            if (node.nodeTransform == null)
+            {
+                node.nodeTransform = new GameObject("KISNodeTransf").transform;
+                node.nodeTransform.parent = part.transform;
+                node.nodeTransform.localPosition = node.position;
+                node.nodeTransform.localRotation = KIS_Shared.GetNodeRotation(node);
+            }
+
             if (!node.icon)
             {
                 node.icon = GameObject.CreatePrimitive(PrimitiveType.Sphere);
@@ -597,17 +611,10 @@ namespace KIS
                 }
                 else num = (double)node.size;
                 node.icon.transform.localScale = Vector3.one * node.radius * (float)num;
-                node.icon.transform.localPosition = node.position;
-                node.icon.transform.localRotation = KIS_Shared.GetNodeRotation(node);
+                node.icon.transform.parent = node.nodeTransform;
+                node.icon.transform.localPosition = Vector3.zero;
+                node.icon.transform.localRotation = Quaternion.identity;
             }
-            // NodeTransform
-            if (node.nodeTransform == null)
-            {
-                node.nodeTransform = new GameObject("KISNodeTransf").transform;
-                node.nodeTransform.parent = part.transform;
-            }
-            node.nodeTransform.localPosition = node.position;
-            node.nodeTransform.localRotation = KIS_Shared.GetNodeRotation(node);
         }
 
         public static void EditField(string label, ref bool value, int maxLenght = 50)

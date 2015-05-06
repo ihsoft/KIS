@@ -177,51 +177,75 @@ namespace KIS
                 if (hit.rigidbody)
                 {
                     tgtPart = hit.rigidbody.GetComponent<Part>();
-                    tgtKerbalEva = hit.rigidbody.GetComponent<KerbalEVA>();
-                    if (tgtKerbalEva)
+                }
+                if (!tgtPart)
+                {
+                    tgtPart = (Part)UIPartActionController.GetComponentUpwards("Part", hit.collider.gameObject);
+                }
+                if (!tgtPart)
+                {
+                    // check linked part
+                    LinkedObject linkedObject = hit.collider.gameObject.GetComponent<LinkedObject>();
+                    if (linkedObject)
                     {
-                        pointerTarget = PointerTarget.KerbalEva;
+                        tgtPart = linkedObject.part;
                     }
-                    else
+                }
+                if (tgtPart)
+                {
+                    tgtKerbalEva = tgtPart.GetComponent<KerbalEVA>();
+                }
+
+                // If rigidbody
+                if (hit.rigidbody && !tgtPart && !tgtKerbalEva)
+                {
+                    pointerTarget = PointerTarget.StaticRb;
+                }
+
+                // If kerbal
+                if (tgtKerbalEva)
+                {
+                    pointerTarget = PointerTarget.KerbalEva;
+                }
+
+                // If part
+                if (tgtPart && !tgtKerbalEva)
+                {
+                    float currentDist = Mathf.Infinity;
+                    foreach (AttachNode an in tgtPart.attachNodes)
                     {
-                        pointerTarget = PointerTarget.StaticRb;
-                        if (tgtPart)
+                        if (an.icon)
                         {
-                            float currentDist = Mathf.Infinity;
-                            foreach (AttachNode an in tgtPart.attachNodes)
+                            float dist;
+                            if (an.icon.renderer.bounds.IntersectRay(FlightCamera.fetch.mainCamera.ScreenPointToRay(Input.mousePosition), out dist))
                             {
-                                if (an.icon)
+                                if (dist < currentDist)
                                 {
-                                    float dist;
-                                    if (an.icon.renderer.bounds.IntersectRay(FlightCamera.fetch.mainCamera.ScreenPointToRay(Input.mousePosition), out dist))
-                                    {
-                                        if (dist < currentDist)
-                                        {
-                                            tgtAttachNode = an;
-                                            currentDist = dist;
-                                        }
-                                    }
+                                    tgtAttachNode = an;
+                                    currentDist = dist;
                                 }
-                            }
-                            if (tgtAttachNode != null)
-                            {
-                                if (tgtAttachNode.icon.name == "KISMount")
-                                {
-                                    pointerTarget = PointerTarget.PartMount;
-                                }
-                                else
-                                {
-                                    pointerTarget = PointerTarget.PartNode;
-                                }
-                            }
-                            else
-                            {
-                                pointerTarget = PointerTarget.Part;
                             }
                         }
                     }
+                    if (tgtAttachNode != null)
+                    {
+                        if (tgtAttachNode.icon.name == "KISMount")
+                        {
+                            pointerTarget = PointerTarget.PartMount;
+                        }
+                        else
+                        {
+                            pointerTarget = PointerTarget.PartNode;
+                        }
+                    }
+                    else
+                    {
+                        pointerTarget = PointerTarget.Part;
+                    }
                 }
-                else
+
+                //if nothing
+                if (!hit.rigidbody && !tgtPart && !tgtKerbalEva)
                 {
                     pointerTarget = PointerTarget.Static;
                 }

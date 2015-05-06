@@ -545,7 +545,7 @@ namespace KIS
             prefabModule.OnUnEquip(this);
         }
 
-        private void OnEquippedPartCreated()
+        private void OnEquippedPartCreated(Part createdpart, Part tgtPart, AttachNode tgtNode)
         {
             if (equipMode == EquipMode.Part)
             {

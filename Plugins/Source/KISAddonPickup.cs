@@ -699,16 +699,17 @@ namespace KIS
             movingPart = null;
         }
 
-        private void CreateDrop(Part tgtPart, Vector3 pos, Quaternion rot)
+        private Part CreateDrop(Part tgtPart, Vector3 pos, Quaternion rot)
         {
             KIS_Shared.DebugLog("Create & drop part");
             ModuleKISPickup modulePickup = GetActivePickupNearest(pos);
-            KIS_Shared.CreatePart(draggedItem.partNode, pos, rot, draggedItem.inventory.part);
+            Part newPart = KIS_Shared.CreatePart(draggedItem.partNode, pos, rot, draggedItem.inventory.part);
             KISAddonPointer.StopPointer();
             draggedItem.StackRemove(1);
             draggedItem = null;
             draggedPart = null;
             if (modulePickup) AudioSource.PlayClipAtPoint(GameDatabase.Instance.GetAudioClip(modulePickup.dropSndPath), pos);
+            return newPart;
         }
 
         private void MoveAttach(Part tgtPart, Vector3 pos, Quaternion rot, string srcAttachNodeID = null, AttachNode tgtAttachNode = null)
@@ -720,6 +721,7 @@ namespace KIS
             if (tgtPart)
             {
                 KIS_Shared.CouplePart(movingPart, tgtPart, srcAttachNodeID, tgtAttachNode);
+                tgtPart.SendMessage("OnKISPartAttached", tgtAttachNode, SendMessageOptions.DontRequireReceiver);
             }
             else
             {
@@ -731,13 +733,13 @@ namespace KIS
             draggedPart = null;
         }
 
-        private void CreateAttach(Part tgtPart, Vector3 pos, Quaternion rot, string srcAttachNodeID = null, AttachNode tgtAttachNode = null)
+        private Part CreateAttach(Part tgtPart, Vector3 pos, Quaternion rot, string srcAttachNodeID = null, AttachNode tgtAttachNode = null)
         {
             KIS_Shared.DebugLog("Create part & attach");
             Part newPart;
             if (tgtPart)
             {
-                newPart = KIS_Shared.CreatePart(draggedItem.partNode, pos, rot, draggedItem.inventory.part, tgtPart, srcAttachNodeID, tgtAttachNode);
+                newPart = KIS_Shared.CreatePart(draggedItem.partNode, pos, rot, draggedItem.inventory.part, tgtPart, srcAttachNodeID, tgtAttachNode, OnPartCreated);
             }
             else
             {
@@ -749,6 +751,16 @@ namespace KIS
             movingPart = null;
             draggedItem = null;
             draggedPart = null;
+            return newPart;
         }
+
+        private void OnPartCreated(Part createdpart, Part tgtPart, AttachNode tgtNode)
+        {
+            if (tgtPart)
+            {
+                tgtPart.SendMessage("OnKISPartAttached", tgtNode, SendMessageOptions.DontRequireReceiver);
+            }
+        }
+
     }
 }
