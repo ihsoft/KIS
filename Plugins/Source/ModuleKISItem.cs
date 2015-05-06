@@ -89,10 +89,5 @@ namespace KIS
 
         }
 
-        public virtual void OnAttachStatic(KIS_Item item)
-        {
-
-        }
-
     }
 }
