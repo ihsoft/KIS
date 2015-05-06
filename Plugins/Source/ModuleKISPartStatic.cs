@@ -8,7 +8,7 @@ using UnityEngine;
 namespace KIS
 {
 
-    public class ModuleKISItemStatic : ModuleKISItem
+    public class ModuleKISPartStatic : PartModule
     {
         [KSPField(isPersistant = true)]
         public bool groundAttached = false;
