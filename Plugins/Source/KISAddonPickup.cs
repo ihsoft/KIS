@@ -695,6 +695,14 @@ namespace KIS
             KIS_Shared.DecoupleFromAll(movingPart);
             movingPart.transform.position = pos;
             movingPart.transform.rotation = rot;
+            if (tgtPart)
+            {
+                movingPart.SendMessage("OnKISPartDroppedOnPart", tgtPart, SendMessageOptions.DontRequireReceiver);
+            }
+            else
+            {
+                movingPart.SendMessage("OnKISPartDroppedOnStatic", SendMessageOptions.DontRequireReceiver);
+            }
             KISAddonPointer.StopPointer();
             movingPart = null;
         }
@@ -703,7 +711,15 @@ namespace KIS
         {
             KIS_Shared.DebugLog("Create & drop part");
             ModuleKISPickup modulePickup = GetActivePickupNearest(pos);
-            Part newPart = KIS_Shared.CreatePart(draggedItem.partNode, pos, rot, draggedItem.inventory.part);
+            Part newPart = KIS_Shared.CreatePart(draggedItem.partNode, pos, rot, draggedItem.inventory.part);        
+            if (tgtPart)
+            {
+                newPart.SendMessage("OnKISPartDroppedOnPart", tgtPart, SendMessageOptions.DontRequireReceiver);
+            }
+            else
+            {
+                newPart.SendMessage("OnKISPartDroppedOnStatic", SendMessageOptions.DontRequireReceiver);
+            }
             KISAddonPointer.StopPointer();
             draggedItem.StackRemove(1);
             draggedItem = null;
@@ -715,17 +731,25 @@ namespace KIS
         private void MoveAttach(Part tgtPart, Vector3 pos, Quaternion rot, string srcAttachNodeID = null, AttachNode tgtAttachNode = null)
         {
             KIS_Shared.DebugLog("Move part & attach");
+            if (tgtPart)
+            {
+                movingPart.SendMessage("OnKISPartAttach", tgtAttachNode, SendMessageOptions.DontRequireReceiver);
+            }
+            else
+            {
+                movingPart.SendMessage("OnKISStaticAttach", SendMessageOptions.DontRequireReceiver);
+            }
             KIS_Shared.DecoupleFromAll(movingPart);
             movingPart.transform.position = pos;
             movingPart.transform.rotation = rot;
             if (tgtPart)
             {
                 KIS_Shared.CouplePart(movingPart, tgtPart, srcAttachNodeID, tgtAttachNode);
-                tgtPart.SendMessage("OnKISPartAttached", tgtAttachNode, SendMessageOptions.DontRequireReceiver);
+                movingPart.SendMessage("OnKISPartAttached", tgtAttachNode, SendMessageOptions.DontRequireReceiver);
             }
             else
             {
-                movingPart.SendMessage("OnAttachStatic", SendMessageOptions.DontRequireReceiver);
+                movingPart.SendMessage("OnKISStaticAttached", SendMessageOptions.DontRequireReceiver);
             }
             KISAddonPointer.StopPointer();
             movingPart = null;
@@ -739,12 +763,13 @@ namespace KIS
             Part newPart;
             if (tgtPart)
             {
-                newPart = KIS_Shared.CreatePart(draggedItem.partNode, pos, rot, draggedItem.inventory.part, tgtPart, srcAttachNodeID, tgtAttachNode, OnPartCreated);
+                newPart = KIS_Shared.CreatePart(draggedItem.partNode, pos, rot, draggedItem.inventory.part, tgtPart, srcAttachNodeID, tgtAttachNode);
+                newPart.SendMessage("OnKISPartAttached", tgtAttachNode, SendMessageOptions.DontRequireReceiver);
             }
             else
             {
                 newPart = KIS_Shared.CreatePart(draggedItem.partNode, pos, rot, draggedItem.inventory.part);
-                newPart.SendMessage("OnAttachStatic", SendMessageOptions.DontRequireReceiver);
+                newPart.SendMessage("OnKISStaticAttached", SendMessageOptions.DontRequireReceiver);
             }
             KISAddonPointer.StopPointer();
             draggedItem.StackRemove(1);
@@ -752,14 +777,6 @@ namespace KIS
             draggedItem = null;
             draggedPart = null;
             return newPart;
-        }
-
-        private void OnPartCreated(Part createdpart, Part tgtPart, AttachNode tgtNode)
-        {
-            if (tgtPart)
-            {
-                tgtPart.SendMessage("OnKISPartAttached", tgtNode, SendMessageOptions.DontRequireReceiver);
-            }
         }
 
     }

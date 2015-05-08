@@ -500,7 +500,28 @@ namespace KIS
                     alreadyEquippedPart.Die();
                 }
 
-                equippedPart = KIS_Shared.CreatePart(partNode, Vector3.zero, Quaternion.identity, this.inventory.part, this.inventory.part, null, null, OnEquippedPartCreated);
+                equippedPart = KIS_Shared.CreatePart(partNode, Vector3.zero, Quaternion.identity, this.inventory.part, this.inventory.part, null, null);
+
+                //Disable colliders
+                equippedPart.mass = 0.001f;
+                foreach (Collider col in equippedPart.gameObject.GetComponentsInChildren<Collider>())
+                {
+                    col.isTrigger = true;
+                }
+
+                //Destroy joint to avoid buggy eva move
+                if (equippedPart.attachJoint)
+                {
+                    equippedPart.attachJoint.DestroyJoint();
+                }
+
+                //Destroy rigidbody
+                equippedPart.physicalSignificance = Part.PhysicalSignificance.NONE;
+                if (equippedPart.collisionEnhancer)
+                {
+                    UnityEngine.Object.DestroyImmediate(equippedPart.collisionEnhancer);
+                }
+                UnityEngine.Object.Destroy(equippedPart.rigidbody);
                 equippedGameObj = equippedPart.gameObject;
 
                 if (prefabModule.equipRemoveHelmet)
@@ -512,7 +533,12 @@ namespace KIS
             {
                 Vector3 pos = inventory.part.transform.TransformPoint(prefabModule.equipPos);
                 Quaternion rot = inventory.part.transform.rotation * Quaternion.Euler(prefabModule.equipDir);
-                equippedPart = KIS_Shared.CreatePart(partNode, pos, rot, this.inventory.part, this.inventory.part, null, null, OnEquippedPartCreated);
+                equippedPart = KIS_Shared.CreatePart(partNode, pos, rot, this.inventory.part, this.inventory.part, null, null);
+                //Disable colliders
+                foreach (Collider col in equippedPart.gameObject.GetComponentsInChildren<Collider>())
+                {
+                    col.isTrigger = true;
+                }
             }
             PlaySound(prefabModule.moveSndPath);
             equipped = true;
@@ -543,42 +569,6 @@ namespace KIS
             equipped = false;
             PlaySound(prefabModule.moveSndPath);
             prefabModule.OnUnEquip(this);
-        }
-
-        private void OnEquippedPartCreated(Part createdpart, Part tgtPart, AttachNode tgtNode)
-        {
-            if (equipMode == EquipMode.Part)
-            {
-                //Disable colliders
-                equippedPart.mass = 0.001f;
-                foreach (Collider col in equippedPart.gameObject.GetComponentsInChildren<Collider>())
-                {
-                    col.isTrigger = true;
-                }
-
-                //Destroy joint to avoid buggy eva move
-                if (equippedPart.attachJoint)
-                {
-                    equippedPart.attachJoint.DestroyJoint();
-                }
-
-                //Destroy rigidbody
-                equippedPart.physicalSignificance = Part.PhysicalSignificance.NONE;
-                if (equippedPart.collisionEnhancer)
-                {
-                    UnityEngine.Object.DestroyImmediate(equippedPart.collisionEnhancer);
-                }
-                UnityEngine.Object.Destroy(equippedPart.rigidbody);
-            }
-
-            if (equipMode == EquipMode.Physic)
-            {
-                //Disable colliders
-                foreach (Collider col in equippedPart.gameObject.GetComponentsInChildren<Collider>())
-                {
-                    col.isTrigger = true;
-                }
-            }
         }
 
         public void Drop(Part fromPart = null)

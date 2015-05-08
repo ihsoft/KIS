@@ -23,16 +23,26 @@ namespace KIS
             if (groundAttached)
             {
                 KIS_Shared.DebugLog("Re-attach static object (OnPartUnpack)");
-                OnAttachStatic();
+                GroundAttach();
             }
         }
 
-        public void OnAttachStatic()
+        public void OnKISStaticAttach()
         {
             GroundAttach();
         }
 
-        public void OnKISDecoupleFromAll()
+        public void OnKISPartAttach()
+        {
+            GroundDetach();
+        }
+
+        public void OnKISPartDroppedOnPart()
+        {
+            GroundDetach();
+        }
+
+        public void OnKISPartDroppedOnStatic()
         {
             GroundDetach();
         }
