@@ -12,6 +12,8 @@ namespace KIS
         [KSPField]
         public string sndStorePath = "KIS/Sounds/containerMount";
         [KSPField]
+        public string mountedPartNode = "bottom";
+        [KSPField]
         public bool allowRelease = true;
         public FXGroup sndFxStore;
 

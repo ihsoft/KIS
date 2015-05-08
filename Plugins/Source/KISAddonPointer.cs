@@ -307,6 +307,14 @@ namespace KIS
                 ModuleKISPartMount pMount = hoverPart.GetComponent<ModuleKISPartMount>();
                 if (pMount)
                 {
+                    // Set current attach node 
+                    AttachNode an = attachNodes.Find(f => f.id == pMount.mountedPartNode);
+                    if (an != null)
+                    {
+                        attachNodeIndex = attachNodes.FindIndex(f => f.id == pMount.mountedPartNode);
+                        if (pointer) UnityEngine.Object.Destroy(pointer);
+                    }
+                    // Init attach node
                     foreach (KeyValuePair<AttachNode, List<string>> mount in pMount.GetMounts())
                     {
                         if (!mount.Key.attachedPart)
@@ -630,14 +638,17 @@ namespace KIS
                 }
                 if (GameSettings.Editor_toggleSymMethod.GetKeyDown())
                 {
-                    if (pointer) UnityEngine.Object.Destroy(pointer);
-                    attachNodeIndex++;
-                    if (attachNodeIndex > (attachNodes.Count - 1))
+                    if (pointerTarget != PointerTarget.PartMount)
                     {
-                        attachNodeIndex = 0;
+                        if (pointer) UnityEngine.Object.Destroy(pointer);
+                        attachNodeIndex++;
+                        if (attachNodeIndex > (attachNodes.Count - 1))
+                        {
+                            attachNodeIndex = 0;
+                        }
+                        ResetMouseOver();
+                        SendPointerState(pointerTarget, PointerState.OnChangeAttachNode, null, null);
                     }
-                    ResetMouseOver();
-                    SendPointerState(pointerTarget, PointerState.OnChangeAttachNode, null, null);
                 }
             }
         }
