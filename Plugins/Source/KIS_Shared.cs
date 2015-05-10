@@ -77,6 +77,11 @@ namespace KIS
             return part;
         }
 
+        public static void PlaySoundAtPoint(string soundPath, Vector3 position)
+        {
+            AudioSource.PlayClipAtPoint(GameDatabase.Instance.GetAudioClip(soundPath), position);
+        }
+
         public static bool createFXSound(Part part, FXGroup group, string sndPath, bool loop, float maxDistance = 30f)
         {
             group.audio = part.gameObject.AddComponent<AudioSource>();
