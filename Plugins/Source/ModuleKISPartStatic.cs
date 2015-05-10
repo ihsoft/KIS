@@ -27,29 +27,16 @@ namespace KIS
             }
         }
 
-        public void OnKISStaticAttach()
+        public void OnKISAction(KIS_Shared.MessageInfo messageInfo)
         {
-            GroundAttach();
-        }
-
-        public void OnKISPartAttach()
-        {
-            GroundDetach();
-        }
-
-        public void OnKISPartDroppedOnPart()
-        {
-            GroundDetach();
-        }
-
-        public void OnKISPartDroppedOnStatic()
-        {
-            GroundDetach();
-        }
-
-        public void OnKISPartStored()
-        {
-            GroundDetach();
+            if (messageInfo.action == KIS_Shared.MessageAction.Store || messageInfo.action == KIS_Shared.MessageAction.DropEnd || messageInfo.action == KIS_Shared.MessageAction.AttachStart)
+            {
+                GroundDetach();
+            }
+            if (messageInfo.action == KIS_Shared.MessageAction.AttachEnd && messageInfo.tgtPart == null)
+            {
+                GroundAttach();
+            }
         }
 
         public void GroundAttach()

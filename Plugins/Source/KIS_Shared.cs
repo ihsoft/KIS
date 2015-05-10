@@ -18,6 +18,23 @@ namespace KIS
         public static bool debugLog = true;
         public static string bipWrongSndPath = "KIS/Sounds/bipwrong";
 
+        public enum MessageAction { DropEnd, AttachStart, AttachEnd, Store, Decouple }
+        public struct MessageInfo
+        {
+            public MessageAction action;
+            public Part tgtPart;
+            public AttachNode TgtAttachNode;
+        }
+
+        public static void SendKISMessage(Part destPart, MessageAction action, Part tgtPart = null, AttachNode tgtNode = null)
+        {
+            KIS_Shared.MessageInfo messageInfo = new KIS_Shared.MessageInfo();
+            messageInfo.action = action;
+            messageInfo.tgtPart = tgtPart;
+            messageInfo.TgtAttachNode = tgtNode;
+            destPart.SendMessage("OnKISAction", messageInfo, SendMessageOptions.DontRequireReceiver);
+        }
+
         public static void DebugLog(string text)
         {
             if (debugLog) Debug.Log("[KIS] " + text);
@@ -60,7 +77,6 @@ namespace KIS
             return part;
         }
 
-
         public static bool createFXSound(Part part, FXGroup group, string sndPath, bool loop, float maxDistance = 30f)
         {
             group.audio = part.gameObject.AddComponent<AudioSource>();
@@ -86,6 +102,7 @@ namespace KIS
 
         public static void DecoupleFromAll(Part p)
         {
+            SendKISMessage(p, MessageAction.Decouple);
             if (p.parent)
             {
                 p.decouple();
@@ -349,7 +366,6 @@ namespace KIS
 
             fromPart.vessel.Parts.Add(newPart);
 
-            // Request initialization as nonphysical to prevent explosions and velocity reset at high velocity (ex : orbiting moon)
             newPart.physicalSignificance = Part.PhysicalSignificance.NONE;
 
             newPart.PromoteToPhysicalPart();
@@ -367,12 +383,7 @@ namespace KIS
                 newPart.rigidbody.angularVelocity = fromPart.rigidbody.angularVelocity;
             }
 
-            GameEvents.onVesselWasModified.Fire(newPart.vessel);
-
             newPart.decouple();
-
-            GameEvents.onVesselWasModified.Fire(fromPart.vessel);
-            GameEvents.onVesselWasModified.Fire(newPart.vessel);
 
             if (tgtPart)
             {

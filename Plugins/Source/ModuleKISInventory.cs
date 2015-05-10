@@ -1555,7 +1555,7 @@ namespace KIS
                                     // Picked part from scene
                                     if (carryPart)
                                     {
-                                        KISAddonPickup.draggedPart.SendMessage("OnKISPartStored", SendMessageOptions.DontRequireReceiver);
+                                        KIS_Shared.SendKISMessage(KISAddonPickup.draggedPart, KIS_Shared.MessageAction.Store);
                                         KIS_Item carryItem = AddItem(KISAddonPickup.draggedPart, 1, i);
                                         KISAddonPickup.draggedPart.Die();
                                         carryItem.Equip();
@@ -1564,7 +1564,7 @@ namespace KIS
                                     {
                                         if (VolumeAvailableFor(KISAddonPickup.draggedPart))
                                         {
-                                            KISAddonPickup.draggedPart.SendMessage("OnKISPartStored", SendMessageOptions.DontRequireReceiver);
+                                            KIS_Shared.SendKISMessage(KISAddonPickup.draggedPart, KIS_Shared.MessageAction.Store);
                                             AddItem(KISAddonPickup.draggedPart, 1, i);
                                             if (HighLogic.LoadedSceneIsEditor == false)
                                             {

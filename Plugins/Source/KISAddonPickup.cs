@@ -695,14 +695,7 @@ namespace KIS
             KIS_Shared.DecoupleFromAll(movingPart);
             movingPart.transform.position = pos;
             movingPart.transform.rotation = rot;
-            if (tgtPart)
-            {
-                movingPart.SendMessage("OnKISPartDroppedOnPart", tgtPart, SendMessageOptions.DontRequireReceiver);
-            }
-            else
-            {
-                movingPart.SendMessage("OnKISPartDroppedOnStatic", SendMessageOptions.DontRequireReceiver);
-            }
+            KIS_Shared.SendKISMessage(movingPart, KIS_Shared.MessageAction.DropEnd, tgtPart);
             KISAddonPointer.StopPointer();
             movingPart = null;
         }
@@ -711,15 +704,8 @@ namespace KIS
         {
             KIS_Shared.DebugLog("Create & drop part");
             ModuleKISPickup modulePickup = GetActivePickupNearest(pos);
-            Part newPart = KIS_Shared.CreatePart(draggedItem.partNode, pos, rot, draggedItem.inventory.part);        
-            if (tgtPart)
-            {
-                newPart.SendMessage("OnKISPartDroppedOnPart", tgtPart, SendMessageOptions.DontRequireReceiver);
-            }
-            else
-            {
-                newPart.SendMessage("OnKISPartDroppedOnStatic", SendMessageOptions.DontRequireReceiver);
-            }
+            Part newPart = KIS_Shared.CreatePart(draggedItem.partNode, pos, rot, draggedItem.inventory.part);
+            KIS_Shared.SendKISMessage(newPart, KIS_Shared.MessageAction.DropEnd, tgtPart);
             KISAddonPointer.StopPointer();
             draggedItem.StackRemove(1);
             draggedItem = null;
@@ -731,26 +717,15 @@ namespace KIS
         private void MoveAttach(Part tgtPart, Vector3 pos, Quaternion rot, string srcAttachNodeID = null, AttachNode tgtAttachNode = null)
         {
             KIS_Shared.DebugLog("Move part & attach");
-            if (tgtPart)
-            {
-                movingPart.SendMessage("OnKISPartAttach", tgtAttachNode, SendMessageOptions.DontRequireReceiver);
-            }
-            else
-            {
-                movingPart.SendMessage("OnKISStaticAttach", SendMessageOptions.DontRequireReceiver);
-            }
+            KIS_Shared.SendKISMessage(movingPart, KIS_Shared.MessageAction.AttachStart, tgtPart, tgtAttachNode);
             KIS_Shared.DecoupleFromAll(movingPart);
             movingPart.transform.position = pos;
             movingPart.transform.rotation = rot;
             if (tgtPart)
             {
                 KIS_Shared.CouplePart(movingPart, tgtPart, srcAttachNodeID, tgtAttachNode);
-                movingPart.SendMessage("OnKISPartAttached", tgtAttachNode, SendMessageOptions.DontRequireReceiver);
             }
-            else
-            {
-                movingPart.SendMessage("OnKISStaticAttached", SendMessageOptions.DontRequireReceiver);
-            }
+            KIS_Shared.SendKISMessage(movingPart, KIS_Shared.MessageAction.AttachEnd, tgtPart, tgtAttachNode);
             KISAddonPointer.StopPointer();
             movingPart = null;
             draggedItem = null;
@@ -761,16 +736,17 @@ namespace KIS
         {
             KIS_Shared.DebugLog("Create part & attach");
             Part newPart;
+
             if (tgtPart)
             {
                 newPart = KIS_Shared.CreatePart(draggedItem.partNode, pos, rot, draggedItem.inventory.part, tgtPart, srcAttachNodeID, tgtAttachNode);
-                newPart.SendMessage("OnKISPartAttached", tgtAttachNode, SendMessageOptions.DontRequireReceiver);
             }
             else
             {
                 newPart = KIS_Shared.CreatePart(draggedItem.partNode, pos, rot, draggedItem.inventory.part);
-                newPart.SendMessage("OnKISStaticAttached", SendMessageOptions.DontRequireReceiver);
             }
+
+            KIS_Shared.SendKISMessage(newPart, KIS_Shared.MessageAction.AttachEnd, tgtPart, tgtAttachNode);
             KISAddonPointer.StopPointer();
             draggedItem.StackRemove(1);
             movingPart = null;
@@ -778,6 +754,5 @@ namespace KIS
             draggedPart = null;
             return newPart;
         }
-
     }
 }
