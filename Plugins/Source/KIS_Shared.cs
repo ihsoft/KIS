@@ -394,6 +394,7 @@ namespace KIS
             {
                 KIS_Shared.DebugLog("CreatePart - Coupling part...");
                 CouplePart(newPart, tgtPart, srcAttachNodeID, tgtAttachNode);
+                newPart.StartCoroutine(WaitAndRemoveExtraJoint(newPart, tgtPart));
             }
             else
             {
@@ -457,6 +458,34 @@ namespace KIS
 
             KIS_Shared.ResetCollisionEnhancer(srcPart);
             GameEvents.onVesselWasModified.Fire(tgtPart.vessel);
+        }
+
+        // Workaround to fix an extra joint added on part attached directly from an inventory
+        private static IEnumerator WaitAndRemoveExtraJoint(Part srcPart, Part tgtPart)
+        {
+            while (!srcPart.started && srcPart.State != PartStates.DEAD)
+            {
+                KIS_Shared.DebugLog("WaitAndRemoveExtraJoint - Waiting initialization of the part...");
+                yield return null;
+            }
+            float breakForce = 888;
+            foreach (Joint jnt in tgtPart.GetComponents<Joint>())
+            {
+                if (jnt.connectedBody == srcPart.rigidbody && jnt != srcPart.attachJoint.Joint && jnt.GetType() == typeof(ConfigurableJoint))
+                {
+                    if (jnt.breakForce != Mathf.Infinity)
+                    {
+                        breakForce = jnt.breakForce;
+                    }
+                    KIS_Shared.DebugLog("WaitAndRemoveExtraJoint - Destroy Fixed Joint : " + jnt.name + " | " + jnt.connectedBody.name + " | " + jnt.breakForce);
+                    UnityEngine.Object.DestroyImmediate(jnt);
+                }
+            }
+            if (srcPart.attachJoint.Joint.breakForce == Mathf.Infinity)
+            {
+                KIS_Shared.DebugLog("WaitAndRemoveExtraJoint - Set Joint breakforce to : " + breakForce);
+                srcPart.attachJoint.Joint.breakForce = breakForce;
+            }
         }
 
         public static void MoveAlign(Transform source, Transform childNode, RaycastHit hit, Quaternion adjust)
