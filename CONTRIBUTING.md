@@ -12,9 +12,6 @@ Make sure you're encountering a bug and not just an intended aspect of the mod.
 **Is it actually a KIS problem?**  
 See if the problem occurs if you uninstall KIS, and also see if it occurs when KIS is the *only* mod installed. 
 
-**Are you using the KSP Windows x64 version ?**  
-x64 Windows version of KSP is not supported. Please be sure to use the x86 Windows version of KSP before filing a report.
-
 **Are you up-to-date?**  
 Only the latest version of KIS and the latest version of KSP are supported. Make sure both are completely up-to-date before filing a report.
 
