@@ -564,24 +564,6 @@ namespace KIS
         {
             Quaternion rotation;
             rotation = Quaternion.LookRotation(attachNode.orientation);
-            // A fix for The Not-Rockomax Micronode if needed (orientation is wrong, squad need to fix it)
-            /*
-            if (attachNode.nodeType == AttachNode.NodeType.Surface)
-            {
-                rotation = Quaternion.LookRotation(attachNode.orientation);
-            }
-            else if (attachNode.orientation == Vector3.up || attachNode.orientation == Vector3.down)
-            {
-                rotation = Quaternion.LookRotation(attachNode.orientation);
-            }
-            else if (attachNode.orientation == Vector3.left || attachNode.orientation == Vector3.right)
-            {
-                rotation = Quaternion.Inverse(Quaternion.LookRotation(attachNode.orientation));
-            }
-            else
-            {
-                rotation = Quaternion.LookRotation(-attachNode.orientation);
-            }*/
             return rotation;
         }
 
