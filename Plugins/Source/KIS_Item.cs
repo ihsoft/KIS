@@ -496,12 +496,14 @@ namespace KIS
                 Part alreadyEquippedPart = this.inventory.part.vessel.Parts.Find(p => p.partInfo.name == this.availablePart.name);
                 if (alreadyEquippedPart)
                 {
-                    KIS_Shared.DebugLog("Part : " + this.availablePart.name + " already found on eva, removing it to re-equip");
-                    alreadyEquippedPart.Die();
+                    KIS_Shared.DebugLog("Part : " + this.availablePart.name + " already found on eva");
+                    equippedPart = alreadyEquippedPart;
                 }
-
-                equippedPart = KIS_Shared.CreatePart(partNode, Vector3.zero, Quaternion.identity, this.inventory.part, this.inventory.part, null, null);
-
+                else
+                {
+                    equippedPart = KIS_Shared.CreatePart(partNode, Vector3.zero, Quaternion.identity, this.inventory.part, this.inventory.part, null, null);
+                }
+                
                 //Disable colliders
                 equippedPart.mass = 0.001f;
                 foreach (Collider col in equippedPart.gameObject.GetComponentsInChildren<Collider>())
