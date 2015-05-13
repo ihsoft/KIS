@@ -481,10 +481,13 @@ namespace KIS
                     UnityEngine.Object.DestroyImmediate(jnt);
                 }
             }
-            if (srcPart.attachJoint.Joint.breakForce == Mathf.Infinity)
+            if (srcPart.attachJoint.Joint)
             {
-                KIS_Shared.DebugLog("WaitAndRemoveExtraJoint - Set Joint breakforce to : " + breakForce);
-                srcPart.attachJoint.Joint.breakForce = breakForce;
+                if (srcPart.attachJoint.Joint.breakForce == Mathf.Infinity)
+                {
+                    KIS_Shared.DebugLog("WaitAndRemoveExtraJoint - Set Joint breakforce to : " + breakForce);
+                    srcPart.attachJoint.Joint.breakForce = breakForce;
+                }
             }
         }
 
