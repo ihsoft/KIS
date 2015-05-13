@@ -1446,6 +1446,7 @@ namespace KIS
                                         if (items[i].StackAdd(KISAddonPickup.draggedItem.quantity, checkVolume))
                                         {
                                             KISAddonPickup.draggedItem.Delete();
+                                            items[i].OnMove(srcInventory, this);
                                         }
                                     }
                                     else
@@ -1454,6 +1455,7 @@ namespace KIS
                                         if (items[i].StackAdd(1))
                                         {
                                             KISAddonPickup.draggedPart.Die();
+                                            items[i].OnMove(srcInventory, this);
                                         }
                                     }
                                 }
@@ -1483,10 +1485,10 @@ namespace KIS
                                             srcInventory.items.Add(srcSlot, destItem);
                                             destItem.inventory = srcInventory;
                                             srcInventory.RefreshMassAndVolume();
+                                            items[i].OnMove(srcInventory, this);
                                         }
                                     }
                                 }
-                                items[i].OnMove(srcInventory, this);
                             }
                         }
                     }
