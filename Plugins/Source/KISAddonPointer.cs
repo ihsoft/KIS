@@ -52,6 +52,9 @@ namespace KIS
         public static Part partToAttach;
         public static float scale = 1;
         public static float maxDist = 2f;
+        public static bool allowMoveAbove = false;
+        public static float maxAboveDist = 0.2f;
+        public static float aboveDistStep = 0.05f;
         public static bool useAttachRules = false;
         private static Transform sourceTransform;
         private static RaycastHit hit;
@@ -62,6 +65,7 @@ namespace KIS
         private static GameObject pointer;
         private static List<MeshRenderer> allModelMr;
         private static Vector3 customRot = new Vector3(0f, 0f, 0f);
+        private static float aboveDistance = 0;
         private static Transform pointerNodeTransform;
         private static List<AttachNode> attachNodes = new List<AttachNode>();
         private static int attachNodeIndex;
@@ -102,6 +106,7 @@ namespace KIS
             {
                 KIS_Shared.DebugLog("StartPointer(pointer)");
                 customRot = Vector3.zero;
+                aboveDistance = 0;
                 partToAttach = partToMoveAndAttach;
                 sourceTransform = from;
                 running = true;
@@ -476,6 +481,33 @@ namespace KIS
             else
             {
                 KIS_Shared.MoveAlign(pointer.transform, pointerNodeTransform, hit, rotAdjust);
+            }
+
+            // Move above
+            if (allowMoveAbove)
+            {
+                if (pointerTarget != PointerTarget.PartMount)
+                {
+                    if (Input.GetKeyDown(KeyCode.B))
+                    {
+                        if (aboveDistance < maxAboveDist)
+                        {
+                            aboveDistance += aboveDistStep;
+                        }
+                    }
+                    if (Input.GetKeyDown(KeyCode.N))
+                    {
+                        if (aboveDistance > -maxAboveDist)
+                        {
+                            aboveDistance -= aboveDistStep;
+                        }
+                    }
+                    if (GameSettings.Editor_resetRotation.GetKeyDown())
+                    {
+                        aboveDistance = 0;
+                    }
+                    pointer.transform.position = pointer.transform.position + (hit.normal.normalized * aboveDistance);
+                }
             }
 
             //Check distance
