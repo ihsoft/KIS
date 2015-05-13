@@ -28,7 +28,7 @@ namespace KIS
         public ModuleKISInventory inventory;
         public ModuleKISItem prefabModule;
         private GameObject equippedGameObj;
-        private Part equippedPart;
+        public Part equippedPart;
         Transform evaTransform;
         public enum ActionType { Drop, Equip, Custom }
         public enum UseFrom { KeyDown, KeyUp, InventoryShortcut, ContextMenu }
