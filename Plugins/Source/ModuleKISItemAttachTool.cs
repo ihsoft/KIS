@@ -28,7 +28,10 @@ namespace KIS
         {
             var sb = new StringBuilder();
             sb.AppendFormat("<b>Maximum mass</b>: {0:F0}", attachMaxMass); sb.AppendLine();
-            sb.AppendFormat("<b>Stacking</b>", allowStack); sb.AppendLine();
+            if (allowStack)
+            {
+                sb.AppendLine("Allow snap attach on stack node");
+            }
             return sb.ToString();
         }
 

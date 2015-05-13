@@ -1042,7 +1042,7 @@ namespace KIS
             sb.AppendLine("Cost : " + (this.GetContentCost() + part.partInfo.cost) + " √");
             GUILayout.Box(sb.ToString(), boxStyle, GUILayout.Width(width), GUILayout.Height(45 + extraSpace));
             bool closeInv = false;
-            
+
             if (GUILayout.Button(new GUIContent("Close", "Close container"), GUILayout.Width(width), GUILayout.Height(21)))
             {
                 closeInv = true;
@@ -1499,6 +1499,11 @@ namespace KIS
                             bool carryPart = false;
                             bool storePart = true;
                             ModuleKISItem draggedItemModule = KISAddonPickup.draggedPart.GetComponent<ModuleKISItem>();
+                            if (!draggedItemModule && KISAddonPickup.draggedItem != null)
+                            {
+                                draggedItemModule = KISAddonPickup.draggedItem.prefabModule;
+                            }
+
                             if (draggedItemModule)
                             {
                                 if (draggedItemModule.carriable && invType == InventoryType.Eva && HighLogic.LoadedSceneIsFlight)
@@ -1516,13 +1521,10 @@ namespace KIS
                                                     break;
                                                 }
                                             }
-                                            else
-                                            {
-                                                carryPart = false;
-                                                storePart = false;
-                                                ScreenMessages.PostScreenMessage("Another part is already carried on slot <" + draggedItemModule.equipSlot + ">", 5, ScreenMessageStyle.UPPER_CENTER);
-                                                break;
-                                            }
+                                            carryPart = false;
+                                            storePart = false;
+                                            ScreenMessages.PostScreenMessage("Another part is already carried on slot <" + draggedItemModule.equipSlot + ">", 5, ScreenMessageStyle.UPPER_CENTER);
+                                            break;
                                         }
                                     }
                                 }
