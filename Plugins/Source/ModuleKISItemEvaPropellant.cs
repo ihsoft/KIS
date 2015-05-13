@@ -46,6 +46,14 @@ namespace KIS
                                     ScreenMessages.PostScreenMessage("EVA pack refueled", 5, ScreenMessageStyle.UPPER_CENTER);
                                     evaRessource.amount = evaRessource.maxAmount;
                                     item.SetResource("EVA Propellant", (itemRessource.amount - amountToFill));
+                                    if (item.equippedPart)
+                                    {  
+                                        PartResource equippedTankRessource = item.equippedPart.Resources.list.Find(p => p.resourceName == "EVA Propellant");
+                                        if (equippedTankRessource)
+                                        {
+                                            equippedTankRessource.amount = (itemRessource.amount - amountToFill);
+                                        }
+                                    }
                                     item.inventory.PlaySound(refuelSndPath, false, false);
                                 }
                                 else
