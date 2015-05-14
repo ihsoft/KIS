@@ -498,32 +498,13 @@ namespace KIS
                 {
                     KIS_Shared.DebugLog("Part : " + this.availablePart.name + " already found on eva");
                     equippedPart = alreadyEquippedPart;
+                    OnEquippedPartCoupled(equippedPart);
                 }
                 else
                 {
-                    equippedPart = KIS_Shared.CreatePart(partNode, Vector3.zero, Quaternion.identity, this.inventory.part, this.inventory.part, null, null);
+                    equippedPart = KIS_Shared.CreatePart(partNode, Vector3.zero, Quaternion.identity, this.inventory.part, this.inventory.part, null, null, OnEquippedPartCoupled);
                 }
-                
-                //Disable colliders
-                equippedPart.mass = 0.001f;
-                foreach (Collider col in equippedPart.gameObject.GetComponentsInChildren<Collider>())
-                {
-                    col.isTrigger = true;
-                }
-
-                //Destroy joint to avoid buggy eva move
-                if (equippedPart.attachJoint)
-                {
-                    equippedPart.attachJoint.DestroyJoint();
-                }
-
-                //Destroy rigidbody
-                equippedPart.physicalSignificance = Part.PhysicalSignificance.NONE;
-                if (equippedPart.collisionEnhancer)
-                {
-                    UnityEngine.Object.DestroyImmediate(equippedPart.collisionEnhancer);
-                }
-                UnityEngine.Object.Destroy(equippedPart.rigidbody);
+                  
                 equippedGameObj = equippedPart.gameObject;
 
                 if (prefabModule.equipRemoveHelmet)
@@ -535,13 +516,19 @@ namespace KIS
             {
                 Vector3 pos = inventory.part.transform.TransformPoint(prefabModule.equipPos);
                 Quaternion rot = inventory.part.transform.rotation * Quaternion.Euler(prefabModule.equipDir);
-                equippedPart = KIS_Shared.CreatePart(partNode, pos, rot, this.inventory.part, this.inventory.part, null, null);
-                //Disable colliders
-                foreach (Collider col in equippedPart.gameObject.GetComponentsInChildren<Collider>())
+                Part alreadyEquippedPart = this.inventory.part.vessel.Parts.Find(p => p.partInfo.name == this.availablePart.name);
+                if (alreadyEquippedPart)
                 {
-                    col.isTrigger = true;
+                    KIS_Shared.DebugLog("Part : " + this.availablePart.name + " already found on eva");
+                    equippedPart = alreadyEquippedPart;
+                    OnEquippedPartCoupled(equippedPart);
                 }
+                else
+                {
+                    equippedPart = KIS_Shared.CreatePart(partNode, pos, rot, this.inventory.part, this.inventory.part, null, null, OnEquippedPartCoupled);
+                }             
             }
+
             PlaySound(prefabModule.moveSndPath);
             equipped = true;
             prefabModule.OnEquip(this);
@@ -571,6 +558,42 @@ namespace KIS
             equipped = false;
             PlaySound(prefabModule.moveSndPath);
             prefabModule.OnUnEquip(this);
+        }
+
+        public void OnEquippedPartCoupled(Part createdPart, Part tgtPart = null, AttachNode tgtAttachNode = null)
+        {
+            if (equipMode == EquipMode.Part)
+            {
+                //Disable colliders
+                equippedPart.mass = 0.001f;
+                foreach (Collider col in equippedPart.gameObject.GetComponentsInChildren<Collider>())
+                {
+                    col.isTrigger = true;
+                }
+
+                //Destroy joint to avoid buggy eva move
+                if (equippedPart.attachJoint)
+                {
+                    equippedPart.attachJoint.DestroyJoint();
+                }
+
+                //Destroy rigidbody
+                equippedPart.physicalSignificance = Part.PhysicalSignificance.NONE;
+                if (equippedPart.collisionEnhancer)
+                {
+                    UnityEngine.Object.DestroyImmediate(equippedPart.collisionEnhancer);
+                }
+                UnityEngine.Object.Destroy(equippedPart.rigidbody);
+            }
+
+            if (equipMode == EquipMode.Physic)
+            {
+                //Disable colliders
+                foreach (Collider col in equippedPart.gameObject.GetComponentsInChildren<Collider>())
+                {
+                    col.isTrigger = true;
+                }
+            }
         }
 
         public void Drop(Part fromPart = null)

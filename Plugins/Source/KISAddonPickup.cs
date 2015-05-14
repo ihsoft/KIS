@@ -739,14 +739,13 @@ namespace KIS
 
             if (tgtPart)
             {
-                newPart = KIS_Shared.CreatePart(draggedItem.partNode, pos, rot, draggedItem.inventory.part, tgtPart, srcAttachNodeID, tgtAttachNode);
+                newPart = KIS_Shared.CreatePart(draggedItem.partNode, pos, rot, draggedItem.inventory.part, tgtPart, srcAttachNodeID, tgtAttachNode, OnPartCoupled);
             }
             else
             {
-                newPart = KIS_Shared.CreatePart(draggedItem.partNode, pos, rot, draggedItem.inventory.part);
+                newPart = KIS_Shared.CreatePart(draggedItem.partNode, pos, rot, draggedItem.inventory.part, onPartCoupled:OnPartCoupled);
             }
-
-            KIS_Shared.SendKISMessage(newPart, KIS_Shared.MessageAction.AttachEnd, tgtPart, tgtAttachNode);
+         
             KISAddonPointer.StopPointer();
             draggedItem.StackRemove(1);
             movingPart = null;
@@ -754,5 +753,11 @@ namespace KIS
             draggedPart = null;
             return newPart;
         }
+
+        public void OnPartCoupled(Part createdPart, Part tgtPart = null, AttachNode tgtAttachNode = null)
+        {
+            KIS_Shared.SendKISMessage(createdPart, KIS_Shared.MessageAction.AttachEnd, tgtPart, tgtAttachNode);
+        }
+
     }
 }

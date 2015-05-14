@@ -17,6 +17,7 @@ namespace KIS
     {
         public static bool debugLog = true;
         public static string bipWrongSndPath = "KIS/Sounds/bipwrong";
+        public delegate void OnPartCoupled(Part createdPart, Part tgtPart = null, AttachNode tgtAttachNode = null);
 
         public enum MessageAction { DropEnd, AttachStart, AttachEnd, Store, Decouple }
         public struct MessageInfo
@@ -243,95 +244,6 @@ namespace KIS
             }
             return evaCollider;
         }
-        /* TEST
-        public static Part CreatePart(ConfigNode partConfig, Vector3 position, Quaternion rotation, Part fromPart, bool removeMe = true)
-        {
-
-
-    ConfigNode[] partNodes = new ConfigNode[1];
-
-
-    partNodes[0] = partConfig;
-
-            ConfigNode protoVessNode = ProtoVessel.CreateVesselNode("test",VesselType.Unknown, fromPart.orbit, 0, partNodes);
-
-            ProtoVessel protoVess = HighLogic.CurrentGame.AddVessel(protoVessNode);
-            protoVess.landed = true;
-
-            protoVess.vesselRef.rootPart.transform.position = position;
-            protoVess.vesselRef.rootPart.transform.rotation = rotation;
-
-            return protoVess.vesselRef.rootPart;
-            
-            // Create part
-            ConfigNode node_copy = new ConfigNode();
-            partConfig.CopyTo(node_copy);
-            ProtoPartSnapshot snapshot = new ProtoPartSnapshot(node_copy, null, HighLogic.CurrentGame);
-
-            if (HighLogic.CurrentGame.flightState.ContainsFlightID(snapshot.flightID))
-                snapshot.flightID = ShipConstruction.GetUniqueFlightID(HighLogic.CurrentGame.flightState);
-
-            snapshot.parentIdx = 0;
-            snapshot.position = position;
-            snapshot.rotation = rotation;
-            snapshot.stageIndex = 0;
-            snapshot.defaultInverseStage = 0;
-            snapshot.seqOverride = -1;
-            snapshot.inStageIndex = -1;
-            snapshot.attachMode = (int)AttachModes.SRF_ATTACH;
-            snapshot.attached = true;
-            snapshot.connected = true;
-            snapshot.flagURL = fromPart.flagURL;
-
-            Part newPart = snapshot.Load(fromPart.vessel, false);
-
-            // Request initialization as nonphysical to prevent explosions and velocity reset at high velocity (ex : orbiting moon)
-            newPart.physicalSignificance = Part.PhysicalSignificance.NONE;
-
-            ShipConstruct newShip = new ShipConstruct();
-            newShip.Add(newPart);
-            newShip.SaveShip();
-            newShip.shipName = newPart.partInfo.title;
-            //newShip.ty = 1;
-
-            VesselCrewManifest vessCrewManifest = new VesselCrewManifest();
-            Vessel currentVessel = FlightGlobals.ActiveVessel;
-
-            Vessel v = newShip.parts[0].localRoot.gameObject.AddComponent<Vessel>();
-            v.id = Guid.NewGuid();
-            v.vesselName = newShip.shipName;
-            v.Initialize(false);
-            v.Landed = true;
-            v.rootPart.flightID = ShipConstruction.GetUniqueFlightID(HighLogic.CurrentGame.flightState);
-            v.rootPart.missionID = fromPart.missionID;
-            v.rootPart.flagURL = fromPart.flagURL;
-
-            //v.rootPart.collider.isTrigger = true;
-
-            //v.landedAt = "somewhere";
-
-            Staging.beginFlight();
-            newShip.parts[0].vessel.ResumeStaging();
-            Staging.GenerateStagingSequence(newShip.parts[0].localRoot);
-            Staging.RecalculateVesselStaging(newShip.parts[0].vessel);
-
-            FlightGlobals.SetActiveVessel(currentVessel);
-
-            v.SetPosition(position);
-            v.SetRotation(rotation);
-
-            // Solar panels from containers don't work otherwise
-            for (int i = 0; i < newPart.Modules.Count; i++)
-            {
-                ConfigNode node = new ConfigNode();
-                node.AddValue("name", newPart.Modules[i].moduleName);
-                newPart.LoadModule(node, ref i);
-            }
-
-            return newPart;
-        }*/
-
-
 
         public static Part CreatePart(AvailablePart avPart, Vector3 position, Quaternion rotation, Part fromPart, Part tgtPart = null, string srcAttachNodeID = null, AttachNode tgtAttachNode = null)
         {
@@ -340,9 +252,8 @@ namespace KIS
             return CreatePart(partNode, position, rotation, fromPart);
         }
 
-        public static Part CreatePart(ConfigNode partConfig, Vector3 position, Quaternion rotation, Part fromPart, Part tgtPart = null, string srcAttachNodeID = null, AttachNode tgtAttachNode = null)
+        public static Part CreatePart(ConfigNode partConfig, Vector3 position, Quaternion rotation, Part fromPart, Part coupleToPart = null, string srcAttachNodeID = null, AttachNode tgtAttachNode = null, OnPartCoupled onPartCoupled = null)
         {
-            // Create and add part to a vessel and decouple it
             ConfigNode node_copy = new ConfigNode();
             partConfig.CopyTo(node_copy);
             ProtoPartSnapshot snapshot = new ProtoPartSnapshot(node_copy, null, HighLogic.CurrentGame);
@@ -372,15 +283,14 @@ namespace KIS
             fromPart.vessel.Parts.Add(newPart);
 
             newPart.physicalSignificance = Part.PhysicalSignificance.NONE;
-
             newPart.PromoteToPhysicalPart();
             newPart.Unpack();
             newPart.InitializeModules();
 
-            if (tgtPart)
+            if (coupleToPart)
             {
-                newPart.rigidbody.velocity = tgtPart.rigidbody.velocity;
-                newPart.rigidbody.angularVelocity = tgtPart.rigidbody.angularVelocity;
+                newPart.rigidbody.velocity = coupleToPart.rigidbody.velocity;
+                newPart.rigidbody.angularVelocity = coupleToPart.rigidbody.angularVelocity;
             }
             else
             {
@@ -390,11 +300,9 @@ namespace KIS
 
             newPart.decouple();
 
-            if (tgtPart)
+            if (coupleToPart)
             {
-                KIS_Shared.DebugLog("CreatePart - Coupling part...");
-                CouplePart(newPart, tgtPart, srcAttachNodeID, tgtAttachNode);
-                newPart.StartCoroutine(WaitAndRemoveExtraJoint(newPart, tgtPart));
+                newPart.StartCoroutine(WaitAndCouple(newPart, coupleToPart, srcAttachNodeID, tgtAttachNode, onPartCoupled));
             }
             else
             {
@@ -416,11 +324,59 @@ namespace KIS
             return newPart;
         }
 
+        private static IEnumerator WaitAndCouple(Part newPart, Part tgtPart = null, string srcAttachNodeID = null, AttachNode tgtAttachNode = null, OnPartCoupled onPartCoupled = null)
+        {
+            // Get relative position & rotation
+            Vector3 toPartLocalPos = Vector3.zero;
+            Quaternion toPartLocalRot = Quaternion.identity;
+            if (tgtPart)
+            {
+                if (tgtAttachNode == null)
+                {
+                    // Local position & rotation from part
+                    toPartLocalPos = tgtPart.transform.InverseTransformPoint(newPart.transform.position);
+                    toPartLocalRot = Quaternion.Inverse(tgtPart.transform.rotation) * newPart.transform.rotation;
+                }
+                else
+                {
+                    // Local position & rotation from node (KAS winch connector)
+                    toPartLocalPos = tgtAttachNode.nodeTransform.InverseTransformPoint(newPart.transform.position);
+                    toPartLocalRot = Quaternion.Inverse(tgtAttachNode.nodeTransform.rotation) * newPart.transform.rotation;
+                }
+            }
+
+            // Wait part to initialize
+            while (!newPart.started && newPart.State != PartStates.DEAD)
+            {
+                KIS_Shared.DebugLog("CreatePart - Waiting initialization of the part...");
+                if (tgtPart)
+                {
+                    // Part stay in position 
+                    if (tgtAttachNode == null)
+                    {
+                        newPart.transform.position = tgtPart.transform.TransformPoint(toPartLocalPos);
+                        newPart.transform.rotation = tgtPart.transform.rotation * toPartLocalRot;
+                    }
+                    else
+                    {
+                        newPart.transform.position = tgtAttachNode.nodeTransform.TransformPoint(toPartLocalPos);
+                        newPart.transform.rotation = tgtAttachNode.nodeTransform.rotation * toPartLocalRot;
+                    }
+                }
+                yield return null;
+            }
+
+            KIS_Shared.DebugLog("CreatePart - Coupling part...");
+            CouplePart(newPart, tgtPart, srcAttachNodeID, tgtAttachNode);
+
+            if (onPartCoupled != null)
+            {
+                onPartCoupled(newPart, tgtPart, tgtAttachNode);
+            }
+        }
+
         public static void CouplePart(Part srcPart, Part tgtPart, string srcAttachNodeID = null, AttachNode tgtAttachNode = null)
         {
-            GameEvents.onActiveJointNeedUpdate.Fire(srcPart.vessel);
-            GameEvents.onActiveJointNeedUpdate.Fire(tgtPart.vessel);
-
             // Node links
             if (srcAttachNodeID != null)
             {
@@ -455,40 +411,6 @@ namespace KIS
             }
 
             srcPart.Couple(tgtPart);
-
-            KIS_Shared.ResetCollisionEnhancer(srcPart);
-            GameEvents.onVesselWasModified.Fire(tgtPart.vessel);
-        }
-
-        // Workaround to fix an extra joint added on part attached directly from an inventory
-        private static IEnumerator WaitAndRemoveExtraJoint(Part srcPart, Part tgtPart)
-        {
-            while (!srcPart.started && srcPart.State != PartStates.DEAD)
-            {
-                KIS_Shared.DebugLog("WaitAndRemoveExtraJoint - Waiting initialization of the part...");
-                yield return null;
-            }
-            float breakForce = 888;
-            foreach (Joint jnt in tgtPart.GetComponents<Joint>())
-            {
-                if (jnt.connectedBody == srcPart.rigidbody && jnt != srcPart.attachJoint.Joint && jnt.GetType() == typeof(ConfigurableJoint))
-                {
-                    if (jnt.breakForce != Mathf.Infinity)
-                    {
-                        breakForce = jnt.breakForce;
-                    }
-                    KIS_Shared.DebugLog("WaitAndRemoveExtraJoint - Destroy Fixed Joint : " + jnt.name + " | " + jnt.connectedBody.name + " | " + jnt.breakForce);
-                    UnityEngine.Object.DestroyImmediate(jnt);
-                }
-            }
-            if (srcPart.attachJoint.Joint)
-            {
-                if (srcPart.attachJoint.Joint.breakForce == Mathf.Infinity)
-                {
-                    KIS_Shared.DebugLog("WaitAndRemoveExtraJoint - Set Joint breakforce to : " + breakForce);
-                    srcPart.attachJoint.Joint.breakForce = breakForce;
-                }
-            }
         }
 
         public static void MoveAlign(Transform source, Transform childNode, RaycastHit hit, Quaternion adjust)
