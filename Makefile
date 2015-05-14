@@ -1,3 +1,13 @@
+# Makefile for KIS
+#
+# If you have KSP in a non-standard directory, be sure to set the environment variable
+# $XDG_DATA_HOME (if different from usual), or $KSPDIR to the directory of KSP (if using
+# a Steam library in a non-standard location).
+#
+# Example: if you have a Steam library in the directory /media/partition3, do something like:
+# export KSPDIR="/media/partition3/SteamLibrary/SteamApps/common/Kerbal Space Program"
+# then, run make as normal.
+
 ifeq ($(OS),Windows_NT)
 	# It's unlikely that a windows user will use a makefile to compile KIS
 	# Visual studio is free, after all.
