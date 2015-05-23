@@ -818,7 +818,7 @@ namespace KIS
                 if (!this.part.vessel.mainBody.atmosphereContainsOxygen)
                 {
                     helmetEquipped = true;
-                    ScreenMessages.PostScreenMessage("Cannot remove helmet, atmosphere do not contain oxygen !", 5, ScreenMessageStyle.UPPER_CENTER);
+                    ScreenMessages.PostScreenMessage("Cannot remove helmet, atmosphere does not contain oxygen !", 5, ScreenMessageStyle.UPPER_CENTER);
                     return false;
                 }
                 if (FlightGlobals.getStaticPressure() < KISAddonConfig.breathableAtmoPressure)
