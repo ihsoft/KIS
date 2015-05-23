@@ -148,6 +148,19 @@ namespace KIS
             this.volume = GetVolume();
             this.cost = GetCost();
 
+            // Set launchID
+            if (this.partNode.HasValue("launchID"))
+            {
+                if (int.Parse(this.partNode.GetValue("launchID")) == 0)
+                {
+                    this.partNode.SetValue("launchID", this.inventory.part.launchID.ToString(), true);
+                }
+            }
+            else
+            {
+                this.partNode.SetValue("launchID", this.inventory.part.launchID.ToString(), true);
+            }
+
             if (this.prefabModule)
             {
                 if (this.prefabModule.volumeOverride > 0)
