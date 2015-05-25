@@ -322,6 +322,7 @@ namespace KIS
                 if (hoverInventoryGui()) return;
                 if (draggedPart == part) return;
                 ModuleKISPickup pickupModule = GetActivePickupNearest(part);
+                ModuleKISItem partItemModule = part.GetComponent<ModuleKISItem>();
                 ModuleKISPartDrag pDrag = part.GetComponent<ModuleKISPartDrag>();
                 ModuleKISPartMount parentMount = null;
                 if (part.parent) parentMount = part.parent.GetComponent<ModuleKISPartMount>();
@@ -357,7 +358,7 @@ namespace KIS
                 }
 
                 // Check part childrens
-                if (part.children.Count > 0)
+                if (part.children.Count > 0 && (partItemModule != null && !partItemModule.alwaysDetachable))
                 {
                     CursorEnable("KIS/Textures/forbidden", "Can't grab", "(Part can't be grabbed because " + part.children.Count + " part(s) is attached to it");
                     return;
