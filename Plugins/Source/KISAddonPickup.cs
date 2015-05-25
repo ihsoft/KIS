@@ -743,7 +743,8 @@ namespace KIS
             }
             else
             {
-                newPart = KIS_Shared.CreatePart(draggedItem.partNode, pos, rot, draggedItem.inventory.part, onPartCoupled:OnPartCoupled);
+                newPart = KIS_Shared.CreatePart(draggedItem.partNode, pos, rot, draggedItem.inventory.part);
+                KIS_Shared.SendKISMessage(newPart, KIS_Shared.MessageAction.AttachEnd, tgtPart, tgtAttachNode);
             }
          
             KISAddonPointer.StopPointer();
