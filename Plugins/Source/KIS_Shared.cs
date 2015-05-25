@@ -20,20 +20,14 @@ namespace KIS
         public delegate void OnPartCoupled(Part createdPart, Part tgtPart = null, AttachNode tgtAttachNode = null);
 
         public enum MessageAction { DropEnd, AttachStart, AttachEnd, Store, Decouple }
-        public struct MessageInfo
-        {
-            public MessageAction action;
-            public Part tgtPart;
-            public AttachNode TgtAttachNode;
-        }
 
         public static void SendKISMessage(Part destPart, MessageAction action, Part tgtPart = null, AttachNode tgtNode = null)
         {
-            KIS_Shared.MessageInfo messageInfo = new KIS_Shared.MessageInfo();
-            messageInfo.action = action;
-            messageInfo.tgtPart = tgtPart;
-            messageInfo.TgtAttachNode = tgtNode;
-            destPart.SendMessage("OnKISAction", messageInfo, SendMessageOptions.DontRequireReceiver);
+            BaseEventData bEventData = new BaseEventData(BaseEventData.Sender.AUTO);
+            bEventData.Set("action", action.ToString());
+            bEventData.Set("targetPart", tgtPart);
+            bEventData.Set("targetNode", tgtNode);
+            destPart.SendMessage("OnKISAction", bEventData, SendMessageOptions.DontRequireReceiver);
         }
 
         public static void DebugLog(string text)

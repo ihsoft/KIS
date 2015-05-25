@@ -27,13 +27,15 @@ namespace KIS
             }
         }
 
-        public void OnKISAction(KIS_Shared.MessageInfo messageInfo)
+        public void OnKISAction(BaseEventData baseEventData)
         {
-            if (messageInfo.action == KIS_Shared.MessageAction.Store || messageInfo.action == KIS_Shared.MessageAction.DropEnd || messageInfo.action == KIS_Shared.MessageAction.AttachStart)
+            string action = baseEventData.GetString("action");
+            Part tgtPart = (Part)baseEventData.Get("targetPart");
+            if (action == KIS_Shared.MessageAction.Store.ToString() || action == KIS_Shared.MessageAction.DropEnd.ToString() || action == KIS_Shared.MessageAction.AttachStart.ToString())
             {
                 GroundDetach();
             }
-            if (messageInfo.action == KIS_Shared.MessageAction.AttachEnd && messageInfo.tgtPart == null)
+            if (action == KIS_Shared.MessageAction.AttachEnd.ToString() && tgtPart == null)
             {
                 GroundAttach();
             }
