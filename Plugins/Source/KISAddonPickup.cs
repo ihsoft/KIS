@@ -229,75 +229,80 @@ namespace KIS
                 // On drag released
                 if (draggedPart && Input.GetMouseButtonUp(0))
                 {
-                    CursorDefault();
-                    if (HighLogic.LoadedSceneIsFlight)
+                    OnDragReleased();
+                }
+            }
+        }
+
+        void OnDragReleased()
+        {
+            CursorDefault();
+            if (HighLogic.LoadedSceneIsFlight)
+            {
+                InputLockManager.RemoveControlLock("KISpickup");
+                // Re-enable jetpack mouse control (workaround as SetControlLock didn't have any effect on this)  
+                KerbalEVA Keva = FlightGlobals.ActiveVessel.rootPart.GetComponent<KerbalEVA>();
+                if (Keva)
+                {
+                    if (jetpackLock)
                     {
-                        InputLockManager.RemoveControlLock("KISpickup");
-                        // Re-enable jetpack mouse control (workaround as SetControlLock didn't have any effect on this)  
-                        KerbalEVA Keva = FlightGlobals.ActiveVessel.rootPart.GetComponent<KerbalEVA>();
-                        if (Keva)
-                        {
-                            if (jetpackLock)
-                            {
-                                Keva.JetpackDeployed = true;
-                                jetpackLock = false;
-                                KIS_Shared.DebugLog("Jetpack mouse input re-enabled");
-                            }
-                        }
+                        Keva.JetpackDeployed = true;
+                        jetpackLock = false;
+                        KIS_Shared.DebugLog("Jetpack mouse input re-enabled");
                     }
-                    if (hoverInventoryGui())
+                }
+            }
+            if (hoverInventoryGui())
+            {
+                // Couroutine to let time to KISModuleInventory to catch the draggedPart
+                StartCoroutine(WaitAndStopDrag());
+            }
+            else
+            {
+                ModuleKISPartDrag pDrag = null;
+                if (hoveredPart)
+                {
+                    if (hoveredPart != draggedPart)
                     {
-                        // Couroutine to let time to KISModuleInventory to catch the draggedPart
-                        StartCoroutine(WaitAndStopDrag());
+                        pDrag = hoveredPart.GetComponent<ModuleKISPartDrag>();
+                    }
+                }
+                if (pDrag)
+                {
+                    if (draggedItem != null)
+                    {
+                        draggedItem.DragToPart(hoveredPart);
+                        pDrag.OnItemDragged(draggedItem);
                     }
                     else
                     {
-                        ModuleKISPartDrag pDrag = null;
-                        if (hoveredPart)
+                        pDrag.OnPartDragged(draggedPart);
+                    }
+                }
+                else
+                {
+                    if (HighLogic.LoadedSceneIsEditor)
+                    {
+                        if (draggedItem != null)
                         {
-                            if (hoveredPart != draggedPart)
-                            {
-                                pDrag = hoveredPart.GetComponent<ModuleKISPartDrag>();
-                            }
+                            draggedItem.Delete();
                         }
-                        if (pDrag)
+                    }
+                    if (HighLogic.LoadedSceneIsFlight)
+                    {
+                        if (draggedItem != null)
                         {
-                            if (draggedItem != null)
-                            {
-                                draggedItem.DragToPart(hoveredPart);
-                                pDrag.OnItemDragged(draggedItem);
-                            }
-                            else
-                            {
-                                pDrag.OnPartDragged(draggedPart);
-                            }
+                            Drop(draggedItem);
                         }
                         else
                         {
-                            if (HighLogic.LoadedSceneIsEditor)
-                            {
-                                if (draggedItem != null)
-                                {
-                                    draggedItem.Delete();
-                                }
-                            }
-                            if (HighLogic.LoadedSceneIsFlight)
-                            {
-                                if (draggedItem != null)
-                                {
-                                    Drop(draggedItem);
-                                }
-                                else
-                                {
-                                    movingPart = draggedPart;
-                                    Drop(movingPart, movingPart);
-                                }
-                            }
+                            movingPart = draggedPart;
+                            Drop(movingPart, movingPart);
                         }
-                        icon = null;
-                        draggedPart = null;
                     }
                 }
+                icon = null;
+                draggedPart = null;
             }
         }
 
