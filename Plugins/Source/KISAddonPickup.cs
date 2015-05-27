@@ -43,6 +43,7 @@ namespace KIS
         public Part hoveredPart = null;
         public bool grabActive = false;
         private bool grabOk = false;
+        private bool jetpackLock = false;
 
         public enum PointerMode { Drop, Attach }
         private PointerMode _pointerMode = PointerMode.Drop;
@@ -232,6 +233,17 @@ namespace KIS
                     if (HighLogic.LoadedSceneIsFlight)
                     {
                         InputLockManager.RemoveControlLock("KISpickup");
+                        // Re-enable jetpack mouse control (workaround as SetControlLock didn't have any effect on this)  
+                        KerbalEVA Keva = FlightGlobals.ActiveVessel.rootPart.GetComponent<KerbalEVA>();
+                        if (Keva)
+                        {
+                            if (jetpackLock)
+                            {
+                                Keva.JetpackDeployed = true;
+                                jetpackLock = false;
+                                KIS_Shared.DebugLog("Jetpack mouse input re-enabled");
+                            }
+                        }
                     }
                     if (hoverInventoryGui())
                     {
@@ -518,6 +530,17 @@ namespace KIS
             if (HighLogic.LoadedSceneIsFlight)
             {
                 InputLockManager.SetControlLock(ControlTypes.EVA_INPUT, "KISpickup");
+                // Disable jetpack mouse control (workaround as SetControlLock didn't have any effect on this)  
+                KerbalEVA Keva = FlightGlobals.ActiveVessel.rootPart.GetComponent<KerbalEVA>();
+                if (Keva)
+                {
+                    if (Keva.JetpackDeployed)
+                    {
+                        Keva.JetpackDeployed = false;
+                        jetpackLock = true;
+                        KIS_Shared.DebugLog("Jetpack mouse input disabled");
+                    }
+                }
             }
         }
 
