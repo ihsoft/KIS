@@ -8,7 +8,7 @@ using UnityEngine;
 namespace KIS
 {
 
-    public class ModuleKISInventory : PartModule, IPartCostModifier
+    public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifier
     {
         // Inventory
         public Dictionary<int, KIS_Item> items = new Dictionary<int, KIS_Item>();
@@ -669,6 +669,11 @@ namespace KIS
         public float GetModuleCost(float defaultCost)
         {
             return GetContentCost();
+        }
+
+        public float GetModuleMass(float defaultMass)
+        {
+            return GetContentMass();
         }
 
         private bool VolumeAvailableFor(Part p)
