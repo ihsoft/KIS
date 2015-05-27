@@ -534,7 +534,7 @@ namespace KIS
             CursorDisable();
             if (HighLogic.LoadedSceneIsFlight)
             {
-                InputLockManager.SetControlLock(ControlTypes.EVA_INPUT, "KISpickup");
+                InputLockManager.SetControlLock(ControlTypes.VESSEL_SWITCHING, "KISpickup");
                 // Disable jetpack mouse control (workaround as SetControlLock didn't have any effect on this)  
                 KerbalEVA Keva = FlightGlobals.ActiveVessel.rootPart.GetComponent<KerbalEVA>();
                 if (Keva)
