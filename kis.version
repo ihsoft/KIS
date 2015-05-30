@@ -2,7 +2,7 @@
 	"NAME":"KIS",
 	"URL":"https://raw.githubusercontent.com/KospY/KIS/master/kis.version",
 	"DOWNLOAD":"http://kerbal.curseforge.com/ksp-mods/228561-kerbal-inventory-system-kis",
-	"CHANGE_LOG_URL":"https://github.com/KospY/KIS/wiki/Changelog",
+	"CHANGE_LOG_URL":"https://raw.githubusercontent.com/KospY/KIS/master/changelog.md",
 	"GITHUB":
     {
         "USERNAME":"KospY",
