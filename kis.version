@@ -1,19 +1,25 @@
 {
 	"NAME":"KIS",
-	"URL":"https://github.com/KospY/KIS/blob/master/kis.version",
-	"DOWNLOAD":"http://kerbal.curseforge.com/ksp-mods/228561-kerbal-inventory-system-kis/files/2238213",
+	"URL":"https://raw.githubusercontent.com/KospY/KIS/master/kis.version",
+	"DOWNLOAD":"http://kerbal.curseforge.com/ksp-mods/228561-kerbal-inventory-system-kis",
 	"CHANGE_LOG_URL":"https://github.com/KospY/KIS/wiki/Changelog",
+	"GITHUB":
+    {
+        "USERNAME":"KospY",
+        "REPOSITORY":"KIS",
+        "ALLOW_PRE_RELEASE":false,
+    },
 	"VERSION":
 	{
 		"MAJOR":1,
 		"MINOR":1,
-		"PATCH":6,
+		"PATCH":5,
 		"BUILD":0
 	},
 	"KSP_VERSION":
 	{
 		"MAJOR":1,
 		"MINOR":0,
-		"PATCH":3
+		"PATCH":2
 	}
 }
