@@ -42,7 +42,6 @@
   <ItemGroup>
     <Compile Include="DependancyChecker.cs" />
     <Compile Include="ModuleKISItemEvaPropellant.cs" />
-    <Compile Include="CompatibilityChecker.cs" />
     <Compile Include="KIS_IconViewer.cs" />
     <Compile Include="ModuleKISItemBook.cs" />
     <Compile Include="ModuleKISPartStatic.cs" />
