@@ -1,4 +1,4 @@
-### 1.1.5 (Not released yet)
+### 1.1.5 (31 May, 2015)
 - [Enhancement] Disable jetpack mouse input while dragging 
 - [Enhancement] Converted parts textures to DDS 
 - [Enhancement] AVC is now used for version check
