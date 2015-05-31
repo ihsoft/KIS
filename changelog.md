@@ -1,3 +1,18 @@
+### 1.1.5 (Not released yet)
+- [Enhancement] Disable jetpack mouse input while dragging 
+- [Enhancement] Convert parts textures to DDS 
+- [Enhancement] Added a KAS version dependancy check 
+- [Enhancement] AVC is now used for version check
+- [Fix] launchID is now correctly set for stored parts
+- [Fix] Prevent removing the launch vessel flag of stored parts
+- [Fix] Stored parts must now be recognized by contracts
+- [Fix] Fix static part not attaching when dragged from an inventory
+- [Fix] Fix wording for removing helmets. (thanks to iPeer)
+- [Fix] OnKISAction method use BaseEventData (prevent KAS crash if KIS is missing)
+- [Fix] Prevent vessel switching while dragging an item 
+- [Fix] Engineer report take into account the mass update 
+- [Fix] Fix two typos in the user manual 
+
 ### 1.1.4 (14 May, 2015)
 - [Fix] fix delayed ship explosion after attaching parts from inventory in deep space 
 
