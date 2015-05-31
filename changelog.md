@@ -3,6 +3,7 @@
 - [Enhancement] Converted parts textures to DDS 
 - [Enhancement] AVC is now used for version check
 - [Enhancement] Added a KAS version dependancy check 
+- [Enhancement] Added more stackable module (KASModuleHarpoon, ModuleRecycleablePart, CollisionFX)
 - [Fix] launchID is now correctly set for stored parts
 - [Fix] Prevent removing the launch vessel flag of stored parts
 - [Fix] Stored parts must now be recognized by contracts
