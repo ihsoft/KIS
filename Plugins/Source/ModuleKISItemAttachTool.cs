@@ -101,5 +101,103 @@ namespace KIS
             }
         }
 
+        //
+        // Summary:
+        //     Called when a part is Detach (from an other part).
+        //     srcPart it's the part being dropped (it's attach to its parent)
+        //     errorMsg is the string array needed when it's not possible to detach
+        //      (first is the texture, then some messages)
+        // default : check maxmass
+        public virtual bool OnCheckDetach(Part partToDetach, ref String[] errorMsg)
+        {
+            if (partToDetach == null) return true;
+            float pMass = (part.mass + part.GetResourceMass());
+            if (pMass > attachMaxMass)
+            {
+                errorMsg = new string[]{
+					"KIS/Textures/tooHeavy", 
+					"Too heavy",
+					"(Use a better tool for this [" + pMass + " > " + attachMaxMass + ")"
+				};
+                return false;
+            }
+            return true;
+        }
+
+
+        //private static float GetAllPickupMaxMassInRange(Part p)
+        //{
+        //	float maxMass = 0;
+        //	ModuleKISPickup[] allPickupModules = FindObjectsOfType(typeof(ModuleKISPickup)) as ModuleKISPickup[];
+        //	foreach (ModuleKISPickup pickupModule in allPickupModules)
+        //	{
+        //		float partDist = Vector3.Distance(pickupModule.part.transform.position, p.transform.position);
+        //		if (partDist <= pickupModule.maxDistance)
+        //		{
+        //			maxMass += pickupModule.maxMass;
+        //		}
+        //	}
+        //	return maxMass;
+        //}
+
+        //
+        // Summary:
+        //     Called when a part is dropped.
+        //     srcPart it's the part being dropped
+        //     tgtPart is a part src part will be going into
+        public virtual void OnItemMove(Part srcPart, Part tgtPart, KISMoveType moveType, KISAddonPointer.PointerTarget pointerTarget)
+        {
+            if (moveType == (KISMoveType.ATTACH_MOVE | KISMoveType.ATTACH_NEW) && srcPart)
+            {
+                AudioSource.PlayClipAtPoint(GameDatabase.Instance.GetAudioClip(attachSndPath), srcPart.transform.position);
+            }
+            else
+            {
+                if (tgtPart != null)
+                {
+                    AudioSource.PlayClipAtPoint(GameDatabase.Instance.GetAudioClip(detachSndPath), srcPart.transform.position);
+                }
+            }
+        }
+
+        //
+        // Summary:
+        //     Called when a part need to known if it can be surface-attach with this tool
+        //     srcPart it's the part we want to attach
+        //     tgtPart is where we want to attach srcPart
+        //     toolInvalidMsg is the message used when this method return false.
+        //     surfaceMountPosition is the surface mount position on tgtPart (in scene origin)
+        public virtual bool OnCheckAttach(Part srcPart, Part tgtPart, ref string toolInvalidMsg, Vector3 surfaceMountPosition)
+        {
+            return this.OnCheckAttach(srcPart, tgtPart, ref toolInvalidMsg);
+        }
+
+        //
+        // Summary:
+        //     Called when a part need to known if it can be attachon a node with this tool
+        //     srcPart it's the part we want to attach
+        //     tgtPart is where we want to attach srcPart
+        //     toolInvalidMsg is the message used when this method return false.
+        //     surfaceMountPosition is the surface mount position on tgtPart (in scene origin)
+        public virtual bool OnCheckAttach(Part srcPart, Part tgtPart, ref string toolInvalidMsg, AttachNode tgtNode)
+        {
+            return this.OnCheckAttach(srcPart, tgtPart, ref toolInvalidMsg);
+        }
+
+        protected virtual bool OnCheckAttach(Part srcPart, Part tgtPart, ref string toolInvalidMsg)
+        {
+            float pMass = (part.mass + part.GetResourceMass());
+            if (pMass > attachMaxMass)
+            {
+                toolInvalidMsg = "Too heavy, (Use a better tool for this [" + pMass + " > " + attachMaxMass + ")";
+
+                return false;
+            }
+            return true;
+        }
     }
+
+    // TODO: RETURN_INVENTORY option with the associated hook
+    public enum KISMoveType { DROP_NEW, DROP_MOVE, ATTACH_NEW, ATTACH_MOVE }
+
 }

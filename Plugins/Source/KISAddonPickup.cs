@@ -394,18 +394,29 @@ namespace KIS
                 {
                     if (pickupModule.canDetach && !parentMount && part.parent && part.children.Count == 0)
                     {
-                        float partMass = part.mass + part.GetResourceMass();
-                        if (partMass > pickupModule.detachMaxMass)
+                        string[] errorMsg = null;
+                        bool canDetachWithTool = KIS_Shared.CheckAttachTool(x => x.OnCheckDetach(part, ref errorMsg));
+                        if (!canDetachWithTool)
                         {
-                            CursorEnable("KIS/Textures/tooHeavy", "Too heavy", "(Use a better tool for this [" + partMass + " > " + pickupModule.detachMaxMass + ")");
+                            if (errorMsg == null)
+                                CursorEnable("KIS/Textures/forbidden", "Can't grab", "(Part can't be detached without the proper tool");
+                            else
+                                CursorEnable(errorMsg);
                             return;
                         }
-                        else
-                        {
-                            CursorEnable("KIS/Textures/attachOk", "Detach", '(' + part.partInfo.title + ')');
-                            grabOk = true;
-                            return;
-                        }
+
+                        //float partMass = part.mass + part.GetResourceMass();
+                        //if (partMass > pickupModule.detachMaxMass)
+                        //{
+                        //	CursorEnable("KIS/Textures/tooHeavy", "Too heavy", "(Use a better tool for this [" + partMass + " > " + pickupModule.detachMaxMass + ")");
+                        //	return;
+                        //}
+                        //else
+                        //{
+                        //	CursorEnable("KIS/Textures/attachOk", "Detach", '(' + part.partInfo.title + ')');
+                        //	grabOk = true;
+                        //	return;
+                        //}
                     }
                 }
 
@@ -493,6 +504,16 @@ namespace KIS
             cursorText = text;
             cursorText2 = text2;
             cursorText3 = text3;
+        }
+        public void CursorEnable(string[] texts)
+        {
+            if (texts.Length < 2) return;
+            cursorShow = true;
+            Screen.showCursor = false;
+            cursorTexture = GameDatabase.Instance.GetTexture(texts[0], false);
+            cursorText = texts[1];
+            if (texts.Length > 2) cursorText2 = texts[2];
+            if (texts.Length > 3) cursorText3 = texts[3];
         }
 
         public void CursorDefault()
@@ -647,7 +668,7 @@ namespace KIS
             }
         }
 
-        private void OnPointerAction(KISAddonPointer.PointerTarget pointerTarget, Vector3 pos, Quaternion rot, Part tgtPart, string srcAttachNodeID = null, AttachNode tgtAttachNode = null)
+        private void OnPointerAction(KISAddonPointer.PointerTarget pointerTarget, Vector3 pos, Quaternion rot, Part tgtPart, ModuleKISItemAttachTool attachTool, string srcAttachNodeID = null, AttachNode tgtAttachNode = null)
         {
             if (pointerTarget == KISAddonPointer.PointerTarget.PartMount)
             {
@@ -673,10 +694,12 @@ namespace KIS
                     if (movingPart)
                     {
                         MoveDrop(tgtPart, pos, rot);
+                        if (attachTool) attachTool.OnItemMove(movingPart, tgtPart, KISMoveType.DROP_MOVE, pointerTarget);
                     }
                     else
                     {
-                        CreateDrop(tgtPart, pos, rot);
+                        Part scrPart = CreateDrop(tgtPart, pos, rot);
+                        if (attachTool) attachTool.OnItemMove(scrPart, tgtPart, KISMoveType.DROP_NEW, pointerTarget);
                     }
                 }
                 if (pointerMode == PointerMode.Attach)
@@ -684,13 +707,19 @@ namespace KIS
                     if (movingPart)
                     {
                         MoveAttach(tgtPart, pos, rot, srcAttachNodeID, tgtAttachNode);
+                        if (attachTool) attachTool.OnItemMove(movingPart, tgtPart, KISMoveType.ATTACH_MOVE, pointerTarget);
                     }
                     else
                     {
-                        CreateAttach(tgtPart, pos, rot, srcAttachNodeID, tgtAttachNode);
+                        Part scrPart = CreateAttach(tgtPart, pos, rot, srcAttachNodeID, tgtAttachNode);
+                        if (attachTool) attachTool.OnItemMove(scrPart, tgtPart, KISMoveType.ATTACH_NEW, pointerTarget);
                     }
-                    ModuleKISPickup modulePickup = GetActivePickupNearest(pos);
-                    if (modulePickup) AudioSource.PlayClipAtPoint(GameDatabase.Instance.GetAudioClip(modulePickup.attachSndPath), pos);
+                    //if can't do attachTool.OnItemMove, use default sound
+                    if (!attachTool)
+                    {
+                        ModuleKISPickup modulePickup = GetActivePickupNearest(pos);
+                        if (modulePickup) AudioSource.PlayClipAtPoint(GameDatabase.Instance.GetAudioClip(modulePickup.attachSndPath), pos);
+                    }
                 }
             }
             draggedItem = null;
@@ -725,7 +754,6 @@ namespace KIS
             movingPart.transform.rotation = rot;
             KIS_Shared.SendKISMessage(movingPart, KIS_Shared.MessageAction.DropEnd, tgtPart);
             KISAddonPointer.StopPointer();
-            movingPart = null;
         }
 
         private Part CreateDrop(Part tgtPart, Vector3 pos, Quaternion rot)
@@ -736,8 +764,6 @@ namespace KIS
             KIS_Shared.SendKISMessage(newPart, KIS_Shared.MessageAction.DropEnd, tgtPart);
             KISAddonPointer.StopPointer();
             draggedItem.StackRemove(1);
-            draggedItem = null;
-            draggedPart = null;
             if (modulePickup) AudioSource.PlayClipAtPoint(GameDatabase.Instance.GetAudioClip(modulePickup.dropSndPath), pos);
             return newPart;
         }
@@ -755,9 +781,6 @@ namespace KIS
             }
             KIS_Shared.SendKISMessage(movingPart, KIS_Shared.MessageAction.AttachEnd, tgtPart, tgtAttachNode);
             KISAddonPointer.StopPointer();
-            movingPart = null;
-            draggedItem = null;
-            draggedPart = null;
         }
 
         private Part CreateAttach(Part tgtPart, Vector3 pos, Quaternion rot, string srcAttachNodeID = null, AttachNode tgtAttachNode = null)
@@ -774,12 +797,9 @@ namespace KIS
                 newPart = KIS_Shared.CreatePart(draggedItem.partNode, pos, rot, draggedItem.inventory.part);
                 KIS_Shared.SendKISMessage(newPart, KIS_Shared.MessageAction.AttachEnd, tgtPart, tgtAttachNode);
             }
-         
+
             KISAddonPointer.StopPointer();
             draggedItem.StackRemove(1);
-            movingPart = null;
-            draggedItem = null;
-            draggedPart = null;
             return newPart;
         }
 

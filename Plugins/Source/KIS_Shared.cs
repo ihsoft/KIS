@@ -595,5 +595,37 @@ namespace KIS
             return btnPress;
         }
 
+		//public static bool CheckAttachTool(Func<ModuleKISItemAttachTool, bool> toExecute)
+		//{
+		//	List<ModuleKISInventory> inventories = FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleKISInventory>();
+		//	bool checkOk = false;
+		//	foreach (ModuleKISInventory inventory in inventories)
+		//	{
+		//		KIS_Item item = inventory.GetEquipedItem("rightHand");
+		//		if (item != null && item.prefabModule != null && item.prefabModule is ModuleKISItemAttachTool)
+		//		{
+		//			checkOk = toExecute(item.prefabModule as ModuleKISItemAttachTool);
+		//			if (checkOk) return true;
+		//		}
+		//	}
+		//	return false;
+		//}
+
+		public static ModuleKISItemAttachTool CheckAttachTool(Func<ModuleKISItemAttachTool, bool> toExecute)
+		{
+			List<ModuleKISInventory> inventories = FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleKISInventory>();
+			bool checkOk = false;
+			foreach (ModuleKISInventory inventory in inventories)
+			{
+				KIS_Item item = inventory.GetEquipedItem("rightHand");
+				if (item != null && item.prefabModule != null && item.prefabModule is ModuleKISItemAttachTool)
+				{
+					checkOk = toExecute(item.prefabModule as ModuleKISItemAttachTool);
+					if (checkOk) return item.prefabModule as ModuleKISItemAttachTool;
+				}
+			}
+			return null;
+		}
+
     }
 }
