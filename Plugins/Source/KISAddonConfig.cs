@@ -76,7 +76,6 @@ namespace KIS
                 if (nodeEvaPickup.HasValue("maxDistance")) evaPickup.maxDistance = float.Parse(nodeEvaPickup.GetValue("maxDistance"));
                 if (nodeEvaPickup.HasValue("maxMass")) evaPickup.maxMass = float.Parse(nodeEvaPickup.GetValue("maxMass"));
                 if (nodeEvaPickup.HasValue("dropSndPath")) evaPickup.dropSndPath = nodeEvaPickup.GetValue("dropSndPath");
-                if (nodeEvaPickup.HasValue("attachSndPath")) evaPickup.attachSndPath = nodeEvaPickup.GetValue("attachSndPath");
                 if (nodeEvaPickup.HasValue("draggedIconResolution")) KISAddonPickup.draggedIconResolution = int.Parse(nodeEvaPickup.GetValue("draggedIconResolution"));
                 KIS_Shared.DebugLog("Eva pickup module loaded successfully");
             }
@@ -108,7 +107,6 @@ namespace KIS
                 if (nodeEvaPickup.HasValue("maxDistance")) evaFemalePickup.maxDistance = float.Parse(nodeEvaPickup.GetValue("maxDistance"));
                 if (nodeEvaPickup.HasValue("maxMass")) evaFemalePickup.maxMass = float.Parse(nodeEvaPickup.GetValue("maxMass"));
                 if (nodeEvaPickup.HasValue("dropSndPath")) evaFemalePickup.dropSndPath = nodeEvaPickup.GetValue("dropSndPath");
-                if (nodeEvaPickup.HasValue("attachSndPath")) evaFemalePickup.attachSndPath = nodeEvaPickup.GetValue("attachSndPath");
                 if (nodeEvaPickup.HasValue("draggedIconResolution")) KISAddonPickup.draggedIconResolution = int.Parse(nodeEvaPickup.GetValue("draggedIconResolution"));
                 KIS_Shared.DebugLog("Eva pickup module loaded successfully");
             }

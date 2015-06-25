@@ -80,12 +80,6 @@ namespace KIS
             if (pickupModule)
             {
                 pickupModule.canDetach = true;
-                orgAttachMaxMass = pickupModule.detachMaxMass;
-                pickupModule.detachMaxMass = attachMaxMass;
-                orgAttachSndPath = pickupModule.attachSndPath;
-                pickupModule.attachSndPath = attachSndPath;
-                orgDetachSndPath = pickupModule.detachSndPath;
-                pickupModule.detachSndPath = detachSndPath;
             }
         }
 
@@ -95,9 +89,6 @@ namespace KIS
             if (pickupModule)
             {
                 pickupModule.canDetach = false;
-                pickupModule.detachMaxMass = orgAttachMaxMass;
-                pickupModule.attachSndPath = orgAttachSndPath;
-                pickupModule.detachSndPath = orgDetachSndPath;
             }
         }
 
@@ -124,22 +115,6 @@ namespace KIS
             return true;
         }
 
-
-        //private static float GetAllPickupMaxMassInRange(Part p)
-        //{
-        //	float maxMass = 0;
-        //	ModuleKISPickup[] allPickupModules = FindObjectsOfType(typeof(ModuleKISPickup)) as ModuleKISPickup[];
-        //	foreach (ModuleKISPickup pickupModule in allPickupModules)
-        //	{
-        //		float partDist = Vector3.Distance(pickupModule.part.transform.position, p.transform.position);
-        //		if (partDist <= pickupModule.maxDistance)
-        //		{
-        //			maxMass += pickupModule.maxMass;
-        //		}
-        //	}
-        //	return maxMass;
-        //}
-
         //
         // Summary:
         //     Called when a part is dropped.
@@ -147,14 +122,18 @@ namespace KIS
         //     tgtPart is a part src part will be going into
         public virtual void OnItemMove(Part srcPart, Part tgtPart, KISMoveType moveType, KISAddonPointer.PointerTarget pointerTarget)
         {
-            if (moveType == (KISMoveType.ATTACH_MOVE | KISMoveType.ATTACH_NEW) && srcPart)
+            Debug.Log("OnItemMove: "+(srcPart == null ? "null" : srcPart.name) + ", " + (tgtPart == null ? "null" : tgtPart.name)
+                + "; " + moveType + " - " + pointerTarget);
+            if ( (moveType == KISMoveType.ATTACH_MOVE || moveType == KISMoveType.ATTACH_NEW) && srcPart)
             {
+                Debug.Log("Play attach: " + attachSndPath);
                 AudioSource.PlayClipAtPoint(GameDatabase.Instance.GetAudioClip(attachSndPath), srcPart.transform.position);
             }
-            else
+            else if (moveType == KISMoveType.DROP_MOVE)
             {
                 if (tgtPart != null)
                 {
+                    Debug.Log("Play Detach " + detachSndPath);
                     AudioSource.PlayClipAtPoint(GameDatabase.Instance.GetAudioClip(detachSndPath), srcPart.transform.position);
                 }
             }
