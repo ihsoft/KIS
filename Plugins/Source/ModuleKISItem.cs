@@ -52,6 +52,8 @@ namespace KIS
         public bool allowAttachOnStatic = false;
         [KSPField]
         public bool editorItemsCategory = true;
+        [KSPField]
+        public bool alwaysDetachable = false;
 
 
         public virtual void OnItemUse(KIS_Item item, KIS_Item.UseFrom useFrom)
