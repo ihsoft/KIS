@@ -111,12 +111,10 @@ namespace KIS
         {
             if ( (moveType == KISAttachType.DETACH_AND_ATTACH || moveType == KISAttachType.ATTACH) && srcPart)
             {
-                Debug.Log("Play attach: " + attachSndPath);
                 AudioSource.PlayClipAtPoint(GameDatabase.Instance.GetAudioClip(attachSndPath), srcPart.transform.position);
             }
             else if (moveType == KISAttachType.DETACH && srcPart)
             {
-                Debug.Log("Play Detach " + detachSndPath);
                 AudioSource.PlayClipAtPoint(GameDatabase.Instance.GetAudioClip(detachSndPath), srcPart.transform.position);
             }
         }
@@ -136,13 +134,12 @@ namespace KIS
         // Check if the max mass is ok (but this is already done in OnItemUse)
         protected virtual bool OnCheckAttach(Part srcPart, Part tgtPart, ref string toolInvalidMsg)
         {
-            float pMass = (srcPart.mass + srcPart.GetResourceMass());
-            if (pMass > attachMaxMass)
-            {
-                toolInvalidMsg = "Too heavy, (Use a better tool for this [" + pMass + " > " + attachMaxMass + ")";
-
-                return false;
-            }
+            //float pMass = (srcPart.mass + srcPart.GetResourceMass());
+            //if (pMass > attachMaxMass)
+            //{
+            //    toolInvalidMsg = "Too heavy, (Use a better tool for this [" + pMass + " > " + attachMaxMass + ")";
+            //    return false;
+            //}
             return true;
         }
     }

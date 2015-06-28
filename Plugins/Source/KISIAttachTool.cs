@@ -43,7 +43,7 @@ namespace KIS
 
         //
         // Summary:
-        //     Called when a part need to known if it can be attachon a node with this tool
+        //     Called when a part need to known if it can be attach on a node with this tool
         //     srcPart it's the part we want to attach
         //     tgtPart is where we want to attach srcPart
         //     toolInvalidMsg is the message used when this method return false.
