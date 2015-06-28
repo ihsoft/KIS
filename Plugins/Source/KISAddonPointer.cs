@@ -73,7 +73,7 @@ namespace KIS
         public static PointerTarget pointerTarget = PointerTarget.Nothing;
         public enum PointerTarget { Nothing, Static, StaticRb, Part, PartNode, PartMount, KerbalEva }
         private static OnPointerClick SendPointerClick;
-        public delegate void OnPointerClick(PointerTarget pTarget, Vector3 pos, Quaternion rot, Part pointerPart, ModuleKISItemAttachTool attachTool, string SrcAttachNodeID = null, AttachNode tgtAttachNode = null);
+        public delegate void OnPointerClick(PointerTarget pTarget, Vector3 pos, Quaternion rot, Part pointerPart, IAttachTool attachTool, string SrcAttachNodeID = null, AttachNode tgtAttachNode = null);
 
         public enum PointerState { OnMouseEnterPart, OnMouseExitPart, OnMouseEnterNode, OnMouseExitNode, OnChangeAttachNode }
         private static OnPointerState SendPointerState;
@@ -527,7 +527,7 @@ namespace KIS
             bool itselfIsInvalid = false;
             bool toolIsInvalid = false;
             string toolInvalidMsg = "";
-			ModuleKISItemAttachTool attachTool = null;
+			IAttachTool attachTool = null;
             switch (pointerTarget)
             {
                 case PointerTarget.Static:

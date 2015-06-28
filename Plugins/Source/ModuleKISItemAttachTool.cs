@@ -8,7 +8,7 @@ using UnityEngine;
 namespace KIS
 {
 
-    public class ModuleKISItemAttachTool : ModuleKISItem
+    public class ModuleKISItemAttachTool : ModuleKISItem, IAttachTool
     {
         [KSPField]
         public float attachMaxMass = 0.5f;
@@ -20,9 +20,6 @@ namespace KIS
         public string detachSndPath = "KIS/Sounds/detach";
         [KSPField]
         public string changeModeSndPath = "KIS/Sounds/click";
-
-        private string orgAttachSndPath, orgDetachSndPath;
-        private float orgAttachMaxMass;
 
         public override string GetInfo()
         {
@@ -120,22 +117,17 @@ namespace KIS
         //     Called when a part is dropped.
         //     srcPart it's the part being dropped
         //     tgtPart is a part src part will be going into
-        public virtual void OnItemMove(Part srcPart, Part tgtPart, KISMoveType moveType, KISAddonPointer.PointerTarget pointerTarget)
+        public virtual void OnAttachToolUsed(Part srcPart, Part tgtPart, KISAttachType moveType, KISAddonPointer.PointerTarget pointerTarget)
         {
-            Debug.Log("OnItemMove: "+(srcPart == null ? "null" : srcPart.name) + ", " + (tgtPart == null ? "null" : tgtPart.name)
-                + "; " + moveType + " - " + pointerTarget);
-            if ( (moveType == KISMoveType.ATTACH_MOVE || moveType == KISMoveType.ATTACH_NEW) && srcPart)
+            if ( (moveType == KISAttachType.DETACH_AND_ATTACH || moveType == KISAttachType.ATTACH) && srcPart)
             {
                 Debug.Log("Play attach: " + attachSndPath);
                 AudioSource.PlayClipAtPoint(GameDatabase.Instance.GetAudioClip(attachSndPath), srcPart.transform.position);
             }
-            else if (moveType == KISMoveType.DROP_MOVE)
+            else if (moveType == KISAttachType.DETACH && srcPart)
             {
-                if (tgtPart != null)
-                {
-                    Debug.Log("Play Detach " + detachSndPath);
-                    AudioSource.PlayClipAtPoint(GameDatabase.Instance.GetAudioClip(detachSndPath), srcPart.transform.position);
-                }
+                Debug.Log("Play Detach " + detachSndPath);
+                AudioSource.PlayClipAtPoint(GameDatabase.Instance.GetAudioClip(detachSndPath), srcPart.transform.position);
             }
         }
 
@@ -175,8 +167,5 @@ namespace KIS
             return true;
         }
     }
-
-    // TODO: RETURN_INVENTORY option with the associated hook
-    public enum KISMoveType { DROP_NEW, DROP_MOVE, ATTACH_NEW, ATTACH_MOVE }
 
 }

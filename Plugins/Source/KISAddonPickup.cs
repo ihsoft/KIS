@@ -43,7 +43,7 @@ namespace KIS
         public Part hoveredPart = null;
         public bool grabActive = false;
         private bool grabOk = false;
-        private ModuleKISItemAttachTool detachTool;
+        private IAttachTool detachTool;
         private bool jetpackLock = false;
 
         public enum PointerMode { Drop, Attach }
@@ -397,7 +397,7 @@ namespace KIS
                     {
                         //check if tool can detach
                         string[] errorMsg = null;
-                        ModuleKISItemAttachTool checkDetachTool = KIS_Shared.CheckAttachTool(x => x.OnCheckDetach(part, ref errorMsg));
+                        IAttachTool checkDetachTool = KIS_Shared.CheckAttachTool(x => x.OnCheckDetach(part, ref errorMsg));
                         if (checkDetachTool == null)
                         {
                             if (errorMsg == null)
@@ -661,7 +661,7 @@ namespace KIS
             }
         }
 
-        private void OnPointerAction(KISAddonPointer.PointerTarget pointerTarget, Vector3 pos, Quaternion rot, Part tgtPart, ModuleKISItemAttachTool attachTool, string srcAttachNodeID = null, AttachNode tgtAttachNode = null)
+        private void OnPointerAction(KISAddonPointer.PointerTarget pointerTarget, Vector3 pos, Quaternion rot, Part tgtPart, IAttachTool attachTool, string srcAttachNodeID = null, AttachNode tgtAttachNode = null)
         {
             if (pointerTarget == KISAddonPointer.PointerTarget.PartMount)
             {
@@ -688,13 +688,12 @@ namespace KIS
                     {
                         Part parent = movingPart.parent;
                         MoveDrop(tgtPart, pos, rot);
-                        if (this.detachTool) this.detachTool.OnItemMove(movingPart, parent, KISMoveType.DROP_MOVE, pointerTarget);
+                        if (this.detachTool != null && parent != null) this.detachTool.OnAttachToolUsed(movingPart, parent, KISAttachType.DETACH, pointerTarget);
                         this.detachTool = null;
                     }
                     else
                     {
-                        Part scrPart = CreateDrop(tgtPart, pos, rot);
-                        if (this.detachTool) this.detachTool.OnItemMove(scrPart, null, KISMoveType.DROP_NEW, pointerTarget);
+                        CreateDrop(tgtPart, pos, rot);
                         this.detachTool = null;
                     }
                 }
@@ -702,13 +701,15 @@ namespace KIS
                 {
                     if (movingPart)
                     {
+                        Part parent = movingPart.parent;
                         MoveAttach(tgtPart, pos, rot, srcAttachNodeID, tgtAttachNode);
-                        if (attachTool) attachTool.OnItemMove(movingPart, tgtPart, KISMoveType.ATTACH_MOVE, pointerTarget);
+                        if (attachTool != null) attachTool.OnAttachToolUsed(movingPart, parent,
+                            (parent ? KISAttachType.DETACH_AND_ATTACH : KISAttachType.ATTACH), pointerTarget);
                     }
                     else
                     {
                         Part scrPart = CreateAttach(tgtPart, pos, rot, srcAttachNodeID, tgtAttachNode);
-                        if (attachTool) attachTool.OnItemMove(scrPart, tgtPart, KISMoveType.ATTACH_NEW, pointerTarget);
+                        if (attachTool != null) attachTool.OnAttachToolUsed(scrPart, null, KISAttachType.ATTACH, pointerTarget);
                     }
                 }
             }
