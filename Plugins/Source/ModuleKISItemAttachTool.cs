@@ -93,7 +93,7 @@ namespace KIS
         public virtual bool OnCheckDetach(Part partToDetach, ref String[] errorMsg)
         {
             if (partToDetach == null) return true;
-            float pMass = (part.mass + part.GetResourceMass());
+            float pMass = (partToDetach.mass + partToDetach.GetResourceMass());
             if (pMass > attachMaxMass)
             {
                 errorMsg = new string[]{
@@ -136,7 +136,7 @@ namespace KIS
         // Check if the max mass is ok (but this is already done in OnItemUse)
         protected virtual bool OnCheckAttach(Part srcPart, Part tgtPart, ref string toolInvalidMsg)
         {
-            float pMass = (srcPart.mass + part.GetResourceMass());
+            float pMass = (srcPart.mass + srcPart.GetResourceMass());
             if (pMass > attachMaxMass)
             {
                 toolInvalidMsg = "Too heavy, (Use a better tool for this [" + pMass + " > " + attachMaxMass + ")";

@@ -10,7 +10,7 @@ namespace KIS
 
     public class ModuleKISPickup : PartModule
     {
-        [KSPField] //it's a shortcut to 'part.hasModule<ModuleKISItemAttachTool>()'
+        [KSPField] //it's ~ a shortcut to 'rightHandEquipedItem'.Modules.Contains("KISIAttachTool")
         public bool canDetach = false;
         [KSPField]
         public float maxDistance = 2;

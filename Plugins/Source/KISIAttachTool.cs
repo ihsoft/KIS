@@ -7,7 +7,12 @@ using UnityEngine;
 
 namespace KIS
 {
-
+    //
+    // Summary:
+    //          Interface for item who can attach and detach parts from other parts.
+    //          /!\ At this time, you MUST set item.inventory.part.GetComponent<ModuleKISPickup>().canDetach = true; 
+    //              in onEquip to make it work (and to false value in onUnequip)
+    //          Your item MUST be in the right hand, to make it work & be compliant with the doc
     public interface KISIAttachTool
     {
 
