@@ -8,7 +8,7 @@ using UnityEngine;
 namespace KIS
 {
 
-    public class ModuleKISItemAttachTool : ModuleKISItem
+    public class ModuleKISItemAttachTool : ModuleKISItem, KISIAttachTool
     {
         [KSPField]
         public float attachMaxMass = 0.5f;
@@ -20,9 +20,6 @@ namespace KIS
         public string detachSndPath = "KIS/Sounds/detach";
         [KSPField]
         public string changeModeSndPath = "KIS/Sounds/click";
-
-        private string orgAttachSndPath, orgDetachSndPath;
-        private float orgAttachMaxMass;
 
         public override string GetInfo()
         {
@@ -80,12 +77,6 @@ namespace KIS
             if (pickupModule)
             {
                 pickupModule.canDetach = true;
-                orgAttachMaxMass = pickupModule.detachMaxMass;
-                pickupModule.detachMaxMass = attachMaxMass;
-                orgAttachSndPath = pickupModule.attachSndPath;
-                pickupModule.attachSndPath = attachSndPath;
-                orgDetachSndPath = pickupModule.detachSndPath;
-                pickupModule.detachSndPath = detachSndPath;
             }
         }
 
@@ -95,11 +86,62 @@ namespace KIS
             if (pickupModule)
             {
                 pickupModule.canDetach = false;
-                pickupModule.detachMaxMass = orgAttachMaxMass;
-                pickupModule.attachSndPath = orgAttachSndPath;
-                pickupModule.detachSndPath = orgDetachSndPath;
             }
         }
 
+        // Check if the max mass is ok
+        public virtual bool OnCheckDetach(Part partToDetach, ref String[] errorMsg)
+        {
+            if (partToDetach == null) return true;
+            float pMass = (partToDetach.mass + partToDetach.GetResourceMass());
+            if (pMass > attachMaxMass)
+            {
+                errorMsg = new string[]{
+					"KIS/Textures/tooHeavy", 
+					"Too heavy",
+					"(Use a better tool for this [" + pMass + " > " + attachMaxMass + ")"
+				};
+                return false;
+            }
+            return true;
+        }
+
+        // Play sound on attach & detach
+        public virtual void OnAttachToolUsed(Part srcPart, Part oldParent, KISAttachType moveType, KISAddonPointer.PointerTarget pointerTarget)
+        {
+            if ( (moveType == KISAttachType.DETACH_AND_ATTACH || moveType == KISAttachType.ATTACH) && srcPart)
+            {
+                AudioSource.PlayClipAtPoint(GameDatabase.Instance.GetAudioClip(attachSndPath), srcPart.transform.position);
+            }
+            else if (moveType == KISAttachType.DETACH && srcPart)
+            {
+                AudioSource.PlayClipAtPoint(GameDatabase.Instance.GetAudioClip(detachSndPath), srcPart.transform.position);
+            }
+        }
+
+        // redirect to protected bool OnCheckAttach(Part srcPart, Part tgtPart, ref string toolInvalidMsg)
+        public virtual bool OnCheckAttach(Part srcPart, Part tgtPart, ref string toolInvalidMsg, Vector3 surfaceMountPosition)
+        {
+            return this.OnCheckAttach(srcPart, tgtPart, ref toolInvalidMsg);
+        }
+
+        // redirect to protected bool OnCheckAttach(Part srcPart, Part tgtPart, ref string toolInvalidMsg)
+        public virtual bool OnCheckAttach(Part srcPart, Part tgtPart, ref string toolInvalidMsg, AttachNode tgtNode)
+        {
+            return this.OnCheckAttach(srcPart, tgtPart, ref toolInvalidMsg);
+        }
+
+        // Check if the max mass is ok (but this is already done in OnItemUse)
+        protected virtual bool OnCheckAttach(Part srcPart, Part tgtPart, ref string toolInvalidMsg)
+        {
+            //float pMass = (srcPart.mass + srcPart.GetResourceMass());
+            //if (pMass > attachMaxMass)
+            //{
+            //    toolInvalidMsg = "Too heavy, (Use a better tool for this [" + pMass + " > " + attachMaxMass + ")";
+            //    return false;
+            //}
+            return true;
+        }
     }
+
 }

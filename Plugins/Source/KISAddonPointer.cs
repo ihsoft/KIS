@@ -73,7 +73,7 @@ namespace KIS
         public static PointerTarget pointerTarget = PointerTarget.Nothing;
         public enum PointerTarget { Nothing, Static, StaticRb, Part, PartNode, PartMount, KerbalEva }
         private static OnPointerClick SendPointerClick;
-        public delegate void OnPointerClick(PointerTarget pTarget, Vector3 pos, Quaternion rot, Part pointerPart, string SrcAttachNodeID = null, AttachNode tgtAttachNode = null);
+        public delegate void OnPointerClick(PointerTarget pTarget, Vector3 pos, Quaternion rot, Part pointerPart, KISIAttachTool attachTool, string SrcAttachNodeID = null, AttachNode tgtAttachNode = null);
 
         public enum PointerState { OnMouseEnterPart, OnMouseExitPart, OnMouseEnterNode, OnMouseExitNode, OnChangeAttachNode }
         private static OnPointerState SendPointerState;
@@ -525,6 +525,9 @@ namespace KIS
             bool cannotSurfaceAttach = false;
             bool invalidCurrentNode = false;
             bool itselfIsInvalid = false;
+            bool toolIsInvalid = false;
+            string toolInvalidMsg = "";
+			KISIAttachTool attachTool = null;
             switch (pointerTarget)
             {
                 case PointerTarget.Static:
@@ -548,24 +551,31 @@ namespace KIS
                         }
                         else
                         {
-                            if (useAttachRules)
+                            //check if the tool is ok to do the job
+							attachTool = KIS_Shared.CheckAttachTool(x => x.OnCheckAttach(partToAttach, hoveredPart,
+                                    ref toolInvalidMsg, pointer.transform.position));
+							toolIsInvalid = attachTool == null;
+                            if (!toolIsInvalid)
                             {
-                                if (hoveredPart.attachRules.allowSrfAttach)
+                                if (useAttachRules)
                                 {
-                                    if (GetCurrentAttachNode().nodeType == AttachNode.NodeType.Surface)
+                                    if (hoveredPart.attachRules.allowSrfAttach)
                                     {
-                                        color = Color.green;
+                                        if (GetCurrentAttachNode().nodeType == AttachNode.NodeType.Surface)
+                                        {
+                                            color = Color.green;
+                                        }
+                                        else
+                                        {
+                                            invalidCurrentNode = true;
+                                        }
                                     }
-                                    else
-                                    {
-                                        invalidCurrentNode = true;
-                                    }
+                                    else cannotSurfaceAttach = true;
                                 }
-                                else cannotSurfaceAttach = true;
-                            }
-                            else
-                            {
-                                color = Color.green;
+                                else
+                                {
+                                    color = Color.green;
+                                }
                             }
                         }
                     }
@@ -589,7 +599,15 @@ namespace KIS
                     }
                     break;
                 case PointerTarget.PartNode:
-                    if (allowStack) color = XKCDColors.SeaGreen;
+                    if (allowStack)
+                    {
+						attachTool = KIS_Shared.CheckAttachTool(x => x.OnCheckAttach(partToAttach, hoveredPart,
+                                ref toolInvalidMsg, hoveredNode));
+						toolIsInvalid = attachTool == null;
+                        if (!toolIsInvalid)
+                            color = XKCDColors.SeaGreen;
+
+                    }
                     else invalidTarget = true;
                     break;
                 default:
@@ -606,6 +624,12 @@ namespace KIS
             //On click
             if (Input.GetKeyDown(KeyCode.Mouse0))
             {
+                if (toolIsInvalid)
+                {
+                    ScreenMessages.PostScreenMessage(toolInvalidMsg);
+                    audioBipWrong.Play();
+                    return;
+                }
                 if (invalidTarget)
                 {
                     ScreenMessages.PostScreenMessage("Target object is not allowed !");
@@ -650,7 +674,7 @@ namespace KIS
                 }
                 else
                 {
-                    SendPointerClick(pointerTarget, pointer.transform.position, pointer.transform.rotation, hoveredPart, GetCurrentAttachNode().id, hoveredNode);
+					SendPointerClick(pointerTarget, pointer.transform.position, pointer.transform.rotation, hoveredPart, attachTool, GetCurrentAttachNode().id, hoveredNode);
                 }
             }
         }
