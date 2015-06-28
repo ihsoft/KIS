@@ -8,7 +8,7 @@ using UnityEngine;
 namespace KIS
 {
 
-    public interface IAttachTool
+    public interface KISIAttachTool
     {
 
         //

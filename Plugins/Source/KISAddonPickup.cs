@@ -43,7 +43,7 @@ namespace KIS
         public Part hoveredPart = null;
         public bool grabActive = false;
         private bool grabOk = false;
-        private IAttachTool detachTool;
+        private KISIAttachTool detachTool;
         private bool jetpackLock = false;
 
         public enum PointerMode { Drop, Attach }
@@ -397,7 +397,7 @@ namespace KIS
                     {
                         //check if tool can detach
                         string[] errorMsg = null;
-                        IAttachTool checkDetachTool = KIS_Shared.CheckAttachTool(x => x.OnCheckDetach(part, ref errorMsg));
+                        KISIAttachTool checkDetachTool = KIS_Shared.CheckAttachTool(x => x.OnCheckDetach(part, ref errorMsg));
                         if (checkDetachTool == null)
                         {
                             if (errorMsg == null)
@@ -661,7 +661,7 @@ namespace KIS
             }
         }
 
-        private void OnPointerAction(KISAddonPointer.PointerTarget pointerTarget, Vector3 pos, Quaternion rot, Part tgtPart, IAttachTool attachTool, string srcAttachNodeID = null, AttachNode tgtAttachNode = null)
+        private void OnPointerAction(KISAddonPointer.PointerTarget pointerTarget, Vector3 pos, Quaternion rot, Part tgtPart, KISIAttachTool attachTool, string srcAttachNodeID = null, AttachNode tgtAttachNode = null)
         {
             if (pointerTarget == KISAddonPointer.PointerTarget.PartMount)
             {

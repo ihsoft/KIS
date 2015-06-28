@@ -8,7 +8,7 @@ using UnityEngine;
 namespace KIS
 {
 
-    public class ModuleKISItemAttachTool : ModuleKISItem, IAttachTool
+    public class ModuleKISItemAttachTool : ModuleKISItem, KISIAttachTool
     {
         [KSPField]
         public float attachMaxMass = 0.5f;
@@ -89,13 +89,7 @@ namespace KIS
             }
         }
 
-        //
-        // Summary:
-        //     Called when a part is Detach (from an other part).
-        //     srcPart it's the part being dropped (it's attach to its parent)
-        //     errorMsg is the string array needed when it's not possible to detach
-        //      (first is the texture, then some messages)
-        // default : check maxmass
+        // Check if the max mass is ok
         public virtual bool OnCheckDetach(Part partToDetach, ref String[] errorMsg)
         {
             if (partToDetach == null) return true;
@@ -112,12 +106,8 @@ namespace KIS
             return true;
         }
 
-        //
-        // Summary:
-        //     Called when a part is dropped.
-        //     srcPart it's the part being dropped
-        //     tgtPart is a part src part will be going into
-        public virtual void OnAttachToolUsed(Part srcPart, Part tgtPart, KISAttachType moveType, KISAddonPointer.PointerTarget pointerTarget)
+        // Play sound on attach & detach
+        public virtual void OnAttachToolUsed(Part srcPart, Part oldParent, KISAttachType moveType, KISAddonPointer.PointerTarget pointerTarget)
         {
             if ( (moveType == KISAttachType.DETACH_AND_ATTACH || moveType == KISAttachType.ATTACH) && srcPart)
             {
@@ -131,33 +121,22 @@ namespace KIS
             }
         }
 
-        //
-        // Summary:
-        //     Called when a part need to known if it can be surface-attach with this tool
-        //     srcPart it's the part we want to attach
-        //     tgtPart is where we want to attach srcPart
-        //     toolInvalidMsg is the message used when this method return false.
-        //     surfaceMountPosition is the surface mount position on tgtPart (in scene origin)
+        // redirect to protected bool OnCheckAttach(Part srcPart, Part tgtPart, ref string toolInvalidMsg)
         public virtual bool OnCheckAttach(Part srcPart, Part tgtPart, ref string toolInvalidMsg, Vector3 surfaceMountPosition)
         {
             return this.OnCheckAttach(srcPart, tgtPart, ref toolInvalidMsg);
         }
 
-        //
-        // Summary:
-        //     Called when a part need to known if it can be attachon a node with this tool
-        //     srcPart it's the part we want to attach
-        //     tgtPart is where we want to attach srcPart
-        //     toolInvalidMsg is the message used when this method return false.
-        //     surfaceMountPosition is the surface mount position on tgtPart (in scene origin)
+        // redirect to protected bool OnCheckAttach(Part srcPart, Part tgtPart, ref string toolInvalidMsg)
         public virtual bool OnCheckAttach(Part srcPart, Part tgtPart, ref string toolInvalidMsg, AttachNode tgtNode)
         {
             return this.OnCheckAttach(srcPart, tgtPart, ref toolInvalidMsg);
         }
 
+        // Check if the max mass is ok (but this is already done in OnItemUse)
         protected virtual bool OnCheckAttach(Part srcPart, Part tgtPart, ref string toolInvalidMsg)
         {
-            float pMass = (part.mass + part.GetResourceMass());
+            float pMass = (srcPart.mass + part.GetResourceMass());
             if (pMass > attachMaxMass)
             {
                 toolInvalidMsg = "Too heavy, (Use a better tool for this [" + pMass + " > " + attachMaxMass + ")";
