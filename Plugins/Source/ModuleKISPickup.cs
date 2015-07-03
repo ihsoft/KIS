@@ -13,8 +13,6 @@ namespace KIS
         [KSPField]
         public bool canAttach = false;
         [KSPField]
-        public float attachMaxMass = Mathf.Infinity;
-        [KSPField]
         public float maxDistance = 2;
         [KSPField]
         public float grabMaxMass = 1;

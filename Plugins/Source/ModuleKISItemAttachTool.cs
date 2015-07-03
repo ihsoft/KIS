@@ -11,8 +11,6 @@ namespace KIS
     public class ModuleKISItemAttachTool : ModuleKISItem
     {
         [KSPField]
-        public float attachMaxMass = 0.5f;
-        [KSPField]
         public bool allowStack = false;
         [KSPField]
         public string attachSndPath = "KIS/Sounds/attach";
@@ -22,12 +20,10 @@ namespace KIS
         public string changeModeSndPath = "KIS/Sounds/click";
 
         private string orgAttachSndPath, orgDetachSndPath;
-        private float orgAttachMaxMass;
 
         public override string GetInfo()
         {
             var sb = new StringBuilder();
-            sb.AppendFormat("<b>Maximum mass</b>: {0:F0}", attachMaxMass); sb.AppendLine();
             if (allowStack)
             {
                 sb.AppendLine("Allow snap attach on stack node");
@@ -55,8 +51,6 @@ namespace KIS
             {
                 pickupModule.canAttach = true;
                 KISAddonPointer.allowStack = allowStack;
-                orgAttachMaxMass = pickupModule.attachMaxMass;
-                pickupModule.attachMaxMass = attachMaxMass;
                 orgAttachSndPath = pickupModule.attachSndPath;
                 pickupModule.attachSndPath = attachSndPath;
                 orgDetachSndPath = pickupModule.detachSndPath;
@@ -71,7 +65,6 @@ namespace KIS
             {
                 pickupModule.canAttach = false;
                 KISAddonPointer.allowStack = false;
-                pickupModule.attachMaxMass = orgAttachMaxMass;
                 pickupModule.attachSndPath = orgAttachSndPath;
                 pickupModule.detachSndPath = orgDetachSndPath;
             }
