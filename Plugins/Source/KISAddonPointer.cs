@@ -20,6 +20,13 @@ namespace KIS
         public static bool allowEva = false;
         public static bool allowStatic = false;
 
+        public static Color colorNok = Color.red;
+        public static Color colorOk = Color.green;
+        public static Color colorDistNok = Color.yellow;
+        public static Color colorStack = XKCDColors.Teal;
+        public static Color colorMountOk = XKCDColors.SeaGreen;
+        public static Color colorMountNok = XKCDColors.LightOrange;
+        public static Color colorWrong = XKCDColors.Teal;
 
         private static bool _allowMount = false;
         public static bool allowMount
@@ -324,7 +331,7 @@ namespace KIS
                     {
                         if (!mount.Key.attachedPart)
                         {
-                            KIS_Shared.AssignAttachIcon(hoverPart, mount.Key, XKCDColors.Teal, "KISMount");
+                            KIS_Shared.AssignAttachIcon(hoverPart, mount.Key, colorMountOk, "KISMount");
                         }
                     }
                 }
@@ -335,7 +342,7 @@ namespace KIS
                 {
                     if (!an.attachedPart)
                     {
-                        KIS_Shared.AssignAttachIcon(hoverPart, an, XKCDColors.SeaGreen);
+                        KIS_Shared.AssignAttachIcon(hoverPart, an, colorStack);
                     }
                 }
             }
@@ -519,7 +526,7 @@ namespace KIS
             bool isValidTargetDist = Vector3.Distance(FlightGlobals.ActiveVessel.transform.position, hit.point) <= maxDist;
 
             //Set color
-            Color color = Color.red;
+            Color color = colorNok;
             bool invalidTarget = false;
             bool notAllowedOnMount = false;
             bool cannotSurfaceAttach = false;
@@ -528,15 +535,15 @@ namespace KIS
             switch (pointerTarget)
             {
                 case PointerTarget.Static:
-                    if (allowStatic) color = Color.green;
+                    if (allowStatic) color = colorOk;
                     else invalidTarget = true;
                     break;
                 case PointerTarget.StaticRb:
-                    if (allowStatic) color = Color.green;
+                    if (allowStatic) color = colorOk;
                     else invalidTarget = true;
                     break;
                 case PointerTarget.KerbalEva:
-                    if (allowEva) color = Color.green;
+                    if (allowEva) color = colorOk;
                     else invalidTarget = true;
                     break;
                 case PointerTarget.Part:
@@ -554,7 +561,7 @@ namespace KIS
                                 {
                                     if (GetCurrentAttachNode().nodeType == AttachNode.NodeType.Surface)
                                     {
-                                        color = Color.green;
+                                        color = colorOk;
                                     }
                                     else
                                     {
@@ -565,7 +572,7 @@ namespace KIS
                             }
                             else
                             {
-                                color = Color.green;
+                                color = colorOk;
                             }
                         }
                     }
@@ -579,17 +586,17 @@ namespace KIS
                         pMount.GetMounts().TryGetValue(hoveredNode, out allowedPartNames);
                         if (allowedPartNames.Contains(partToAttach.partInfo.name))
                         {
-                            color = XKCDColors.Teal;
+                            color = colorMountOk;
                         }
                         else
                         {
-                            color = XKCDColors.LightOrange;
+                            color = colorMountNok;
                             notAllowedOnMount = true;
                         }
                     }
                     break;
                 case PointerTarget.PartNode:
-                    if (allowStack) color = XKCDColors.SeaGreen;
+                    if (allowStack) color = colorStack;
                     else invalidTarget = true;
                     break;
                 default:
@@ -597,7 +604,7 @@ namespace KIS
             }
             if (!isValidSourceDist || !isValidTargetDist)
             {
-                color = Color.yellow;
+                color = colorDistNok;
             }
             color.a = 0.5f;
             foreach (MeshRenderer mr in allModelMr) mr.material.color = color;
