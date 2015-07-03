@@ -11,13 +11,13 @@ namespace KIS
     public class ModuleKISPickup : PartModule
     {
         [KSPField]
-        public bool canDetach = false;
+        public bool canAttach = false;
         [KSPField]
-        public float detachMaxMass = Mathf.Infinity;
+        public float attachMaxMass = Mathf.Infinity;
         [KSPField]
         public float maxDistance = 2;
         [KSPField]
-        public float maxMass = 1;
+        public float grabMaxMass = 1;
         [KSPField]
         public string dropSndPath = "KIS/Sounds/drop";
         [KSPField]
