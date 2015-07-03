@@ -13,15 +13,21 @@ namespace KIS
         [KSPField]
         public bool canAttach = false;
         [KSPField]
+        public bool allowStack = false;
+        [KSPField]
         public float maxDistance = 2;
         [KSPField]
         public float grabMaxMass = 1;
         [KSPField]
         public string dropSndPath = "KIS/Sounds/drop";
         [KSPField]
-        public string attachSndPath = "KIS/Sounds/attach";
+        public string attachPartSndPath = "KIS/Sounds/attachPart";
         [KSPField]
-        public string detachSndPath = "KIS/Sounds/detach";
+        public string detachPartSndPath = "KIS/Sounds/detachPart";
+        [KSPField]
+        public string attachStaticSndPath = "KIS/Sounds/attachStatic";
+        [KSPField]
+        public string detachStaticSndPath = "KIS/Sounds/detachStatic";
         public FXGroup sndFx;
     }
 

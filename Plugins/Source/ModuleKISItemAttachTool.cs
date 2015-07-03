@@ -13,13 +13,15 @@ namespace KIS
         [KSPField]
         public bool allowStack = false;
         [KSPField]
-        public string attachSndPath = "KIS/Sounds/attach";
+        public string attachPartSndPath = "KIS/Sounds/attachPart";
         [KSPField]
-        public string detachSndPath = "KIS/Sounds/detach";
+        public string detachPartSndPath = "KIS/Sounds/detachPart";
         [KSPField]
-        public string changeModeSndPath = "KIS/Sounds/click";
+        public string attachStaticSndPath = "KIS/Sounds/attachStatic";
+        [KSPField]
+        public string detachStaticSndPath = "KIS/Sounds/detachStatic";
 
-        private string orgAttachSndPath, orgDetachSndPath;
+        private string orgAttachPartSndPath, orgDetachPartSndPath, orgAttachStaticSndPath, orgDetachStaticSndPath;
 
         public override string GetInfo()
         {
@@ -50,11 +52,17 @@ namespace KIS
             if (pickupModule)
             {
                 pickupModule.canAttach = true;
-                KISAddonPointer.allowStack = allowStack;
-                orgAttachSndPath = pickupModule.attachSndPath;
-                pickupModule.attachSndPath = attachSndPath;
-                orgDetachSndPath = pickupModule.detachSndPath;
-                pickupModule.detachSndPath = detachSndPath;
+                pickupModule.allowStack = allowStack;
+
+                orgAttachPartSndPath = pickupModule.attachPartSndPath;
+                pickupModule.attachPartSndPath = attachPartSndPath;
+                orgDetachPartSndPath = pickupModule.detachPartSndPath;
+                pickupModule.detachPartSndPath = detachPartSndPath;
+
+                orgAttachStaticSndPath = pickupModule.attachStaticSndPath;
+                pickupModule.attachStaticSndPath = attachStaticSndPath;
+                orgDetachStaticSndPath = pickupModule.detachStaticSndPath;
+                pickupModule.detachStaticSndPath = detachStaticSndPath;
             }
         }
 
@@ -64,9 +72,13 @@ namespace KIS
             if (pickupModule)
             {
                 pickupModule.canAttach = false;
-                KISAddonPointer.allowStack = false;
-                pickupModule.attachSndPath = orgAttachSndPath;
-                pickupModule.detachSndPath = orgDetachSndPath;
+                pickupModule.allowStack = false;
+
+                pickupModule.attachPartSndPath = orgAttachPartSndPath;
+                pickupModule.detachPartSndPath = orgDetachPartSndPath;
+
+                pickupModule.attachStaticSndPath = orgAttachStaticSndPath;
+                pickupModule.detachStaticSndPath = orgDetachStaticSndPath;
             }
         }
 

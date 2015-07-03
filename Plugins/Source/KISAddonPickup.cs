@@ -237,11 +237,8 @@ namespace KIS
                 }
                 if (KISAddonPointer.isRunning && KISAddonPointer.pointerTarget != KISAddonPointer.PointerTarget.PartMount)
                 {
-                    //float attachPartMass = KISAddonPointer.partToAttach.mass + KISAddonPointer.partToAttach.GetResourceMass();
                     KISAddonPickup.instance.pointerMode = KISAddonPickup.PointerMode.Attach;
-                    //KISAddonPointer.allowStack = allowStack;
-                    //KIS_Shared.PlaySoundAtPoint(string soundPath, Vector3 position)
-                    //item.PlaySound(changeModeSndPath);              
+                    KIS_Shared.PlaySoundAtPoint("KIS/Sounds/click", FlightGlobals.ActiveVessel.transform.position);
                 }
             }
         }
@@ -260,8 +257,7 @@ namespace KIS
                 if (KISAddonPointer.isRunning && KISAddonPickup.instance.pointerMode == KISAddonPickup.PointerMode.Attach)
                 {
                     KISAddonPickup.instance.pointerMode = KISAddonPickup.PointerMode.Drop;
-                    KISAddonPointer.allowStack = false;
-                    //item.PlaySound(changeModeSndPath);
+                    KIS_Shared.PlaySoundAtPoint("KIS/Sounds/click", FlightGlobals.ActiveVessel.transform.position);
                 }
             }
         }
@@ -386,7 +382,7 @@ namespace KIS
             // Check part distance
             if (!HasActivePickupInRange(part))
             {
-                KISAddonCursor.CursorEnable("KIS/Textures/tooFar", "Too far", "(Move closer to the part");
+                KISAddonCursor.CursorEnable("KIS/Textures/tooFar", "Too far", "(Move closer to the part)");
                 return;
             }
 
@@ -407,7 +403,7 @@ namespace KIS
                 {
                     if (item.allowPartAttach == 0)
                     {
-                        KISAddonCursor.CursorEnable("KIS/Textures/forbidden", "Can't grab", "(This part can't be detached");
+                        KISAddonCursor.CursorEnable("KIS/Textures/forbidden", "Can't grab", "(This part can't be detached)");
                         return;
                     }
                     else if (item.allowPartAttach == 2)
@@ -417,12 +413,12 @@ namespace KIS
                         {
                             if (FlightGlobals.ActiveVessel.isEVA)
                             {
-                                KISAddonCursor.CursorEnable("KIS/Textures/forbidden", "Tool needed", "(Part can't be detached without a tool");
+                                KISAddonCursor.CursorEnable("KIS/Textures/needtool", "Tool needed", "(This part can't be detached without a tool)");
                                 return;
                             }
                             else
                             {
-                                KISAddonCursor.CursorEnable("KIS/Textures/forbidden", "Not supported", "(Detach function is not supported on this part");
+                                KISAddonCursor.CursorEnable("KIS/Textures/forbidden", "Not supported", "(Detach function is not supported on this part)");
                                 return;
                             }
                         }
@@ -435,12 +431,12 @@ namespace KIS
                     {
                         if (FlightGlobals.ActiveVessel.isEVA)
                         {
-                            KISAddonCursor.CursorEnable("KIS/Textures/forbidden", "Tool needed", "(Part can't be detached without a tool");
+                            KISAddonCursor.CursorEnable("KIS/Textures/needtool", "Tool needed", "(This part can't be detached without a tool)");
                             return;
                         }
                         else
                         {
-                            KISAddonCursor.CursorEnable("KIS/Textures/forbidden", "Not supported", "(Detach function is not supported on this part");
+                            KISAddonCursor.CursorEnable("KIS/Textures/forbidden", "Not supported", "(Detach function is not supported on this part)");
                             return;
                         }
                     }
@@ -452,7 +448,7 @@ namespace KIS
             {
                 if (part.children.Count > 0)
                 {
-                    KISAddonCursor.CursorEnable("KIS/Textures/forbidden", "Can't grab", "(" + (part.children.Count + 1) + " parts is attached to )");
+                    KISAddonCursor.CursorEnable("KIS/Textures/forbidden", "Can't grab", "(" + (part.children.Count + 1) + " parts is attached to it)");
                     return;
                 }
             }
@@ -539,7 +535,7 @@ namespace KIS
             // Check part distance
             if (!HasActivePickupInRange(part))
             {
-                KISAddonCursor.CursorEnable("KIS/Textures/tooFar", "Too far", "(Move closer to the part");
+                KISAddonCursor.CursorEnable("KIS/Textures/tooFar", "Too far", "(Move closer to the part)");
                 return;
             }
 
@@ -550,7 +546,7 @@ namespace KIS
                 {
                     if (item.allowPartAttach == 0)
                     {
-                        KISAddonCursor.CursorEnable("KIS/Textures/forbidden", "Can't detach", "(This part can't be detached");
+                        KISAddonCursor.CursorEnable("KIS/Textures/forbidden", "Can't detach", "(This part can't be detached)");
                         return;
                     }
                     else if (item.allowPartAttach == 2)
@@ -560,12 +556,12 @@ namespace KIS
                         {
                             if (FlightGlobals.ActiveVessel.isEVA)
                             {
-                                KISAddonCursor.CursorEnable("KIS/Textures/forbidden", "Tool needed", "(Part can't be detached without a tool");
+                                KISAddonCursor.CursorEnable("KIS/Textures/needtool", "Tool needed", "(Part can't be detached without a tool)");
                                 return;
                             }
                             else
                             {
-                                KISAddonCursor.CursorEnable("KIS/Textures/forbidden", "Not supported", "(Detach function is not supported on this part");
+                                KISAddonCursor.CursorEnable("KIS/Textures/forbidden", "Not supported", "(Detach function is not supported on this part)");
                                 return;
                             }
                         }
@@ -578,12 +574,12 @@ namespace KIS
                     {
                         if (FlightGlobals.ActiveVessel.isEVA)
                         {
-                            KISAddonCursor.CursorEnable("KIS/Textures/forbidden", "Tool needed", "(Part can't be detached without a tool");
+                            KISAddonCursor.CursorEnable("KIS/Textures/needtool", "Tool needed", "(Part can't be detached without a tool)");
                             return;
                         }
                         else
                         {
-                            KISAddonCursor.CursorEnable("KIS/Textures/forbidden", "Not supported", "(Detach function is not supported on this part");
+                            KISAddonCursor.CursorEnable("KIS/Textures/forbidden", "Not supported", "(Detach function is not supported on this part)");
                             return;
                         }
                     }
@@ -624,18 +620,18 @@ namespace KIS
                 if (item.allowPartAttach == 1)
                 {
                     ModuleKISPickup pickupModule = GetActivePickupNearest(part);
-                    KIS_Shared.PlaySoundAtPoint(pickupModule.detachSndPath, pickupModule.part.transform.position);
+                    KIS_Shared.PlaySoundAtPoint(pickupModule.detachPartSndPath, pickupModule.part.transform.position);
                 }
                 if (item.allowPartAttach == 2)
                 {
                     ModuleKISPickup pickupModule = GetActivePickupNearest(part, canAttachOnly: true);
-                    KIS_Shared.PlaySoundAtPoint(pickupModule.detachSndPath, pickupModule.part.transform.position);
+                    KIS_Shared.PlaySoundAtPoint(pickupModule.detachPartSndPath, pickupModule.part.transform.position);
                 }
             }
             else
             {
                 ModuleKISPickup pickupModule = GetActivePickupNearest(part, canAttachOnly: true);
-                KIS_Shared.PlaySoundAtPoint(pickupModule.detachSndPath, pickupModule.part.transform.position);
+                KIS_Shared.PlaySoundAtPoint(pickupModule.detachPartSndPath, pickupModule.part.transform.position);
             }
         }
 
@@ -782,7 +778,7 @@ namespace KIS
                 if (pickupModule)
                 {
                     KISAddonPointer.allowPart = KISAddonPointer.allowEva = KISAddonPointer.allowMount = KISAddonPointer.allowStatic = true;
-                    KISAddonPointer.allowStack = false;
+                    KISAddonPointer.allowStack = pickupModule.allowStack;
                     KISAddonPointer.maxDist = pickupModule.maxDistance;
                     if (draggedItem != null)
                     {
@@ -898,8 +894,12 @@ namespace KIS
                     {
                         CreateAttach(tgtPart, pos, rot, srcAttachNodeID, tgtAttachNode);
                     }
+                    // sound
                     ModuleKISPickup modulePickup = GetActivePickupNearest(pos);
-                    if (modulePickup) AudioSource.PlayClipAtPoint(GameDatabase.Instance.GetAudioClip(modulePickup.attachSndPath), pos);
+                    if (tgtPart)
+                    {    
+                        if (modulePickup) AudioSource.PlayClipAtPoint(GameDatabase.Instance.GetAudioClip(modulePickup.attachPartSndPath), pos);
+                    }
                 }
             }
             draggedItem = null;
@@ -925,7 +925,7 @@ namespace KIS
                             movingPartMounted = true;
                         }
                     }
-                    if (!movingPartMounted) AudioSource.PlayClipAtPoint(GameDatabase.Instance.GetAudioClip(modulePickup.detachSndPath), movingPart.transform.position);
+                    if (!movingPartMounted) AudioSource.PlayClipAtPoint(GameDatabase.Instance.GetAudioClip(modulePickup.detachPartSndPath), movingPart.transform.position);
                 }
                 AudioSource.PlayClipAtPoint(GameDatabase.Instance.GetAudioClip(modulePickup.dropSndPath), pos);
             }

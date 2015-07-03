@@ -143,16 +143,23 @@ namespace KIS
             fixedJoint = CurJoint;
             this.part.vessel.Landed = true;
             staticAttached = true;
+            ModuleKISPickup modulePickup = KISAddonPickup.instance.GetActivePickupNearest(this.transform.position);
+            if (modulePickup) KIS_Shared.PlaySoundAtPoint(modulePickup.attachStaticSndPath, this.transform.position);
         }
 
         public void GroundDetach()
         {
-            KIS_Shared.DebugLog("Removing static rigidbody and fixed joint on " + this.part.partInfo.title);
-            if (fixedJoint) Destroy(fixedJoint);
-            if (connectedGameObject) Destroy(connectedGameObject);
-            fixedJoint = null;
-            connectedGameObject = null;
-            staticAttached = false;
+            if (staticAttached)
+            {
+                KIS_Shared.DebugLog("Removing static rigidbody and fixed joint on " + this.part.partInfo.title);
+                if (fixedJoint) Destroy(fixedJoint);
+                if (connectedGameObject) Destroy(connectedGameObject);
+                fixedJoint = null;
+                connectedGameObject = null;
+                staticAttached = false;
+                ModuleKISPickup modulePickup = KISAddonPickup.instance.GetActivePickupNearest(this.transform.position);
+                if (modulePickup) KIS_Shared.PlaySoundAtPoint(modulePickup.detachStaticSndPath, this.transform.position);
+            }
         }
 
 
