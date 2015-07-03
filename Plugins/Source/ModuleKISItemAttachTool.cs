@@ -40,38 +40,12 @@ namespace KIS
             // Check if grab key is pressed
             if (useFrom == KIS_Item.UseFrom.KeyDown)
             {
-                if (!KISAddonPickup.draggedPart && !KISAddonPickup.instance.grabActive && !KISAddonPointer.isRunning)
-                {
-                    item.PlaySound(KIS_Shared.bipWrongSndPath);
-                    ScreenMessages.PostScreenMessage("Use this tool while in drop mode to attach / Use grab key to detach", 5, ScreenMessageStyle.UPPER_CENTER);
-                }
-                if (KISAddonPointer.isRunning && KISAddonPointer.pointerTarget != KISAddonPointer.PointerTarget.PartMount)
-                {
-                    float attachPartMass = KISAddonPointer.partToAttach.mass + KISAddonPointer.partToAttach.GetResourceMass();
-                    if (attachPartMass < attachMaxMass)
-                    {
-                        KISAddonPickup.instance.pointerMode = KISAddonPickup.PointerMode.Attach;
-                        KISAddonPointer.allowStack = allowStack;
-                        item.PlaySound(changeModeSndPath);
-                    }
-                    else
-                    {
-                        item.PlaySound(KIS_Shared.bipWrongSndPath);
-                        ScreenMessages.PostScreenMessage("This part is too heavy for this tool", 5, ScreenMessageStyle.UPPER_CENTER);
-                    }
-                }
-
+                KISAddonPickup.instance.EnableAttachMode();
             }
             if (useFrom == KIS_Item.UseFrom.KeyUp)
             {
-                if (KISAddonPointer.isRunning && KISAddonPickup.instance.pointerMode == KISAddonPickup.PointerMode.Attach)
-                {
-                    KISAddonPickup.instance.pointerMode = KISAddonPickup.PointerMode.Drop;
-                    KISAddonPointer.allowStack = false;
-                    item.PlaySound(changeModeSndPath);
-                }
-            }
-                            
+                KISAddonPickup.instance.DisableAttachMode();
+            }     
         }
 
         public override void OnEquip(KIS_Item item)
@@ -79,9 +53,10 @@ namespace KIS
             ModuleKISPickup pickupModule = item.inventory.part.GetComponent<ModuleKISPickup>();
             if (pickupModule)
             {
-                pickupModule.canDetach = true;
-                orgAttachMaxMass = pickupModule.detachMaxMass;
-                pickupModule.detachMaxMass = attachMaxMass;
+                pickupModule.canAttach = true;
+                KISAddonPointer.allowStack = allowStack;
+                orgAttachMaxMass = pickupModule.attachMaxMass;
+                pickupModule.attachMaxMass = attachMaxMass;
                 orgAttachSndPath = pickupModule.attachSndPath;
                 pickupModule.attachSndPath = attachSndPath;
                 orgDetachSndPath = pickupModule.detachSndPath;
@@ -94,8 +69,9 @@ namespace KIS
             ModuleKISPickup pickupModule = item.inventory.part.GetComponent<ModuleKISPickup>();
             if (pickupModule)
             {
-                pickupModule.canDetach = false;
-                pickupModule.detachMaxMass = orgAttachMaxMass;
+                pickupModule.canAttach = false;
+                KISAddonPointer.allowStack = false;
+                pickupModule.attachMaxMass = orgAttachMaxMass;
                 pickupModule.attachSndPath = orgAttachSndPath;
                 pickupModule.detachSndPath = orgDetachSndPath;
             }
