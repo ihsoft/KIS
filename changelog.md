@@ -1,3 +1,13 @@
+### 1.2.0 (Not released yet)
+- [Enhancement] Added a dedicated key to attach/detach (H)
+- [Enhancement] Explosives can be attached without a tool
+- [Enhancement] Added different color to attach and drop
+- [Enhancement] Added an dedicated icon for detaching
+- [Enhancement] Detaching a part with a parent or a child(s) is now possible 
+- [Enhancement] Added colors to the target part and his parent on detach
+- [Enhancement] Added a ModuleKISItem parameter : allowStaticAttach (0:false / 1:true / 2:Attach tool needed)
+- [Enhancement] Added a ModuleKISItem parameter : allowPartAttach (0:false / 1:true / 2:Attach tool needed)
+
 ### 1.1.5 (31 May, 2015)
 - [Enhancement] Disable jetpack mouse input while dragging 
 - [Enhancement] Converted parts textures to DDS 
