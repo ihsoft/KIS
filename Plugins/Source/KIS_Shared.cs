@@ -359,7 +359,17 @@ namespace KIS
                 }
                 yield return null;
             }
-
+            // Part stay in position 
+            if (tgtAttachNode == null)
+            {
+                newPart.transform.position = tgtPart.transform.TransformPoint(toPartLocalPos);
+                newPart.transform.rotation = tgtPart.transform.rotation * toPartLocalRot;
+            }
+            else
+            {
+                newPart.transform.position = tgtAttachNode.nodeTransform.TransformPoint(toPartLocalPos);
+                newPart.transform.rotation = tgtAttachNode.nodeTransform.rotation * toPartLocalRot;
+            }
             KIS_Shared.DebugLog("CreatePart - Coupling part...");
             CouplePart(newPart, tgtPart, srcAttachNodeID, tgtAttachNode);
 
