@@ -105,7 +105,7 @@ namespace KIS
                         }
                         else if (item.allowStaticAttach == 2)
                         {
-                            ModuleKISPickup pickupModule = GetActivePickupNearest(attachPart, canAttachOnly: true);
+                            ModuleKISPickup pickupModule = GetActivePickupNearest(attachPart, canStaticAttachOnly: true);
                             if (pickupModule)
                             {
                                 KISAddonPointer.allowStatic = true;
@@ -118,7 +118,7 @@ namespace KIS
                         }
                         else if (item.allowPartAttach == 2)
                         {
-                            ModuleKISPickup pickupModule = GetActivePickupNearest(attachPart, canAttachOnly: true);
+                            ModuleKISPickup pickupModule = GetActivePickupNearest(attachPart, canPartAttachOnly: true);
                             if (pickupModule)
                             {
                                 KISAddonPointer.allowPart = true;
@@ -127,7 +127,7 @@ namespace KIS
                     }
                     else
                     {
-                        ModuleKISPickup pickupModule = GetActivePickupNearest(attachPart, canAttachOnly: true);
+                        ModuleKISPickup pickupModule = GetActivePickupNearest(attachPart, canPartAttachOnly: true);
                         if (pickupModule)
                         {
                             KISAddonPointer.allowPart = true;
@@ -180,7 +180,7 @@ namespace KIS
             }
             // On drag released
             if (HighLogic.LoadedSceneIsEditor || HighLogic.LoadedSceneIsFlight)
-            {     
+            {
                 if (draggedPart && Input.GetMouseButtonUp(0))
                 {
                     OnDragReleased();
@@ -362,6 +362,7 @@ namespace KIS
             ModuleKISPartDrag pDrag = part.GetComponent<ModuleKISPartDrag>();
             ModuleKISPartMount parentMount = null;
             if (part.parent) parentMount = part.parent.GetComponent<ModuleKISPartMount>();
+            ModuleKISItem item = part.GetComponent<ModuleKISItem>();
 
             // Drag part over another one if possible (ex : mount)
             if (draggedPart && pDrag)
@@ -396,19 +397,39 @@ namespace KIS
             }
 
             // Check if part can be detached and grabbed
-            if (!parentMount && (part.children.Count > 0 || part.parent))
+            if (!parentMount)
             {
-                ModuleKISItem item = part.GetComponent<ModuleKISItem>();
-                if (item)
+                if (part.children.Count > 0 || part.parent)
                 {
-                    if (item.allowPartAttach == 0)
+                    //Part with a child or a parent
+                    if (item)
                     {
-                        KISAddonCursor.CursorEnable("KIS/Textures/forbidden", "Can't grab", "(This part can't be detached)");
-                        return;
+                        if (item.allowPartAttach == 0)
+                        {
+                            KISAddonCursor.CursorEnable("KIS/Textures/forbidden", "Can't grab", "(This part can't be detached)");
+                            return;
+                        }
+                        else if (item.allowPartAttach == 2)
+                        {
+                            ModuleKISPickup pickupModule = GetActivePickupNearest(part, canPartAttachOnly: true);
+                            if (!pickupModule)
+                            {
+                                if (FlightGlobals.ActiveVessel.isEVA)
+                                {
+                                    KISAddonCursor.CursorEnable("KIS/Textures/needtool", "Tool needed", "(This part can't be detached without a tool)");
+                                    return;
+                                }
+                                else
+                                {
+                                    KISAddonCursor.CursorEnable("KIS/Textures/forbidden", "Not supported", "(Detach function is not supported on this part)");
+                                    return;
+                                }
+                            }
+                        }
                     }
-                    else if (item.allowPartAttach == 2)
+                    else
                     {
-                        ModuleKISPickup pickupModule = GetActivePickupNearest(part, canAttachOnly: true);
+                        ModuleKISPickup pickupModule = GetActivePickupNearest(part, canPartAttachOnly: true);
                         if (!pickupModule)
                         {
                             if (FlightGlobals.ActiveVessel.isEVA)
@@ -426,18 +447,25 @@ namespace KIS
                 }
                 else
                 {
-                    ModuleKISPickup pickupModule = GetActivePickupNearest(part, canAttachOnly: true);
-                    if (!pickupModule)
+                    // Part without childs and parent
+                    if (item)
                     {
-                        if (FlightGlobals.ActiveVessel.isEVA)
+                        if (item.staticAttached && item.allowStaticAttach == 2)
                         {
-                            KISAddonCursor.CursorEnable("KIS/Textures/needtool", "Tool needed", "(This part can't be detached without a tool)");
-                            return;
-                        }
-                        else
-                        {
-                            KISAddonCursor.CursorEnable("KIS/Textures/forbidden", "Not supported", "(Detach function is not supported on this part)");
-                            return;
+                            ModuleKISPickup pickupModule = GetActivePickupNearest(part, canStaticAttachOnly: true);
+                            if (!pickupModule)
+                            {
+                                if (FlightGlobals.ActiveVessel.isEVA)
+                                {
+                                    KISAddonCursor.CursorEnable("KIS/Textures/needtool", "Tool needed", "(This part can't be detached from the ground without a tool)");
+                                    return;
+                                }
+                                else
+                                {
+                                    KISAddonCursor.CursorEnable("KIS/Textures/forbidden", "Not supported", "(Detach from ground function is not supported on this part)");
+                                    return;
+                                }
+                            }
                         }
                     }
                 }
@@ -470,7 +498,7 @@ namespace KIS
             {
                 KISAddonCursor.CursorEnable("KIS/Textures/grabOk", "Grab", '(' + part.partInfo.title + ')');
             }
-            
+
             part.SetHighlight(true, false);
             grabOk = true;
         }
@@ -526,12 +554,6 @@ namespace KIS
                 return;
             }
 
-            // Do nothing if not attached
-            if (part.children.Count == 0 && !part.parent)
-            {
-                return;
-            }
-
             // Check part distance
             if (!HasActivePickupInRange(part))
             {
@@ -539,19 +561,72 @@ namespace KIS
                 return;
             }
 
+
+            // Check if part is static attached
+            if (item)
+            {
+                if (item.staticAttached)
+                {
+                    ModuleKISPickup pickupModule = GetActivePickupNearest(part, canStaticAttachOnly: true);
+                    if ((item.allowStaticAttach == 1) || (pickupModule && item.allowStaticAttach == 2))
+                    {
+                        part.SetHighlightColor(XKCDColors.Periwinkle);
+                        part.SetHighlight(true, false);
+                        KISAddonCursor.CursorEnable("KIS/Textures/detachOk", "Detach from ground", '(' + part.partInfo.title + ')');
+                        detachOk = true;
+                        return;
+                    }
+                    else
+                    {
+                        if (FlightGlobals.ActiveVessel.isEVA)
+                        {
+                            KISAddonCursor.CursorEnable("KIS/Textures/needtool", "Tool needed", "(This part can't be detached from the ground without a tool)");
+                            return;
+                        }
+                        else
+                        {
+                            KISAddonCursor.CursorEnable("KIS/Textures/forbidden", "Not supported", "(Detach from ground function is not supported on this part)");
+                            return;
+                        }
+                    }
+                }
+            }
+
+
             // Check if part can be detached
             if (!parentMount)
             {
-                if (item)
+                if (part.children.Count > 0 || part.parent)
                 {
-                    if (item.allowPartAttach == 0)
+                    //Part with a child or a parent
+                    if (item)
                     {
-                        KISAddonCursor.CursorEnable("KIS/Textures/forbidden", "Can't detach", "(This part can't be detached)");
-                        return;
+                        if (item.allowPartAttach == 0)
+                        {
+                            KISAddonCursor.CursorEnable("KIS/Textures/forbidden", "Can't detach", "(This part can't be detached)");
+                            return;
+                        }
+                        else if (item.allowPartAttach == 2)
+                        {
+                            ModuleKISPickup pickupModule = GetActivePickupNearest(part, canPartAttachOnly: true);
+                            if (!pickupModule)
+                            {
+                                if (FlightGlobals.ActiveVessel.isEVA)
+                                {
+                                    KISAddonCursor.CursorEnable("KIS/Textures/needtool", "Tool needed", "(Part can't be detached without a tool)");
+                                    return;
+                                }
+                                else
+                                {
+                                    KISAddonCursor.CursorEnable("KIS/Textures/forbidden", "Not supported", "(Detach function is not supported on this part)");
+                                    return;
+                                }
+                            }
+                        }
                     }
-                    else if (item.allowPartAttach == 2)
+                    else
                     {
-                        ModuleKISPickup pickupModule = GetActivePickupNearest(part, canAttachOnly: true);
+                        ModuleKISPickup pickupModule = GetActivePickupNearest(part, canPartAttachOnly: true);
                         if (!pickupModule)
                         {
                             if (FlightGlobals.ActiveVessel.isEVA)
@@ -569,20 +644,8 @@ namespace KIS
                 }
                 else
                 {
-                    ModuleKISPickup pickupModule = GetActivePickupNearest(part, canAttachOnly: true);
-                    if (!pickupModule)
-                    {
-                        if (FlightGlobals.ActiveVessel.isEVA)
-                        {
-                            KISAddonCursor.CursorEnable("KIS/Textures/needtool", "Tool needed", "(Part can't be detached without a tool)");
-                            return;
-                        }
-                        else
-                        {
-                            KISAddonCursor.CursorEnable("KIS/Textures/forbidden", "Not supported", "(Detach function is not supported on this part)");
-                            return;
-                        }
-                    }
+                    // Part without childs and parent
+                    return;
                 }
             }
 
@@ -612,9 +675,29 @@ namespace KIS
             detachActive = false;
             KISAddonCursor.StopPartDetection();
             KISAddonCursor.CursorDefault();
-            part.decouple();
-            // sound
             ModuleKISItem item = part.GetComponent<ModuleKISItem>();
+
+            if (item)
+            {
+                if (item.staticAttached)
+                {
+                    item.GroundDetach();
+                    if (item.allowPartAttach == 1)
+                    {
+                        ModuleKISPickup pickupModule = GetActivePickupNearest(part);
+                        KIS_Shared.PlaySoundAtPoint(pickupModule.detachStaticSndPath, pickupModule.part.transform.position);
+                    }
+                    if (item.allowPartAttach == 2)
+                    {
+                        ModuleKISPickup pickupModule = GetActivePickupNearest(part, canStaticAttachOnly: true);
+                        KIS_Shared.PlaySoundAtPoint(pickupModule.detachStaticSndPath, pickupModule.part.transform.position);
+                    }
+                    return;
+                }
+            }
+
+            part.decouple();
+
             if (item)
             {
                 if (item.allowPartAttach == 1)
@@ -624,13 +707,13 @@ namespace KIS
                 }
                 if (item.allowPartAttach == 2)
                 {
-                    ModuleKISPickup pickupModule = GetActivePickupNearest(part, canAttachOnly: true);
+                    ModuleKISPickup pickupModule = GetActivePickupNearest(part, canPartAttachOnly: true);
                     KIS_Shared.PlaySoundAtPoint(pickupModule.detachPartSndPath, pickupModule.part.transform.position);
                 }
             }
             else
             {
-                ModuleKISPickup pickupModule = GetActivePickupNearest(part, canAttachOnly: true);
+                ModuleKISPickup pickupModule = GetActivePickupNearest(part, canPartAttachOnly: true);
                 KIS_Shared.PlaySoundAtPoint(pickupModule.detachPartSndPath, pickupModule.part.transform.position);
             }
         }
@@ -655,12 +738,12 @@ namespace KIS
             detachOk = false;
         }
 
-        public bool HasActivePickupInRange(Part p, bool canAttachOnly = false)
+        public bool HasActivePickupInRange(Part p, bool canPartAttachOnly = false, bool canStaticAttachOnly = false)
         {
-            return HasActivePickupInRange(p.transform.position, canAttachOnly);
+            return HasActivePickupInRange(p.transform.position, canPartAttachOnly, canStaticAttachOnly);
         }
 
-        public bool HasActivePickupInRange(Vector3 position, bool canAttachOnly = false)
+        public bool HasActivePickupInRange(Vector3 position, bool canPartAttachOnly = false, bool canStaticAttachOnly = false)
         {
             bool nearPickupModule = false;
             List<ModuleKISPickup> pickupModules = FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleKISPickup>();
@@ -669,11 +752,15 @@ namespace KIS
                 float partDist = Vector3.Distance(pickupModule.part.transform.position, position);
                 if (partDist <= pickupModule.maxDistance)
                 {
-                    if (canAttachOnly == false)
+                    if (canPartAttachOnly == false && canStaticAttachOnly == false)
                     {
                         nearPickupModule = true;
                     }
-                    else if (pickupModule.canAttach)
+                    else if (canPartAttachOnly == true && pickupModule.allowPartAttach)
+                    {
+                        nearPickupModule = true;
+                    }
+                    else if (canStaticAttachOnly == true && pickupModule.allowStaticAttach)
                     {
                         nearPickupModule = true;
                     }
@@ -682,12 +769,12 @@ namespace KIS
             return nearPickupModule;
         }
 
-        public ModuleKISPickup GetActivePickupNearest(Part p, bool canAttachOnly = false)
+        public ModuleKISPickup GetActivePickupNearest(Part p, bool canPartAttachOnly = false, bool canStaticAttachOnly = false)
         {
-            return GetActivePickupNearest(p.transform.position, canAttachOnly);
+            return GetActivePickupNearest(p.transform.position, canPartAttachOnly, canStaticAttachOnly);
         }
 
-        public ModuleKISPickup GetActivePickupNearest(Vector3 position, bool canAttachOnly = false)
+        public ModuleKISPickup GetActivePickupNearest(Vector3 position, bool canPartAttachOnly = false, bool canStaticAttachOnly = false)
         {
             ModuleKISPickup nearestPModule = null;
             float nearestDistance = Mathf.Infinity;
@@ -697,12 +784,17 @@ namespace KIS
                 float partDist = Vector3.Distance(pickupModule.part.transform.position, position);
                 if (partDist <= nearestDistance)
                 {
-                    if (canAttachOnly == false)
+                    if (canPartAttachOnly == false && canStaticAttachOnly == false)
                     {
                         nearestDistance = partDist;
                         nearestPModule = pickupModule;
                     }
-                    else if (pickupModule.canAttach)
+                    else if (canPartAttachOnly == true && pickupModule.allowPartAttach)
+                    {
+                        nearestDistance = partDist;
+                        nearestPModule = pickupModule;
+                    }
+                    else if (canStaticAttachOnly == true && pickupModule.allowStaticAttach)
                     {
                         nearestDistance = partDist;
                         nearestPModule = pickupModule;
@@ -778,7 +870,7 @@ namespace KIS
                 if (pickupModule)
                 {
                     KISAddonPointer.allowPart = KISAddonPointer.allowEva = KISAddonPointer.allowMount = KISAddonPointer.allowStatic = true;
-                    KISAddonPointer.allowStack = pickupModule.allowStack;
+                    KISAddonPointer.allowStack = pickupModule.allowPartStack;
                     KISAddonPointer.maxDist = pickupModule.maxDistance;
                     if (draggedItem != null)
                     {
@@ -897,7 +989,7 @@ namespace KIS
                     // sound
                     ModuleKISPickup modulePickup = GetActivePickupNearest(pos);
                     if (tgtPart)
-                    {    
+                    {
                         if (modulePickup) AudioSource.PlayClipAtPoint(GameDatabase.Instance.GetAudioClip(modulePickup.attachPartSndPath), pos);
                     }
                 }

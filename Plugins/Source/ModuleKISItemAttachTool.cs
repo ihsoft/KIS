@@ -11,7 +11,11 @@ namespace KIS
     public class ModuleKISItemAttachTool : ModuleKISItem
     {
         [KSPField]
-        public bool allowStack = false;
+        public bool toolPartAttach = true;
+        [KSPField]
+        public bool toolStaticAttach = false;
+        [KSPField]
+        public bool toolPartStack = false;
         [KSPField]
         public string attachPartSndPath = "KIS/Sounds/attachPart";
         [KSPField]
@@ -22,11 +26,12 @@ namespace KIS
         public string detachStaticSndPath = "KIS/Sounds/detachStatic";
 
         private string orgAttachPartSndPath, orgDetachPartSndPath, orgAttachStaticSndPath, orgDetachStaticSndPath;
+        private bool orgToolPartAttach, orgToolStaticAttach, orgToolPartStack;
 
         public override string GetInfo()
         {
             var sb = new StringBuilder();
-            if (allowStack)
+            if (toolPartStack)
             {
                 sb.AppendLine("Allow snap attach on stack node");
             }
@@ -45,14 +50,18 @@ namespace KIS
                 KISAddonPickup.instance.DisableAttachMode();
             }     
         }
-
+        
         public override void OnEquip(KIS_Item item)
         {
             ModuleKISPickup pickupModule = item.inventory.part.GetComponent<ModuleKISPickup>();
             if (pickupModule)
             {
-                pickupModule.canAttach = true;
-                pickupModule.allowStack = allowStack;
+                orgToolPartAttach = pickupModule.allowPartAttach;
+                orgToolStaticAttach = pickupModule.allowStaticAttach;
+                orgToolPartStack = pickupModule.allowPartStack;
+                pickupModule.allowPartAttach = toolPartAttach;
+                pickupModule.allowStaticAttach = toolStaticAttach;
+                pickupModule.allowPartStack = toolPartStack;
 
                 orgAttachPartSndPath = pickupModule.attachPartSndPath;
                 pickupModule.attachPartSndPath = attachPartSndPath;
@@ -71,8 +80,9 @@ namespace KIS
             ModuleKISPickup pickupModule = item.inventory.part.GetComponent<ModuleKISPickup>();
             if (pickupModule)
             {
-                pickupModule.canAttach = false;
-                pickupModule.allowStack = false;
+                pickupModule.allowPartAttach = orgToolPartAttach;
+                pickupModule.allowStaticAttach = orgToolStaticAttach;
+                pickupModule.allowPartStack = orgToolPartStack;
 
                 pickupModule.attachPartSndPath = orgAttachPartSndPath;
                 pickupModule.detachPartSndPath = orgDetachPartSndPath;

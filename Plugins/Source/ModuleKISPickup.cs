@@ -11,9 +11,11 @@ namespace KIS
     public class ModuleKISPickup : PartModule
     {
         [KSPField]
-        public bool canAttach = false;
+        public bool allowPartAttach = true;
         [KSPField]
-        public bool allowStack = false;
+        public bool allowStaticAttach = false;
+        [KSPField]
+        public bool allowPartStack = false;
         [KSPField]
         public float maxDistance = 2;
         [KSPField]
