@@ -1,13 +1,21 @@
 ### 1.2.0 (Not released yet)
 - [Enhancement] Added a dedicated key to attach/detach (H)
 - [Enhancement] Explosives can be attached without a tool
+- [Enhancement] Added a GUI to set the timer and radius of explosives
 - [Enhancement] Added different color to attach and drop
 - [Enhancement] Added an dedicated icon for detaching
 - [Enhancement] Detaching a part with a parent or a child(s) is now possible 
 - [Enhancement] Added colors to the target part and his parent on detach
+- [Enhancement] Removed attach mass restriction for the wrench
 - [Enhancement] Added a ModuleKISItem parameter : allowStaticAttach (0:false / 1:true / 2:Attach tool needed)
 - [Enhancement] Added a ModuleKISItem parameter : allowPartAttach (0:false / 1:true / 2:Attach tool needed)
-
+- [Enhancement] Added a ModuleKISItemAttachTool & ModuleKISPickup parameter to enable/disable part & static attach
+- [Change] Moved ModuleKISPartStatic to ModuleKISItem
+- [Change] Changed some part description
+- [Change] Increased explosives maxTemp parameter
+- [Fix] Fixed crash on x64 linux
+- [Fix] Fixed wrong position of part attached from inventory 
+- 
 ### 1.1.5 (31 May, 2015)
 - [Enhancement] Disable jetpack mouse input while dragging 
 - [Enhancement] Converted parts textures to DDS 
