@@ -288,8 +288,17 @@ namespace KIS
             }
             else
             {
-                newPart.rigidbody.velocity = fromPart.rigidbody.velocity;
-                newPart.rigidbody.angularVelocity = fromPart.rigidbody.angularVelocity;
+                if (fromPart.rigidbody)
+                {
+                    newPart.rigidbody.velocity = fromPart.rigidbody.velocity;
+                    newPart.rigidbody.angularVelocity = fromPart.rigidbody.angularVelocity;
+                }
+                else
+                {
+                    // If fromPart is a carried container
+                    newPart.rigidbody.velocity = fromPart.vessel.rootPart.rigidbody.velocity;
+                    newPart.rigidbody.angularVelocity = fromPart.vessel.rootPart.rigidbody.angularVelocity;
+                }
             }
 
             newPart.decouple();
