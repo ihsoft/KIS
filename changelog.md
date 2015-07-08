@@ -15,7 +15,7 @@
 - [Change] Increased explosives maxTemp parameter
 - [Fix] Fixed crash on x64 linux
 - [Fix] Fixed wrong position of part attached from inventory 
-- 
+
 ### 1.1.5 (31 May, 2015)
 - [Enhancement] Disable jetpack mouse input while dragging 
 - [Enhancement] Converted parts textures to DDS 
