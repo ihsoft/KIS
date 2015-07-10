@@ -1033,10 +1033,10 @@ namespace KIS
         {
             KIS_Shared.DebugLog("Create & drop part");
             ModuleKISPickup modulePickup = GetActivePickupNearest(pos);
+            draggedItem.StackRemove(1);
             Part newPart = KIS_Shared.CreatePart(draggedItem.partNode, pos, rot, draggedItem.inventory.part);
             KIS_Shared.SendKISMessage(newPart, KIS_Shared.MessageAction.DropEnd, tgtPart);
             KISAddonPointer.StopPointer();
-            draggedItem.StackRemove(1);
             draggedItem = null;
             draggedPart = null;
             if (modulePickup) AudioSource.PlayClipAtPoint(GameDatabase.Instance.GetAudioClip(modulePickup.dropSndPath), pos);
@@ -1065,7 +1065,7 @@ namespace KIS
         {
             KIS_Shared.DebugLog("Create part & attach");
             Part newPart;
-
+            draggedItem.StackRemove(1);
             if (tgtPart)
             {
                 newPart = KIS_Shared.CreatePart(draggedItem.partNode, pos, rot, draggedItem.inventory.part, tgtPart, srcAttachNodeID, tgtAttachNode, OnPartCoupled);
@@ -1075,9 +1075,7 @@ namespace KIS
                 newPart = KIS_Shared.CreatePart(draggedItem.partNode, pos, rot, draggedItem.inventory.part);
                 KIS_Shared.SendKISMessage(newPart, KIS_Shared.MessageAction.AttachEnd, tgtPart, tgtAttachNode);
             }
-
             KISAddonPointer.StopPointer();
-            draggedItem.StackRemove(1);
             movingPart = null;
             draggedItem = null;
             draggedPart = null;
