@@ -16,7 +16,7 @@
 - [Change] Changed some part description
 - [Change] Increased explosives maxTemp parameter
 - [Change] Updated guide to 1.2
-- [Fix] Compatibility fix for KSP 1.0.
+- [Fix] Compatibility fix for KSP 1.0.4
 - [Fix] Fixed crash on x64 linux
 - [Fix] Fixed wrong position of part attached from inventory 
 - [Fix] Prevent part "cloning" when removing content of a carried container before
