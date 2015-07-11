@@ -15,6 +15,7 @@
 - [Change] Moved ModuleKISPartStatic to ModuleKISItem
 - [Change] Changed some part description
 - [Change] Increased explosives maxTemp parameter
+- [Fix] Compatibility fix for KSP 1.0.4
 - [Fix] Fixed crash on x64 linux
 - [Fix] Fixed wrong position of part attached from inventory 
 
