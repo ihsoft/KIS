@@ -477,13 +477,8 @@ namespace KIS
                     UnityEngine.Object.Destroy(equippedGameObj);
                     return;
                 }
-
-                if (prefabModule.equipRemoveHelmet)
-                {
-                    inventory.SetHelmet(false);
-                }
             }
-            if (equipMode == EquipMode.Part)
+            if (equipMode == EquipMode.Part || equipMode == EquipMode.Physic)
             {
                 evaTransform = null;
                 List<SkinnedMeshRenderer> skmrs = new List<SkinnedMeshRenderer>(inventory.part.GetComponentsInChildren<SkinnedMeshRenderer>() as SkinnedMeshRenderer[]);
@@ -513,33 +508,17 @@ namespace KIS
                 }
                 else
                 {
-                    equippedPart = KIS_Shared.CreatePart(partNode, Vector3.zero, Quaternion.identity, this.inventory.part, this.inventory.part, null, null, OnEquippedPartCoupled);
+                    Vector3 equipPos =  evaTransform.TransformPoint(prefabModule.equipPos);
+                    Quaternion equipRot = evaTransform.rotation * Quaternion.Euler(prefabModule.equipDir);
+                    equippedPart = KIS_Shared.CreatePart(partNode, equipPos, equipRot, this.inventory.part, this.inventory.part, null, null, OnEquippedPartCoupled);
                 }
-                  
-                equippedGameObj = equippedPart.gameObject;
-
-                if (prefabModule.equipRemoveHelmet)
-                {
-                    inventory.SetHelmet(false);
-                }
+                if (equipMode == EquipMode.Part) equippedGameObj = equippedPart.gameObject;
             }
-            if (equipMode == EquipMode.Physic)
+
+            if (prefabModule.equipRemoveHelmet)
             {
-                Vector3 pos = inventory.part.transform.TransformPoint(prefabModule.equipPos);
-                Quaternion rot = inventory.part.transform.rotation * Quaternion.Euler(prefabModule.equipDir);
-                Part alreadyEquippedPart = this.inventory.part.vessel.Parts.Find(p => p.partInfo.name == this.availablePart.name);
-                if (alreadyEquippedPart)
-                {
-                    KIS_Shared.DebugLog("Part : " + this.availablePart.name + " already found on eva");
-                    equippedPart = alreadyEquippedPart;
-                    OnEquippedPartCoupled(equippedPart);
-                }
-                else
-                {
-                    equippedPart = KIS_Shared.CreatePart(partNode, pos, rot, this.inventory.part, this.inventory.part, null, null, OnEquippedPartCoupled);
-                }             
+                inventory.SetHelmet(false);
             }
-
             PlaySound(prefabModule.moveSndPath);
             equipped = true;
             prefabModule.OnEquip(this);
@@ -576,7 +555,6 @@ namespace KIS
             if (equipMode == EquipMode.Part)
             {
                 //Disable colliders
-                equippedPart.mass = 0.001f;
                 foreach (Collider col in equippedPart.gameObject.GetComponentsInChildren<Collider>())
                 {
                     col.isTrigger = true;
@@ -599,11 +577,25 @@ namespace KIS
 
             if (equipMode == EquipMode.Physic)
             {
+                equippedPart.mass = 0.001f;
                 //Disable colliders
                 foreach (Collider col in equippedPart.gameObject.GetComponentsInChildren<Collider>())
                 {
                     col.isTrigger = true;
                 }
+
+                //Destroy joint to avoid buggy eva move
+                if (equippedPart.attachJoint)
+                {
+                    equippedPart.attachJoint.DestroyJoint();
+                }
+
+                //Create physic join
+                FixedJoint evaJoint = equippedPart.gameObject.AddComponent<FixedJoint>();
+                evaJoint.connectedBody = this.inventory.part.rigidbody;//evaCollider.attachedRigidbody;
+                evaJoint.breakForce = 5;
+                evaJoint.breakTorque = 5;
+                KIS_Shared.ResetCollisionEnhancer(equippedPart);
             }
         }
 
