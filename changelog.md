@@ -1,4 +1,5 @@
 ### 1.2.0 (Not released yet)
+- [New Part] ISC-6K inline container (6 000L)
 - [Enhancement] Added a dedicated key to attach/detach (H)
 - [Enhancement] Explosives can be attached without a tool
 - [Enhancement] Added a GUI to set the timer and radius of explosives
@@ -10,6 +11,7 @@
 - [Enhancement] Added a ModuleKISItem parameter : allowStaticAttach (0:false / 1:true / 2:Attach tool needed)
 - [Enhancement] Added a ModuleKISItem parameter : allowPartAttach (0:false / 1:true / 2:Attach tool needed)
 - [Enhancement] Added a ModuleKISItemAttachTool & ModuleKISPickup parameter to enable/disable part & static attach
+- [Change] IMC-250 container renamed ILC-18k, max volume reduced from 22000 to 18000
 - [Change] Moved ModuleKISPartStatic to ModuleKISItem
 - [Change] Changed some part description
 - [Change] Increased explosives maxTemp parameter
