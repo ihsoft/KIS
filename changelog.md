@@ -1,4 +1,4 @@
-### 1.2.0 (Not released yet)
+### 1.2.0 (11 July 2015)
 - [New Part] ISC-6K inline container (6 000L)
 - [Enhancement] Added a dedicated key to attach/detach (H)
 - [Enhancement] Part can be detached from parent without grabbing
