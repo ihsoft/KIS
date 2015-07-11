@@ -1,11 +1,12 @@
 ### 1.2.0 (Not released yet)
 - [New Part] ISC-6K inline container (6 000L)
 - [Enhancement] Added a dedicated key to attach/detach (H)
+- [Enhancement] Part can be detached from parent without grabbing
 - [Enhancement] Explosives can be attached without a tool
 - [Enhancement] Added a GUI to set the timer and radius of explosives
 - [Enhancement] Added different color to attach and drop
 - [Enhancement] Added an dedicated icon for detaching
-- [Enhancement] Detaching a part with a parent or a child(s) is now possible 
+- [Enhancement] Allow detaching & grabbing of part with one parent or children
 - [Enhancement] Added colors to the target part and his parent on detach
 - [Enhancement] Removed attach mass restriction for the wrench
 - [Enhancement] Added a ModuleKISItem parameter : allowStaticAttach (0:false / 1:true / 2:Attach tool needed)
@@ -15,9 +16,13 @@
 - [Change] Moved ModuleKISPartStatic to ModuleKISItem
 - [Change] Changed some part description
 - [Change] Increased explosives maxTemp parameter
+- [Change] Updated guide to 1.2
 - [Fix] Compatibility fix for KSP 1.0.4
 - [Fix] Fixed crash on x64 linux
 - [Fix] Fixed wrong position of part attached from inventory 
+- [Fix] Prevent part "cloning" when removing content of a carried container before
+dropping it
+- [Fix] Fix crash when dropping a part from a carried container 
 
 ### 1.1.5 (31 May, 2015)
 - [Enhancement] Disable jetpack mouse input while dragging 
