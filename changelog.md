@@ -6,7 +6,7 @@
 - [Enhancement] Added a GUI to set the timer and radius of explosives
 - [Enhancement] Added different color to attach and drop
 - [Enhancement] Added an dedicated icon for detaching
-- [Enhancement] Allow detaching & grabbing of part with parent or children
+- [Enhancement] Allow detaching & grabbing of part with one parent or children
 - [Enhancement] Added colors to the target part and his parent on detach
 - [Enhancement] Removed attach mass restriction for the wrench
 - [Enhancement] Added a ModuleKISItem parameter : allowStaticAttach (0:false / 1:true / 2:Attach tool needed)
