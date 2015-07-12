@@ -178,6 +178,21 @@ namespace KIS
                     DisableAttachMode();
                 }
             }
+            // Drag editor parts
+            if (HighLogic.LoadedSceneIsEditor)
+            {
+                if (Input.GetMouseButtonDown(0))
+                {
+                    if (!UIManager.instance.DidPointerHitUI(0) && InputLockManager.IsUnlocked(ControlTypes.EDITOR_PAD_PICK_PLACE))
+                    {
+                        Part part = KIS_Shared.GetPartUnderCursor();
+                        if (part)
+                        {
+                            OnMouseGrabPartClick(part);
+                        }
+                    }
+                }
+            }
             // On drag released
             if (HighLogic.LoadedSceneIsEditor || HighLogic.LoadedSceneIsFlight)
             {
