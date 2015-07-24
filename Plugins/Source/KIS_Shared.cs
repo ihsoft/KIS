@@ -467,7 +467,7 @@ namespace KIS
         {
             Bounds[] rendererBounds = PartGeometryUtil.GetRendererBounds(partPrefab);
             Vector3 boundsSize = PartGeometryUtil.MergeBounds(rendererBounds, partPrefab.transform).size;
-			float volume = (boundsSize.x * boundsSize.y * boundsSize.z) * ((float) Math.Pow(partPrefab.rescaleFactor,3));
+			float volume = (boundsSize.x * boundsSize.y * boundsSize.z) * (Mathf.Pow(partPrefab.rescaleFactor,3));
             return volume * 1000;
         }
 
