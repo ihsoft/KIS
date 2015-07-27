@@ -12,6 +12,7 @@ namespace KIS
     {
         [KSPField]
         public string sndPath = "KIS/Sounds/guitar";
+        public float sndMaxDistance = 10;
         public bool loop = false;
         public FXGroup sndFx;
 
@@ -27,7 +28,7 @@ namespace KIS
                 sndFx.audio.rolloffMode = AudioRolloffMode.Linear;
                 sndFx.audio.dopplerLevel = 0f;
                 sndFx.audio.panLevel = 1f;
-                sndFx.audio.maxDistance = 10;
+                sndFx.audio.maxDistance = sndMaxDistance;
                 sndFx.audio.loop = loop;
                 sndFx.audio.playOnAwake = false;
                 sndFx.audio.clip = GameDatabase.Instance.GetAudioClip(sndPath);
