@@ -1051,16 +1051,14 @@ namespace KIS
                 {
                     if (GUILayout.Button(new GUIContent("Remove Helmet", ""), GUILayout.Width(width), GUILayout.Height(22)))
                     {
-                        PlaySound(helmetOffSndPath);
-                        SetHelmet(false, true);
+                        if (SetHelmet(false, true)) PlaySound(helmetOffSndPath);
                     }
                 }
                 else
                 {
                     if (GUILayout.Button(new GUIContent("Put On Helmet", ""), GUILayout.Width(width), GUILayout.Height(22)))
                     {
-                        PlaySound(helmetOnSndPath);
-                        SetHelmet(true);
+                        if (SetHelmet(true)) PlaySound(helmetOnSndPath);
                     }
                 }
             }
