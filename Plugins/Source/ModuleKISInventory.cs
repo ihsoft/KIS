@@ -834,6 +834,7 @@ namespace KIS
                 }
             }
 
+            //Disable helmet and visor
             List<SkinnedMeshRenderer> skmrs = new List<SkinnedMeshRenderer>(this.part.GetComponentsInChildren<SkinnedMeshRenderer>() as SkinnedMeshRenderer[]);
             foreach (SkinnedMeshRenderer skmr in skmrs)
             {
@@ -843,6 +844,19 @@ namespace KIS
                     helmetEquipped = active;
                 }
             }
+
+            //Disable flares and light
+            List<Light> lights = new List<Light>(this.part.GetComponentsInChildren<Light>(true) as Light[]);
+            foreach (Light light in lights)
+            {
+                if (light.name == "headlamp")
+                {
+                    light.enabled = active;
+                    light.transform.Find("flare1").renderer.enabled = active;
+                    light.transform.Find("flare2").renderer.enabled = active;
+                }
+            }
+
             return true;
         }
 
