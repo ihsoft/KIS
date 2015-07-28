@@ -45,6 +45,7 @@ namespace KIS
 
         public string evaInventoryKey = "tab";
         public string evaRightHandKey = "x";
+        public string evaHelmetKey = "j";
         public string openGuiName;
         public float totalVolume = 0;
         public int podSeat = 0;
@@ -207,6 +208,8 @@ namespace KIS
             slotKeyPress(KeyCode.Alpha6, 5, 1);
             slotKeyPress(KeyCode.Alpha7, 6, 1);
             slotKeyPress(KeyCode.Alpha8, 7, 1);
+
+            // Use right hand tool
             if (Input.GetKeyDown(evaRightHandKey))
             {
                 KIS_Item rightHandItem = GetEquipedItem("rightHand");
@@ -222,6 +225,19 @@ namespace KIS
                 if (rightHandItem != null)
                 {
                     rightHandItem.Use(KIS_Item.UseFrom.KeyUp);
+                }
+            }
+
+            // Put/remove helmet
+            if (Input.GetKeyDown(evaHelmetKey))
+            {
+                if (helmetEquipped)
+                {
+                    if (SetHelmet(false, true)) PlaySound(helmetOffSndPath);
+                }
+                else
+                {
+                    if (SetHelmet(true)) PlaySound(helmetOnSndPath);
                 }
             }
         }
