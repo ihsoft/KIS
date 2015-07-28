@@ -562,11 +562,11 @@ namespace KIS
         public static void MoveItem(KIS_Item srcItem, ModuleKISInventory tgtInventory, int tgtSlot)
         {
             ModuleKISInventory srcInventory = srcItem.inventory;
+            srcItem.OnMove(srcInventory, tgtInventory);
             int srcSlot = srcItem.slot;
             tgtInventory.items.Add(tgtSlot, srcItem);
             srcItem.inventory.items.Remove(srcSlot);
             srcItem.inventory = tgtInventory;
-            tgtInventory.items[tgtSlot].OnMove(srcInventory, tgtInventory);
             srcInventory.RefreshMassAndVolume();
             tgtInventory.RefreshMassAndVolume();
         }
