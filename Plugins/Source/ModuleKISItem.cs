@@ -54,10 +54,14 @@ namespace KIS
         public int allowPartAttach = 2;     // 0:false / 1:true / 2:Attach tool needed
         [KSPField]
         public int allowStaticAttach = 0;   // 0:false / 1:true / 2:Attach tool needed
-        [KSPField(isPersistant = true)]
-        public bool staticAttached = false;
+        [KSPField]
+        public bool useExternalPartAttach = false; // For KAS
+        [KSPField]
+        public bool useExternalStaticAttach = false; // For KAS
         [KSPField]
         public float staticAttachBreakForce = 10;
+        [KSPField(isPersistant = true)]
+        public bool staticAttached = false;
 
         private FixedJoint fixedJoint;
         private GameObject connectedGameObject;
@@ -100,6 +104,7 @@ namespace KIS
         public virtual void OnPartUnpack()
         {
             if (allowStaticAttach == 0) return;
+            if (useExternalStaticAttach) return;
             if (staticAttached)
             {
                 KIS_Shared.DebugLog("Re-attach static object (OnPartUnpack)");
@@ -110,6 +115,7 @@ namespace KIS
         public void OnKISAction(BaseEventData baseEventData)
         {
             if (allowStaticAttach == 0) return;
+            if (useExternalStaticAttach) return;
             string action = baseEventData.GetString("action");
             Part tgtPart = (Part)baseEventData.Get("targetPart");
             if (action == KIS_Shared.MessageAction.Store.ToString() || action == KIS_Shared.MessageAction.DropEnd.ToString() || action == KIS_Shared.MessageAction.AttachStart.ToString())

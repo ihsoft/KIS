@@ -1039,7 +1039,7 @@ namespace KIS
             KIS_Shared.DecoupleFromAll(movingPart);
             movingPart.transform.position = pos;
             movingPart.transform.rotation = rot;
-            KIS_Shared.SendKISMessage(movingPart, KIS_Shared.MessageAction.DropEnd, tgtPart);
+            KIS_Shared.SendKISMessage(movingPart, KIS_Shared.MessageAction.DropEnd, KISAddonPointer.GetCurrentAttachNode(), tgtPart);
             KISAddonPointer.StopPointer();
             movingPart = null;
         }
@@ -1050,7 +1050,7 @@ namespace KIS
             ModuleKISPickup modulePickup = GetActivePickupNearest(pos);
             draggedItem.StackRemove(1);
             Part newPart = KIS_Shared.CreatePart(draggedItem.partNode, pos, rot, draggedItem.inventory.part);
-            KIS_Shared.SendKISMessage(newPart, KIS_Shared.MessageAction.DropEnd, tgtPart);
+            KIS_Shared.SendKISMessage(newPart, KIS_Shared.MessageAction.DropEnd, KISAddonPointer.GetCurrentAttachNode(), tgtPart);
             KISAddonPointer.StopPointer();
             draggedItem = null;
             draggedPart = null;
@@ -1061,15 +1061,19 @@ namespace KIS
         private void MoveAttach(Part tgtPart, Vector3 pos, Quaternion rot, string srcAttachNodeID = null, AttachNode tgtAttachNode = null)
         {
             KIS_Shared.DebugLog("Move part & attach");
-            KIS_Shared.SendKISMessage(movingPart, KIS_Shared.MessageAction.AttachStart, tgtPart, tgtAttachNode);
+            KIS_Shared.SendKISMessage(movingPart, KIS_Shared.MessageAction.AttachStart, KISAddonPointer.GetCurrentAttachNode(), tgtPart, tgtAttachNode);
             KIS_Shared.DecoupleFromAll(movingPart);
             movingPart.transform.position = pos;
             movingPart.transform.rotation = rot;
-            if (tgtPart)
+
+            ModuleKISItem moduleItem = movingPart.GetComponent<ModuleKISItem>();
+            bool useExternalPartAttach = false;
+            if (moduleItem) if (moduleItem.useExternalPartAttach) useExternalPartAttach = true;
+            if (tgtPart && !useExternalPartAttach)
             {
                 KIS_Shared.CouplePart(movingPart, tgtPart, srcAttachNodeID, tgtAttachNode);
             }
-            KIS_Shared.SendKISMessage(movingPart, KIS_Shared.MessageAction.AttachEnd, tgtPart, tgtAttachNode);
+            KIS_Shared.SendKISMessage(movingPart, KIS_Shared.MessageAction.AttachEnd, KISAddonPointer.GetCurrentAttachNode(), tgtPart, tgtAttachNode);
             KISAddonPointer.StopPointer();
             movingPart = null;
             draggedItem = null;
@@ -1081,14 +1085,16 @@ namespace KIS
             KIS_Shared.DebugLog("Create part & attach");
             Part newPart;
             draggedItem.StackRemove(1);
-            if (tgtPart)
+            bool useExternalPartAttach = false;
+            if (draggedItem.prefabModule) if (draggedItem.prefabModule.useExternalPartAttach) useExternalPartAttach = true;
+            if (tgtPart && !useExternalPartAttach)
             {
                 newPart = KIS_Shared.CreatePart(draggedItem.partNode, pos, rot, draggedItem.inventory.part, tgtPart, srcAttachNodeID, tgtAttachNode, OnPartCoupled);
             }
             else
             {
                 newPart = KIS_Shared.CreatePart(draggedItem.partNode, pos, rot, draggedItem.inventory.part);
-                KIS_Shared.SendKISMessage(newPart, KIS_Shared.MessageAction.AttachEnd, tgtPart, tgtAttachNode);
+                KIS_Shared.SendKISMessage(newPart, KIS_Shared.MessageAction.AttachEnd, KISAddonPointer.GetCurrentAttachNode(), tgtPart, tgtAttachNode);
             }
             KISAddonPointer.StopPointer();
             movingPart = null;
@@ -1099,7 +1105,7 @@ namespace KIS
 
         public void OnPartCoupled(Part createdPart, Part tgtPart = null, AttachNode tgtAttachNode = null)
         {
-            KIS_Shared.SendKISMessage(createdPart, KIS_Shared.MessageAction.AttachEnd, tgtPart, tgtAttachNode);
+            KIS_Shared.SendKISMessage(createdPart, KIS_Shared.MessageAction.AttachEnd, KISAddonPointer.GetCurrentAttachNode(), tgtPart, tgtAttachNode);
         }
 
     }

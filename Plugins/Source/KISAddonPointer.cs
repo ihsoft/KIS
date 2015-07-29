@@ -197,7 +197,7 @@ namespace KIS
                 if (!tgtPart)
                 {
                     // check linked part
-                    LinkedObject linkedObject = hit.collider.gameObject.GetComponent<LinkedObject>();
+                    KIS_LinkedPart linkedObject = hit.collider.gameObject.GetComponent<KIS_LinkedPart>();
                     if (linkedObject)
                     {
                         tgtPart = linkedObject.part;
