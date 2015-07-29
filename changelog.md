@@ -1,9 +1,11 @@
 ### 1.2.1 (Not released yet)
+- [Enhancement] Added key (B/N) to move up or down a part in drop mode 
 - [Enhancement] Added a dedicated key to put/remove helmet (J)
 - [Enhancement] Added new stackable modules
 - [Enhancement] Added max sound distance parameter for ModuleKISItemSoundPlayer 
 - [Enhancement] Added new parameters in moduleKISItem : useExternalPartAttach &
 useExternalStaticAttach (for KAS or others mods)
+- [Change] Modified the organization of the text keys under cursor
 - [Fix] Fixed editor part dragging
 - [Fix] Removed some unused debug lines
 - [Fix] Fixed eva speed not returning to the default value after moving a carried container to an inventory
