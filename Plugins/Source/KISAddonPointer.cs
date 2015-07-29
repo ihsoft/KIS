@@ -59,12 +59,15 @@ namespace KIS
         public static Part partToAttach;
         public static float scale = 1;
         public static float maxDist = 2f;
-        public static bool allowMoveAbove = false;
-        public static float maxAboveDist = 0.2f;
-        public static float aboveDistStep = 0.05f;
         public static bool useAttachRules = false;
         private static Transform sourceTransform;
         private static RaycastHit hit;
+
+        public static bool allowOffset = false;
+        public static string offsetUpKey = "b";
+        public static string offsetDownKey = "n";
+        public static float maxOffsetDist = 0.5f;
+        public static float aboveOffsetStep = 0.05f;
 
         private static bool running = false;
         public static Part hoveredPart = null;
@@ -491,22 +494,22 @@ namespace KIS
             }
 
             // Move above
-            if (allowMoveAbove)
+            if (allowOffset)
             {
                 if (pointerTarget != PointerTarget.PartMount)
                 {
-                    if (Input.GetKeyDown(KeyCode.B))
+                    if (Input.GetKeyDown(offsetUpKey))
                     {
-                        if (aboveDistance < maxAboveDist)
+                        if (aboveDistance < maxOffsetDist)
                         {
-                            aboveDistance += aboveDistStep;
+                            aboveDistance += aboveOffsetStep;
                         }
                     }
-                    if (Input.GetKeyDown(KeyCode.N))
+                    if (Input.GetKeyDown(offsetDownKey))
                     {
-                        if (aboveDistance > -maxAboveDist)
+                        if (aboveDistance > -maxOffsetDist)
                         {
-                            aboveDistance -= aboveDistStep;
+                            aboveDistance -= aboveOffsetStep;
                         }
                     }
                     if (GameSettings.Editor_resetRotation.GetKeyDown())

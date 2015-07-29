@@ -60,18 +60,21 @@ namespace KIS
                 string keypu = "[" + GameSettings.Editor_pitchUp.name + "]";
                 string keyyl = "[" + GameSettings.Editor_yawLeft.name + "]";
                 string keyyr = "[" + GameSettings.Editor_yawRight.name + "]";
+                string keyOffset = "[" + KISAddonPointer.offsetUpKey.ToUpper() + "] / [" + KISAddonPointer.offsetDownKey.ToUpper() + "]";
+                string attachK = "[" + attachKey.ToUpper() + "]";
                 string keyRotate = keyrl + keyrr + " / " + keypd + keypu + " / " + keyyl + keyyr;
                 string keyResetRot = "[" + GameSettings.Editor_resetRotation.name + "]";
                 string keyAnchor = "[" + GameSettings.Editor_toggleSymMethod.name + "]";
 
                 if (value == PointerMode.Drop)
                 {
-                    KISAddonCursor.CursorEnable("KIS/Textures/drop", "Drop (" + KISAddonPointer.GetCurrentAttachNode().id + ")", "(Press " + keyRotate + " to rotate, " + keyResetRot + " to reset orientation,", keyAnchor + " to change node, [Escape] to cancel)");
+                    KISAddonCursor.CursorEnable("KIS/Textures/drop", "Drop (" + KISAddonPointer.GetCurrentAttachNode().id + ")", "(Press " + attachK + " to attach, " + keyRotate + " to rotate, " + keyResetRot + " to reset orientation, ", keyAnchor + " to change node," + keyOffset + " to move up/down, [Escape] to cancel)");
                     KISAddonPointer.allowPart = true;
                     KISAddonPointer.allowStatic = true;
                     KISAddonPointer.allowEva = true;
                     KISAddonPointer.allowPartItself = true;
                     KISAddonPointer.useAttachRules = false;
+                    KISAddonPointer.allowOffset = true;
                     KISAddonPointer.colorOk = Color.green;
                 }
                 if (value == PointerMode.Attach)
@@ -82,6 +85,7 @@ namespace KIS
                     KISAddonPointer.allowEva = false;
                     KISAddonPointer.allowPartItself = false;
                     KISAddonPointer.useAttachRules = true;
+                    KISAddonPointer.allowOffset = false;
                     KISAddonPointer.colorOk = XKCDColors.Teal;
 
                     ModuleKISItem item = null;
