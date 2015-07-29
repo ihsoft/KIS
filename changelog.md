@@ -1,3 +1,12 @@
+### 1.2.1 (Not released yet)
+- [Enhancement] Added a dedicated key to put/remove helmet (J)
+- [Enhancement] Added new stackable modules
+- [Enhancement] Added max sound distance parameter for ModuleKISItemSoundPlayer 
+- [Fix] Fixed editor part dragging
+- [Fix] Fixed eva speed not returning to the default value after moving a carried container to an inventory
+- [Fix] Kerbal headlamp is disabled when helmet is removed 
+- [Fix] Prevent helmet sound to play if it cannnot be removed
+
 ### 1.2.0 (11 July 2015)
 - [New Part] ISC-6K inline container (6 000L)
 - [Enhancement] Added a dedicated key to attach/detach (H)
