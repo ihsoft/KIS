@@ -35,7 +35,6 @@ namespace KIS
             delegateOnMouseHoverPart = onMouseHoverPart;
             delegateOnMouseExitPart = onMouseExitPart;
             partDetectionActive = true;
-            KIS_Shared.DebugLog("Part detection started");
         }
 
         public static void StopPartDetection()
@@ -46,7 +45,6 @@ namespace KIS
                 delegateOnMouseExitPart(hoveredPart);
             }
             hoveredPart = null;
-            KIS_Shared.DebugLog("Part detection stopped");
         }
 
         void Update()
