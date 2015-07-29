@@ -60,15 +60,18 @@ namespace KIS
                 string keypu = "[" + GameSettings.Editor_pitchUp.name + "]";
                 string keyyl = "[" + GameSettings.Editor_yawLeft.name + "]";
                 string keyyr = "[" + GameSettings.Editor_yawRight.name + "]";
-                string keyOffset = "[" + KISAddonPointer.offsetUpKey.ToUpper() + "] / [" + KISAddonPointer.offsetDownKey.ToUpper() + "]";
-                string attachK = "[" + attachKey.ToUpper() + "]";
-                string keyRotate = keyrl + keyrr + " / " + keypd + keypu + " / " + keyyl + keyyr;
-                string keyResetRot = "[" + GameSettings.Editor_resetRotation.name + "]";
-                string keyAnchor = "[" + GameSettings.Editor_toggleSymMethod.name + "]";
+
+                List<String> texts = new List<String>();
+                texts.Add(keyrl + keyrr + "/" + keypd + keypu + "/" + keyyl + keyyr + " to rotate");
+                texts.Add("[" + GameSettings.Editor_resetRotation.name + "] to reset orientation & position");
+                texts.Add("[" + GameSettings.Editor_toggleSymMethod.name + "] to change node");
+                if (value == PointerMode.Drop) texts.Add("[" + KISAddonPointer.offsetUpKey.ToUpper() + "]/[" + KISAddonPointer.offsetDownKey.ToUpper() + "] to move up/down");
+                if (value == PointerMode.Drop) texts.Add("[" + attachKey.ToUpper() + "] to attach");
+                texts.Add("[Escape] to cancel");
 
                 if (value == PointerMode.Drop)
                 {
-                    KISAddonCursor.CursorEnable("KIS/Textures/drop", "Drop (" + KISAddonPointer.GetCurrentAttachNode().id + ")", "(Press " + attachK + " to attach, " + keyRotate + " to rotate, " + keyResetRot + " to reset orientation, ", keyAnchor + " to change node," + keyOffset + " to move up/down, [Escape] to cancel)");
+                    KISAddonCursor.CursorEnable("KIS/Textures/drop", "Drop (" + KISAddonPointer.GetCurrentAttachNode().id + ")", texts);
                     KISAddonPointer.allowPart = true;
                     KISAddonPointer.allowStatic = true;
                     KISAddonPointer.allowEva = true;
@@ -79,7 +82,7 @@ namespace KIS
                 }
                 if (value == PointerMode.Attach)
                 {
-                    KISAddonCursor.CursorEnable("KIS/Textures/attachOk", "Attach (" + KISAddonPointer.GetCurrentAttachNode().id + ")", "(Press " + keyRotate + " to rotate, " + keyResetRot + " to reset orientation,", keyAnchor + " to change node, [Escape] to cancel)");
+                    KISAddonCursor.CursorEnable("KIS/Textures/attachOk", "Attach (" + KISAddonPointer.GetCurrentAttachNode().id + ")", texts);
                     KISAddonPointer.allowPart = false;
                     KISAddonPointer.allowStatic = false;
                     KISAddonPointer.allowEva = false;
