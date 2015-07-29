@@ -12,6 +12,7 @@ namespace KIS
     {
         [KSPField]
         public string sndPath = "KIS/Sounds/guitar";
+        [KSPField]
         public float sndMaxDistance = 10;
         public bool loop = false;
         public FXGroup sndFx;
