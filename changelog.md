@@ -1,4 +1,4 @@
-### 1.2.1 (Not released yet)
+### 1.2.1 (29 July 2015)
 - [Enhancement] Added key (B/N) to move up or down a part in drop mode 
 - [Enhancement] Added a dedicated key to put/remove helmet (J)
 - [Enhancement] Added new stackable modules
