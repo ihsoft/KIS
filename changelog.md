@@ -2,7 +2,10 @@
 - [Enhancement] Added a dedicated key to put/remove helmet (J)
 - [Enhancement] Added new stackable modules
 - [Enhancement] Added max sound distance parameter for ModuleKISItemSoundPlayer 
+- [Enhancement] Added new parameters in moduleKISItem : useExternalPartAttach &
+useExternalStaticAttach (for KAS or others mods)
 - [Fix] Fixed editor part dragging
+- [Fix] Removed some unused debug lines
 - [Fix] Fixed eva speed not returning to the default value after moving a carried container to an inventory
 - [Fix] Kerbal headlamp is disabled when helmet is removed 
 - [Fix] Prevent helmet sound to play if it cannnot be removed
