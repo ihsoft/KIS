@@ -51,6 +51,23 @@ namespace KIS
             {
                 // Instantiate part icon
                 iconPrefab = UnityEngine.Object.Instantiate((UnityEngine.Object)p.partInfo.iconPrefab) as GameObject;
+                
+                // Command Seat Icon Fix (Temporary workaround until squad fix the broken shader)
+                if (p.partInfo.name == "seatExternalCmd")
+                {
+                    Shader fixShader = Shader.Find("KSP/Alpha/Cutoff Bumped");
+                    foreach (Renderer r in iconPrefab.GetComponentsInChildren<Renderer>(true))
+                    {
+                        foreach (Material m in r.materials)
+                        {
+                            if (m.shader.name == "KSP/Alpha/Cutoff")
+                            {
+                                m.shader = fixShader;
+                            }
+                        }
+                    }
+                }
+
                 iconPrefab.SetActive(true);
 
                 // Icon Camera
