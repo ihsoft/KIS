@@ -60,28 +60,35 @@ namespace KIS
                 string keypu = "[" + GameSettings.Editor_pitchUp.name + "]";
                 string keyyl = "[" + GameSettings.Editor_yawLeft.name + "]";
                 string keyyr = "[" + GameSettings.Editor_yawRight.name + "]";
-                string keyRotate = keyrl + keyrr + " / " + keypd + keypu + " / " + keyyl + keyyr;
-                string keyResetRot = "[" + GameSettings.Editor_resetRotation.name + "]";
-                string keyAnchor = "[" + GameSettings.Editor_toggleSymMethod.name + "]";
+
+                List<String> texts = new List<String>();
+                texts.Add(keyrl + keyrr + "/" + keypd + keypu + "/" + keyyl + keyyr + " to rotate");
+                texts.Add("[" + GameSettings.Editor_resetRotation.name + "] to reset orientation & position");
+                texts.Add("[" + GameSettings.Editor_toggleSymMethod.name + "] to change node");
+                if (value == PointerMode.Drop) texts.Add("[" + KISAddonPointer.offsetUpKey.ToUpper() + "]/[" + KISAddonPointer.offsetDownKey.ToUpper() + "] to move up/down");
+                if (value == PointerMode.Drop) texts.Add("[" + attachKey.ToUpper() + "] to attach");
+                texts.Add("[Escape] to cancel");
 
                 if (value == PointerMode.Drop)
                 {
-                    KISAddonCursor.CursorEnable("KIS/Textures/drop", "Drop (" + KISAddonPointer.GetCurrentAttachNode().id + ")", "(Press " + keyRotate + " to rotate, " + keyResetRot + " to reset orientation,", keyAnchor + " to change node, [Escape] to cancel)");
+                    KISAddonCursor.CursorEnable("KIS/Textures/drop", "Drop (" + KISAddonPointer.GetCurrentAttachNode().id + ")", texts);
                     KISAddonPointer.allowPart = true;
                     KISAddonPointer.allowStatic = true;
                     KISAddonPointer.allowEva = true;
                     KISAddonPointer.allowPartItself = true;
                     KISAddonPointer.useAttachRules = false;
+                    KISAddonPointer.allowOffset = true;
                     KISAddonPointer.colorOk = Color.green;
                 }
                 if (value == PointerMode.Attach)
                 {
-                    KISAddonCursor.CursorEnable("KIS/Textures/attachOk", "Attach (" + KISAddonPointer.GetCurrentAttachNode().id + ")", "(Press " + keyRotate + " to rotate, " + keyResetRot + " to reset orientation,", keyAnchor + " to change node, [Escape] to cancel)");
+                    KISAddonCursor.CursorEnable("KIS/Textures/attachOk", "Attach (" + KISAddonPointer.GetCurrentAttachNode().id + ")", texts);
                     KISAddonPointer.allowPart = false;
                     KISAddonPointer.allowStatic = false;
                     KISAddonPointer.allowEva = false;
                     KISAddonPointer.allowPartItself = false;
                     KISAddonPointer.useAttachRules = true;
+                    KISAddonPointer.allowOffset = false;
                     KISAddonPointer.colorOk = XKCDColors.Teal;
 
                     ModuleKISItem item = null;
@@ -1039,7 +1046,7 @@ namespace KIS
             KIS_Shared.DecoupleFromAll(movingPart);
             movingPart.transform.position = pos;
             movingPart.transform.rotation = rot;
-            KIS_Shared.SendKISMessage(movingPart, KIS_Shared.MessageAction.DropEnd, tgtPart);
+            KIS_Shared.SendKISMessage(movingPart, KIS_Shared.MessageAction.DropEnd, KISAddonPointer.GetCurrentAttachNode(), tgtPart);
             KISAddonPointer.StopPointer();
             movingPart = null;
         }
@@ -1050,7 +1057,7 @@ namespace KIS
             ModuleKISPickup modulePickup = GetActivePickupNearest(pos);
             draggedItem.StackRemove(1);
             Part newPart = KIS_Shared.CreatePart(draggedItem.partNode, pos, rot, draggedItem.inventory.part);
-            KIS_Shared.SendKISMessage(newPart, KIS_Shared.MessageAction.DropEnd, tgtPart);
+            KIS_Shared.SendKISMessage(newPart, KIS_Shared.MessageAction.DropEnd, KISAddonPointer.GetCurrentAttachNode(), tgtPart);
             KISAddonPointer.StopPointer();
             draggedItem = null;
             draggedPart = null;
@@ -1061,15 +1068,19 @@ namespace KIS
         private void MoveAttach(Part tgtPart, Vector3 pos, Quaternion rot, string srcAttachNodeID = null, AttachNode tgtAttachNode = null)
         {
             KIS_Shared.DebugLog("Move part & attach");
-            KIS_Shared.SendKISMessage(movingPart, KIS_Shared.MessageAction.AttachStart, tgtPart, tgtAttachNode);
+            KIS_Shared.SendKISMessage(movingPart, KIS_Shared.MessageAction.AttachStart, KISAddonPointer.GetCurrentAttachNode(), tgtPart, tgtAttachNode);
             KIS_Shared.DecoupleFromAll(movingPart);
             movingPart.transform.position = pos;
             movingPart.transform.rotation = rot;
-            if (tgtPart)
+
+            ModuleKISItem moduleItem = movingPart.GetComponent<ModuleKISItem>();
+            bool useExternalPartAttach = false;
+            if (moduleItem) if (moduleItem.useExternalPartAttach) useExternalPartAttach = true;
+            if (tgtPart && !useExternalPartAttach)
             {
                 KIS_Shared.CouplePart(movingPart, tgtPart, srcAttachNodeID, tgtAttachNode);
             }
-            KIS_Shared.SendKISMessage(movingPart, KIS_Shared.MessageAction.AttachEnd, tgtPart, tgtAttachNode);
+            KIS_Shared.SendKISMessage(movingPart, KIS_Shared.MessageAction.AttachEnd, KISAddonPointer.GetCurrentAttachNode(), tgtPart, tgtAttachNode);
             KISAddonPointer.StopPointer();
             movingPart = null;
             draggedItem = null;
@@ -1081,14 +1092,16 @@ namespace KIS
             KIS_Shared.DebugLog("Create part & attach");
             Part newPart;
             draggedItem.StackRemove(1);
-            if (tgtPart)
+            bool useExternalPartAttach = false;
+            if (draggedItem.prefabModule) if (draggedItem.prefabModule.useExternalPartAttach) useExternalPartAttach = true;
+            if (tgtPart && !useExternalPartAttach)
             {
                 newPart = KIS_Shared.CreatePart(draggedItem.partNode, pos, rot, draggedItem.inventory.part, tgtPart, srcAttachNodeID, tgtAttachNode, OnPartCoupled);
             }
             else
             {
                 newPart = KIS_Shared.CreatePart(draggedItem.partNode, pos, rot, draggedItem.inventory.part);
-                KIS_Shared.SendKISMessage(newPart, KIS_Shared.MessageAction.AttachEnd, tgtPart, tgtAttachNode);
+                KIS_Shared.SendKISMessage(newPart, KIS_Shared.MessageAction.AttachEnd, KISAddonPointer.GetCurrentAttachNode(), tgtPart, tgtAttachNode);
             }
             KISAddonPointer.StopPointer();
             movingPart = null;
@@ -1099,7 +1112,7 @@ namespace KIS
 
         public void OnPartCoupled(Part createdPart, Part tgtPart = null, AttachNode tgtAttachNode = null)
         {
-            KIS_Shared.SendKISMessage(createdPart, KIS_Shared.MessageAction.AttachEnd, tgtPart, tgtAttachNode);
+            KIS_Shared.SendKISMessage(createdPart, KIS_Shared.MessageAction.AttachEnd, KISAddonPointer.GetCurrentAttachNode(), tgtPart, tgtAttachNode);
         }
 
     }

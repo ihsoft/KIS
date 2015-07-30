@@ -8,7 +8,7 @@ using KSP.IO;
 
 namespace KIS
 {
-    public class LinkedObject : MonoBehaviour
+    public class KIS_LinkedPart : MonoBehaviour
     {
         public Part part;
     }
@@ -21,10 +21,11 @@ namespace KIS
 
         public enum MessageAction { DropEnd, AttachStart, AttachEnd, Store, Decouple }
 
-        public static void SendKISMessage(Part destPart, MessageAction action, Part tgtPart = null, AttachNode tgtNode = null)
+        public static void SendKISMessage(Part destPart, MessageAction action, AttachNode srcNode = null, Part tgtPart = null, AttachNode tgtNode = null)
         {
             BaseEventData bEventData = new BaseEventData(BaseEventData.Sender.AUTO);
             bEventData.Set("action", action.ToString());
+            bEventData.Set("sourceNode", srcNode);
             bEventData.Set("targetPart", tgtPart);
             bEventData.Set("targetNode", tgtNode);
             destPart.SendMessage("OnKISAction", bEventData, SendMessageOptions.DontRequireReceiver);

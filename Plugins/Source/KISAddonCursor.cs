@@ -14,7 +14,8 @@ namespace KIS
         private static bool partDetectionActive = false;
         
         public static Texture2D cursorTexture = null;
-        public static string cursorText, cursorText2, cursorText3 = "";
+        public static string cursorText;
+        public static List<string> cursorAdditionalTexts;
         public static Part hoveredPart = null;
         private static OnMousePartAction delegateOnMousePartClick;
         private static OnMousePartAction delegateOnMouseEnterPart;
@@ -35,7 +36,6 @@ namespace KIS
             delegateOnMouseHoverPart = onMouseHoverPart;
             delegateOnMouseExitPart = onMouseExitPart;
             partDetectionActive = true;
-            KIS_Shared.DebugLog("Part detection started");
         }
 
         public static void StopPartDetection()
@@ -46,7 +46,6 @@ namespace KIS
                 delegateOnMouseExitPart(hoveredPart);
             }
             hoveredPart = null;
-            KIS_Shared.DebugLog("Part detection stopped");
         }
 
         void Update()
@@ -108,16 +107,23 @@ namespace KIS
             }
         }
 
-        public static void CursorEnable(string texturePath, string text = "", string text2 = "", string text3 = "")
+        public static void CursorEnable(string texturePath, string text = "", string text2 = "")
+        {
+            List<String> texts = new List<String>();
+            texts.Add(text2);
+            CursorEnable(texturePath, text, texts);
+        }
+
+        public static void CursorEnable(string texturePath, string text = "", List<string> additionalTexts = null)
         {
             cursorShow = true;
             Screen.showCursor = false;
             cursorTexture = GameDatabase.Instance.GetTexture(texturePath, false);
             cursorText = text;
-            cursorText2 = text2;
-            cursorText3 = text3;
+            cursorAdditionalTexts = additionalTexts;
         }
 
+        
         public static void CursorDefault()
         {
             cursorShow = false;
@@ -146,8 +152,12 @@ namespace KIS
 
                 GUIStyle StyleComments = new GUIStyle(GUI.skin.label);
                 StyleComments.fontSize = 10;
-                GUI.Label(new Rect(Event.current.mousePosition.x + 16, Event.current.mousePosition.y + 5, 400, 20), cursorText2, StyleComments);
-                GUI.Label(new Rect(Event.current.mousePosition.x + 16, Event.current.mousePosition.y + 20, 400, 20), cursorText3, StyleComments);
+                int i = 5;
+                foreach (String text in cursorAdditionalTexts)
+                {
+                    GUI.Label(new Rect(Event.current.mousePosition.x + 16, Event.current.mousePosition.y + i, 400, 20), text, StyleComments);
+                    i = i + 15;
+                }
             }
         }
     }

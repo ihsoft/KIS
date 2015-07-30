@@ -45,6 +45,7 @@ namespace KIS
 
         public string evaInventoryKey = "tab";
         public string evaRightHandKey = "x";
+        public string evaHelmetKey = "j";
         public string openGuiName;
         public float totalVolume = 0;
         public int podSeat = 0;
@@ -207,6 +208,8 @@ namespace KIS
             slotKeyPress(KeyCode.Alpha6, 5, 1);
             slotKeyPress(KeyCode.Alpha7, 6, 1);
             slotKeyPress(KeyCode.Alpha8, 7, 1);
+
+            // Use right hand tool
             if (Input.GetKeyDown(evaRightHandKey))
             {
                 KIS_Item rightHandItem = GetEquipedItem("rightHand");
@@ -222,6 +225,19 @@ namespace KIS
                 if (rightHandItem != null)
                 {
                     rightHandItem.Use(KIS_Item.UseFrom.KeyUp);
+                }
+            }
+
+            // Put/remove helmet
+            if (Input.GetKeyDown(evaHelmetKey))
+            {
+                if (helmetEquipped)
+                {
+                    if (SetHelmet(false, true)) PlaySound(helmetOffSndPath);
+                }
+                else
+                {
+                    if (SetHelmet(true)) PlaySound(helmetOnSndPath);
                 }
             }
         }
@@ -562,11 +578,11 @@ namespace KIS
         public static void MoveItem(KIS_Item srcItem, ModuleKISInventory tgtInventory, int tgtSlot)
         {
             ModuleKISInventory srcInventory = srcItem.inventory;
+            srcItem.OnMove(srcInventory, tgtInventory);
             int srcSlot = srcItem.slot;
             tgtInventory.items.Add(tgtSlot, srcItem);
             srcItem.inventory.items.Remove(srcSlot);
             srcItem.inventory = tgtInventory;
-            tgtInventory.items[tgtSlot].OnMove(srcInventory, tgtInventory);
             srcInventory.RefreshMassAndVolume();
             tgtInventory.RefreshMassAndVolume();
         }
@@ -834,6 +850,7 @@ namespace KIS
                 }
             }
 
+            //Disable helmet and visor
             List<SkinnedMeshRenderer> skmrs = new List<SkinnedMeshRenderer>(this.part.GetComponentsInChildren<SkinnedMeshRenderer>() as SkinnedMeshRenderer[]);
             foreach (SkinnedMeshRenderer skmr in skmrs)
             {
@@ -843,6 +860,19 @@ namespace KIS
                     helmetEquipped = active;
                 }
             }
+
+            //Disable flares and light
+            List<Light> lights = new List<Light>(this.part.GetComponentsInChildren<Light>(true) as Light[]);
+            foreach (Light light in lights)
+            {
+                if (light.name == "headlamp")
+                {
+                    light.enabled = active;
+                    light.transform.Find("flare1").renderer.enabled = active;
+                    light.transform.Find("flare2").renderer.enabled = active;
+                }
+            }
+
             return true;
         }
 
@@ -1021,16 +1051,14 @@ namespace KIS
                 {
                     if (GUILayout.Button(new GUIContent("Remove Helmet", ""), GUILayout.Width(width), GUILayout.Height(22)))
                     {
-                        PlaySound(helmetOffSndPath);
-                        SetHelmet(false, true);
+                        if (SetHelmet(false, true)) PlaySound(helmetOffSndPath);
                     }
                 }
                 else
                 {
                     if (GUILayout.Button(new GUIContent("Put On Helmet", ""), GUILayout.Width(width), GUILayout.Height(22)))
                     {
-                        PlaySound(helmetOnSndPath);
-                        SetHelmet(true);
+                        if (SetHelmet(true)) PlaySound(helmetOnSndPath);
                     }
                 }
             }
