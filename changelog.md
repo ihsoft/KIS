@@ -1,5 +1,5 @@
 ### 1.2.2 (Not released yet)
-- [Fix] Command Seat Icon Fix 
+- [Fix] Fixed missing command seat item icon (workaround until squad fix this)
 
 ### 1.2.1 (29 July 2015)
 - [Enhancement] Added key (B/N) to move up or down a part in drop mode 
