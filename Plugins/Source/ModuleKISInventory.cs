@@ -361,9 +361,8 @@ namespace KIS
                 if (invType == InventoryType.Pod && fromToAction.to.vessel.isEVA)
                 {
                     // pod to eva
-                    KIS_Shared.DebugLog("Pod to eva");
-                    InternalSeat seat = this.part.internalModel.seats[podSeat];
-                    if (items.Count > 0 && !seat.taken)
+                    ProtoCrewMember crewAtPodSeat = fromToAction.from.protoModuleCrew.Find(x => x.seatIdx == podSeat);
+                    if (items.Count > 0 && crewAtPodSeat == null)
                     {
                         ModuleKISInventory destInventory = fromToAction.to.GetComponent<ModuleKISInventory>();
                         KIS_Shared.DebugLog("Item transfer | source " + this.part.name + " (" + this.podSeat + ")");
@@ -376,9 +375,18 @@ namespace KIS
                 if (invType == InventoryType.Pod && !fromToAction.to.vessel.isEVA)
                 {
                     // pod to pod
-                    KIS_Shared.DebugLog("Pod to pod");
-                    InternalSeat seat = this.part.internalModel.seats[podSeat];
-                    if (items.Count > 0 && !seat.taken)
+
+                    // Workaround to set a seat index on pod without internal (because KSP don't do it for an unknow reason)
+                    if (fromToAction.host.seatIdx == -1)
+                    {
+                        KIS_Shared.DebugWarning("protoCrew seatIdx has been set to -1 ! (no internal ?)");
+                        fromToAction.host.seatIdx = GetFirstFreeSeatIdx(fromToAction.to);
+                        KIS_Shared.DebugLog("Setting seat to : " + fromToAction.host.seatIdx);
+                        if (fromToAction.host.seatIdx == -1) KIS_Shared.DebugError("A seat must be available!");
+                    }
+
+                    ProtoCrewMember crewAtPodSeat = fromToAction.from.protoModuleCrew.Find(x => x.seatIdx == podSeat);
+                    if (items.Count > 0 && crewAtPodSeat == null)
                     {
                         KIS_Shared.DebugLog("Item transfer | source :" + this.part.name + " (" + podSeat + ")");
                         foreach (ModuleKISInventory destInventory in fromToAction.to.GetComponents<ModuleKISInventory>())
@@ -394,7 +402,16 @@ namespace KIS
                 if (invType == InventoryType.Pod && fromToAction.from.vessel.isEVA)
                 {
                     // eva to pod
-                    KIS_Shared.DebugLog("Eva to pod");
+
+                    // Workaround to set a seat index on pod without internal (because KSP don't do it for an unknow reason)
+                    if (fromToAction.host.seatIdx == -1)
+                    {
+                        KIS_Shared.DebugWarning("protoCrew seatIdx has been set to -1 ! (no internal ?)");
+                        fromToAction.host.seatIdx = GetFirstFreeSeatIdx(fromToAction.to);
+                        KIS_Shared.DebugLog("Setting seat to : " + fromToAction.host.seatIdx);
+                        if (fromToAction.host.seatIdx == -1) KIS_Shared.DebugError("A seat must be available!");
+                    }
+
                     ModuleKISInventory evaInventory = fromToAction.from.GetComponent<ModuleKISInventory>();
                     KIS_Shared.DebugLog("Item transfer | source " + fromToAction.host.name);
                     List<KIS_Item> itemsToDrop = new List<KIS_Item>();
@@ -419,11 +436,24 @@ namespace KIS
             }
         }
 
+        private int GetFirstFreeSeatIdx(Part p)
+        {
+            for (int i = 0; i <= (p.protoModuleCrew.Count + 1); i++)
+            {
+                ProtoCrewMember pcm = p.protoModuleCrew.Find(x => x.seatIdx == i);
+                if (pcm == null)
+                {
+                    return i;
+                }
+            }
+            return -1;
+        }
+
         private IEnumerator WaitAndTransferItems(Dictionary<int, KIS_Item> transferedItems, ProtoCrewMember protoCrew, ModuleKISInventory srcInventory = null)
         {
             yield return new WaitForFixedUpdate();
-            InternalSeat seat = this.part.internalModel.seats[podSeat];
-            if (seat.crew == protoCrew)
+            ProtoCrewMember crewAtPodSeat = this.part.protoModuleCrew.Find(x => x.seatIdx == podSeat);
+            if (crewAtPodSeat == protoCrew)
             {
                 MoveItems(transferedItems, this);
                 KIS_Shared.DebugLog("Item transfer | destination :" + this.part.name + " (" + this.podSeat + ")");
@@ -446,14 +476,16 @@ namespace KIS
                 else
                 {
                     Events["ShowInventory"].guiActive = Events["ShowInventory"].guiActiveUnfocused = false;
+                    ProtoCrewMember crewAtPodSeat = this.part.protoModuleCrew.Find(x => x.seatIdx == podSeat);
                     foreach (ProtoCrewMember pcm in this.part.protoModuleCrew)
                     {
-                        if (pcm.seatIdx == podSeat)
-                        {
-                            string kerbalName = pcm.name.Split(' ').FirstOrDefault();
-                            Events["ShowInventory"].guiActive = Events["ShowInventory"].guiActiveUnfocused = true;
-                            Events["ShowInventory"].guiName = kerbalName + "'s inventory";
-                        }
+                        KIS_Shared.DebugWarning("pcm " + pcm.name + " | seat " + pcm.seatIdx);
+                    }
+                    if (crewAtPodSeat != null)
+                    {
+                        string kerbalName = crewAtPodSeat.name.Split(' ').FirstOrDefault();
+                        Events["ShowInventory"].guiActive = Events["ShowInventory"].guiActiveUnfocused = true;
+                        Events["ShowInventory"].guiName = kerbalName + "'s inventory";
                     }
                 }
             }
@@ -927,13 +959,10 @@ namespace KIS
                 title = this.part.partInfo.title + " | Seat " + podSeat;
                 if (!HighLogic.LoadedSceneIsEditor)
                 {
-                    if (this.part.internalModel)
+                    ProtoCrewMember crewAtPodSeat = this.part.protoModuleCrew.Find(x => x.seatIdx == podSeat);
+                    if (crewAtPodSeat != null)
                     {
-                        InternalSeat seat = this.part.internalModel.seats[podSeat];
-                        if (seat.taken)
-                        {
-                            title = seat.kerbalRef.crewMemberName;
-                        }
+                        title = crewAtPodSeat.name;
                     }
                 }
             }
