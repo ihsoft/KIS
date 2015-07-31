@@ -1,6 +1,7 @@
 ### 1.2.2 (Not released yet)
 - [Fix] Fixed kerbal items not transfering to pod without internal
 - [Fix] Fixed missing command seat item icon (thx to mongoose)
+- [Fix] Fixed node attach not working for some radial part
 - [Fix] Prevent playing static attach sound after load/warp 
 - [Fix] Fix minor typo in sound error message (thx to Amorymeltzer)
 
