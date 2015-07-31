@@ -121,10 +121,14 @@ namespace KIS
             if (action == KIS_Shared.MessageAction.Store.ToString() || action == KIS_Shared.MessageAction.DropEnd.ToString() || action == KIS_Shared.MessageAction.AttachStart.ToString())
             {
                 GroundDetach();
+                ModuleKISPickup modulePickup = KISAddonPickup.instance.GetActivePickupNearest(this.transform.position);
+                if (modulePickup) KIS_Shared.PlaySoundAtPoint(modulePickup.detachStaticSndPath, this.transform.position);
             }
             if (action == KIS_Shared.MessageAction.AttachEnd.ToString() && tgtPart == null)
             {
                 GroundAttach();
+                ModuleKISPickup modulePickup = KISAddonPickup.instance.GetActivePickupNearest(this.transform.position);
+                if (modulePickup) KIS_Shared.PlaySoundAtPoint(modulePickup.attachStaticSndPath, this.transform.position);
             }
         }
 
@@ -149,8 +153,6 @@ namespace KIS
             fixedJoint = CurJoint;
             this.part.vessel.Landed = true;
             staticAttached = true;
-            ModuleKISPickup modulePickup = KISAddonPickup.instance.GetActivePickupNearest(this.transform.position);
-            if (modulePickup) KIS_Shared.PlaySoundAtPoint(modulePickup.attachStaticSndPath, this.transform.position);
         }
 
         public void GroundDetach()
@@ -163,8 +165,6 @@ namespace KIS
                 fixedJoint = null;
                 connectedGameObject = null;
                 staticAttached = false;
-                ModuleKISPickup modulePickup = KISAddonPickup.instance.GetActivePickupNearest(this.transform.position);
-                if (modulePickup) KIS_Shared.PlaySoundAtPoint(modulePickup.detachStaticSndPath, this.transform.position);
             }
         }
 
