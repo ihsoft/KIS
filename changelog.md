@@ -1,5 +1,6 @@
 ### 1.2.2 (Not released yet)
 - [Fix] Fixed missing command seat item icon (thx to mongoose)
+- [Fix] Prevent playing static attach sound after load/warp 
 - [Fix] Fix minor typo in sound error message (thx to Amorymeltzer)
 
 ### 1.2.1 (29 July 2015)
