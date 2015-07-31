@@ -3,7 +3,7 @@
 - [Fix] Fixed missing command seat item icon (thx to mongoose)
 - [Fix] Fixed node attach not working for some radial part
 - [Fix] Prevent playing static attach sound after load/warp 
-- [Fix] Fix minor typo in sound error message (thx to Amorymeltzer)
+- [Fix] Fixed minor typo in sound error message (thx to Amorymeltzer)
 
 ### 1.2.1 (29 July 2015)
 - [Enhancement] Added key (B/N) to move up or down a part in drop mode 
