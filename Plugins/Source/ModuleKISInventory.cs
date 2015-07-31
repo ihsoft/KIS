@@ -69,6 +69,7 @@ namespace KIS
         private float splitQty = 1;
         private bool clickThroughLocked = false;
         private bool guiSetName = false;
+        private bool PartActionUICreated = false;
 
         //Tooltip
         private KIS_Item tooltipItem;
@@ -126,7 +127,8 @@ namespace KIS
             GameEvents.onCrewTransferred.Add(new EventData<GameEvents.HostedFromToAction<ProtoCrewMember, Part>>.OnEvent(this.OnCrewTransferred));
             GameEvents.onVesselChange.Add(new EventData<Vessel>.OnEvent(this.OnVesselChange));
             GameEvents.onPartActionUICreate.Add(new EventData<Part>.OnEvent(this.OnPartActionUICreate));
-
+            GameEvents.onPartActionUIDismiss.Add(new EventData<Part>.OnEvent(this.OnPartActionUIDismiss));
+            
             if (invType == InventoryType.Eva)
             {
                 List<ProtoCrewMember> protoCrewMembers = this.vessel.GetVesselCrew();
@@ -465,6 +467,7 @@ namespace KIS
         private void OnPartActionUICreate(Part p)
         {
             if (this.part != p) return;
+            if (PartActionUICreated) return;
             // Update context menu
             if (invType == InventoryType.Pod)
             {
@@ -477,10 +480,6 @@ namespace KIS
                 {
                     Events["ShowInventory"].guiActive = Events["ShowInventory"].guiActiveUnfocused = false;
                     ProtoCrewMember crewAtPodSeat = this.part.protoModuleCrew.Find(x => x.seatIdx == podSeat);
-                    foreach (ProtoCrewMember pcm in this.part.protoModuleCrew)
-                    {
-                        KIS_Shared.DebugWarning("pcm " + pcm.name + " | seat " + pcm.seatIdx);
-                    }
                     if (crewAtPodSeat != null)
                     {
                         string kerbalName = crewAtPodSeat.name.Split(' ').FirstOrDefault();
@@ -500,6 +499,13 @@ namespace KIS
                 ModuleKISPickup mPickup = KISAddonPickup.instance.GetActivePickupNearest(this.part);
                 if (mPickup) Events["ShowInventory"].unfocusedRange = mPickup.maxDistance;
             }
+            PartActionUICreated = true;
+        }
+
+        private void OnPartActionUIDismiss(Part p)
+        {
+            if (this.part != p) return;
+            PartActionUICreated = false;
         }
 
         public void RefreshMassAndVolume()
@@ -532,6 +538,7 @@ namespace KIS
             GameEvents.onCrewTransferred.Remove(new EventData<GameEvents.HostedFromToAction<ProtoCrewMember, Part>>.OnEvent(this.OnCrewTransferred));
             GameEvents.onVesselChange.Remove(new EventData<Vessel>.OnEvent(this.OnVesselChange));
             GameEvents.onPartActionUICreate.Remove(new EventData<Part>.OnEvent(this.OnPartActionUICreate));
+            GameEvents.onPartActionUIDismiss.Remove(new EventData<Part>.OnEvent(this.OnPartActionUIDismiss));
             if (HighLogic.LoadedSceneIsEditor) InputLockManager.RemoveControlLock("KISInventoryLock");
         }
 
