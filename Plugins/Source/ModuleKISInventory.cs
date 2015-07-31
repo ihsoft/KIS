@@ -330,7 +330,7 @@ namespace KIS
             else
             {
                 KIS_Shared.DebugError("Sound not found in the game database !");
-                ScreenMessages.PostScreenMessage("Sound file : " + sndPath + " as not been found, please check installation path !", 10, ScreenMessageStyle.UPPER_CENTER);
+                ScreenMessages.PostScreenMessage("Sound file : " + sndPath + " has not been found, please check installation path !", 10, ScreenMessageStyle.UPPER_CENTER);
             }
             sndFx.audio.Play();
         }
