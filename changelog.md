@@ -1,12 +1,49 @@
-### 1.2.0 (Not released yet)
+### 1.2.2 (Not released yet)
+- [Fix] Fixed kerbal items not transfering to pod without internal model
+- [Fix] Fixed missing command seat icon (thx to mongoose)
+- [Fix] Fixed node attach not working for some radial part
+- [Fix] Prevent playing static attach sound after load/warp 
+- [Fix] Fixed minor typo in sound error message (thx to Amorymeltzer)
+
+### 1.2.1 (29 July 2015)
+- [Enhancement] Added key (B/N) to move up or down a part in drop mode 
+- [Enhancement] Added a dedicated key to put/remove helmet (J)
+- [Enhancement] Added new stackable modules
+- [Enhancement] Added max sound distance parameter for ModuleKISItemSoundPlayer 
+- [Enhancement] Added new parameters in moduleKISItem : useExternalPartAttach &
+useExternalStaticAttach (for KAS or others mods)
+- [Change] Modified the organization of the text keys under cursor
+- [Fix] Fixed editor part dragging
+- [Fix] Removed some unused debug lines
+- [Fix] Fixed eva speed not returning to the default value after moving a carried container to an inventory
+- [Fix] Kerbal headlamp is disabled when helmet is removed 
+- [Fix] Prevent helmet sound to play if it cannnot be removed
+
+### 1.2.0 (11 July 2015)
+- [New Part] ISC-6K inline container (6 000L)
 - [Enhancement] Added a dedicated key to attach/detach (H)
+- [Enhancement] Part can be detached from parent without grabbing
 - [Enhancement] Explosives can be attached without a tool
+- [Enhancement] Added a GUI to set the timer and radius of explosives
 - [Enhancement] Added different color to attach and drop
 - [Enhancement] Added an dedicated icon for detaching
-- [Enhancement] Detaching a part with a parent or a child(s) is now possible 
+- [Enhancement] Allow detaching & grabbing of part with one parent or children
 - [Enhancement] Added colors to the target part and his parent on detach
+- [Enhancement] Removed attach mass restriction for the wrench
 - [Enhancement] Added a ModuleKISItem parameter : allowStaticAttach (0:false / 1:true / 2:Attach tool needed)
 - [Enhancement] Added a ModuleKISItem parameter : allowPartAttach (0:false / 1:true / 2:Attach tool needed)
+- [Enhancement] Added a ModuleKISItemAttachTool & ModuleKISPickup parameter to enable/disable part & static attach
+- [Change] IMC-250 container renamed ILC-18k, max volume reduced from 22000 to 18000
+- [Change] Moved ModuleKISPartStatic to ModuleKISItem
+- [Change] Changed some part description
+- [Change] Increased explosives maxTemp parameter
+- [Change] Updated guide to 1.2
+- [Fix] Compatibility fix for KSP 1.0.4
+- [Fix] Fixed crash on x64 linux
+- [Fix] Fixed wrong position of part attached from inventory 
+- [Fix] Prevent part "cloning" when removing content of a carried container before
+dropping it
+- [Fix] Fix crash when dropping a part from a carried container 
 
 ### 1.1.5 (31 May, 2015)
 - [Enhancement] Disable jetpack mouse input while dragging 

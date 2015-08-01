@@ -20,6 +20,13 @@ namespace KIS
         public static bool allowEva = false;
         public static bool allowStatic = false;
 
+        public static Color colorNok = Color.red;
+        public static Color colorOk = Color.green;
+        public static Color colorDistNok = Color.yellow;
+        public static Color colorStack = XKCDColors.Teal;
+        public static Color colorMountOk = XKCDColors.SeaGreen;
+        public static Color colorMountNok = XKCDColors.LightOrange;
+        public static Color colorWrong = XKCDColors.Teal;
 
         private static bool _allowMount = false;
         public static bool allowMount
@@ -52,12 +59,15 @@ namespace KIS
         public static Part partToAttach;
         public static float scale = 1;
         public static float maxDist = 2f;
-        public static bool allowMoveAbove = false;
-        public static float maxAboveDist = 0.2f;
-        public static float aboveDistStep = 0.05f;
         public static bool useAttachRules = false;
         private static Transform sourceTransform;
         private static RaycastHit hit;
+
+        public static bool allowOffset = false;
+        public static string offsetUpKey = "b";
+        public static string offsetDownKey = "n";
+        public static float maxOffsetDist = 0.5f;
+        public static float aboveOffsetStep = 0.05f;
 
         private static bool running = false;
         public static Part hoveredPart = null;
@@ -179,18 +189,12 @@ namespace KIS
                 Part tgtPart = null;
                 KerbalEVA tgtKerbalEva = null;
                 AttachNode tgtAttachNode = null;
-                if (hit.rigidbody)
-                {
-                    tgtPart = hit.rigidbody.GetComponent<Part>();
-                }
-                if (!tgtPart)
-                {
-                    tgtPart = (Part)UIPartActionController.GetComponentUpwards("Part", hit.collider.gameObject);
-                }
+
+                tgtPart = KIS_Shared.GetPartUnderCursor();
                 if (!tgtPart)
                 {
                     // check linked part
-                    LinkedObject linkedObject = hit.collider.gameObject.GetComponent<LinkedObject>();
+                    KIS_LinkedPart linkedObject = hit.collider.gameObject.GetComponent<KIS_LinkedPart>();
                     if (linkedObject)
                     {
                         tgtPart = linkedObject.part;
@@ -324,7 +328,7 @@ namespace KIS
                     {
                         if (!mount.Key.attachedPart)
                         {
-                            KIS_Shared.AssignAttachIcon(hoverPart, mount.Key, XKCDColors.Teal, "KISMount");
+                            KIS_Shared.AssignAttachIcon(hoverPart, mount.Key, colorMountOk, "KISMount");
                         }
                     }
                 }
@@ -335,7 +339,7 @@ namespace KIS
                 {
                     if (!an.attachedPart)
                     {
-                        KIS_Shared.AssignAttachIcon(hoverPart, an, XKCDColors.SeaGreen);
+                        KIS_Shared.AssignAttachIcon(hoverPart, an, colorStack);
                     }
                 }
             }
@@ -484,22 +488,22 @@ namespace KIS
             }
 
             // Move above
-            if (allowMoveAbove)
+            if (allowOffset)
             {
                 if (pointerTarget != PointerTarget.PartMount)
                 {
-                    if (Input.GetKeyDown(KeyCode.B))
+                    if (Input.GetKeyDown(offsetUpKey))
                     {
-                        if (aboveDistance < maxAboveDist)
+                        if (aboveDistance < maxOffsetDist)
                         {
-                            aboveDistance += aboveDistStep;
+                            aboveDistance += aboveOffsetStep;
                         }
                     }
-                    if (Input.GetKeyDown(KeyCode.N))
+                    if (Input.GetKeyDown(offsetDownKey))
                     {
-                        if (aboveDistance > -maxAboveDist)
+                        if (aboveDistance > -maxOffsetDist)
                         {
-                            aboveDistance -= aboveDistStep;
+                            aboveDistance -= aboveOffsetStep;
                         }
                     }
                     if (GameSettings.Editor_resetRotation.GetKeyDown())
@@ -519,7 +523,7 @@ namespace KIS
             bool isValidTargetDist = Vector3.Distance(FlightGlobals.ActiveVessel.transform.position, hit.point) <= maxDist;
 
             //Set color
-            Color color = Color.red;
+            Color color = colorNok;
             bool invalidTarget = false;
             bool notAllowedOnMount = false;
             bool cannotSurfaceAttach = false;
@@ -531,15 +535,15 @@ namespace KIS
             switch (pointerTarget)
             {
                 case PointerTarget.Static:
-                    if (allowStatic) color = Color.green;
+                    if (allowStatic) color = colorOk;
                     else invalidTarget = true;
                     break;
                 case PointerTarget.StaticRb:
-                    if (allowStatic) color = Color.green;
+                    if (allowStatic) color = colorOk;
                     else invalidTarget = true;
                     break;
                 case PointerTarget.KerbalEva:
-                    if (allowEva) color = Color.green;
+                    if (allowEva) color = colorOk;
                     else invalidTarget = true;
                     break;
                 case PointerTarget.Part:
@@ -563,7 +567,7 @@ namespace KIS
                                     {
                                         if (GetCurrentAttachNode().nodeType == AttachNode.NodeType.Surface)
                                         {
-                                            color = Color.green;
+                                            color = colorOk;
                                         }
                                         else
                                         {
@@ -574,7 +578,7 @@ namespace KIS
                                 }
                                 else
                                 {
-                                    color = Color.green;
+                                    color = colorOk;
                                 }
                             }
                         }
@@ -589,11 +593,11 @@ namespace KIS
                         pMount.GetMounts().TryGetValue(hoveredNode, out allowedPartNames);
                         if (allowedPartNames.Contains(partToAttach.partInfo.name))
                         {
-                            color = XKCDColors.Teal;
+                            color = colorMountOk;
                         }
                         else
                         {
-                            color = XKCDColors.LightOrange;
+                            color = colorMountNok;
                             notAllowedOnMount = true;
                         }
                     }
@@ -605,7 +609,7 @@ namespace KIS
                                 ref toolInvalidMsg, hoveredNode));
 						toolIsInvalid = attachTool == null;
                         if (!toolIsInvalid)
-                            color = XKCDColors.SeaGreen;
+                            color = colorStack;
 
                     }
                     else invalidTarget = true;
@@ -615,7 +619,7 @@ namespace KIS
             }
             if (!isValidSourceDist || !isValidTargetDist)
             {
-                color = Color.yellow;
+                color = colorDistNok;
             }
             color.a = 0.5f;
             foreach (MeshRenderer mr in allModelMr) mr.material.color = color;

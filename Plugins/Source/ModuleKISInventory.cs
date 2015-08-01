@@ -45,6 +45,7 @@ namespace KIS
 
         public string evaInventoryKey = "tab";
         public string evaRightHandKey = "x";
+        public string evaHelmetKey = "j";
         public string openGuiName;
         public float totalVolume = 0;
         public int podSeat = 0;
@@ -68,6 +69,7 @@ namespace KIS
         private float splitQty = 1;
         private bool clickThroughLocked = false;
         private bool guiSetName = false;
+        private bool PartActionUICreated = false;
 
         //Tooltip
         private KIS_Item tooltipItem;
@@ -125,7 +127,8 @@ namespace KIS
             GameEvents.onCrewTransferred.Add(new EventData<GameEvents.HostedFromToAction<ProtoCrewMember, Part>>.OnEvent(this.OnCrewTransferred));
             GameEvents.onVesselChange.Add(new EventData<Vessel>.OnEvent(this.OnVesselChange));
             GameEvents.onPartActionUICreate.Add(new EventData<Part>.OnEvent(this.OnPartActionUICreate));
-
+            GameEvents.onPartActionUIDismiss.Add(new EventData<Part>.OnEvent(this.OnPartActionUIDismiss));
+            
             if (invType == InventoryType.Eva)
             {
                 List<ProtoCrewMember> protoCrewMembers = this.vessel.GetVesselCrew();
@@ -207,6 +210,8 @@ namespace KIS
             slotKeyPress(KeyCode.Alpha6, 5, 1);
             slotKeyPress(KeyCode.Alpha7, 6, 1);
             slotKeyPress(KeyCode.Alpha8, 7, 1);
+
+            // Use right hand tool
             if (Input.GetKeyDown(evaRightHandKey))
             {
                 KIS_Item rightHandItem = GetEquipedItem("rightHand");
@@ -222,6 +227,19 @@ namespace KIS
                 if (rightHandItem != null)
                 {
                     rightHandItem.Use(KIS_Item.UseFrom.KeyUp);
+                }
+            }
+
+            // Put/remove helmet
+            if (Input.GetKeyDown(evaHelmetKey))
+            {
+                if (helmetEquipped)
+                {
+                    if (SetHelmet(false, true)) PlaySound(helmetOffSndPath);
+                }
+                else
+                {
+                    if (SetHelmet(true)) PlaySound(helmetOnSndPath);
                 }
             }
         }
@@ -314,7 +332,7 @@ namespace KIS
             else
             {
                 KIS_Shared.DebugError("Sound not found in the game database !");
-                ScreenMessages.PostScreenMessage("Sound file : " + sndPath + " as not been found, please check installation path !", 10, ScreenMessageStyle.UPPER_CENTER);
+                ScreenMessages.PostScreenMessage("Sound file : " + sndPath + " has not been found, please check installation path !", 10, ScreenMessageStyle.UPPER_CENTER);
             }
             sndFx.audio.Play();
         }
@@ -345,9 +363,8 @@ namespace KIS
                 if (invType == InventoryType.Pod && fromToAction.to.vessel.isEVA)
                 {
                     // pod to eva
-                    KIS_Shared.DebugLog("Pod to eva");
-                    InternalSeat seat = this.part.internalModel.seats[podSeat];
-                    if (items.Count > 0 && !seat.taken)
+                    ProtoCrewMember crewAtPodSeat = fromToAction.from.protoModuleCrew.Find(x => x.seatIdx == podSeat);
+                    if (items.Count > 0 && crewAtPodSeat == null)
                     {
                         ModuleKISInventory destInventory = fromToAction.to.GetComponent<ModuleKISInventory>();
                         KIS_Shared.DebugLog("Item transfer | source " + this.part.name + " (" + this.podSeat + ")");
@@ -360,9 +377,18 @@ namespace KIS
                 if (invType == InventoryType.Pod && !fromToAction.to.vessel.isEVA)
                 {
                     // pod to pod
-                    KIS_Shared.DebugLog("Pod to pod");
-                    InternalSeat seat = this.part.internalModel.seats[podSeat];
-                    if (items.Count > 0 && !seat.taken)
+
+                    // Workaround to set a seat index on pod without internal (because KSP don't do it for an unknow reason)
+                    if (fromToAction.host.seatIdx == -1)
+                    {
+                        KIS_Shared.DebugWarning("protoCrew seatIdx has been set to -1 ! (no internal ?)");
+                        fromToAction.host.seatIdx = GetFirstFreeSeatIdx(fromToAction.to);
+                        KIS_Shared.DebugLog("Setting seat to : " + fromToAction.host.seatIdx);
+                        if (fromToAction.host.seatIdx == -1) KIS_Shared.DebugError("A seat must be available!");
+                    }
+
+                    ProtoCrewMember crewAtPodSeat = fromToAction.from.protoModuleCrew.Find(x => x.seatIdx == podSeat);
+                    if (items.Count > 0 && crewAtPodSeat == null)
                     {
                         KIS_Shared.DebugLog("Item transfer | source :" + this.part.name + " (" + podSeat + ")");
                         foreach (ModuleKISInventory destInventory in fromToAction.to.GetComponents<ModuleKISInventory>())
@@ -378,7 +404,16 @@ namespace KIS
                 if (invType == InventoryType.Pod && fromToAction.from.vessel.isEVA)
                 {
                     // eva to pod
-                    KIS_Shared.DebugLog("Eva to pod");
+
+                    // Workaround to set a seat index on pod without internal (because KSP don't do it for an unknow reason)
+                    if (fromToAction.host.seatIdx == -1)
+                    {
+                        KIS_Shared.DebugWarning("protoCrew seatIdx has been set to -1 ! (no internal ?)");
+                        fromToAction.host.seatIdx = GetFirstFreeSeatIdx(fromToAction.to);
+                        KIS_Shared.DebugLog("Setting seat to : " + fromToAction.host.seatIdx);
+                        if (fromToAction.host.seatIdx == -1) KIS_Shared.DebugError("A seat must be available!");
+                    }
+
                     ModuleKISInventory evaInventory = fromToAction.from.GetComponent<ModuleKISInventory>();
                     KIS_Shared.DebugLog("Item transfer | source " + fromToAction.host.name);
                     List<KIS_Item> itemsToDrop = new List<KIS_Item>();
@@ -403,11 +438,24 @@ namespace KIS
             }
         }
 
+        private int GetFirstFreeSeatIdx(Part p)
+        {
+            for (int i = 0; i <= (p.protoModuleCrew.Count + 1); i++)
+            {
+                ProtoCrewMember pcm = p.protoModuleCrew.Find(x => x.seatIdx == i);
+                if (pcm == null)
+                {
+                    return i;
+                }
+            }
+            return -1;
+        }
+
         private IEnumerator WaitAndTransferItems(Dictionary<int, KIS_Item> transferedItems, ProtoCrewMember protoCrew, ModuleKISInventory srcInventory = null)
         {
             yield return new WaitForFixedUpdate();
-            InternalSeat seat = this.part.internalModel.seats[podSeat];
-            if (seat.crew == protoCrew)
+            ProtoCrewMember crewAtPodSeat = this.part.protoModuleCrew.Find(x => x.seatIdx == podSeat);
+            if (crewAtPodSeat == protoCrew)
             {
                 MoveItems(transferedItems, this);
                 KIS_Shared.DebugLog("Item transfer | destination :" + this.part.name + " (" + this.podSeat + ")");
@@ -419,6 +467,7 @@ namespace KIS
         private void OnPartActionUICreate(Part p)
         {
             if (this.part != p) return;
+            if (PartActionUICreated) return;
             // Update context menu
             if (invType == InventoryType.Pod)
             {
@@ -430,14 +479,12 @@ namespace KIS
                 else
                 {
                     Events["ShowInventory"].guiActive = Events["ShowInventory"].guiActiveUnfocused = false;
-                    foreach (ProtoCrewMember pcm in this.part.protoModuleCrew)
+                    ProtoCrewMember crewAtPodSeat = this.part.protoModuleCrew.Find(x => x.seatIdx == podSeat);
+                    if (crewAtPodSeat != null)
                     {
-                        if (pcm.seatIdx == podSeat)
-                        {
-                            string kerbalName = pcm.name.Split(' ').FirstOrDefault();
-                            Events["ShowInventory"].guiActive = Events["ShowInventory"].guiActiveUnfocused = true;
-                            Events["ShowInventory"].guiName = kerbalName + "'s inventory";
-                        }
+                        string kerbalName = crewAtPodSeat.name.Split(' ').FirstOrDefault();
+                        Events["ShowInventory"].guiActive = Events["ShowInventory"].guiActiveUnfocused = true;
+                        Events["ShowInventory"].guiName = kerbalName + "'s inventory";
                     }
                 }
             }
@@ -452,6 +499,13 @@ namespace KIS
                 ModuleKISPickup mPickup = KISAddonPickup.instance.GetActivePickupNearest(this.part);
                 if (mPickup) Events["ShowInventory"].unfocusedRange = mPickup.maxDistance;
             }
+            PartActionUICreated = true;
+        }
+
+        private void OnPartActionUIDismiss(Part p)
+        {
+            if (this.part != p) return;
+            PartActionUICreated = false;
         }
 
         public void RefreshMassAndVolume()
@@ -484,6 +538,7 @@ namespace KIS
             GameEvents.onCrewTransferred.Remove(new EventData<GameEvents.HostedFromToAction<ProtoCrewMember, Part>>.OnEvent(this.OnCrewTransferred));
             GameEvents.onVesselChange.Remove(new EventData<Vessel>.OnEvent(this.OnVesselChange));
             GameEvents.onPartActionUICreate.Remove(new EventData<Part>.OnEvent(this.OnPartActionUICreate));
+            GameEvents.onPartActionUIDismiss.Remove(new EventData<Part>.OnEvent(this.OnPartActionUIDismiss));
             if (HighLogic.LoadedSceneIsEditor) InputLockManager.RemoveControlLock("KISInventoryLock");
         }
 
@@ -562,11 +617,11 @@ namespace KIS
         public static void MoveItem(KIS_Item srcItem, ModuleKISInventory tgtInventory, int tgtSlot)
         {
             ModuleKISInventory srcInventory = srcItem.inventory;
+            srcItem.OnMove(srcInventory, tgtInventory);
             int srcSlot = srcItem.slot;
             tgtInventory.items.Add(tgtSlot, srcItem);
             srcItem.inventory.items.Remove(srcSlot);
             srcItem.inventory = tgtInventory;
-            tgtInventory.items[tgtSlot].OnMove(srcInventory, tgtInventory);
             srcInventory.RefreshMassAndVolume();
             tgtInventory.RefreshMassAndVolume();
         }
@@ -834,6 +889,7 @@ namespace KIS
                 }
             }
 
+            //Disable helmet and visor
             List<SkinnedMeshRenderer> skmrs = new List<SkinnedMeshRenderer>(this.part.GetComponentsInChildren<SkinnedMeshRenderer>() as SkinnedMeshRenderer[]);
             foreach (SkinnedMeshRenderer skmr in skmrs)
             {
@@ -843,6 +899,19 @@ namespace KIS
                     helmetEquipped = active;
                 }
             }
+
+            //Disable flares and light
+            List<Light> lights = new List<Light>(this.part.GetComponentsInChildren<Light>(true) as Light[]);
+            foreach (Light light in lights)
+            {
+                if (light.name == "headlamp")
+                {
+                    light.enabled = active;
+                    light.transform.Find("flare1").renderer.enabled = active;
+                    light.transform.Find("flare2").renderer.enabled = active;
+                }
+            }
+
             return true;
         }
 
@@ -897,13 +966,10 @@ namespace KIS
                 title = this.part.partInfo.title + " | Seat " + podSeat;
                 if (!HighLogic.LoadedSceneIsEditor)
                 {
-                    if (this.part.internalModel)
+                    ProtoCrewMember crewAtPodSeat = this.part.protoModuleCrew.Find(x => x.seatIdx == podSeat);
+                    if (crewAtPodSeat != null)
                     {
-                        InternalSeat seat = this.part.internalModel.seats[podSeat];
-                        if (seat.taken)
-                        {
-                            title = seat.kerbalRef.crewMemberName;
-                        }
+                        title = crewAtPodSeat.name;
                     }
                 }
             }
@@ -1021,16 +1087,14 @@ namespace KIS
                 {
                     if (GUILayout.Button(new GUIContent("Remove Helmet", ""), GUILayout.Width(width), GUILayout.Height(22)))
                     {
-                        PlaySound(helmetOffSndPath);
-                        SetHelmet(false, true);
+                        if (SetHelmet(false, true)) PlaySound(helmetOffSndPath);
                     }
                 }
                 else
                 {
                     if (GUILayout.Button(new GUIContent("Put On Helmet", ""), GUILayout.Width(width), GUILayout.Height(22)))
                     {
-                        PlaySound(helmetOnSndPath);
-                        SetHelmet(true);
+                        if (SetHelmet(true)) PlaySound(helmetOnSndPath);
                     }
                 }
             }

@@ -13,19 +13,24 @@ namespace KIS
         [KSPField]
         public float attachMaxMass = 0.5f;
         [KSPField]
-        public bool allowStack = false;
+        public bool toolPartAttach = true;
         [KSPField]
-        public string attachSndPath = "KIS/Sounds/attach";
+        public bool toolStaticAttach = false;
         [KSPField]
-        public string detachSndPath = "KIS/Sounds/detach";
+        public bool toolPartStack = false;
         [KSPField]
-        public string changeModeSndPath = "KIS/Sounds/click";
+        public string attachPartSndPath = "KIS/Sounds/attachPart";
+        [KSPField]
+        public string detachPartSndPath = "KIS/Sounds/detachPart";
+        [KSPField]
+        public string attachStaticSndPath = "KIS/Sounds/attachStatic";
+        [KSPField]
+        public string detachStaticSndPath = "KIS/Sounds/detachStatic";
 
         public override string GetInfo()
         {
             var sb = new StringBuilder();
-            sb.AppendFormat("<b>Maximum mass</b>: {0:F0}", attachMaxMass); sb.AppendLine();
-            if (allowStack)
+            if (toolPartStack)
             {
                 sb.AppendLine("Allow snap attach on stack node");
             }
@@ -37,46 +42,22 @@ namespace KIS
             // Check if grab key is pressed
             if (useFrom == KIS_Item.UseFrom.KeyDown)
             {
-                if (!KISAddonPickup.draggedPart && !KISAddonPickup.instance.grabActive && !KISAddonPointer.isRunning)
-                {
-                    item.PlaySound(KIS_Shared.bipWrongSndPath);
-                    ScreenMessages.PostScreenMessage("Use this tool while in drop mode to attach / Use grab key to detach", 5, ScreenMessageStyle.UPPER_CENTER);
-                }
-                if (KISAddonPointer.isRunning && KISAddonPointer.pointerTarget != KISAddonPointer.PointerTarget.PartMount)
-                {
-                    float attachPartMass = KISAddonPointer.partToAttach.mass + KISAddonPointer.partToAttach.GetResourceMass();
-                    if (attachPartMass < attachMaxMass)
-                    {
-                        KISAddonPickup.instance.pointerMode = KISAddonPickup.PointerMode.Attach;
-                        KISAddonPointer.allowStack = allowStack;
-                        item.PlaySound(changeModeSndPath);
-                    }
-                    else
-                    {
-                        item.PlaySound(KIS_Shared.bipWrongSndPath);
-                        ScreenMessages.PostScreenMessage("This part is too heavy for this tool", 5, ScreenMessageStyle.UPPER_CENTER);
-                    }
-                }
-
+                KISAddonPickup.instance.EnableAttachMode();
             }
             if (useFrom == KIS_Item.UseFrom.KeyUp)
             {
-                if (KISAddonPointer.isRunning && KISAddonPickup.instance.pointerMode == KISAddonPickup.PointerMode.Attach)
-                {
-                    KISAddonPickup.instance.pointerMode = KISAddonPickup.PointerMode.Drop;
-                    KISAddonPointer.allowStack = false;
-                    item.PlaySound(changeModeSndPath);
-                }
-            }
-                            
+                KISAddonPickup.instance.DisableAttachMode();
+            }     
         }
-
+        
         public override void OnEquip(KIS_Item item)
         {
             ModuleKISPickup pickupModule = item.inventory.part.GetComponent<ModuleKISPickup>();
             if (pickupModule)
             {
-                pickupModule.canDetach = true;
+                pickupModule.detachSndPath = toolPartAttach;
+                pickupModule.allowStaticAttach = toolStaticAttach;
+                pickupModule.allowPartStack = toolPartStack;
             }
         }
 
@@ -85,7 +66,9 @@ namespace KIS
             ModuleKISPickup pickupModule = item.inventory.part.GetComponent<ModuleKISPickup>();
             if (pickupModule)
             {
-                pickupModule.canDetach = false;
+                pickupModule.allowPartAttach = false;
+                pickupModule.allowStaticAttach = false;
+                pickupModule.allowPartStack = false;
             }
         }
 

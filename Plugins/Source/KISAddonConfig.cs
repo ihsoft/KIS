@@ -72,9 +72,12 @@ namespace KIS
             if (evaPickup)
             {
                 if (nodeEvaPickup.HasValue("grabKey")) KISAddonPickup.grabKey = nodeEvaPickup.GetValue("grabKey");
-                if (nodeEvaPickup.HasValue("canDetach")) evaPickup.canDetach = bool.Parse(nodeEvaPickup.GetValue("canDetach"));
+                if (nodeEvaPickup.HasValue("attachKey")) KISAddonPickup.attachKey = nodeEvaPickup.GetValue("attachKey");
+                if (nodeEvaPickup.HasValue("allowPartAttach")) evaPickup.allowPartAttach = bool.Parse(nodeEvaPickup.GetValue("allowPartAttach"));
+                if (nodeEvaPickup.HasValue("allowStaticAttach")) evaPickup.allowStaticAttach = bool.Parse(nodeEvaPickup.GetValue("allowStaticAttach"));
+                if (nodeEvaPickup.HasValue("allowPartStack")) evaPickup.allowPartStack = bool.Parse(nodeEvaPickup.GetValue("allowPartStack"));
                 if (nodeEvaPickup.HasValue("maxDistance")) evaPickup.maxDistance = float.Parse(nodeEvaPickup.GetValue("maxDistance"));
-                if (nodeEvaPickup.HasValue("maxMass")) evaPickup.maxMass = float.Parse(nodeEvaPickup.GetValue("maxMass"));
+                if (nodeEvaPickup.HasValue("grabMaxMass")) evaPickup.grabMaxMass = float.Parse(nodeEvaPickup.GetValue("grabMaxMass"));
                 if (nodeEvaPickup.HasValue("dropSndPath")) evaPickup.dropSndPath = nodeEvaPickup.GetValue("dropSndPath");
                 if (nodeEvaPickup.HasValue("draggedIconResolution")) KISAddonPickup.draggedIconResolution = int.Parse(nodeEvaPickup.GetValue("draggedIconResolution"));
                 KIS_Shared.DebugLog("Eva pickup module loaded successfully");
@@ -103,9 +106,12 @@ namespace KIS
             if (evaFemalePickup)
             {
                 if (nodeEvaPickup.HasValue("grabKey")) KISAddonPickup.grabKey = nodeEvaPickup.GetValue("grabKey");
-                if (nodeEvaPickup.HasValue("canDetach")) evaFemalePickup.canDetach = bool.Parse(nodeEvaPickup.GetValue("canDetach"));
+                if (nodeEvaPickup.HasValue("attachKey")) KISAddonPickup.attachKey = nodeEvaPickup.GetValue("attachKey");
+                if (nodeEvaPickup.HasValue("allowPartAttach")) evaFemalePickup.allowPartAttach = bool.Parse(nodeEvaPickup.GetValue("allowPartAttach"));
+                if (nodeEvaPickup.HasValue("allowStaticAttach")) evaFemalePickup.allowStaticAttach = bool.Parse(nodeEvaPickup.GetValue("allowStaticAttach"));
+                if (nodeEvaPickup.HasValue("allowPartStack")) evaFemalePickup.allowPartStack = bool.Parse(nodeEvaPickup.GetValue("allowPartStack"));
                 if (nodeEvaPickup.HasValue("maxDistance")) evaFemalePickup.maxDistance = float.Parse(nodeEvaPickup.GetValue("maxDistance"));
-                if (nodeEvaPickup.HasValue("maxMass")) evaFemalePickup.maxMass = float.Parse(nodeEvaPickup.GetValue("maxMass"));
+                if (nodeEvaPickup.HasValue("grabMaxMass")) evaFemalePickup.grabMaxMass = float.Parse(nodeEvaPickup.GetValue("grabMaxMass"));
                 if (nodeEvaPickup.HasValue("dropSndPath")) evaFemalePickup.dropSndPath = nodeEvaPickup.GetValue("dropSndPath");
                 if (nodeEvaPickup.HasValue("draggedIconResolution")) KISAddonPickup.draggedIconResolution = int.Parse(nodeEvaPickup.GetValue("draggedIconResolution"));
                 KIS_Shared.DebugLog("Eva pickup module loaded successfully");
@@ -145,6 +151,7 @@ namespace KIS
         {
             if (node.HasValue("inventoryKey")) moduleInventory.evaInventoryKey = node.GetValue("inventoryKey");
             if (node.HasValue("rightHandKey")) moduleInventory.evaRightHandKey = node.GetValue("rightHandKey");
+            if (node.HasValue("helmetKey")) moduleInventory.evaHelmetKey = node.GetValue("helmetKey");
             if (node.HasValue("slotsX")) moduleInventory.slotsX = int.Parse(node.GetValue("slotsX"));
             if (node.HasValue("slotsY")) moduleInventory.slotsY = int.Parse(node.GetValue("slotsY"));
             if (node.HasValue("slotSize")) moduleInventory.slotSize = int.Parse(node.GetValue("slotSize"));

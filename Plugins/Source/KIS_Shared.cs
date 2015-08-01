@@ -8,7 +8,7 @@ using KSP.IO;
 
 namespace KIS
 {
-    public class LinkedObject : MonoBehaviour
+    public class KIS_LinkedPart : MonoBehaviour
     {
         public Part part;
     }
@@ -21,10 +21,11 @@ namespace KIS
 
         public enum MessageAction { DropEnd, AttachStart, AttachEnd, Store, Decouple }
 
-        public static void SendKISMessage(Part destPart, MessageAction action, Part tgtPart = null, AttachNode tgtNode = null)
+        public static void SendKISMessage(Part destPart, MessageAction action, AttachNode srcNode = null, Part tgtPart = null, AttachNode tgtNode = null)
         {
             BaseEventData bEventData = new BaseEventData(BaseEventData.Sender.AUTO);
             bEventData.Set("action", action.ToString());
+            bEventData.Set("sourceNode", srcNode);
             bEventData.Set("targetPart", tgtPart);
             bEventData.Set("targetNode", tgtNode);
             destPart.SendMessage("OnKISAction", bEventData, SendMessageOptions.DontRequireReceiver);
@@ -288,8 +289,17 @@ namespace KIS
             }
             else
             {
-                newPart.rigidbody.velocity = fromPart.rigidbody.velocity;
-                newPart.rigidbody.angularVelocity = fromPart.rigidbody.angularVelocity;
+                if (fromPart.rigidbody)
+                {
+                    newPart.rigidbody.velocity = fromPart.rigidbody.velocity;
+                    newPart.rigidbody.angularVelocity = fromPart.rigidbody.angularVelocity;
+                }
+                else
+                {
+                    // If fromPart is a carried container
+                    newPart.rigidbody.velocity = fromPart.vessel.rootPart.rigidbody.velocity;
+                    newPart.rigidbody.angularVelocity = fromPart.vessel.rootPart.rigidbody.angularVelocity;
+                }
             }
 
             newPart.decouple();
@@ -359,7 +369,17 @@ namespace KIS
                 }
                 yield return null;
             }
-
+            // Part stay in position 
+            if (tgtAttachNode == null)
+            {
+                newPart.transform.position = tgtPart.transform.TransformPoint(toPartLocalPos);
+                newPart.transform.rotation = tgtPart.transform.rotation * toPartLocalRot;
+            }
+            else
+            {
+                newPart.transform.position = tgtAttachNode.nodeTransform.TransformPoint(toPartLocalPos);
+                newPart.transform.rotation = tgtAttachNode.nodeTransform.rotation * toPartLocalRot;
+            }
             KIS_Shared.DebugLog("CreatePart - Coupling part...");
             CouplePart(newPart, tgtPart, srcAttachNodeID, tgtAttachNode);
 
