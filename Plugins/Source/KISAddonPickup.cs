@@ -410,7 +410,7 @@ namespace KIS
                 return;
             }
 
-            // Check part mass
+            // Check part mass (for grabbing)
             float pMass = (part.mass + part.GetResourceMass());
             float pickupMaxMass = GetAllPickupMaxMassInRange(part);
             if (pMass > pickupMaxMass)
@@ -447,7 +447,25 @@ namespace KIS
                                     KISAddonCursor.CursorEnable("KIS/Textures/forbidden", "Not supported", "(Detach function is not supported on this part)");
                                     return;
                                 }
-                            }
+							}
+							else
+							{
+								//check if tool can detach
+								string[] errorMsg = null;
+								KISIAttachTool checkDetachTool = KIS_Shared.CheckAttachTool(x => x.OnCheckDetach(part, ref errorMsg));
+								if (checkDetachTool == null)
+								{
+									if (errorMsg == null)
+										KISAddonCursor.CursorEnable("KIS/Textures/forbidden", "Can't grab", "(Part can't be detached without the proper tool");
+									else
+										KISAddonCursor.CursorEnable(errorMsg);
+									return;
+								}
+								else
+								{
+									this.detachTool = checkDetachTool;
+								}
+							}
                         }
                     }
                     else
@@ -712,9 +730,10 @@ namespace KIS
                     }
                     if (item.allowPartAttach == 2)
                     {
-                        ModuleKISPickup pickupModule = GetActivePickupNearest(part, canStaticAttachOnly: true);
-                        KIS_Shared.PlaySoundAtPoint(pickupModule.detachStaticSndPath, pickupModule.part.transform.position);
-                    }
+                        //ModuleKISPickup pickupModule = GetActivePickupNearest(part, canStaticAttachOnly: true);
+						 //KIS_Shared.PlaySoundAtPoint(pickupModule.detachStaticSndPath, pickupModule.part.transform.position);
+						 detachTool.OnAttachToolUsed(part, null, KISAttachType.DETACH, KISAddonPointer.PointerTarget.Nothing);
+					}
                     return;
                 }
             }
@@ -730,24 +749,8 @@ namespace KIS
                 }
                 if (item.allowPartAttach == 2)
                 {
-                    if (pickupModule.canDetach && !parentMount && part.parent && part.children.Count == 0)
-                    {
-                        //check if tool can detach
-                        string[] errorMsg = null;
-                        KISIAttachTool checkDetachTool = KIS_Shared.CheckAttachTool(x => x.OnCheckDetach(part, ref errorMsg));
-                        if (checkDetachTool == null)
-                        {
-                            if (errorMsg == null)
-                                CursorEnable("KIS/Textures/forbidden", "Can't grab", "(Part can't be detached without the proper tool");
-                            else
-                                CursorEnable(errorMsg);
-                            return;
-                        }
-                        else
-                        {
-                            this.detachTool = checkDetachTool;
-                        }
-                    }
+					//TODO: check, what?
+					detachTool.OnAttachToolUsed(part, null, KISAttachType.DETACH, KISAddonPointer.PointerTarget.Nothing);
                 }
             }
             else
@@ -858,44 +861,7 @@ namespace KIS
             return maxMass;
         }
 
-        //////////////////// MOVE TO KISAddonCursor /////////////////////////
-        public void CursorEnable(string texturePath, string text = "", string text2 = "", string text3 = "")
-        {
-            cursorShow = true;
-            Screen.showCursor = false;
-            cursorTexture = GameDatabase.Instance.GetTexture(texturePath, false);
-            cursorText = text;
-            cursorText2 = text2;
-            cursorText3 = text3;
-        }
-        public void CursorEnable(string[] texts)
-        {
-            if (texts.Length < 2) return;
-            cursorShow = true;
-            Screen.showCursor = false;
-            cursorTexture = GameDatabase.Instance.GetTexture(texts[0], false);
-            cursorText = texts[1];
-            if (texts.Length > 2) cursorText2 = texts[2];
-            if (texts.Length > 3) cursorText3 = texts[3];
-        }
-
-        public void CursorDefault()
-        {
-            cursorShow = false;
-            Screen.showCursor = true;
-        }
-
-        public void CursorDisable()
-        {
-            cursorShow = false;
-            Screen.showCursor = false;
-        }
-
-        public void CursorDefaultGrab()
-        {
-            CursorEnable("KIS/Textures/grab", "Grab", "");
-        }
-/////////////////////////////////////// END MOVE
+       
         public void Pickup(Part part)
         {
             draggedPart = part;
@@ -1071,7 +1037,7 @@ namespace KIS
                         Part scrPart = CreateAttach(tgtPart, pos, rot, srcAttachNodeID, tgtAttachNode);
                         if (attachTool != null) attachTool.OnAttachToolUsed(scrPart, null, KISAttachType.ATTACH, pointerTarget);
                     }
-                    // sound (new)
+                    // sound (new) => check if done in OnattachToolUsed
                     //ModuleKISPickup modulePickup = GetActivePickupNearest(pos);
                     //if (tgtPart)
                     //{
@@ -1091,20 +1057,20 @@ namespace KIS
             ModuleKISPickup modulePickup = GetActivePickupNearest(pos);
             if (modulePickup)
             {
-                //// TODO: see this
-                if (movingPart.parent)
-                {
-                    bool movingPartMounted = false;
-                    ModuleKISPartMount partM = movingPart.parent.GetComponent<ModuleKISPartMount>();
-                    if (partM)
-                    {
-                        if (partM.PartIsMounted(movingPart))
-                        {
-                            movingPartMounted = true;
-                        }
-                    }
-                    if (!movingPartMounted) AudioSource.PlayClipAtPoint(GameDatabase.Instance.GetAudioClip(modulePickup.detachPartSndPath), movingPart.transform.position);
-                }
+				//// TODO: see this => already done in OnAttachToolUsed
+				//if (movingPart.parent)
+				//{
+				//	bool movingPartMounted = false;
+				//	ModuleKISPartMount partM = movingPart.parent.GetComponent<ModuleKISPartMount>();
+				//	if (partM)
+				//	{
+				//		if (partM.PartIsMounted(movingPart))
+				//		{
+				//			movingPartMounted = true;
+				//		}
+				//	}
+				//	if (!movingPartMounted) AudioSource.PlayClipAtPoint(GameDatabase.Instance.GetAudioClip(modulePickup.detachPartSndPath), movingPart.transform.position);
+				//}
                 AudioSource.PlayClipAtPoint(GameDatabase.Instance.GetAudioClip(modulePickup.dropSndPath), pos);
             }
             KIS_Shared.DecoupleFromAll(movingPart);
