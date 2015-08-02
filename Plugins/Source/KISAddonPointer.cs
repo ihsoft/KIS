@@ -531,7 +531,7 @@ namespace KIS
             bool itselfIsInvalid = false;
             bool toolIsInvalid = false;
             string toolInvalidMsg = "";
-			KISIAttachTool attachTool = null;
+            KISIAttachTool attachTool = null;
             switch (pointerTarget)
             {
                 case PointerTarget.Static:
@@ -696,7 +696,7 @@ namespace KIS
                 else
                 {
                     KIS_Shared.DebugLog("CLICK => send pointer click ");
-					SendPointerClick(pointerTarget, pointer.transform.position, pointer.transform.rotation, hoveredPart, attachTool, GetCurrentAttachNode().id, hoveredNode);
+                    SendPointerClick(pointerTarget, pointer.transform.position, pointer.transform.rotation, hoveredPart, attachTool, GetCurrentAttachNode().id, hoveredNode);
                 }
             }
         }
