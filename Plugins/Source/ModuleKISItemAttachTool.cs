@@ -10,8 +10,10 @@ namespace KIS
 
     public class ModuleKISItemAttachTool : ModuleKISItem, KISIAttachTool
     {
-        [KSPField]
-        public float attachMaxMass = 0.5f;
+
+        //============= check mass => deactivated ==========
+        //[KSPField]
+        //public float attachMaxMass = 0.5f;
         [KSPField]
         public bool toolPartAttach = true;
         [KSPField]
@@ -27,9 +29,13 @@ namespace KIS
         [KSPField]
         public string detachStaticSndPath = "KIS/Sounds/detachStatic";
 
+        private bool orgToolPartAttach, orgToolStaticAttach, orgToolPartStack;
+
         public override string GetInfo()
         {
             var sb = new StringBuilder();
+            //============= check mass => deactivated ==========
+            //sb.AppendFormat("<b>Maximum mass</b>: {0:F0}", attachMaxMass); sb.AppendLine();
             if (toolPartStack)
             {
                 sb.AppendLine("Allow snap attach on stack node");
@@ -42,6 +48,25 @@ namespace KIS
             // Check if grab key is pressed
             if (useFrom == KIS_Item.UseFrom.KeyDown)
             {
+                //============= check mass => deactivated ==========
+                //if (!KISAddonPickup.draggedPart && !KISAddonPickup.instance.grabActive && !KISAddonPointer.isRunning)
+                //{
+                //    item.PlaySound(KIS_Shared.bipWrongSndPath);
+                //    ScreenMessages.PostScreenMessage("Use this tool while in drop mode to attach / Use grab key to detach", 5, ScreenMessageStyle.UPPER_CENTER);
+                //}
+                //if (KISAddonPointer.isRunning && KISAddonPointer.pointerTarget != KISAddonPointer.PointerTarget.PartMount)
+                //{
+                //    float attachPartMass = KISAddonPointer.partToAttach.mass + KISAddonPointer.partToAttach.GetResourceMass();
+                //    if (attachPartMass < attachMaxMass)
+                //    {
+                //        KISAddonPickup.instance.EnableAttachMode();
+                //    }
+                //    else
+                //    {
+                //        item.PlaySound(KIS_Shared.bipWrongSndPath);
+                //        ScreenMessages.PostScreenMessage("This part is too heavy for this tool", 5, ScreenMessageStyle.UPPER_CENTER);
+                //    }
+                //}
                 KISAddonPickup.instance.EnableAttachMode();
             }
             if (useFrom == KIS_Item.UseFrom.KeyUp)
@@ -55,9 +80,12 @@ namespace KIS
             ModuleKISPickup pickupModule = item.inventory.part.GetComponent<ModuleKISPickup>();
             if (pickupModule)
             {
+                orgToolPartAttach = pickupModule.allowPartAttach;
+                orgToolStaticAttach = pickupModule.allowStaticAttach;
+                orgToolPartStack = pickupModule.allowPartStack;
                 pickupModule.allowPartAttach = toolPartAttach;
                 pickupModule.allowStaticAttach = toolStaticAttach;
-                //pickupModule.allowPartStack = toolPartStack;
+                pickupModule.allowPartStack = toolPartStack;
             }
         }
 
@@ -66,14 +94,15 @@ namespace KIS
             ModuleKISPickup pickupModule = item.inventory.part.GetComponent<ModuleKISPickup>();
             if (pickupModule)
             {
-                pickupModule.allowPartAttach = false;
-                pickupModule.allowStaticAttach = false;
-                //pickupModule.allowPartStack = false;
+                pickupModule.allowPartAttach = orgToolPartAttach;
+                pickupModule.allowStaticAttach = orgToolStaticAttach;
+                pickupModule.allowPartStack = orgToolPartStack;
             }
         }
 
         public virtual bool OnCheckDetach(Part partToDetach, ref String[] errorMsg)
         {
+            //KIS_Shared.DebugLog("[KIS] OnCheckDetach " + partToDetach);
             //sanity check
             if (partToDetach == null) return true;
             //if can't node-attach and this part is attached via a node
@@ -86,24 +115,61 @@ namespace KIS
 				};
                 return false;
             }
+            //============= check mass => deactivated ==========
             // Check if the max mass is ok
-            float pMass = (partToDetach.mass + partToDetach.GetResourceMass());
-            if (pMass > attachMaxMass)
-            {
-                errorMsg = new string[]{
-					"KIS/Textures/tooHeavy", 
-					"Too heavy",
-					"(Use a better tool for this [" + pMass + " > " + attachMaxMass + ")"
-				};
-                return false;
-            }
+            //float pMass = (partToDetach.mass + partToDetach.GetResourceMass());
+            //if (pMass > attachMaxMass)
+            //{
+            //    errorMsg = new string[]{
+            //        "KIS/Textures/tooHeavy", 
+            //        "Too heavy",
+            //        "(Use a better tool for this [" + pMass + " > " + attachMaxMass + ")"
+            //    };
+            //    return false;
+            //}
             //all green
             return true;
         }
+        // redirect to protected bool OnCheckAttach(Part srcPart, Part tgtPart, ref string toolInvalidMsg)
+        public virtual bool OnCheckAttach(Part srcPart, Part tgtPart, ref string toolInvalidMsg, Vector3 surfaceMountPosition)
+        {
+            //KIS_Shared.DebugLog("[KIS] OnCheckAttach (srf) " + srcPart.partName + " " + tgtPart.partName);
+            return this.OnCheckAttach(srcPart, tgtPart, ref toolInvalidMsg);
+        }
+
+        // redirect to protected bool OnCheckAttach(Part srcPart, Part tgtPart, ref string toolInvalidMsg)
+        public virtual bool OnCheckAttach(Part srcPart, Part tgtPart, ref string toolInvalidMsg, AttachNode tgtNode)
+        {
+            //KIS_Shared.DebugLog("[KIS] OnCheckAttach (node) " + srcPart.partName + " " + tgtPart.partName);
+            if (toolPartStack)
+                return this.OnCheckAttach(srcPart, tgtPart, ref toolInvalidMsg);
+            else
+            {
+                toolInvalidMsg = "This tool can't stack-attach a part (via a node).";
+                return false;
+            }
+        }
+
+        // Check if the max mass is ok
+        protected virtual bool OnCheckAttach(Part srcPart, Part tgtPart, ref string toolInvalidMsg)
+        {
+            //============= check mass => deactivated ==========
+            //float pMass = (srcPart.mass + srcPart.GetResourceMass());
+            //if (pMass > attachMaxMass)
+            //{
+            //    toolInvalidMsg = "Too heavy, (Use a better tool for this [" + pMass + " > " + attachMaxMass + ")";
+            //    return false;
+            //}
+            return true;
+        }
+
 
         // Play sound on attach & detach
         public virtual void OnAttachToolUsed(Part srcPart, Part oldParent, KISAttachType moveType, KISAddonPointer.PointerTarget pointerTarget)
         {
+            //    KIS_Shared.DebugLog("OnAttachToolUsed " + (srcPart == null ? "null" : srcPart.partName)
+            //+ " " + (oldParent == null ? "null" : oldParent.partName) + " " + moveType);
+
             //sound at part instead at scrPart (sound at tool instead of attached/detached part
             ModuleKISItem item = part.GetComponent<ModuleKISItem>();
             if (item && item.staticAttached)
@@ -130,35 +196,6 @@ namespace KIS
             }
         }
 
-        // redirect to protected bool OnCheckAttach(Part srcPart, Part tgtPart, ref string toolInvalidMsg)
-        public virtual bool OnCheckAttach(Part srcPart, Part tgtPart, ref string toolInvalidMsg, Vector3 surfaceMountPosition)
-        {
-            return this.OnCheckAttach(srcPart, tgtPart, ref toolInvalidMsg);
-        }
-
-        // redirect to protected bool OnCheckAttach(Part srcPart, Part tgtPart, ref string toolInvalidMsg)
-        public virtual bool OnCheckAttach(Part srcPart, Part tgtPart, ref string toolInvalidMsg, AttachNode tgtNode)
-        {
-            if (toolPartStack)
-                return this.OnCheckAttach(srcPart, tgtPart, ref toolInvalidMsg);
-            else
-            {
-                toolInvalidMsg = "This tool can't stack-attach a part (via a node).";
-                return false;
-            }
-        }
-
-        // Check if the max mass is ok
-        protected virtual bool OnCheckAttach(Part srcPart, Part tgtPart, ref string toolInvalidMsg)
-        {
-            float pMass = (srcPart.mass + srcPart.GetResourceMass());
-            if (pMass > attachMaxMass)
-            {
-                toolInvalidMsg = "Too heavy, (Use a better tool for this [" + pMass + " > " + attachMaxMass + ")";
-                return false;
-            }
-            return true;
-        }
     }
 
 }

@@ -123,55 +123,17 @@ namespace KIS
             cursorAdditionalTexts = additionalTexts;
         }
 
-		//////////////////// MOVE TO KISAddonCursor ///////////////////////// TODO: del
-		//public static void CursorEnable(string texturePath, string text = "", string text2 = "", string text3 = "")
-		//{
-		//	//cursorShow = true;
-		//	//Screen.showCursor = false;
-		//	//cursorTexture = GameDatabase.Instance.GetTexture(texturePath, false);
-		//	//cursorText = text;
-		//	//cursorText2 = text2;
-		//	//cursorText3 = text3;
-		//	List<String> texts = new List<String>();
-		//	texts.Add(text2);
-		//	texts.Add(text3);
-		//	CursorEnable(texturePath, text, texts);
-		//}
 		public static void CursorEnable(string[] texts)
 		{
 			if (texts.Length < 2) return;
-			//cursorShow = true;
-			//Screen.showCursor = false;
-			//cursorTexture = GameDatabase.Instance.GetTexture(texts[0], false);
-			//cursorText = texts[1];
-			//if (texts.Length > 2) cursorText2 = texts[2];
-			//if (texts.Length > 3) cursorText3 = texts[3];
 
 			List<String> textsList = new List<String>();
 			for (int i = 2; i < texts.Length; i++)
 			{
 				textsList.Add(texts[i]);
 			}
-			CursorEnable(texts[0], texts[0], textsList);
+			CursorEnable(texts[0], texts[1], textsList);
 		}
-
-		//public void CursorDefault()
-		//{
-		//	cursorShow = false;
-		//	Screen.showCursor = true;
-		//}
-
-		//public void CursorDisable()
-		//{
-		//	cursorShow = false;
-		//	Screen.showCursor = false;
-		//}
-
-		//public static void CursorDefaultGrab()
-		//{
-		//	CursorEnable("KIS/Textures/grab", "Grab", "");
-		//}
-		/////////////////////////////////////// END MOVE
         
         public static void CursorDefault()
         {

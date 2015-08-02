@@ -75,7 +75,7 @@ namespace KIS
                 if (nodeEvaPickup.HasValue("attachKey")) KISAddonPickup.attachKey = nodeEvaPickup.GetValue("attachKey");
                 if (nodeEvaPickup.HasValue("allowPartAttach")) evaPickup.allowPartAttach = bool.Parse(nodeEvaPickup.GetValue("allowPartAttach"));
                 if (nodeEvaPickup.HasValue("allowStaticAttach")) evaPickup.allowStaticAttach = bool.Parse(nodeEvaPickup.GetValue("allowStaticAttach"));
-				//if (nodeEvaPickup.HasValue("allowPartStack")) evaPickup.allowPartStack = bool.Parse(nodeEvaPickup.GetValue("allowPartStack"));
+                if (nodeEvaPickup.HasValue("allowPartStack")) evaPickup.allowPartStack = bool.Parse(nodeEvaPickup.GetValue("allowPartStack"));
                 if (nodeEvaPickup.HasValue("maxDistance")) evaPickup.maxDistance = float.Parse(nodeEvaPickup.GetValue("maxDistance"));
                 if (nodeEvaPickup.HasValue("grabMaxMass")) evaPickup.grabMaxMass = float.Parse(nodeEvaPickup.GetValue("grabMaxMass"));
                 if (nodeEvaPickup.HasValue("dropSndPath")) evaPickup.dropSndPath = nodeEvaPickup.GetValue("dropSndPath");
@@ -109,7 +109,7 @@ namespace KIS
                 if (nodeEvaPickup.HasValue("attachKey")) KISAddonPickup.attachKey = nodeEvaPickup.GetValue("attachKey");
                 if (nodeEvaPickup.HasValue("allowPartAttach")) evaFemalePickup.allowPartAttach = bool.Parse(nodeEvaPickup.GetValue("allowPartAttach"));
                 if (nodeEvaPickup.HasValue("allowStaticAttach")) evaFemalePickup.allowStaticAttach = bool.Parse(nodeEvaPickup.GetValue("allowStaticAttach"));
-				//if (nodeEvaPickup.HasValue("allowPartStack")) evaFemalePickup.allowPartStack = bool.Parse(nodeEvaPickup.GetValue("allowPartStack"));
+                if (nodeEvaPickup.HasValue("allowPartStack")) evaFemalePickup.allowPartStack = bool.Parse(nodeEvaPickup.GetValue("allowPartStack"));
                 if (nodeEvaPickup.HasValue("maxDistance")) evaFemalePickup.maxDistance = float.Parse(nodeEvaPickup.GetValue("maxDistance"));
                 if (nodeEvaPickup.HasValue("grabMaxMass")) evaFemalePickup.grabMaxMass = float.Parse(nodeEvaPickup.GetValue("grabMaxMass"));
                 if (nodeEvaPickup.HasValue("dropSndPath")) evaFemalePickup.dropSndPath = nodeEvaPickup.GetValue("dropSndPath");

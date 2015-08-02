@@ -555,31 +555,40 @@ namespace KIS
                         }
                         else
                         {
-                            //check if the tool is ok to do the job
-							attachTool = KIS_Shared.CheckAttachTool(x => x.OnCheckAttach(partToAttach, hoveredPart,
-                                    ref toolInvalidMsg, pointer.transform.position));
-							toolIsInvalid = attachTool == null;
-                            if (!toolIsInvalid)
+                            //if we want attach, check if the tool can do that
+                            if (KISAddonPickup.instance.pointerMode == KISAddonPickup.PointerMode.Attach)
                             {
-                                if (useAttachRules)
+                                //check if the tool is ok to do the job
+                                attachTool = KIS_Shared.CheckAttachTool(x => x.OnCheckAttach(partToAttach, hoveredPart,
+                                        ref toolInvalidMsg, pointer.transform.position));
+                                toolIsInvalid = attachTool == null;
+                                if (!toolIsInvalid)
                                 {
-                                    if (hoveredPart.attachRules.allowSrfAttach)
+                                    if (useAttachRules)
                                     {
-                                        if (GetCurrentAttachNode().nodeType == AttachNode.NodeType.Surface)
+                                        if (hoveredPart.attachRules.allowSrfAttach)
                                         {
-                                            color = colorOk;
+                                            if (GetCurrentAttachNode().nodeType == AttachNode.NodeType.Surface)
+                                            {
+                                                color = colorOk;
+                                            }
+                                            else
+                                            {
+                                                invalidCurrentNode = true;
+                                            }
                                         }
-                                        else
-                                        {
-                                            invalidCurrentNode = true;
-                                        }
+                                        else cannotSurfaceAttach = true;
                                     }
-                                    else cannotSurfaceAttach = true;
+                                    else
+                                    {
+                                        color = colorOk;
+                                    }
                                 }
-                                else
-                                {
-                                    color = colorOk;
-                                }
+                            }
+                            else
+                            {
+                                // drop
+                                color = colorOk;
                             }
                         }
                     }
@@ -605,12 +614,20 @@ namespace KIS
                 case PointerTarget.PartNode:
                     if (allowStack)
                     {
-						attachTool = KIS_Shared.CheckAttachTool(x => x.OnCheckAttach(partToAttach, hoveredPart,
-                                ref toolInvalidMsg, hoveredNode));
-						toolIsInvalid = attachTool == null;
-                        if (!toolIsInvalid)
-                            color = colorStack;
-
+                        //if we want attach, check if the tool can do that
+                        if (KISAddonPickup.instance.pointerMode == KISAddonPickup.PointerMode.Attach)
+                        {
+                            attachTool = KIS_Shared.CheckAttachTool(x => x.OnCheckAttach(partToAttach, hoveredPart,
+                                    ref toolInvalidMsg, hoveredNode));
+                            toolIsInvalid = attachTool == null;
+                            if (!toolIsInvalid)
+                                color = colorStack;
+                        }
+                        else
+                        {
+                            // drop
+                            color = colorOk;
+                        }
                     }
                     else invalidTarget = true;
                     break;
@@ -678,6 +695,7 @@ namespace KIS
                 }
                 else
                 {
+                    KIS_Shared.DebugLog("CLICK => send pointer click ");
 					SendPointerClick(pointerTarget, pointer.transform.position, pointer.transform.rotation, hoveredPart, attachTool, GetCurrentAttachNode().id, hoveredNode);
                 }
             }
