@@ -1,4 +1,4 @@
-### 1.2.2 (Not released yet)
+### 1.2.2 (13 August 2015)
 - [Fix] Fixed kerbal items not transfering to pod without internal model
 - [Fix] Fixed missing command seat icon (thx to mongoose)
 - [Fix] Fixed node attach not working for some radial part
