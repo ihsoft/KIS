@@ -1,3 +1,12 @@
+### 1.2.2 (13 August 2015)
+- [Fix] Fixed kerbal items not transfering to pod without internal model
+- [Fix] Fixed missing command seat icon (thx to mongoose)
+- [Fix] Fixed node attach not working for some radial part
+- [Fix] Prevent playing static attach sound after load/warp 
+- [Fix] Removed old ILC-18k container .mbm textures
+- [Fix] Converted ISC-6K container textures to DDS
+- [Fix] Fixed minor typo in sound error message (thx to Amorymeltzer)
+
 ### 1.2.1 (29 July 2015)
 - [Enhancement] Added key (B/N) to move up or down a part in drop mode 
 - [Enhancement] Added a dedicated key to put/remove helmet (J)

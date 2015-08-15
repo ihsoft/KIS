@@ -189,14 +189,8 @@ namespace KIS
                 Part tgtPart = null;
                 KerbalEVA tgtKerbalEva = null;
                 AttachNode tgtAttachNode = null;
-                if (hit.rigidbody)
-                {
-                    tgtPart = hit.rigidbody.GetComponent<Part>();
-                }
-                if (!tgtPart)
-                {
-                    tgtPart = (Part)UIPartActionController.GetComponentUpwards("Part", hit.collider.gameObject);
-                }
+
+                tgtPart = KIS_Shared.GetPartUnderCursor();
                 if (!tgtPart)
                 {
                     // check linked part
