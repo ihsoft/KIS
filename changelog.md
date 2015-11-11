@@ -1,3 +1,6 @@
+### 1.2.3 (11 November 2015)
+- Compatibility fix for KSP 1.0.5
+
 ### 1.2.2 (13 August 2015)
 - [Fix] Fixed kerbal items not transfering to pod without internal model
 - [Fix] Fixed missing command seat icon (thx to mongoose)
