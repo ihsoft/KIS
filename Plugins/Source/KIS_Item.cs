@@ -188,7 +188,8 @@ namespace KIS
                 KIS_Shared.DebugLog("No non-stackable module and ressource found on the part, set item as stackable");
                 this.stackable = true;
             }
-            if (KISAddonConfig.stackableList.Contains(availablePart.name))
+            if (KISAddonConfig.stackableList.Contains(availablePart.name)
+                || availablePart.name.IndexOf('.') != -1 && KISAddonConfig.stackableList.Contains(availablePart.name.Replace('.', '_')))
             {
                 KIS_Shared.DebugLog("Part name present in settings.cfg (node StackableItemOverride), force item as stackable");
                 this.stackable = true;
