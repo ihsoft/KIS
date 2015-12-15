@@ -25,6 +25,11 @@ namespace KIS
         // TODO: Read it from the config.
         public static DebugLogLevel logLevel = DebugLogLevel.INFO;
         
+        private static Dictionary<String, float> exLastReportedTs = new Dictionary<String, float>();
+        private static Dictionary<String, int> exCount = new Dictionary<String, int>();
+        // TODO: Read it from the config.
+        private const float exceptionLogsAggreagtionPeriod = 10.0f;  // Seconds.
+        
         public static string bipWrongSndPath = "KIS/Sounds/bipwrong";
         public delegate void OnPartCoupled(Part createdPart, Part tgtPart = null, AttachNode tgtAttachNode = null);
 
@@ -64,6 +69,33 @@ namespace KIS
             }
         }
 
+        /// <summary>Logs an exception that is happenning very frequently.</summary>
+        /// <remarks>
+        /// When an exception is being thrown at a high rate it's hard to catch its context since
+        /// the debug log updates and scrolls too quickly. By logging exceptions with this method
+        /// first occurrence is logged right away and all the subsequent repetitions are aggregated
+        /// and reported every 10 seconds (a constant for now). Exceptions are macthed by their
+        /// string representation which is expected to capture the stack trace.         
+        /// </remarks>
+        /// <param name="ex">An exception to log.</param>
+        public static void logExceptionRepeated(Exception ex) {
+            var exText = ex.ToString();
+            if (exLastReportedTs.ContainsKey(exText)) {
+                exCount[exText] += 1;
+                if (exLastReportedTs[exText] + exceptionLogsAggreagtionPeriod < Time.unscaledTime) {
+                    logError("Exception has repeated {0} times in the last {1:F2} seconds:\n{2}",
+                             exCount[exText], Time.unscaledTime - exLastReportedTs[exText],
+                             exText);
+                    exLastReportedTs[exText] = Time.unscaledTime;
+                    exCount[exText] = 0;
+                }
+                return;
+            }
+            exLastReportedTs[exText] = Time.unscaledTime;
+            exCount[exText] = 1;
+            logError(exText);
+        }
+        
         // TODO: Deprecate.
         public static void DebugLog(string text)
         {
