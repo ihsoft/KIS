@@ -15,7 +15,16 @@ namespace KIS
 
     static public class KIS_Shared
     {
-        public static bool debugLog = true;
+        public enum DebugLogLevel {
+            NONE = 0,
+            ERROR = 1,
+            WARNING = 2,
+            INFO = 3,
+            TRACE = 4
+        }
+        // TODO: Read it from the config.
+        public static DebugLogLevel logLevel = DebugLogLevel.INFO;
+        
         public static string bipWrongSndPath = "KIS/Sounds/bipwrong";
         public delegate void OnPartCoupled(Part createdPart, Part tgtPart = null, AttachNode tgtAttachNode = null);
 
@@ -31,30 +40,52 @@ namespace KIS
             destPart.SendMessage("OnKISAction", bEventData, SendMessageOptions.DontRequireReceiver);
         }
 
+        public static void logTrace(string fmt, params object[] args) {
+            if (logLevel >= DebugLogLevel.TRACE) {
+                Debug.Log("[KIS] " + String.Format(fmt, args));
+            }
+        }
+
+        public static void logInfo(string fmt, params object[] args) {
+            if (logLevel >= DebugLogLevel.INFO) {
+                Debug.Log("[KIS] " + String.Format(fmt, args));
+            }
+        }
+
+        public static void logWarning(string fmt, params object[] args) {
+            if (logLevel >= DebugLogLevel.WARNING) {
+                Debug.LogWarning("[KIS] " + String.Format(fmt, args));
+            }
+        }
+
+        public static void logError(string fmt, params object[] args) {
+            if (logLevel >= DebugLogLevel.ERROR) {
+                Debug.LogError("[KIS] " + String.Format(fmt, args));
+            }
+        }
+
+        // TODO: Deprecate.
         public static void DebugLog(string text)
         {
-            if (debugLog) Debug.Log("[KIS] " + text);
+            logInfo(text);
         }
 
+        // TODO: Deprecate.
         public static void DebugLog(string text, UnityEngine.Object context)
         {
-            if (debugLog) Debug.Log("[KIS] " + text, context);
+            if (logLevel >= DebugLogLevel.INFO) Debug.Log("[KIS] " + text, context);
         }
 
+        // TODO: Deprecate.
         public static void DebugWarning(string text)
         {
-            if (debugLog)
-            {
-                Debug.LogWarning("[KIS] " + text);
-            }
+            logWarning(text);
         }
 
+        // TODO: Deprecate.
         public static void DebugError(string text)
         {
-            if (debugLog)
-            {
-                Debug.LogError("[KIS] " + text);
-            }
+            logError(text);
         }
 
         public static Part GetPartUnderCursor()
