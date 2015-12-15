@@ -132,6 +132,69 @@ namespace KIS
             }
         }
 
+        /// <summary>
+        /// Walks thru the hierarchy and calculates the total mass of teh assembly.
+        /// </summary>
+        /// <param name="rootPart">A root part of the assembly.</param>
+        /// <returns>Full mass of the hierarchy.</returns>
+        public static float GetAssemblyMass(Part rootPart)
+        {
+            float totalMass = rootPart.mass + rootPart.GetResourceMass();
+            foreach (Part child in rootPart.children) {
+                totalMass += GetAssemblyMass(child);
+            }
+            return totalMass;
+        }
+
+        /// <summary>Fixes all structural links to another vessel(s).</summary>
+        /// <remarks>
+        /// Normally compound parts should handle decoupling themselves but sometimes they do it
+        /// horribly wrong. For instance, stock strut connector tries to restore connection when
+        /// part is re-attached to the former vessel which may produce a collision. This method
+        /// deletes all compound parts with target pointing to a different vessel.
+        /// TODO: Break the link instead of destroying the part.
+        /// TODO: Handle KAS and other popular plugins connectors.         
+        /// </remarks>
+        /// <param name="vessel">Vessel to fix links for.</param>
+        public static void CleanupExternalLinks(Vessel vessel)
+        {
+            var parts = vessel.parts.FindAll(p => p is CompoundPart);
+            logInfo("Check {0} compound part(s) in vessel: {1}", parts.Count(), vessel);
+            foreach (var part in parts) {
+                var compoundPart = part as CompoundPart;
+                if (compoundPart.target && compoundPart.target.vessel != vessel) {
+                    logTrace("Destroy compound part '{0}' which links '{1}' to '{2}'",
+                             compoundPart, compoundPart.parent, compoundPart.target);
+                    compoundPart.Die();
+                }
+            }
+        }
+
+        /// <summary>Decouples <paramref name="assemblyRoot"/> from the vessel.</summary>
+        /// <remarks>Also does external links celanup on both vessels.</remarks>
+        /// <param name="assemblyRoot">An assembly to decouple.</param>
+        public static void DecoupleAssembly(Part assemblyRoot)
+        {
+            if (!assemblyRoot.parent) {
+                logWarning("Part '{0}' has no parent, ignore decoupling", assemblyRoot);
+                return;  // Nothing to decouple.
+            }
+            SendKISMessage(assemblyRoot, MessageAction.Decouple);
+            Vessel oldVessel = assemblyRoot.vessel;
+            assemblyRoot.decouple();
+            CleanupExternalLinks(oldVessel);
+            CleanupExternalLinks(assemblyRoot.vessel);
+
+            ModuleKISInventory inv = assemblyRoot.GetComponent<ModuleKISInventory>();
+            if (inv) {
+                if (inv.invName != "") {
+                    assemblyRoot.vessel.vesselName = inv.part.partInfo.title + " | " + inv.invName;
+                } else {
+                    assemblyRoot.vessel.vesselName = inv.part.partInfo.title;
+                }
+            }
+        }
+
         public static void DecoupleFromAll(Part p)
         {
             SendKISMessage(p, MessageAction.Decouple);
