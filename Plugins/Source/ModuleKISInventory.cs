@@ -155,7 +155,15 @@ namespace KIS
             }
         }
 
-        void Update()
+        void Update() {
+            try {
+                Internal_Update();
+            } catch (Exception e) {
+                KIS_Shared.logExceptionRepeated(e);
+            }
+        }
+        
+        private void Internal_Update()
         {
             if (showGui)
             {

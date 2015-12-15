@@ -159,7 +159,15 @@ namespace KIS
             GameEvents.onVesselChange.Add(new EventData<Vessel>.OnEvent(this.OnVesselChange));
         }
 
-        void Update()
+        public void Update() {
+            try {
+                Internal_Update();
+            } catch (Exception e) {
+                KIS_Shared.logExceptionRepeated(e);
+            }
+        }
+        
+        private void Internal_Update()
         {
             // Check if grab key is pressed
             if (HighLogic.LoadedSceneIsFlight)
