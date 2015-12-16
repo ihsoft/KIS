@@ -429,8 +429,10 @@ namespace KIS
                 return;
             }
 
-            // Check part mass
-            float pMass = (part.mass + part.GetResourceMass());
+            // Check part mass.
+            float pMass = KIS_Shared.GetAssemblyMass(part);
+            part.SetHighlight(true, true);  // Highlight whole hierarchy.
+                
             float pickupMaxMass = GetAllPickupMaxMassInRange(part);
             if (pMass > pickupMaxMass)
             {
@@ -541,7 +543,6 @@ namespace KIS
                 KISAddonCursor.CursorEnable("KIS/Textures/grabOk", "Grab", '(' + part.partInfo.title + ')');
             }
 
-            part.SetHighlight(true, false);
             grabOk = true;
         }
 
@@ -573,7 +574,12 @@ namespace KIS
             {
                 KISAddonCursor.CursorDefault();
             }
-            p.SetHighlight(false, false);
+
+            p.SetHighlight(false /* active */, true /* recursive */);
+            // HACK: Game will remember "recursive" setting and continue selecting the
+            // hierarchy on mouse hover. Do an explicit call with recusrive=false to reset it.
+            p.SetHighlight(false /* active */, false /* recursive */);
+
             grabOk = false;
         }
 
