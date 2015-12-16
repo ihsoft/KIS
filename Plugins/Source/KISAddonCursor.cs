@@ -17,6 +17,7 @@ namespace KIS
         public static string cursorText;
         public static List<string> cursorAdditionalTexts;
         public static Part hoveredPart = null;
+        public static int partClickedFrame = -1;
         private static OnMousePartAction delegateOnMousePartClick;
         private static OnMousePartAction delegateOnMouseEnterPart;
         private static OnMousePartAction delegateOnMouseHoverPart;
@@ -66,6 +67,8 @@ namespace KIS
                 {
                     if (part)
                     {
+                        partClickedFrame = Time.frameCount;
+                        KIS_Shared.logTrace("Set click frame {0}", partClickedFrame);
                         if (delegateOnMousePartClick != null) delegateOnMousePartClick(part);
                     }
                 }

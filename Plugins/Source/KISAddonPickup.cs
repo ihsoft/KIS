@@ -43,6 +43,7 @@ namespace KIS
         private bool grabOk = false;
         private bool detachOk = false;
         private bool jetpackLock = false;
+        private bool delayedButtonUp = false;
 
         public enum PointerMode { Drop, Attach }
         private PointerMode _pointerMode = PointerMode.Drop;
@@ -211,9 +212,20 @@ namespace KIS
             // On drag released
             if (HighLogic.LoadedSceneIsEditor || HighLogic.LoadedSceneIsFlight)
             {
-                if (draggedPart && Input.GetMouseButtonUp(0))
+                if (draggedPart && (Input.GetMouseButtonUp(0) || delayedButtonUp))
                 {
-                    OnDragReleased();
+                    // In slow scenes mouse button can be pressed and released in just one frame.
+                    // As a result UP event may get handled before DOWN handlers which leads to
+                    // false action triggering. So, just postpone UP even by one frame when it
+                    // happens in the same frame as the DOWN event.
+                    if (KISAddonCursor.partClickedFrame == Time.frameCount) {
+                        KIS_Shared.logTrace(
+                            "Postponing mouse button up event in frame {0}", Time.frameCount);
+                        delayedButtonUp = true;  // Event will be handled in the next frame.
+                    } else {
+                        delayedButtonUp = false;
+                        OnDragReleased();
+                    }
                 }
             }
         }
