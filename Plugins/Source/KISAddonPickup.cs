@@ -1095,7 +1095,7 @@ namespace KIS
 
             ModuleKISItem moduleItem = movingPart.GetComponent<ModuleKISItem>();
             bool useExternalPartAttach = false;
-            if (moduleItem) if (moduleItem.useExternalPartAttach) useExternalPartAttach = true;
+            useExternalPartAttach = moduleItem && moduleItem.useExternalPartAttach;
             if (tgtPart && !useExternalPartAttach)
             {
                 KIS_Shared.CouplePart(movingPart, tgtPart, srcAttachNodeID, tgtAttachNode);
