@@ -56,7 +56,7 @@ namespace KIS
                 KIS_Shared.logExceptionRepeated(e);
             }
         }
-        
+
         private void Internal_Update()
         {
             if (partDetectionActive)

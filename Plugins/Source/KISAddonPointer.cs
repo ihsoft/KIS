@@ -180,7 +180,8 @@ namespace KIS
             UpdateKey();
         }
 
-        public void UpdateHoverDetect()
+        /// <summary>Handles everything realted to the pointer.</summary>
+        public static void UpdateHoverDetect()
         {
             if (isRunning)
             {
@@ -680,7 +681,7 @@ namespace KIS
                     StopPointer();
                     SendPointerClick(PointerTarget.Nothing, Vector3.zero, Quaternion.identity, null, null);
                 }
-                if (GameSettings.Editor_toggleSymMethod.GetKeyDown())
+                if (GameSettings.Editor_toggleSymMethod.GetKeyDown())  // "R" by default.
                 {
                     if (pointerTarget != PointerTarget.PartMount)
                     {
