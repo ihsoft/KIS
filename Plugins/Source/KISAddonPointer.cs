@@ -524,12 +524,12 @@ namespace KIS
             }
 
             //Check distance
-            bool isValidSourceDist = true;
+            float sourceDist = 0;
             if (sourceTransform)
             {
-                isValidSourceDist = Vector3.Distance(FlightGlobals.ActiveVessel.transform.position, sourceTransform.position) <= maxDist;
+                sourceDist = Vector3.Distance(FlightGlobals.ActiveVessel.transform.position, sourceTransform.position);
             }
-            bool isValidTargetDist = Vector3.Distance(FlightGlobals.ActiveVessel.transform.position, hit.point) <= maxDist;
+            float targetDist = Vector3.Distance(FlightGlobals.ActiveVessel.transform.position, hit.point);
 
             //Set color
             Color color = colorNok;
@@ -608,7 +608,7 @@ namespace KIS
                 default:
                     break;
             }
-            if (!isValidSourceDist || !isValidTargetDist)
+            if (sourceDist > maxDist || targetDist > maxDist)
             {
                 color = colorDistNok;
             }
@@ -649,15 +649,19 @@ namespace KIS
                     audioBipWrong.Play();
                     return;
                 }
-                else if (!isValidSourceDist)
+                else if (sourceDist > maxDist)
                 {
-                    ScreenMessages.PostScreenMessage("Too far from source !");
+                    ScreenMessages.PostScreenMessage(
+                        "Too far from source: " + sourceDist.ToString("F2")
+                        + "m > " + maxDist.ToString("F2") + "m");
                     audioBipWrong.Play();
                     return;
                 }
-                else if (!isValidTargetDist)
+                else if (targetDist > maxDist)
                 {
-                    ScreenMessages.PostScreenMessage("Too far from target !");
+                    ScreenMessages.PostScreenMessage(
+                        "Too far from target: " + targetDist.ToString("F2")
+                        + "m > " + maxDist.ToString("F2") + "m");
                     audioBipWrong.Play();
                     return;
                 }
