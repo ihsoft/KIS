@@ -615,9 +615,8 @@ namespace KIS
             color.a = 0.5f;
             foreach (MeshRenderer mr in allModelMr) mr.material.color = color;
 
-
-            //On click
-            if (Input.GetKeyDown(KeyCode.Mouse0))
+            //On click.
+            if (Input.GetMouseButtonDown(0))
             {
                 if (invalidTarget)
                 {
@@ -672,6 +671,7 @@ namespace KIS
             }
         }
 
+        /// <summary>Handles keyboard input.</summary>
         private void UpdateKey()
         {
             if (isRunning)
