@@ -29,6 +29,8 @@ namespace KIS
         private static Dictionary<String, int> exCount = new Dictionary<String, int>();
         // TODO: Read it from the config.
         private const float exceptionLogsAggreagtionPeriod = 10.0f;  // Seconds.
+        // TODO: Read it from the config.
+        private const float DefaultMessageTimeout = 5f;  // Seconds.
         
         public static string bipWrongSndPath = "KIS/Sounds/bipwrong";
         public delegate void OnPartCoupled(Part createdPart, Part tgtPart = null, AttachNode tgtAttachNode = null);
@@ -741,5 +743,46 @@ namespace KIS
             return btnPress;
         }
 
+        /// <summary>Shows a formatted message with the specified location and timeout.</summary>
+        /// <param name="style">A <c>ScreenMessageStyle</c> specifier.</param>
+        /// <param name="duration">Delay before hiding the message in seconds.</param>
+        /// <param name="fmt"><c>String.Format()</c> formatting string.</param>
+        /// <param name="args">Arguments for the formattign string.</param>
+        public static void ShowScreenMessage(
+            ScreenMessageStyle style, float duration, String fmt, params object[] args) {
+            ScreenMessages.PostScreenMessage(String.Format(fmt, args), duration, style);
+        }
+
+        /// <summary>Shows a message in the upper center area with the specified timeout.</summary>
+        /// <param name="duration">Delay before hiding the message in seconds.</param>
+        /// <param name="fmt"><c>String.Format()</c> formatting string.</param>
+        /// <param name="args">Arguments for the formattign string.</param>
+        public static void ShowCenterScreenMessageWithTimeout(
+            float duration, String fmt, params object[] args) {
+            ShowScreenMessage(ScreenMessageStyle.UPPER_CENTER, duration, fmt, args);
+        }
+
+        /// <summary>Shows a message in the upper center area with a default timeout.</summary>
+        /// <param name="fmt"><c>String.Format()</c> formatting string.</param>
+        /// <param name="args">Arguments for the formattign string.</param>
+        public static void ShowCenterScreenMessage(String fmt, params object[] args) {
+            ShowCenterScreenMessageWithTimeout(DefaultMessageTimeout, fmt, args);
+        }
+        
+        /// <summary>Shows a message in the upper right corner with the specified timeout.</summary>
+        /// <param name="duration">Delay before hiding the message in seconds.</param>
+        /// <param name="fmt"><c>String.Format()</c> formatting string.</param>
+        /// <param name="args">Arguments for the formattign string.</param>
+        public static void ShowRightScreenMessageWithTimeout(
+            float duration, String fmt, params object[] args) {
+            ShowScreenMessage(ScreenMessageStyle.UPPER_RIGHT, duration, fmt, args);
+        }
+
+        /// <summary>Shows a message in the upper center area with a default timeout.</summary>
+        /// <param name="fmt"><c>String.Format()</c> formatting string.</param>
+        /// <param name="args">Arguments for the formattign string.</param>
+        public static void ShowRightScreenMessage(String fmt, params object[] args) {
+            ShowCenterScreenMessageWithTimeout(DefaultMessageTimeout, fmt, args);
+        }
     }
 }
