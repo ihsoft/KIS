@@ -753,7 +753,7 @@ namespace KIS
         /// <param name="fmt"><c>String.Format()</c> formatting string.</param>
         /// <param name="args">Arguments for the formattign string.</param>
         public static void ShowRightScreenMessage(String fmt, params object[] args) {
-            ShowCenterScreenMessageWithTimeout(DefaultMessageTimeout, fmt, args);
+            ShowRightScreenMessageWithTimeout(DefaultMessageTimeout, fmt, args);
         }
     }
 }
