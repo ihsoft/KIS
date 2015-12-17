@@ -167,15 +167,24 @@ namespace KIS
         }
 
         /// <summary>
-        /// Walks thru the hierarchy and calculates the total mass of teh assembly.
+        /// Walks thru the hierarchy and calculates the total mass of the assembly.
         /// </summary>
         /// <param name="rootPart">A root part of the assembly.</param>
+        /// <param name="childrenCount">[out] A total number of children in the assembly.</param>
         /// <returns>Full mass of the hierarchy.</returns>
-        public static float GetAssemblyMass(Part rootPart)
+        public static float GetAssemblyMass(Part rootPart, out int childrenCount)
+        {
+            childrenCount = 0;
+            return Internal_GetAssemblyMass(rootPart, ref childrenCount);
+        }
+
+        /// <summary>Recursive implementation of <c>GetAssemblyMass</c>.</summary>
+        private static float Internal_GetAssemblyMass(Part rootPart, ref int childrenCount)
         {
             float totalMass = rootPart.mass + rootPart.GetResourceMass();
+            ++childrenCount;
             foreach (Part child in rootPart.children) {
-                totalMass += GetAssemblyMass(child);
+                totalMass += Internal_GetAssemblyMass(child, ref childrenCount);
             }
             return totalMass;
         }

@@ -45,6 +45,9 @@ namespace KIS
         private bool jetpackLock = false;
         private bool delayedButtonUp = false;
 
+        public static int grabbedPartsCount;
+        public static float grabbedMass;  // Tons.
+
         public enum PointerMode { Drop, Attach }
         private PointerMode _pointerMode = PointerMode.Drop;
         public PointerMode pointerMode
@@ -428,11 +431,11 @@ namespace KIS
             }
 
             // Check part mass.
-            float pMass = KIS_Shared.GetAssemblyMass(part);
+            grabbedMass = KIS_Shared.GetAssemblyMass(part, out grabbedPartsCount);
             part.SetHighlight(true, true);  // Highlight whole hierarchy.
                 
             float pickupMaxMass = GetAllPickupMaxMassInRange(part);
-            if (pMass > pickupMaxMass)
+            if (grabbedMass > pickupMaxMass)
             {
                 KISAddonCursor.CursorEnable("KIS/Textures/tooHeavy", "Too heavy", "(Bring more kerbal [" + pMass + " > " + pickupMaxMass + ")");
                 return;
@@ -540,6 +543,13 @@ namespace KIS
             {
                 KISAddonCursor.CursorEnable("KIS/Textures/grabOk", "Grab", '(' + part.partInfo.title + ')');
             }
+            // Grab icon.
+            string cursorTitle = part.parent ? "Detach & Grab" : "Grab";
+            string cursorText = grabbedPartsCount == 1
+                ? String.Format("({0})", part.partInfo.title)
+                : String.Format(
+                    "({0} with {1} attached parts)", part.partInfo.title, grabbedPartsCount - 1);
+            KISAddonCursor.CursorEnable("KIS/Textures/grabOk", cursorTitle, cursorText);
 
             grabOk = true;
         }
