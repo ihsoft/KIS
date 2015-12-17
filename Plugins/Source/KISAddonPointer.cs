@@ -113,7 +113,7 @@ namespace KIS
         {
             if (!running)
             {
-                KIS_Shared.DebugLog("StartPointer(pointer)");
+                KIS_Shared.logTrace("StartPointer(pointer)");
                 customRot = Vector3.zero;
                 aboveDistance = 0;
                 partToAttach = partToMoveAndAttach;

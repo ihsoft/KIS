@@ -195,10 +195,10 @@ namespace KIS
         /// horribly wrong. For instance, stock strut connector tries to restore connection when
         /// part is re-attached to the former vessel which may produce a collision. This method
         /// deletes all compound parts with target pointing to a different vessel.
-        /// TODO: Break the link instead of destroying the part.
-        /// TODO: Handle KAS and other popular plugins connectors.         
         /// </remarks>
         /// <param name="vessel">Vessel to fix links for.</param>
+        // TODO: Break the link instead of destroying the part.
+        // TODO: Handle KAS and other popular plugins connectors.         
         public static void CleanupExternalLinks(Vessel vessel)
         {
             var parts = vessel.parts.FindAll(p => p is CompoundPart);
@@ -214,12 +214,11 @@ namespace KIS
         }
 
         /// <summary>Decouples <paramref name="assemblyRoot"/> from the vessel.</summary>
-        /// <remarks>Also does external links celanup on both vessels.</remarks>
+        /// <remarks>Also does external links cleanup on both vessels.</remarks>
         /// <param name="assemblyRoot">An assembly to decouple.</param>
         public static void DecoupleAssembly(Part assemblyRoot)
         {
             if (!assemblyRoot.parent) {
-                logWarning("Part '{0}' has no parent, ignore decoupling", assemblyRoot);
                 return;  // Nothing to decouple.
             }
             SendKISMessage(assemblyRoot, MessageAction.Decouple);
@@ -380,6 +379,8 @@ namespace KIS
             newPart.Unpack();
             newPart.InitializeModules();
 
+            //FIXME: [Error]: Actor::setLinearVelocity: Actor must be (non-kinematic) dynamic!
+            //FIXME: [Error]: Actor::setAngularVelocity: Actor must be (non-kinematic) dynamic!            
             if (coupleToPart)
             {
                 newPart.rigidbody.velocity = coupleToPart.rigidbody.velocity;
