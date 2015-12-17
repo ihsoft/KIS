@@ -16,7 +16,6 @@ namespace KIS
 
         // Pointer parameters
         public static bool allowPart = false;
-        public static bool allowPartItself = false;
         public static bool allowEva = false;
         public static bool allowStatic = false;
 
@@ -555,7 +554,7 @@ namespace KIS
                 case PointerTarget.Part:
                     if (allowPart)
                     {
-                        if (hoveredPart == partToAttach && !allowPartItself)
+                        if (IsSameAssemblyChild(partToAttach, hoveredPart))
                         {
                             itselfIsInvalid = true;
                         }
@@ -705,6 +704,22 @@ namespace KIS
         public static AttachNode GetCurrentAttachNode()
         {
             return attachNodes[attachNodeIndex];
+        }
+
+        /// <summary>
+        /// Verifies if attaching part is not being attached to own child hierarchy.
+        /// </summary>
+        /// <param name="assemblyRoot">A root part of the assembly.</param>
+        /// <param name="child">A part being tested.</param>
+        /// <returns></returns>
+        private static bool IsSameAssemblyChild(Part assemblyRoot, Part child) {
+            for (Part part = child; part; part = part.parent) {
+                if (assemblyRoot == part) {
+                    KIS_Shared.logTrace("Attaching to self detected");
+                    return true;
+                }
+            }
+            return false;
         }
 
     }
