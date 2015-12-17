@@ -238,45 +238,6 @@ namespace KIS
             }
         }
 
-        public static void DecoupleFromAll(Part p)
-        {
-            SendKISMessage(p, MessageAction.Decouple);
-            if (p.parent)
-            {
-                p.decouple();
-                //name container if needed
-                ModuleKISInventory inv = p.GetComponent<ModuleKISInventory>();
-                if (inv)
-                {
-                    if (inv.invName != "")
-                    {
-                        p.vessel.vesselName = inv.part.partInfo.title + " | " + inv.invName;
-                    }
-                    else
-                    {
-                        p.vessel.vesselName = inv.part.partInfo.title;
-                    }
-                }
-            }
-            if (p.children.Count != 0)
-            {
-                DecoupleAllChilds(p);
-            }
-        }
-
-        public static void DecoupleAllChilds(Part p)
-        {
-            List<Part> partList = new List<Part>();
-            foreach (Part pc in p.children)
-            {
-                partList.Add(pc);
-            }
-            foreach (Part pc2 in partList)
-            {
-                if (pc2.parent) pc2.decouple();
-            }
-        }
-
         public static ConfigNode PartSnapshot(Part part)
         {
             ConfigNode node = new ConfigNode("PART");

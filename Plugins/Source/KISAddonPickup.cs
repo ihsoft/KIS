@@ -1068,9 +1068,9 @@ namespace KIS
                 }
                 AudioSource.PlayClipAtPoint(GameDatabase.Instance.GetAudioClip(modulePickup.dropSndPath), pos);
             }
-            KIS_Shared.DecoupleFromAll(movingPart);
-            movingPart.transform.position = pos;
-            movingPart.transform.rotation = rot;
+            KIS_Shared.DecoupleAssembly(movingPart);
+            movingPart.vessel.SetPosition(pos);
+            movingPart.vessel.SetRotation(rot);
             KIS_Shared.SendKISMessage(movingPart, KIS_Shared.MessageAction.DropEnd, KISAddonPointer.GetCurrentAttachNode(), tgtPart);
             KISAddonPointer.StopPointer();
             movingPart = null;
@@ -1094,10 +1094,10 @@ namespace KIS
         {
             KIS_Shared.DebugLog("Move part & attach");
             KIS_Shared.SendKISMessage(movingPart, KIS_Shared.MessageAction.AttachStart, KISAddonPointer.GetCurrentAttachNode(), tgtPart, tgtAttachNode);
-            KIS_Shared.DecoupleFromAll(movingPart);
-            movingPart.transform.position = pos;
-            movingPart.transform.rotation = rot;
-
+            KIS_Shared.DecoupleAssembly(movingPart);
+            movingPart.vessel.SetPosition(pos);
+            movingPart.vessel.SetRotation(rot);
+            
             ModuleKISItem moduleItem = movingPart.GetComponent<ModuleKISItem>();
             bool useExternalPartAttach = false;
             useExternalPartAttach = moduleItem && moduleItem.useExternalPartAttach;
