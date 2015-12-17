@@ -534,15 +534,6 @@ namespace KIS
                 }
             }
 
-            // Grab icon
-            if (part.children.Count > 0 || part.parent)
-            {
-                KISAddonCursor.CursorEnable("KIS/Textures/grabOk", "Detach & Grab", '(' + part.partInfo.title + ')');
-            }
-            else
-            {
-                KISAddonCursor.CursorEnable("KIS/Textures/grabOk", "Grab", '(' + part.partInfo.title + ')');
-            }
             // Grab icon.
             string cursorTitle = part.parent ? "Detach & Grab" : "Grab";
             string cursorText = grabbedPartsCount == 1
