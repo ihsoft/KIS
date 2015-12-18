@@ -1,5 +1,5 @@
 ### 1.2.X (18 December 2015)
-- Added support for moving complex assemblies (not just a signle part).
+- Added support for moving complex assemblies (not just a single part).
 - Some minor bug fixes.
 
 ### 1.2.3 (11 November 2015)
