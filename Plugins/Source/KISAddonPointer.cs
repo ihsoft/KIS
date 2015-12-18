@@ -865,11 +865,11 @@ namespace KIS
                                 meshFilters.Count(), prefabPart);
             foreach (var meshFilter in meshFilters) {
                 var combine = new CombineInstance();
-                combine.mesh = meshFilter.sharedMesh;
+                combine.mesh = meshFilter.mesh;  // Get a copy. 
                 combine.transform = meshFilter.transform.localToWorldMatrix;
                 meshCombines.Add(combine);
             }
-            Destroy(meshModel);
+            DestroyImmediate(meshModel);  // Don't allow it showing in the scene.
         }
     }
 }
