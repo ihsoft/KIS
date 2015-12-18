@@ -404,6 +404,14 @@ namespace KIS
             if (KISAddonPointer.isRunning) return;
             if (hoverInventoryGui()) return;
             if (draggedPart == part) return;
+            
+            // Don't grab kerbals. It's weird, and they don't have attachment nodes anyways.
+            if (part.name == "kerbalEVA" || part.name == "kerbalEVAfemale") {
+                KISAddonCursor.CursorEnable("KIS/Textures/forbidden", "Can't grab",
+                                            "(Kerbanauts can move themselves. Try to ask)");
+                return;
+            }
+            
             ModuleKISPartDrag pDrag = part.GetComponent<ModuleKISPartDrag>();
             ModuleKISPartMount parentMount = null;
             if (part.parent) parentMount = part.parent.GetComponent<ModuleKISPartMount>();
@@ -574,6 +582,14 @@ namespace KIS
             if (KISAddonPointer.isRunning) return;
             if (hoverInventoryGui()) return;
             if (draggedPart) return;
+
+            // Don't separate kerbals with their parts. They have a reason to be attached.
+            if (part.name == "kerbalEVA" || part.name == "kerbalEVAfemale") {
+                KISAddonCursor.CursorEnable("KIS/Textures/forbidden", "Can't grab",
+                                            "(This kerbanaut looks too attached to the part)");
+                return;
+            }
+
             ModuleKISPartDrag pDrag = part.GetComponent<ModuleKISPartDrag>();
             ModuleKISItem item = part.GetComponent<ModuleKISItem>();
             ModuleKISPartMount parentMount = null;
