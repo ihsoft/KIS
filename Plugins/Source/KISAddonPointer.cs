@@ -122,37 +122,9 @@ namespace KIS
                 running = true;
                 SendPointerClick = pClick;
                 SendPointerState = pState;
-                // Set possible attach nodes
-                attachNodes.Clear();
-                if (partToAttach.attachRules.srfAttach)
-                {
-                    KIS_Shared.DebugLog("Surface node set to default");
-                    attachNodes.Add(partToMoveAndAttach.srfAttachNode);
-                }
-                else if (partToAttach.attachNodes.Count == 0)
-                {
-                    KIS_Shared.DebugLog("No attach nodes found, surface node set to default");
-                    attachNodes.Add(partToMoveAndAttach.srfAttachNode);
-                }
-                else if (partToAttach.findAttachNode("bottom") != null)
-                {
-                    KIS_Shared.DebugLog("Bottom node set to default");
-                    attachNodes.Add(partToAttach.findAttachNode("bottom"));
-                }
-                else
-                {
-                    KIS_Shared.DebugLog(partToAttach.attachNodes[0].id + " node set to default");
-                    attachNodes.Add(partToAttach.attachNodes[0]);
-                }
-                foreach (AttachNode an in partToMoveAndAttach.attachNodes)
-                {
-                    if (!attachNodes.Contains(an))
-                    {
-                        attachNodes.Add(an);
-                        KIS_Shared.DebugLog("Node : " + an.id + " added");
-                    }
-                }
-                attachNodeIndex = 0;
+
+                MakePointer();
+               
                 InputLockManager.SetControlLock(ControlTypes.ALLBUTCAMERAS, "KISpointer");
             }
         }
@@ -163,6 +135,7 @@ namespace KIS
             running = false;
             ResetMouseOver();
             InputLockManager.RemoveControlLock("KISpointer");
+            DestroyPointer();
         }
 
         public void Update() {
@@ -330,7 +303,9 @@ namespace KIS
                     if (an != null)
                     {
                         attachNodeIndex = attachNodes.FindIndex(f => f.id == pMount.mountedPartNode);
-                        if (pointer) UnityEngine.Object.Destroy(pointer);
+                        SetPointerVisible(false);
+                    } else {
+                        SetPointerVisible(true);
                     }
                     // Init attach node
                     foreach (KeyValuePair<AttachNode, List<string>> mount in pMount.GetMounts())
@@ -398,51 +373,23 @@ namespace KIS
             if (running && MapView.MapIsEnabled)
             {
                 StopPointer();
-            }
-
-            // Remove pointer if not running or if the raycast do not hit anything
-            if (!running || pointerTarget == PointerTarget.Nothing)
-            {
-                if (pointer) UnityEngine.Object.Destroy(pointer);
                 return;
             }
 
-            //Create pointer if needed
-            if (!pointer)
-            {
-                GameObject modelGo = partToAttach.FindModelTransform("model").gameObject;
-                GameObject pointerModel = Mesh.Instantiate(modelGo, new Vector3(0, 0, 100), Quaternion.identity) as GameObject;
-                foreach (Collider col in pointerModel.GetComponentsInChildren<Collider>())
-                {
-                    UnityEngine.Object.DestroyImmediate(col);
-                }
-
-                pointer = new GameObject("KISPointer");
-                pointerModel.transform.parent = pointer.transform;
-                pointerModel.transform.localPosition = modelGo.transform.localPosition;
-                pointerModel.transform.localRotation = modelGo.transform.localRotation;
-                pointer.transform.localScale = new Vector3(scale, scale, scale);
-
-                allModelMr = new List<MeshRenderer>();
-                // Remove attached tube mesh renderer if any
-                List<MeshRenderer> tmpAllModelMr = new List<MeshRenderer>(pointerModel.GetComponentsInChildren<MeshRenderer>() as MeshRenderer[]);
-                foreach (MeshRenderer mr in tmpAllModelMr)
-                {
-                    if (mr.name == "KAStube" || mr.name == "KASsrcSphere" || mr.name == "KASsrcTube" || mr.name == "KAStgtSphere" || mr.name == "KAStgtTube")
-                    {
-                        Destroy(mr);
-                        continue;
-                    }
-                    allModelMr.Add(mr);
-                    mr.material = new Material(Shader.Find("Transparent/Diffuse"));
-                }
-                // Set pointer attach node
-                pointerNodeTransform = new GameObject("KASPointerPartNode").transform;
-                pointerNodeTransform.parent = pointer.transform;
-                pointerNodeTransform.localPosition = GetCurrentAttachNode().position;
-                pointerNodeTransform.localRotation = KIS_Shared.GetNodeRotation(GetCurrentAttachNode());
+            // Remove pointer if not running.
+            if (!running) {
+                DestroyPointer();
+                return;
             }
 
+            // Hide pointer if the raycast do not hit anything.
+            if (pointerTarget == PointerTarget.Nothing) {
+                SetPointerVisible(false);
+                return;
+            }
+
+            SetPointerVisible(true);
+            
             // Custom rotation
             float rotDegree = 15;
             if (Input.GetKey(KeyCode.LeftShift))
@@ -660,16 +607,23 @@ namespace KIS
                 }
                 if (GameSettings.Editor_toggleSymMethod.GetKeyDown())  // "R" by default.
                 {
-                    if (pointerTarget != PointerTarget.PartMount)
-                    {
-                        if (pointer) UnityEngine.Object.Destroy(pointer);
-                        attachNodeIndex++;
-                        if (attachNodeIndex > (attachNodes.Count - 1))
-                        {
-                            attachNodeIndex = 0;
+                    if (pointerTarget != PointerTarget.PartMount) {
+                        if (attachNodes.Count() > 1) {
+                            attachNodeIndex++;
+                            if (attachNodeIndex > (attachNodes.Count - 1)) {
+                                attachNodeIndex = 0;
+                            }
+                            KIS_Shared.logInfo("Attach node index changed to: {0}",
+                                               attachNodeIndex);
+                            UpdatePointerAttachNode();
+                            ResetMouseOver();
+                            SendPointerState(
+                                pointerTarget, PointerState.OnChangeAttachNode, null, null);
+                        } else {
+                            KIS_Shared.ShowRightScreenMessage(
+                                "This part has only one attach node!");
+                            audioBipWrong.Play();
                         }
-                        ResetMouseOver();
-                        SendPointerState(pointerTarget, PointerState.OnChangeAttachNode, null, null);
                     }
                 }
             }
@@ -696,5 +650,226 @@ namespace KIS
             return false;
         }
 
+        /// <summary>Sets current pointer visible state.</summary>
+        /// <remarks>
+        /// Method expects all or none of the objects in the pointer to be visible: pointer
+        /// visiblity state is determined by checking the first <c>MeshRenderer</c> only.
+        /// </remarks>
+        /// <param name="isVisible">New state.</param>
+        /// <exception cref="InvalidOperationException">If pointer doesn't exist.</exception>
+        private static void SetPointerVisible(bool isVisible) {
+            if (!pointer) {
+                throw new InvalidOperationException("Pointer doesn't exist");
+            }
+            foreach (var mr in pointer.GetComponentsInChildren<MeshRenderer>()) {
+                if (mr.enabled == isVisible) {
+                    return;  // Abort if current state is already up to date.
+                }
+                mr.enabled = isVisible;
+            }
+            KIS_Shared.logTrace("Pointer visibility state set to: {0}", isVisible);
+        }
+
+        /// <summary>Makes a game object to represent currently dragging assembly.</summary>
+        /// <remarks>It's a very expensive operation.</remarks>
+        private static void MakePointer() {
+            DestroyPointer();
+            MakePointerAttachNodes();
+            
+            var combines = new List<CombineInstance>();
+            if (!partToAttach.GetComponentInChildren<MeshFilter>()) {
+                CollectMeshesFromPrefab(partToAttach, combines);
+            } else {
+                CollectMeshesFromAssembly(
+                    partToAttach, partToAttach.transform.localToWorldMatrix.inverse, combines);
+            }
+
+            pointer = new GameObject("KISPointer");
+
+            // Create one filter per mesh in the hierarhcy. Simple combining all meshes into one
+            // larger mesh may have weird representation artifacts on different video cards.
+            foreach (var combine in combines) {
+                KIS_Shared.logTrace("Add mesh filter for: {0}", combine.transform);
+                var mesh = new Mesh();
+                mesh.CombineMeshes(new CombineInstance[] {combine});
+                var childObj = new GameObject("KISPointerChildMesh");
+
+                var meshRenderer = childObj.AddComponent<MeshRenderer>();
+                meshRenderer.castShadows = false;
+                meshRenderer.receiveShadows = false;
+
+                var filter = childObj.AddComponent<MeshFilter>();
+                filter.sharedMesh = mesh;
+                
+                childObj.transform.parent = pointer.transform;
+            }
+
+            allModelMr = new List<MeshRenderer>(
+                pointer.GetComponentsInChildren<MeshRenderer>() as MeshRenderer[]);
+            foreach (var mr in allModelMr) {
+                mr.material = new Material(Shader.Find("Transparent/Diffuse"));
+            }
+
+            pointerNodeTransform.parent = pointer.transform;
+            KIS_Shared.logInfo("Pointer created");
+        }
+
+        /// <summary>Sets possible attach nodes in <c>attachNodes</c>.</summary>
+        /// <exception cref="InvalidOperationException">
+        /// If part has no valid attachment nodes.
+        /// </exception>
+        private static void MakePointerAttachNodes() {
+            attachNodes.Clear();
+            attachNodeIndex = -1;
+
+            // If root part allows surface mounting then the rest of the hierarchy can be
+            // attached either on the side of the surface node or on the opposite. The attach nodes
+            // oriented towards the assembly children must not be allowed for attaching to avoid
+            // collisions.
+            var childrenOrientation = Vector3.zero;
+            if (partToAttach.children.Any() && partToAttach.attachRules.srfAttach) {
+                var srfNode = partToAttach.srfAttachNode;
+                if (srfNode.attachedPart) {
+                    // Root is surface attached. Find direction of the children.
+                    childrenOrientation = srfNode.attachedPart == partToAttach.parent
+                        ? -srfNode.orientation : srfNode.orientation;
+                } else {
+                    // Root is stack attached. Go thru the nodes and find the direction.
+                    foreach (var an in partToAttach.attachNodes) {
+                        if (an.attachedPart && an.attachedPart.parent == partToAttach) {
+                            childrenOrientation = an.orientation;
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            // Surface node is not listed in attachNodes, handle it separately.
+            if (partToAttach.attachRules.srfAttach
+                && !childrenOrientation.Equals(partToAttach.srfAttachNode.orientation)) {
+                KIS_Shared.logTrace("Surface node set to default");
+                attachNodes.Add(partToAttach.srfAttachNode);
+                attachNodeIndex = 0;
+            }
+
+            // Handle stack nodes.
+            foreach (AttachNode an in partToAttach.attachNodes) {
+                // Skip nodes occupied by children.
+                if (an.attachedPart && an.attachedPart.parent == partToAttach) {
+                    KIS_Shared.logTrace("Skip occupied node '{0}' attached to: {1}",
+                                        an.id, an.attachedPart);
+                    continue;
+                }
+                
+                // Skip nodes pointing towards the children.
+                if (childrenOrientation.Equals(an.orientation)) {
+                    KIS_Shared.logTrace("Skip node '{0}' oriented towards children, "
+                                        + " attached to: {1}", an.id, an.attachedPart);
+                    continue;
+                }
+
+                // Deduct the most appropriate default attach node. In VBH "bottom" is a usual
+                // node so, prefer it when available.
+                if (attachNodeIndex == -1 && an.id.Equals("bottom")) {
+                    KIS_Shared.logTrace("Bottom node set to default");
+                    attachNodeIndex = attachNodes.Count();
+                }
+
+                attachNodes.Add(an);
+                KIS_Shared.logTrace("Added node: {0}", an.id);
+            }
+            
+            // Fallback if no default node is found.
+            if (attachNodeIndex == -1) {
+                if (!attachNodes.Any()) {
+                    throw new InvalidOperationException("No attach nodes found for the part!");
+                }
+                attachNodeIndex = 0;
+                KIS_Shared.logTrace("'{0}' node set to default", attachNodes[attachNodeIndex].id);
+            }
+
+            // Make node transformations.
+            if (pointerNodeTransform) { 
+                Destroy(pointerNodeTransform);
+            }
+            pointerNodeTransform = new GameObject("KASPointerPartNode").transform;
+            UpdatePointerAttachNode();
+        }
+
+        /// <summary>Sets pointer origin to the current attachment node</summary>
+        private static void UpdatePointerAttachNode() {
+            pointerNodeTransform.localPosition = GetCurrentAttachNode().position;
+            pointerNodeTransform.localRotation = KIS_Shared.GetNodeRotation(GetCurrentAttachNode());
+        }
+        
+        /// <summary>Destroyes object(s) allocated to represent a pointer.</summary>
+        /// <remarks>
+        /// When making pointer for a complex hierarchy a lot of different resources may be
+        /// allocated/dropped. Destroying each one of them can be too slow so, cleanup is done in
+        /// one call to <c>UnloadUnusedAssets()</c>.
+        /// </remarks>
+        private static void DestroyPointer() {
+            if (!pointer) {
+                return;  // Nothing to do.
+            }
+            Destroy(pointer);
+            pointer = null;
+            Destroy(pointerNodeTransform);
+            pointerNodeTransform = null;
+            allModelMr.Clear();
+
+            // On large assemblies memory consumption can be significant. Reclaim it.
+            Resources.UnloadUnusedAssets();
+            KIS_Shared.logInfo("Pointer destroyed");
+        }
+
+        /// <summary>Goes thru part assembly and collects all meshes in the hierarchy.</summary>
+        /// <remarks>
+        /// Returns shared meshes with the right transformations. No new objects are created.
+        /// </remarks>
+        /// <param name="assembly">Assembly to collect meshes from.</param>
+        /// <param name="worldTransform">A world transformation matrix to apply to every mesh after
+        ///     it's translated into world's coordinates.</param>
+        /// <param name="meshCombines">[out] Collected meshes.</param>
+        private static void CollectMeshesFromAssembly(Part assembly,
+                                                      Matrix4x4 worldTransform,
+                                                      List<CombineInstance> meshCombines) {
+            // This gives part's mesh(es) and all surface attached children part meshes.
+            MeshFilter[] meshFilters = assembly.GetComponentsInChildren<MeshFilter>();
+            KIS_Shared.logTrace("Found {0} children meshes in: {1}", meshFilters.Count(), assembly);
+            foreach (var meshFilter in meshFilters) {
+                var combine = new CombineInstance();
+                combine.mesh = meshFilter.sharedMesh;
+                combine.transform = worldTransform * meshFilter.transform.localToWorldMatrix;
+                meshCombines.Add(combine);
+            }
+
+            // Go thru the stacked children parts. They don't have local transformation.
+            foreach (Part child in assembly.children) {
+                if (child.transform.position.Equals(child.transform.localPosition)) {
+                    KIS_Shared.logTrace("Collect meshes from stacked child: {0}", child);
+                    CollectMeshesFromAssembly(child, worldTransform, meshCombines);
+                }
+            }
+        }
+
+        /// <summary>Creates and returns meshes from a prefab.</summary>
+        /// <param name="prefabPart">A part to make meshes for.</param>
+        /// <param name="meshCombines">[out] Collected meshes.</param>
+        private static void CollectMeshesFromPrefab(Part prefabPart,
+                                                    List<CombineInstance> meshCombines) {
+            var model = prefabPart.FindModelTransform("model").gameObject;
+            var meshModel = Instantiate(model, Vector3.zero, Quaternion.identity) as GameObject;
+            var meshFilters = meshModel.GetComponentsInChildren<MeshFilter>();
+            KIS_Shared.logTrace("Created {0} meshes from prefab: {1}",
+                                meshFilters.Count(), prefabPart);
+            foreach (var meshFilter in meshFilters) {
+                var combine = new CombineInstance();
+                combine.mesh = meshFilter.sharedMesh;
+                combine.transform = meshFilter.transform.localToWorldMatrix;
+                meshCombines.Add(combine);
+            }
+            Destroy(meshModel);
+        }
     }
 }
