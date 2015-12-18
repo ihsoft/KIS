@@ -15,7 +15,23 @@ namespace KIS
 
     static public class KIS_Shared
     {
-        public static bool debugLog = true;
+        public enum DebugLogLevel {
+            NONE = 0,
+            ERROR = 1,
+            WARNING = 2,
+            INFO = 3,
+            TRACE = 4
+        }
+        // TODO: Read it from the config.
+        public static DebugLogLevel logLevel = DebugLogLevel.INFO;
+        
+        private static Dictionary<String, float> exLastReportedTs = new Dictionary<String, float>();
+        private static Dictionary<String, int> exCount = new Dictionary<String, int>();
+        // TODO: Read it from the config.
+        private const float exceptionLogsAggreagtionPeriod = 10.0f;  // Seconds.
+        // TODO: Read it from the config.
+        private const float DefaultMessageTimeout = 5f;  // Seconds.
+        
         public static string bipWrongSndPath = "KIS/Sounds/bipwrong";
         public delegate void OnPartCoupled(Part createdPart, Part tgtPart = null, AttachNode tgtAttachNode = null);
 
@@ -31,30 +47,79 @@ namespace KIS
             destPart.SendMessage("OnKISAction", bEventData, SendMessageOptions.DontRequireReceiver);
         }
 
+        public static void logTrace(string fmt, params object[] args) {
+            if (logLevel >= DebugLogLevel.TRACE) {
+                Debug.Log("[KIS] " + String.Format(fmt, args));
+            }
+        }
+
+        public static void logInfo(string fmt, params object[] args) {
+            if (logLevel >= DebugLogLevel.INFO) {
+                Debug.Log("[KIS] " + String.Format(fmt, args));
+            }
+        }
+
+        public static void logWarning(string fmt, params object[] args) {
+            if (logLevel >= DebugLogLevel.WARNING) {
+                Debug.LogWarning("[KIS] " + String.Format(fmt, args));
+            }
+        }
+
+        public static void logError(string fmt, params object[] args) {
+            if (logLevel >= DebugLogLevel.ERROR) {
+                Debug.LogError("[KIS] " + String.Format(fmt, args));
+            }
+        }
+
+        /// <summary>Logs an exception that is happenning very frequently.</summary>
+        /// <remarks>
+        /// When an exception is being thrown at a high rate it's hard to catch its context since
+        /// the debug log updates and scrolls too quickly. By logging exceptions with this method
+        /// first occurrence is logged right away and all the subsequent repetitions are aggregated
+        /// and reported every 10 seconds (a constant for now). Exceptions are macthed by their
+        /// string representation which is expected to capture the stack trace.         
+        /// </remarks>
+        /// <param name="ex">An exception to log.</param>
+        public static void logExceptionRepeated(Exception ex) {
+            var exText = ex.ToString();
+            if (exLastReportedTs.ContainsKey(exText)) {
+                exCount[exText] += 1;
+                if (exLastReportedTs[exText] + exceptionLogsAggreagtionPeriod < Time.unscaledTime) {
+                    logError("Exception has repeated {0} times in the last {1:F2} seconds:\n{2}",
+                             exCount[exText], Time.unscaledTime - exLastReportedTs[exText],
+                             exText);
+                    exLastReportedTs[exText] = Time.unscaledTime;
+                    exCount[exText] = 0;
+                }
+                return;
+            }
+            exLastReportedTs[exText] = Time.unscaledTime;
+            exCount[exText] = 1;
+            logError(exText);
+        }
+        
+        // TODO: Deprecate.
         public static void DebugLog(string text)
         {
-            if (debugLog) Debug.Log("[KIS] " + text);
+            logInfo(text);
         }
 
+        // TODO: Deprecate.
         public static void DebugLog(string text, UnityEngine.Object context)
         {
-            if (debugLog) Debug.Log("[KIS] " + text, context);
+            if (logLevel >= DebugLogLevel.INFO) Debug.Log("[KIS] " + text, context);
         }
 
+        // TODO: Deprecate.
         public static void DebugWarning(string text)
         {
-            if (debugLog)
-            {
-                Debug.LogWarning("[KIS] " + text);
-            }
+            logWarning(text);
         }
 
+        // TODO: Deprecate.
         public static void DebugError(string text)
         {
-            if (debugLog)
-            {
-                Debug.LogError("[KIS] " + text);
-            }
+            logError(text);
         }
 
         public static Part GetPartUnderCursor()
@@ -101,42 +166,74 @@ namespace KIS
             }
         }
 
-        public static void DecoupleFromAll(Part p)
+        /// <summary>
+        /// Walks thru the hierarchy and calculates the total mass of the assembly.
+        /// </summary>
+        /// <param name="rootPart">A root part of the assembly.</param>
+        /// <param name="childrenCount">[out] A total number of children in the assembly.</param>
+        /// <returns>Full mass of the hierarchy.</returns>
+        public static float GetAssemblyMass(Part rootPart, out int childrenCount)
         {
-            SendKISMessage(p, MessageAction.Decouple);
-            if (p.parent)
-            {
-                p.decouple();
-                //name container if needed
-                ModuleKISInventory inv = p.GetComponent<ModuleKISInventory>();
-                if (inv)
-                {
-                    if (inv.invName != "")
-                    {
-                        p.vessel.vesselName = inv.part.partInfo.title + " | " + inv.invName;
-                    }
-                    else
-                    {
-                        p.vessel.vesselName = inv.part.partInfo.title;
-                    }
-                }
+            childrenCount = 0;
+            return Internal_GetAssemblyMass(rootPart, ref childrenCount);
+        }
+
+        /// <summary>Recursive implementation of <c>GetAssemblyMass</c>.</summary>
+        private static float Internal_GetAssemblyMass(Part rootPart, ref int childrenCount)
+        {
+            float totalMass = rootPart.mass + rootPart.GetResourceMass();
+            ++childrenCount;
+            foreach (Part child in rootPart.children) {
+                totalMass += Internal_GetAssemblyMass(child, ref childrenCount);
             }
-            if (p.children.Count != 0)
-            {
-                DecoupleAllChilds(p);
+            return totalMass;
+        }
+
+        /// <summary>Fixes all structural links to another vessel(s).</summary>
+        /// <remarks>
+        /// Normally compound parts should handle decoupling themselves but sometimes they do it
+        /// horribly wrong. For instance, stock strut connector tries to restore connection when
+        /// part is re-attached to the former vessel which may produce a collision. This method
+        /// deletes all compound parts with target pointing to a different vessel.
+        /// </remarks>
+        /// <param name="vessel">Vessel to fix links for.</param>
+        // TODO: Break the link instead of destroying the part.
+        // TODO: Handle KAS and other popular plugins connectors.         
+        public static void CleanupExternalLinks(Vessel vessel)
+        {
+            var parts = vessel.parts.FindAll(p => p is CompoundPart);
+            logInfo("Check {0} compound part(s) in vessel: {1}", parts.Count(), vessel);
+            foreach (var part in parts) {
+                var compoundPart = part as CompoundPart;
+                if (compoundPart.target && compoundPart.target.vessel != vessel) {
+                    logTrace("Destroy compound part '{0}' which links '{1}' to '{2}'",
+                             compoundPart, compoundPart.parent, compoundPart.target);
+                    compoundPart.Die();
+                }
             }
         }
 
-        public static void DecoupleAllChilds(Part p)
+        /// <summary>Decouples <paramref name="assemblyRoot"/> from the vessel.</summary>
+        /// <remarks>Also does external links cleanup on both vessels.</remarks>
+        /// <param name="assemblyRoot">An assembly to decouple.</param>
+        public static void DecoupleAssembly(Part assemblyRoot)
         {
-            List<Part> partList = new List<Part>();
-            foreach (Part pc in p.children)
-            {
-                partList.Add(pc);
+            if (!assemblyRoot.parent) {
+                return;  // Nothing to decouple.
             }
-            foreach (Part pc2 in partList)
-            {
-                if (pc2.parent) pc2.decouple();
+            SendKISMessage(assemblyRoot, MessageAction.Decouple);
+            Vessel oldVessel = assemblyRoot.vessel;
+            assemblyRoot.decouple();
+            CleanupExternalLinks(oldVessel);
+            CleanupExternalLinks(assemblyRoot.vessel);
+
+            ModuleKISInventory inv = assemblyRoot.GetComponent<ModuleKISInventory>();
+            if (inv) {
+                if (inv.invName != "") {
+                    assemblyRoot.vessel.vesselName = inv.part.partInfo.title + " | " + inv.invName;
+                } else {
+                    assemblyRoot.vessel.vesselName = inv.part.partInfo.title;
+                }
             }
         }
 
@@ -282,6 +379,8 @@ namespace KIS
             newPart.Unpack();
             newPart.InitializeModules();
 
+            //FIXME: [Error]: Actor::setLinearVelocity: Actor must be (non-kinematic) dynamic!
+            //FIXME: [Error]: Actor::setAngularVelocity: Actor must be (non-kinematic) dynamic!            
             if (coupleToPart)
             {
                 newPart.rigidbody.velocity = coupleToPart.rigidbody.velocity;
@@ -615,5 +714,46 @@ namespace KIS
             return btnPress;
         }
 
+        /// <summary>Shows a formatted message with the specified location and timeout.</summary>
+        /// <param name="style">A <c>ScreenMessageStyle</c> specifier.</param>
+        /// <param name="duration">Delay before hiding the message in seconds.</param>
+        /// <param name="fmt"><c>String.Format()</c> formatting string.</param>
+        /// <param name="args">Arguments for the formattign string.</param>
+        public static void ShowScreenMessage(
+            ScreenMessageStyle style, float duration, String fmt, params object[] args) {
+            ScreenMessages.PostScreenMessage(String.Format(fmt, args), duration, style);
+        }
+
+        /// <summary>Shows a message in the upper center area with the specified timeout.</summary>
+        /// <param name="duration">Delay before hiding the message in seconds.</param>
+        /// <param name="fmt"><c>String.Format()</c> formatting string.</param>
+        /// <param name="args">Arguments for the formattign string.</param>
+        public static void ShowCenterScreenMessageWithTimeout(
+            float duration, String fmt, params object[] args) {
+            ShowScreenMessage(ScreenMessageStyle.UPPER_CENTER, duration, fmt, args);
+        }
+
+        /// <summary>Shows a message in the upper center area with a default timeout.</summary>
+        /// <param name="fmt"><c>String.Format()</c> formatting string.</param>
+        /// <param name="args">Arguments for the formattign string.</param>
+        public static void ShowCenterScreenMessage(String fmt, params object[] args) {
+            ShowCenterScreenMessageWithTimeout(DefaultMessageTimeout, fmt, args);
+        }
+        
+        /// <summary>Shows a message in the upper right corner with the specified timeout.</summary>
+        /// <param name="duration">Delay before hiding the message in seconds.</param>
+        /// <param name="fmt"><c>String.Format()</c> formatting string.</param>
+        /// <param name="args">Arguments for the formattign string.</param>
+        public static void ShowRightScreenMessageWithTimeout(
+            float duration, String fmt, params object[] args) {
+            ShowScreenMessage(ScreenMessageStyle.UPPER_RIGHT, duration, fmt, args);
+        }
+
+        /// <summary>Shows a message in the upper center area with a default timeout.</summary>
+        /// <param name="fmt"><c>String.Format()</c> formatting string.</param>
+        /// <param name="args">Arguments for the formattign string.</param>
+        public static void ShowRightScreenMessage(String fmt, params object[] args) {
+            ShowRightScreenMessageWithTimeout(DefaultMessageTimeout, fmt, args);
+        }
     }
 }

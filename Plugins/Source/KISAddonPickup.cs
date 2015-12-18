@@ -43,6 +43,10 @@ namespace KIS
         private bool grabOk = false;
         private bool detachOk = false;
         private bool jetpackLock = false;
+        private bool delayedButtonUp = false;
+
+        public static int grabbedPartsCount;
+        public static float grabbedMass;  // Tons.
 
         public enum PointerMode { Drop, Attach }
         private PointerMode _pointerMode = PointerMode.Drop;
@@ -159,7 +163,15 @@ namespace KIS
             GameEvents.onVesselChange.Add(new EventData<Vessel>.OnEvent(this.OnVesselChange));
         }
 
-        void Update()
+        public void Update() {
+            try {
+                Internal_Update();
+            } catch (Exception e) {
+                KIS_Shared.logExceptionRepeated(e);
+            }
+        }
+        
+        private void Internal_Update()
         {
             // Check if grab key is pressed
             if (HighLogic.LoadedSceneIsFlight)
@@ -203,9 +215,20 @@ namespace KIS
             // On drag released
             if (HighLogic.LoadedSceneIsEditor || HighLogic.LoadedSceneIsFlight)
             {
-                if (draggedPart && Input.GetMouseButtonUp(0))
+                if (draggedPart && (Input.GetMouseButtonUp(0) || delayedButtonUp))
                 {
-                    OnDragReleased();
+                    // In slow scenes mouse button can be pressed and released in just one frame.
+                    // As a result UP event may get handled before DOWN handlers which leads to
+                    // false action triggering. So, just postpone UP even by one frame when it
+                    // happens in the same frame as the DOWN event.
+                    if (KISAddonCursor.partClickedFrame == Time.frameCount) {
+                        KIS_Shared.logTrace(
+                            "Postponing mouse button up event in frame {0}", Time.frameCount);
+                        delayedButtonUp = true;  // Event will be handled in the next frame.
+                    } else {
+                        delayedButtonUp = false;
+                        OnDragReleased();
+                    }
                 }
             }
         }
@@ -381,6 +404,14 @@ namespace KIS
             if (KISAddonPointer.isRunning) return;
             if (hoverInventoryGui()) return;
             if (draggedPart == part) return;
+            
+            // Don't grab kerbals. It's weird, and they don't have attachment nodes anyways.
+            if (part.name == "kerbalEVA" || part.name == "kerbalEVAfemale") {
+                KISAddonCursor.CursorEnable("KIS/Textures/forbidden", "Can't grab",
+                                            "(Kerbanauts can move themselves. Try to ask)");
+                return;
+            }
+            
             ModuleKISPartDrag pDrag = part.GetComponent<ModuleKISPartDrag>();
             ModuleKISPartMount parentMount = null;
             if (part.parent) parentMount = part.parent.GetComponent<ModuleKISPartMount>();
@@ -409,10 +440,12 @@ namespace KIS
                 return;
             }
 
-            // Check part mass
-            float pMass = (part.mass + part.GetResourceMass());
+            // Check part mass.
+            grabbedMass = KIS_Shared.GetAssemblyMass(part, out grabbedPartsCount);
+            part.SetHighlight(true, true);  // Highlight whole hierarchy.
+                
             float pickupMaxMass = GetAllPickupMaxMassInRange(part);
-            if (pMass > pickupMaxMass)
+            if (grabbedMass > pickupMaxMass)
             {
                 KISAddonCursor.CursorEnable("KIS/Textures/tooHeavy", "Too heavy", "(Bring more kerbal [" + pMass + " > " + pickupMaxMass + ")");
                 return;
@@ -493,35 +526,14 @@ namespace KIS
                 }
             }
 
-            // check number of part attached
-            if (part.parent)
-            {
-                if (part.children.Count > 0)
-                {
-                    KISAddonCursor.CursorEnable("KIS/Textures/forbidden", "Can't grab", "(" + (part.children.Count + 1) + " parts is attached to it)");
-                    return;
-                }
-            }
-            else
-            {
-                if (part.children.Count > 1)
-                {
-                    KISAddonCursor.CursorEnable("KIS/Textures/forbidden", "Can't grab", "(" + part.children.Count + " parts is attached to it)");
-                    return;
-                }
-            }
+            // Grab icon.
+            string cursorTitle = part.parent ? "Detach & Grab" : "Grab";
+            string cursorText = grabbedPartsCount == 1
+                ? String.Format("({0})", part.partInfo.title)
+                : String.Format(
+                    "({0} with {1} attached parts)", part.partInfo.title, grabbedPartsCount - 1);
+            KISAddonCursor.CursorEnable("KIS/Textures/grabOk", cursorTitle, cursorText);
 
-            // Grab icon
-            if (part.children.Count > 0 || part.parent)
-            {
-                KISAddonCursor.CursorEnable("KIS/Textures/grabOk", "Detach & Grab", '(' + part.partInfo.title + ')');
-            }
-            else
-            {
-                KISAddonCursor.CursorEnable("KIS/Textures/grabOk", "Grab", '(' + part.partInfo.title + ')');
-            }
-
-            part.SetHighlight(true, false);
             grabOk = true;
         }
 
@@ -553,7 +565,12 @@ namespace KIS
             {
                 KISAddonCursor.CursorDefault();
             }
-            p.SetHighlight(false, false);
+
+            p.SetHighlight(false /* active */, true /* recursive */);
+            // HACK: Game will remember "recursive" setting and continue selecting the
+            // hierarchy on mouse hover. Do an explicit call with recusrive=false to reset it.
+            p.SetHighlight(false /* active */, false /* recursive */);
+
             grabOk = false;
         }
 
@@ -565,6 +582,14 @@ namespace KIS
             if (KISAddonPointer.isRunning) return;
             if (hoverInventoryGui()) return;
             if (draggedPart) return;
+
+            // Don't separate kerbals with their parts. They have a reason to be attached.
+            if (part.name == "kerbalEVA" || part.name == "kerbalEVAfemale") {
+                KISAddonCursor.CursorEnable("KIS/Textures/forbidden", "Can't grab",
+                                            "(This kerbanaut looks too attached to the part)");
+                return;
+            }
+
             ModuleKISPartDrag pDrag = part.GetComponent<ModuleKISPartDrag>();
             ModuleKISItem item = part.GetComponent<ModuleKISItem>();
             ModuleKISPartMount parentMount = null;
@@ -1043,9 +1068,9 @@ namespace KIS
                 }
                 AudioSource.PlayClipAtPoint(GameDatabase.Instance.GetAudioClip(modulePickup.dropSndPath), pos);
             }
-            KIS_Shared.DecoupleFromAll(movingPart);
-            movingPart.transform.position = pos;
-            movingPart.transform.rotation = rot;
+            KIS_Shared.DecoupleAssembly(movingPart);
+            movingPart.vessel.SetPosition(pos);
+            movingPart.vessel.SetRotation(rot);
             KIS_Shared.SendKISMessage(movingPart, KIS_Shared.MessageAction.DropEnd, KISAddonPointer.GetCurrentAttachNode(), tgtPart);
             KISAddonPointer.StopPointer();
             movingPart = null;
@@ -1069,13 +1094,13 @@ namespace KIS
         {
             KIS_Shared.DebugLog("Move part & attach");
             KIS_Shared.SendKISMessage(movingPart, KIS_Shared.MessageAction.AttachStart, KISAddonPointer.GetCurrentAttachNode(), tgtPart, tgtAttachNode);
-            KIS_Shared.DecoupleFromAll(movingPart);
-            movingPart.transform.position = pos;
-            movingPart.transform.rotation = rot;
-
+            KIS_Shared.DecoupleAssembly(movingPart);
+            movingPart.vessel.SetPosition(pos);
+            movingPart.vessel.SetRotation(rot);
+            
             ModuleKISItem moduleItem = movingPart.GetComponent<ModuleKISItem>();
             bool useExternalPartAttach = false;
-            if (moduleItem) if (moduleItem.useExternalPartAttach) useExternalPartAttach = true;
+            useExternalPartAttach = moduleItem && moduleItem.useExternalPartAttach;
             if (tgtPart && !useExternalPartAttach)
             {
                 KIS_Shared.CouplePart(movingPart, tgtPart, srcAttachNodeID, tgtAttachNode);

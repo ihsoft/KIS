@@ -155,7 +155,15 @@ namespace KIS
             }
         }
 
-        void Update()
+        void Update() {
+            try {
+                Internal_Update();
+            } catch (Exception e) {
+                KIS_Shared.logExceptionRepeated(e);
+            }
+        }
+        
+        private void Internal_Update()
         {
             if (showGui)
             {
@@ -729,6 +737,19 @@ namespace KIS
         public float GetModuleMass(float defaultMass)
         {
             return GetContentMass();
+        }
+
+        /// <summary>Checks if part has a child, and reports the problem.</summary>
+        /// <param name="p">A part to check.</param>
+        /// <returns><c>true</c> if it's OK to put the part into the inventory.</returns>
+        private bool VerifyIsNotAssembly(Part p) {
+            if (KISAddonPickup.grabbedPartsCount > 1) {
+                KIS_Shared.ShowCenterScreenMessage(
+                    "Cannot put a part with children into the inventory."
+                    + " There are {0} part(s) attached", KISAddonPickup.grabbedPartsCount - 1);
+                return false;
+            }
+            return true;
         }
 
         private bool VolumeAvailableFor(Part p)
@@ -1635,7 +1656,8 @@ namespace KIS
                                     }
                                     else
                                     {
-                                        if (VolumeAvailableFor(KISAddonPickup.draggedPart))
+                                        if (VerifyIsNotAssembly(KISAddonPickup.draggedPart)
+                                            && VolumeAvailableFor(KISAddonPickup.draggedPart))
                                         {
                                             KIS_Shared.SendKISMessage(KISAddonPickup.draggedPart, KIS_Shared.MessageAction.Store);
                                             AddItem(KISAddonPickup.draggedPart, 1, i);
