@@ -17,6 +17,7 @@ namespace KIS
         // Pointer parameters
         public static bool allowPart = false;
         public static bool allowEva = false;
+        public static bool allowPartItself = false;
         public static bool allowStatic = false;
 
         public static Color colorNok = Color.red;
@@ -531,86 +532,59 @@ namespace KIS
             float targetDist = Vector3.Distance(FlightGlobals.ActiveVessel.transform.position, hit.point);
 
             //Set color
-            Color color = colorNok;
+            Color color = colorOk;
             bool invalidTarget = false;
             bool notAllowedOnMount = false;
             bool cannotSurfaceAttach = false;
             bool invalidCurrentNode = false;
-            bool itselfIsInvalid = false;
+            bool itselfIsInvalid =
+                !allowPartItself && IsSameAssemblyChild(partToAttach, hoveredPart);
             switch (pointerTarget)
             {
                 case PointerTarget.Static:
-                    if (allowStatic) color = colorOk;
-                    else invalidTarget = true;
-                    break;
                 case PointerTarget.StaticRb:
-                    if (allowStatic) color = colorOk;
-                    else invalidTarget = true;
+                    invalidTarget = !allowStatic;
                     break;
                 case PointerTarget.KerbalEva:
-                    if (allowEva) color = colorOk;
-                    else invalidTarget = true;
+                    invalidTarget = !allowEva;
                     break;
                 case PointerTarget.Part:
-                    if (allowPart)
-                    {
-                        if (IsSameAssemblyChild(partToAttach, hoveredPart))
-                        {
-                            itselfIsInvalid = true;
-                        }
-                        else
-                        {
-                            if (useAttachRules)
-                            {
-                                if (hoveredPart.attachRules.allowSrfAttach)
-                                {
-                                    if (GetCurrentAttachNode().nodeType == AttachNode.NodeType.Surface)
-                                    {
-                                        color = colorOk;
-                                    }
-                                    else
-                                    {
-                                        invalidCurrentNode = true;
-                                    }
-                                }
-                                else cannotSurfaceAttach = true;
-                            }
-                            else
-                            {
-                                color = colorOk;
+                    if (allowPart) {
+                        if (useAttachRules) {
+                            if (hoveredPart.attachRules.allowSrfAttach) {
+                                invalidCurrentNode =
+                                    GetCurrentAttachNode().nodeType != AttachNode.NodeType.Surface;
+                            } else {
+                                cannotSurfaceAttach = true;
                             }
                         }
+                    } else {
+                        invalidTarget = true;
                     }
-                    else invalidTarget = true;
                     break;
                 case PointerTarget.PartMount:
-                    if (allowMount)
-                    {
+                    if (allowMount) {
                         ModuleKISPartMount pMount = hoveredPart.GetComponent<ModuleKISPartMount>();
-                        List<string> allowedPartNames = new List<string>();
+                        var allowedPartNames = new List<string>();
                         pMount.GetMounts().TryGetValue(hoveredNode, out allowedPartNames);
-                        if (allowedPartNames.Contains(partToAttach.partInfo.name))
-                        {
-                            color = colorMountOk;
-                        }
-                        else
-                        {
-                            color = colorMountNok;
-                            notAllowedOnMount = true;
-                        }
+                        notAllowedOnMount = !allowedPartNames.Contains(partToAttach.partInfo.name);
+                        color = colorMountOk;
                     }
                     break;
                 case PointerTarget.PartNode:
-                    if (allowStack) color = colorStack;
-                    else invalidTarget = true;
-                    break;
-                default:
+                    invalidTarget = !allowStack;
+                    color = colorStack;
                     break;
             }
-            if (sourceDist > maxDist || targetDist > maxDist)
-            {
+            
+            // Handle generic "not OK" color. 
+            if (sourceDist > maxDist || targetDist > maxDist) {
                 color = colorDistNok;
+            } else if (invalidTarget || cannotSurfaceAttach || invalidCurrentNode
+                       || itselfIsInvalid) {
+                color = colorNok;
             }
+            
             color.a = 0.5f;
             foreach (MeshRenderer mr in allModelMr) mr.material.color = color;
 

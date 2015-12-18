@@ -79,6 +79,7 @@ namespace KIS
                     KISAddonPointer.allowPart = true;
                     KISAddonPointer.allowStatic = true;
                     KISAddonPointer.allowEva = true;
+                    KISAddonPointer.allowPartItself = true;
                     KISAddonPointer.useAttachRules = false;
                     KISAddonPointer.allowOffset = true;
                     KISAddonPointer.colorOk = Color.green;
@@ -89,6 +90,7 @@ namespace KIS
                     KISAddonPointer.allowPart = false;
                     KISAddonPointer.allowStatic = false;
                     KISAddonPointer.allowEva = false;
+                    KISAddonPointer.allowPartItself = false;
                     KISAddonPointer.useAttachRules = true;
                     KISAddonPointer.allowOffset = false;
                     KISAddonPointer.colorOk = XKCDColors.Teal;
