@@ -518,24 +518,6 @@ namespace KIS
                 }
             }
 
-            // check number of part attached
-            if (part.parent)
-            {
-                if (part.children.Count > 0)
-                {
-                    KISAddonCursor.CursorEnable("KIS/Textures/forbidden", "Can't grab", "(" + (part.children.Count + 1) + " parts is attached to it)");
-                    return;
-                }
-            }
-            else
-            {
-                if (part.children.Count > 1)
-                {
-                    KISAddonCursor.CursorEnable("KIS/Textures/forbidden", "Can't grab", "(" + part.children.Count + " parts is attached to it)");
-                    return;
-                }
-            }
-
             // Grab icon.
             string cursorTitle = part.parent ? "Detach & Grab" : "Grab";
             string cursorText = grabbedPartsCount == 1
