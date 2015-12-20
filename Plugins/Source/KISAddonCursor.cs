@@ -24,6 +24,19 @@ namespace KIS
         private static OnMousePartAction delegateOnMouseExitPart;
         public delegate void OnMousePartAction(Part part);
 
+        // Cursor hint text settings.
+        private const int ActionIconSize = 24;  // It's quare.
+        private const int HintFontSize = 10;
+        private const int HintTextLeftMargin = 4;  // A gap between action icon and the text.
+        private static Color hintBackground = new Color(0.0f, 0.0f, 0.0f, 0.5f);
+        private static GUIStyle hintWindowStyle = new GUIStyle {
+            normal = {
+                background = CreateTextureFromColour(hintBackground),
+                textColor = Color.white
+            },
+            padding = new RectOffset(3, 3, 3, 3),
+            fontSize = HintFontSize
+        };
 
         public static void StartPartDetection()
         {
@@ -147,6 +160,20 @@ namespace KIS
             Screen.showCursor = false;
         }
 
+        /// <summary>Makes a texture with the requested background color.</summary>
+        /// <remarks>
+        /// Borrowed from <see href="https://github.com/CYBUTEK/KerbalEngineer">KER Redux</see>
+        /// </remarks>
+        /// <param name="colour"></param>
+        /// <returns></returns>
+        private static Texture2D CreateTextureFromColour(Color colour)
+        {
+            var texture = new Texture2D(1, 1, TextureFormat.ARGB32, false);
+            texture.SetPixel(1, 1, colour);
+            texture.Apply();
+            return texture;
+        }
+
         private void OnGUI()
         {
             /*
@@ -158,17 +185,25 @@ namespace KIS
 
             if (cursorShow)
             {
-                GUI.DrawTexture(new Rect(Event.current.mousePosition.x - 12, Event.current.mousePosition.y - 12, 24, 24), cursorTexture, ScaleMode.ScaleToFit);
-                GUI.Label(new Rect(Event.current.mousePosition.x + 16, Event.current.mousePosition.y - 10, 400, 20), cursorText);
+                // Display action icon.
+                GUI.DrawTexture(
+                    new Rect(Event.current.mousePosition.x - ActionIconSize / 2,
+                             Event.current.mousePosition.y - ActionIconSize / 2,
+                             ActionIconSize, ActionIconSize),
+                    cursorTexture, ScaleMode.ScaleToFit);
+                
+                // Compile the whole hint text.
+                var allLines = new List<String>{cursorText, ""};
+                allLines.AddRange(cursorAdditionalTexts);
+                var hintText = String.Join("\n", allLines.ToArray());
+                // Calculate the label region.
+                Vector2 textSize = hintWindowStyle.CalcSize(new GUIContent(hintText));
+                var hintLabelRect = new Rect(
+                    Event.current.mousePosition.x + ActionIconSize / 2 + HintTextLeftMargin,
+                    Event.current.mousePosition.y - ActionIconSize / 2,
+                    textSize.x, textSize.y);
 
-                GUIStyle StyleComments = new GUIStyle(GUI.skin.label);
-                StyleComments.fontSize = 10;
-                int i = 5;
-                foreach (String text in cursorAdditionalTexts)
-                {
-                    GUI.Label(new Rect(Event.current.mousePosition.x + 16, Event.current.mousePosition.y + i, 400, 20), text, StyleComments);
-                    i = i + 15;
-                }
+                GUI.Label(hintLabelRect, hintText, hintWindowStyle);
             }
         }
     }
