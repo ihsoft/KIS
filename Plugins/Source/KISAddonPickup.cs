@@ -447,7 +447,10 @@ namespace KIS
             float pickupMaxMass = GetAllPickupMaxMassInRange(part);
             if (grabbedMass > pickupMaxMass)
             {
-                KISAddonCursor.CursorEnable("KIS/Textures/tooHeavy", "Too heavy", "(Bring more kerbal [" + pMass + " > " + pickupMaxMass + ")");
+                KISAddonCursor.CursorEnable(
+                    "KIS/Textures/tooHeavy", "Too heavy",
+                    String.Format("(Bring more kerbal [{0:F3}t > {1:F3}t])",
+                                  grabbedMass, pickupMaxMass));
                 return;
             }
 
