@@ -114,7 +114,7 @@ namespace KIS
         {
             if (!running)
             {
-                KIS_Shared.logTrace("StartPointer(pointer)");
+                KSP_Dev.Logger.logTrace("StartPointer(pointer)");
                 customRot = Vector3.zero;
                 aboveDistance = 0;
                 partToAttach = partToMoveAndAttach;
@@ -139,11 +139,7 @@ namespace KIS
         }
 
         public void Update() {
-            try {
-                Internal_Update();
-            } catch (Exception e) {
-                KIS_Shared.logExceptionRepeated(e);
-            }
+            KSP_Dev.LoggedCallWrapper.Action(Internal_Update);
         }
         
         private void Internal_Update()
@@ -612,8 +608,8 @@ namespace KIS
                             if (attachNodeIndex > (attachNodes.Count - 1)) {
                                 attachNodeIndex = 0;
                             }
-                            KIS_Shared.logInfo("Attach node index changed to: {0}",
-                                               attachNodeIndex);
+                            KSP_Dev.Logger.logInfo("Attach node index changed to: {0}",
+                                                   attachNodeIndex);
                             UpdatePointerAttachNode();
                             ResetMouseOver();
                             SendPointerState(
@@ -642,7 +638,7 @@ namespace KIS
         private static bool IsSameAssemblyChild(Part assemblyRoot, Part child) {
             for (Part part = child; part; part = part.parent) {
                 if (assemblyRoot == part) {
-                    KIS_Shared.logTrace("Attaching to self detected");
+                    KSP_Dev.Logger.logTrace("Attaching to self detected");
                     return true;
                 }
             }
@@ -666,7 +662,7 @@ namespace KIS
                 }
                 mr.enabled = isVisible;
             }
-            KIS_Shared.logTrace("Pointer visibility state set to: {0}", isVisible);
+            KSP_Dev.Logger.logTrace("Pointer visibility state set to: {0}", isVisible);
         }
 
         /// <summary>Makes a game object to represent currently dragging assembly.</summary>
@@ -688,7 +684,7 @@ namespace KIS
             // Create one filter per mesh in the hierarhcy. Simple combining all meshes into one
             // larger mesh may have weird representation artifacts on different video cards.
             foreach (var combine in combines) {
-                KIS_Shared.logTrace("Add mesh filter for: {0}", combine.transform);
+                KSP_Dev.Logger.logTrace("Add mesh filter for: {0}", combine.transform);
                 var mesh = new Mesh();
                 mesh.CombineMeshes(new CombineInstance[] {combine});
                 var childObj = new GameObject("KISPointerChildMesh");
@@ -710,7 +706,7 @@ namespace KIS
             }
 
             pointerNodeTransform.parent = pointer.transform;
-            KIS_Shared.logInfo("Pointer created");
+            KSP_Dev.Logger.logInfo("Pointer created");
         }
 
         /// <summary>Sets possible attach nodes in <c>attachNodes</c>.</summary>
@@ -746,7 +742,7 @@ namespace KIS
             // Surface node is not listed in attachNodes, handle it separately.
             if (partToAttach.attachRules.srfAttach
                 && !childrenOrientation.Equals(partToAttach.srfAttachNode.orientation)) {
-                KIS_Shared.logTrace("Surface node set to default");
+                KSP_Dev.Logger.logTrace("Surface node set to default");
                 attachNodes.Add(partToAttach.srfAttachNode);
                 attachNodeIndex = 0;
             }
@@ -755,27 +751,27 @@ namespace KIS
             foreach (AttachNode an in partToAttach.attachNodes) {
                 // Skip nodes occupied by children.
                 if (an.attachedPart && an.attachedPart.parent == partToAttach) {
-                    KIS_Shared.logTrace("Skip occupied node '{0}' attached to: {1}",
-                                        an.id, an.attachedPart);
+                    KSP_Dev.Logger.logTrace("Skip occupied node '{0}' attached to: {1}",
+                                            an.id, an.attachedPart);
                     continue;
                 }
                 
                 // Skip nodes pointing towards the children.
                 if (childrenOrientation.Equals(an.orientation)) {
-                    KIS_Shared.logTrace("Skip node '{0}' oriented towards children, "
-                                        + " attached to: {1}", an.id, an.attachedPart);
+                    KSP_Dev.Logger.logTrace("Skip node '{0}' oriented towards children, "
+                                            + " attached to: {1}", an.id, an.attachedPart);
                     continue;
                 }
 
                 // Deduct the most appropriate default attach node. In VBH "bottom" is a usual
                 // node so, prefer it when available.
                 if (attachNodeIndex == -1 && an.id.Equals("bottom")) {
-                    KIS_Shared.logTrace("Bottom node set to default");
+                    KSP_Dev.Logger.logTrace("Bottom node set to default");
                     attachNodeIndex = attachNodes.Count();
                 }
 
                 attachNodes.Add(an);
-                KIS_Shared.logTrace("Added node: {0}", an.id);
+                KSP_Dev.Logger.logTrace("Added node: {0}", an.id);
             }
             
             // Fallback if no default node is found.
@@ -784,7 +780,8 @@ namespace KIS
                     throw new InvalidOperationException("No attach nodes found for the part!");
                 }
                 attachNodeIndex = 0;
-                KIS_Shared.logTrace("'{0}' node set to default", attachNodes[attachNodeIndex].id);
+                KSP_Dev.Logger.logTrace(
+                    "'{0}' node set to default", attachNodes[attachNodeIndex].id);
             }
 
             // Make node transformations.
@@ -819,7 +816,7 @@ namespace KIS
 
             // On large assemblies memory consumption can be significant. Reclaim it.
             Resources.UnloadUnusedAssets();
-            KIS_Shared.logInfo("Pointer destroyed");
+            KSP_Dev.Logger.logInfo("Pointer destroyed");
         }
 
         /// <summary>Goes thru part assembly and collects all meshes in the hierarchy.</summary>
@@ -835,7 +832,8 @@ namespace KIS
                                                       List<CombineInstance> meshCombines) {
             // This gives part's mesh(es) and all surface attached children part meshes.
             MeshFilter[] meshFilters = assembly.GetComponentsInChildren<MeshFilter>();
-            KIS_Shared.logTrace("Found {0} children meshes in: {1}", meshFilters.Count(), assembly);
+            KSP_Dev.Logger.logTrace(
+                "Found {0} children meshes in: {1}", meshFilters.Count(), assembly);
             foreach (var meshFilter in meshFilters) {
                 var combine = new CombineInstance();
                 combine.mesh = meshFilter.sharedMesh;
@@ -846,7 +844,7 @@ namespace KIS
             // Go thru the stacked children parts. They don't have local transformation.
             foreach (Part child in assembly.children) {
                 if (child.transform.position.Equals(child.transform.localPosition)) {
-                    KIS_Shared.logTrace("Collect meshes from stacked child: {0}", child);
+                    KSP_Dev.Logger.logTrace("Collect meshes from stacked child: {0}", child);
                     CollectMeshesFromAssembly(child, worldTransform, meshCombines);
                 }
             }
@@ -860,8 +858,8 @@ namespace KIS
             var model = prefabPart.FindModelTransform("model").gameObject;
             var meshModel = Instantiate(model, Vector3.zero, Quaternion.identity) as GameObject;
             var meshFilters = meshModel.GetComponentsInChildren<MeshFilter>();
-            KIS_Shared.logTrace("Created {0} meshes from prefab: {1}",
-                                meshFilters.Count(), prefabPart);
+            KSP_Dev.Logger.logTrace("Created {0} meshes from prefab: {1}",
+                                    meshFilters.Count(), prefabPart);
             foreach (var meshFilter in meshFilters) {
                 var combine = new CombineInstance();
                 combine.mesh = meshFilter.mesh;  // Get a copy. 

@@ -164,13 +164,9 @@ namespace KIS
         }
 
         public void Update() {
-            try {
-                Internal_Update();
-            } catch (Exception e) {
-                KIS_Shared.logExceptionRepeated(e);
-            }
+            KSP_Dev.LoggedCallWrapper.Action(Internal_Update);
         }
-        
+
         private void Internal_Update()
         {
             // Check if grab key is pressed
@@ -222,7 +218,7 @@ namespace KIS
                     // false action triggering. So, just postpone UP even by one frame when it
                     // happens in the same frame as the DOWN event.
                     if (KISAddonCursor.partClickedFrame == Time.frameCount) {
-                        KIS_Shared.logTrace(
+                        KSP_Dev.Logger.logTrace(
                             "Postponing mouse button up event in frame {0}", Time.frameCount);
                         delayedButtonUp = true;  // Event will be handled in the next frame.
                     } else {

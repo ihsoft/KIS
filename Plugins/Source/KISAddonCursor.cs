@@ -63,11 +63,7 @@ namespace KIS
         }
 
         public void Update() {
-            try {
-                Internal_Update();
-            } catch (Exception e) {
-                KIS_Shared.logExceptionRepeated(e);
-            }
+            KSP_Dev.LoggedCallWrapper.Action(Internal_Update);
         }
 
         private void Internal_Update()
@@ -81,7 +77,7 @@ namespace KIS
                     if (part)
                     {
                         partClickedFrame = Time.frameCount;
-                        KIS_Shared.logTrace("Set click frame {0}", partClickedFrame);
+                        KSP_Dev.Logger.logTrace("Set click frame {0}", partClickedFrame);
                         if (delegateOnMousePartClick != null) delegateOnMousePartClick(part);
                     }
                 }

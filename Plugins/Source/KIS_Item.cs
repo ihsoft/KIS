@@ -327,11 +327,7 @@ namespace KIS
         }
 
         public void Update() {
-            try {
-                Internal_Update();
-            } catch (Exception e) {
-                KIS_Shared.logExceptionRepeated(e);
-            }
+            KSP_Dev.LoggedCallWrapper.Action(Internal_Update);
         }
         
         private void Internal_Update()

@@ -15,20 +15,6 @@ namespace KIS
 
     static public class KIS_Shared
     {
-        public enum DebugLogLevel {
-            NONE = 0,
-            ERROR = 1,
-            WARNING = 2,
-            INFO = 3,
-            TRACE = 4
-        }
-        // TODO: Read it from the config.
-        public static DebugLogLevel logLevel = DebugLogLevel.INFO;
-        
-        private static Dictionary<String, float> exLastReportedTs = new Dictionary<String, float>();
-        private static Dictionary<String, int> exCount = new Dictionary<String, int>();
-        // TODO: Read it from the config.
-        private const float exceptionLogsAggreagtionPeriod = 10.0f;  // Seconds.
         // TODO: Read it from the config.
         private const float DefaultMessageTimeout = 5f;  // Seconds.
         
@@ -47,79 +33,28 @@ namespace KIS
             destPart.SendMessage("OnKISAction", bEventData, SendMessageOptions.DontRequireReceiver);
         }
 
-        public static void logTrace(string fmt, params object[] args) {
-            if (logLevel >= DebugLogLevel.TRACE) {
-                Debug.Log("[KIS] " + String.Format(fmt, args));
-            }
-        }
-
-        public static void logInfo(string fmt, params object[] args) {
-            if (logLevel >= DebugLogLevel.INFO) {
-                Debug.Log("[KIS] " + String.Format(fmt, args));
-            }
-        }
-
-        public static void logWarning(string fmt, params object[] args) {
-            if (logLevel >= DebugLogLevel.WARNING) {
-                Debug.LogWarning("[KIS] " + String.Format(fmt, args));
-            }
-        }
-
-        public static void logError(string fmt, params object[] args) {
-            if (logLevel >= DebugLogLevel.ERROR) {
-                Debug.LogError("[KIS] " + String.Format(fmt, args));
-            }
-        }
-
-        /// <summary>Logs an exception that is happenning very frequently.</summary>
-        /// <remarks>
-        /// When an exception is being thrown at a high rate it's hard to catch its context since
-        /// the debug log updates and scrolls too quickly. By logging exceptions with this method
-        /// first occurrence is logged right away and all the subsequent repetitions are aggregated
-        /// and reported every 10 seconds (a constant for now). Exceptions are macthed by their
-        /// string representation which is expected to capture the stack trace.         
-        /// </remarks>
-        /// <param name="ex">An exception to log.</param>
-        public static void logExceptionRepeated(Exception ex) {
-            var exText = ex.ToString();
-            if (exLastReportedTs.ContainsKey(exText)) {
-                exCount[exText] += 1;
-                if (exLastReportedTs[exText] + exceptionLogsAggreagtionPeriod < Time.unscaledTime) {
-                    logError("Exception has repeated {0} times in the last {1:F2} seconds:\n{2}",
-                             exCount[exText], Time.unscaledTime - exLastReportedTs[exText],
-                             exText);
-                    exLastReportedTs[exText] = Time.unscaledTime;
-                    exCount[exText] = 0;
-                }
-                return;
-            }
-            exLastReportedTs[exText] = Time.unscaledTime;
-            exCount[exText] = 1;
-            logError(exText);
-        }
-        
         // TODO: Deprecate.
         public static void DebugLog(string text)
         {
-            logInfo(text);
+            KSP_Dev.Logger.logInfo(text);
         }
 
         // TODO: Deprecate.
         public static void DebugLog(string text, UnityEngine.Object context)
         {
-            if (logLevel >= DebugLogLevel.INFO) Debug.Log("[KIS] " + text, context);
+            Debug.Log("[KIS] " + text, context);
         }
 
         // TODO: Deprecate.
         public static void DebugWarning(string text)
         {
-            logWarning(text);
+            KSP_Dev.Logger.logWarning(text);
         }
 
         // TODO: Deprecate.
         public static void DebugError(string text)
         {
-            logError(text);
+            KSP_Dev.Logger.logError(text);
         }
 
         public static Part GetPartUnderCursor()
@@ -202,12 +137,14 @@ namespace KIS
         public static void CleanupExternalLinks(Vessel vessel)
         {
             var parts = vessel.parts.FindAll(p => p is CompoundPart);
-            logInfo("Check {0} compound part(s) in vessel: {1}", parts.Count(), vessel);
+            KSP_Dev.Logger.logInfo(
+                "Check {0} compound part(s) in vessel: {1}", parts.Count(), vessel);
             foreach (var part in parts) {
                 var compoundPart = part as CompoundPart;
                 if (compoundPart.target && compoundPart.target.vessel != vessel) {
-                    logTrace("Destroy compound part '{0}' which links '{1}' to '{2}'",
-                             compoundPart, compoundPart.parent, compoundPart.target);
+                    KSP_Dev.Logger.logTrace(
+                        "Destroy compound part '{0}' which links '{1}' to '{2}'",
+                        compoundPart, compoundPart.parent, compoundPart.target);
                     compoundPart.Die();
                 }
             }
