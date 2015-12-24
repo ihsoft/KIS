@@ -5,8 +5,7 @@ using UnityEngine;
 
 namespace KIS
 {
-    //using UnityEngine;
-
+    //FIXME: Should be in editor only.
     [KSPAddon(KSPAddon.Startup.MainMenu, true)]
     public class KISAddonEditorFilter : MonoBehaviour
     {
@@ -39,14 +38,7 @@ namespace KIS
 
         private bool EditorItemsFilter(AvailablePart avPart)
         {
-            if (avPartItems.Contains(avPart))
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
+            return avPartItems.Contains(avPart);
         }
 
         private void SubCategories()
