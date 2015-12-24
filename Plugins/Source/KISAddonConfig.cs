@@ -16,6 +16,11 @@ namespace KIS
 
         public void Awake()
         {
+            KSP_Dev.LoggedCallWrapper.Action(Internal_Awake);
+        }
+        
+        private void Internal_Awake()
+        {
             // Set inventory module for every eva kerbal
             KIS_Shared.DebugLog("Set KIS config...");
             ConfigNode nodeSettings = GameDatabase.Instance.GetConfigNode("KIS/settings/KISConfig");

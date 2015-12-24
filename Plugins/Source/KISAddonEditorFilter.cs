@@ -18,6 +18,11 @@ namespace KIS
 
         void Awake()
         {
+            KSP_Dev.LoggedCallWrapper.Action(Internal_Awake);
+        }
+        
+        private void Internal_Awake()
+        {
             GameEvents.onGUIEditorToolbarReady.Add(SubCategories);
 
             avPartItems.Clear();

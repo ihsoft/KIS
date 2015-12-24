@@ -96,6 +96,11 @@ namespace KIS
 
         void Awake()
         {
+            KSP_Dev.LoggedCallWrapper.Action(Internal_Awake);
+        }
+        
+        private void Internal_Awake()
+        {
             audioBipWrong = audioGo.AddComponent<AudioSource>();
             audioBipWrong.volume = GameSettings.UI_VOLUME;
             audioBipWrong.panLevel = 0;  //set as 2D audiosource

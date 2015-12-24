@@ -105,6 +105,11 @@ namespace KIS
 
         public override void OnStart(StartState state)
         {
+            KSP_Dev.LoggedCallWrapper.Action(Internal_OnStart, state);
+        }
+
+        private void Internal_OnStart(StartState state)
+        {
             base.OnStart(state);
             if (state == StartState.None) return;
 
@@ -249,6 +254,11 @@ namespace KIS
         }
 
         public override void OnLoad(ConfigNode node)
+        {
+            KSP_Dev.LoggedCallWrapper.Action(Internal_OnLoad, node);
+        }
+
+        private void Internal_OnLoad(ConfigNode node)
         {
             base.OnLoad(node);
             foreach (ConfigNode cn in node.nodes)
