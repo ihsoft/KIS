@@ -7,7 +7,6 @@ using UnityEngine;
 
 namespace KIS
 {
-    [KSPAddon(KSPAddon.Startup.EveryScene, false)]
     public class KISAddonPickup : MonoBehaviour
     {
         class EditorClickListener : MonoBehaviour
@@ -17,7 +16,6 @@ namespace KIS
             {
                 GetComponent<UIButton>().AddInputDelegate(new EZInputDelegate(OnInput));
                 editorPaction = GetComponent<EditorPartIcon>();
-
             }
 
             void OnInput(ref POINTER_INFO ptr)
@@ -162,7 +160,12 @@ namespace KIS
             {
                 if (EditorPartList.Instance)
                 {
-                    EditorPartList.Instance.iconPrefab.gameObject.AddComponent<EditorClickListener>();
+                    var iconPrefab = EditorPartList.Instance.iconPrefab.gameObject;
+                    if (iconPrefab.GetComponent<EditorClickListener>() == null) {
+                        EditorPartList.Instance.iconPrefab.gameObject.AddComponent<EditorClickListener>();
+                    } else {
+                        KSP_Dev.Logger.logWarning("Skip adding click listener because it exists");
+                    }
                 }
             }
             GameEvents.onVesselChange.Add(new EventData<Vessel>.OnEvent(this.OnVesselChange));
@@ -1143,6 +1146,17 @@ namespace KIS
         {
             KIS_Shared.SendKISMessage(createdPart, KIS_Shared.MessageAction.AttachEnd, KISAddonPointer.GetCurrentAttachNode(), tgtPart, tgtAttachNode);
         }
+    }
 
+    // Create an instance for managing inventory in the editor.
+    [KSPAddon(KSPAddon.Startup.EditorAny, false /*once*/)]
+    public class KISAddonPickupInEditor : KISAddonPickup
+    {
+    }
+
+    // Create an instance for accessing inventory in EVA.
+    [KSPAddon(KSPAddon.Startup.Flight, false /*once*/)]
+    public class KISAddonPickupInFlight : KISAddonPickup
+    {
     }
 }
