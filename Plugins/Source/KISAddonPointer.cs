@@ -540,47 +540,46 @@ namespace KIS
             {
                 if (invalidTarget)
                 {
-                    ScreenMessages.PostScreenMessage("Target object is not allowed !");
+                    KIS_Shared.ShowRightScreenMessage("Target object is not allowed !");
                     audioBipWrong.Play();
                     return;
                 }
                 else if (itselfIsInvalid)
                 {
-                    ScreenMessages.PostScreenMessage("Cannot attach on itself !");
+                    KIS_Shared.ShowRightScreenMessage("Cannot attach on itself !");
                     audioBipWrong.Play();
                     return;
                 }
                 else if (notAllowedOnMount)
                 {
-                    ScreenMessages.PostScreenMessage("This part is not allowed on the mount !");
+                    KIS_Shared.ShowRightScreenMessage("This part is not allowed on the mount !");
                     audioBipWrong.Play();
                     return;
                 }
                 else if (cannotSurfaceAttach)
                 {
-                    ScreenMessages.PostScreenMessage("Target part do not allow surface attach !");
+                    KIS_Shared.ShowRightScreenMessage("Target part do not allow surface attach !");
                     audioBipWrong.Play();
                     return;
                 }
                 else if (invalidCurrentNode)
                 {
-                    ScreenMessages.PostScreenMessage("This node cannot be used for surface attach !");
+                    KIS_Shared.ShowRightScreenMessage(
+                        "This node cannot be used for surface attach !");
                     audioBipWrong.Play();
                     return;
                 }
                 else if (sourceDist > maxDist)
                 {
-                    ScreenMessages.PostScreenMessage(
-                        "Too far from source: " + sourceDist.ToString("F2")
-                        + "m > " + maxDist.ToString("F2") + "m");
+                    KIS_Shared.ShowRightScreenMessage("Too far from source: {0:F3}m > {1:F3}m",
+                                                      sourceDist, maxDist);
                     audioBipWrong.Play();
                     return;
                 }
                 else if (targetDist > maxDist)
                 {
-                    ScreenMessages.PostScreenMessage(
-                        "Too far from target: " + targetDist.ToString("F2")
-                        + "m > " + maxDist.ToString("F2") + "m");
+                    KIS_Shared.ShowRightScreenMessage("Too far from target: {0:F3}m > {1:F3}m",
+                                                      targetDist, maxDist);
                     audioBipWrong.Play();
                     return;
                 }
