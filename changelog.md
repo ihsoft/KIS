@@ -1,3 +1,7 @@
+### 1.2.3-alpha3 (24 December 2015)
+- Fixed #87.
+- Added background for the mouse pointer hint text.
+
 ### 1.2.X (18 December 2015)
 - Added support for moving complex assemblies (not just a single part).
 - Some minor bug fixes.
