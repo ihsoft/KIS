@@ -423,7 +423,7 @@ namespace KIS
             KSP_Dev.Logger.logInfo("Equip item {0}", this.availablePart.name);
 
             //Check skill if needed
-            if (prefabModule.equipSkill != null && prefabModule.equipSkill != "")
+            if (!String.IsNullOrEmpty(prefabModule.equipSkill))
             {
                 bool skillFound = false;
                 List<ProtoCrewMember> protoCrewMembers = inventory.vessel.GetVesselCrew();
