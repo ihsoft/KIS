@@ -185,13 +185,15 @@ namespace KIS
             }
             if (nonStackableModule == 0 && GetResources().Count == 0)
             {
-                KIS_Shared.DebugLog("No non-stackable module and ressource found on the part, set item as stackable");
+                KSP_Dev.Logger.logInfo("No non-stackable module and ressource found on the part,"
+                                       + " set item as stackable");
                 this.stackable = true;
             }
             if (KISAddonConfig.stackableList.Contains(availablePart.name)
                 || availablePart.name.IndexOf('.') != -1 && KISAddonConfig.stackableList.Contains(availablePart.name.Replace('.', '_')))
             {
-                KIS_Shared.DebugLog("Part name present in settings.cfg (node StackableItemOverride), force item as stackable");
+                KSP_Dev.Logger.logInfo("Part name present in settings.cfg (node"
+                                       + " StackableItemOverride), force item as stackable");
                 this.stackable = true;
             }
         }
@@ -208,7 +210,8 @@ namespace KIS
             if (inventoryName != "") node.AddValue("inventoryName", inventoryName);
             if (equipped && (equipMode == EquipMode.Part || equipMode == EquipMode.Physic))
             {
-                KIS_Shared.DebugLog("Update config node of equipped part : " + this.availablePart.title);
+                KSP_Dev.Logger.logInfo(
+                    "Update config node of equipped part: {0}", this.availablePart.title);
                 partNode.ClearData();
                 KIS_Shared.PartSnapshot(equippedPart).CopyTo(partNode);
             }
@@ -417,7 +420,7 @@ namespace KIS
         public void Equip()
         {
             if (!prefabModule) return;
-            KIS_Shared.DebugLog("Equip item " + this.availablePart.name);
+            KSP_Dev.Logger.logInfo("Equip item {0}", this.availablePart.name);
 
             //Check skill if needed
             if (prefabModule.equipSkill != null && prefabModule.equipSkill != "")
@@ -478,7 +481,7 @@ namespace KIS
 
                 if (!evaTransform)
                 {
-                    KIS_Shared.DebugError("evaTransform not found ! ");
+                    KSP_Dev.Logger.logError("evaTransform not found ! ");
                     UnityEngine.Object.Destroy(equippedGameObj);
                     return;
                 }
@@ -500,14 +503,15 @@ namespace KIS
 
                 if (!evaTransform)
                 {
-                    KIS_Shared.DebugError("evaTransform not found ! ");
+                    KSP_Dev.Logger.logError("evaTransform not found ! ");
                     return;
                 }
 
                 Part alreadyEquippedPart = this.inventory.part.vessel.Parts.Find(p => p.partInfo.name == this.availablePart.name);
                 if (alreadyEquippedPart)
                 {
-                    KIS_Shared.DebugLog("Part : " + this.availablePart.name + " already found on eva");
+                    KSP_Dev.Logger.logInfo("Part: {0} already found on eva",
+                                           this.availablePart.name);
                     equippedPart = alreadyEquippedPart;
                     OnEquippedPartCoupled(equippedPart);
                 }
@@ -542,7 +546,8 @@ namespace KIS
             }
             if (equipMode == EquipMode.Part || equipMode == EquipMode.Physic)
             {
-                KIS_Shared.DebugLog("Update config node of equipped part : " + this.availablePart.title);
+                KSP_Dev.Logger.logInfo("Update config node of equipped part: {0}",
+                                       this.availablePart.title);
                 partNode.ClearData();
                 KIS_Shared.PartSnapshot(equippedPart).CopyTo(partNode);
                 equippedPart.Die();
@@ -606,7 +611,7 @@ namespace KIS
 
         public void Drop(Part fromPart = null)
         {
-            KIS_Shared.DebugLog("Drop item");
+            KSP_Dev.Logger.logInfo("Drop item");
             if (fromPart == null) fromPart = inventory.part;
             Quaternion rot;
             Vector3 pos;

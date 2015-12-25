@@ -226,7 +226,7 @@ namespace KIS
                     // false action triggering. So, just postpone UP even by one frame when it
                     // happens in the same frame as the DOWN event.
                     if (KISAddonCursor.partClickedFrame == Time.frameCount) {
-                        KSP_Dev.Logger.logTrace(
+                        KSP_Dev.Logger.logWarning(
                             "Postponing mouse button up event in frame {0}", Time.frameCount);
                         delayedButtonUp = true;  // Event will be handled in the next frame.
                     } else {
@@ -341,7 +341,7 @@ namespace KIS
                     {
                         Keva.JetpackDeployed = true;
                         jetpackLock = false;
-                        KIS_Shared.DebugLog("Jetpack mouse input re-enabled");
+                        KSP_Dev.Logger.logInfo("Jetpack mouse input re-enabled");
                     }
                 }
             }
@@ -904,7 +904,7 @@ namespace KIS
                     {
                         Keva.JetpackDeployed = false;
                         jetpackLock = true;
-                        KIS_Shared.DebugLog("Jetpack mouse input disabled");
+                        KSP_Dev.Logger.logInfo("Jetpack mouse input disabled");
                     }
                 }
             }
@@ -939,7 +939,7 @@ namespace KIS
                 }
                 else
                 {
-                    KIS_Shared.DebugError("No active pickup nearest !");
+                    KSP_Dev.Logger.logError("No active pickup nearest !");
                 }
             }
             KISAddonCursor.StopPartDetection();
@@ -1056,7 +1056,7 @@ namespace KIS
 
         private void MoveDrop(Part tgtPart, Vector3 pos, Quaternion rot)
         {
-            KIS_Shared.DebugLog("Move part");
+            KSP_Dev.Logger.logInfo("Move part");
             ModuleKISPickup modulePickup = GetActivePickupNearest(pos);
             if (modulePickup)
             {
@@ -1085,7 +1085,7 @@ namespace KIS
 
         private Part CreateDrop(Part tgtPart, Vector3 pos, Quaternion rot)
         {
-            KIS_Shared.DebugLog("Create & drop part");
+            KSP_Dev.Logger.logInfo("Create & drop part");
             ModuleKISPickup modulePickup = GetActivePickupNearest(pos);
             draggedItem.StackRemove(1);
             Part newPart = KIS_Shared.CreatePart(draggedItem.partNode, pos, rot, draggedItem.inventory.part);
@@ -1099,7 +1099,7 @@ namespace KIS
 
         private void MoveAttach(Part tgtPart, Vector3 pos, Quaternion rot, string srcAttachNodeID = null, AttachNode tgtAttachNode = null)
         {
-            KIS_Shared.DebugLog("Move part & attach");
+            KSP_Dev.Logger.logInfo("Move part & attach");
             KIS_Shared.SendKISMessage(movingPart, KIS_Shared.MessageAction.AttachStart, KISAddonPointer.GetCurrentAttachNode(), tgtPart, tgtAttachNode);
             KIS_Shared.DecoupleAssembly(movingPart);
             movingPart.vessel.SetPosition(pos);
@@ -1121,7 +1121,7 @@ namespace KIS
 
         private Part CreateAttach(Part tgtPart, Vector3 pos, Quaternion rot, string srcAttachNodeID = null, AttachNode tgtAttachNode = null)
         {
-            KIS_Shared.DebugLog("Create part & attach");
+            KSP_Dev.Logger.logInfo("Create part & attach");
             Part newPart;
             draggedItem.StackRemove(1);
             bool useExternalPartAttach = false;

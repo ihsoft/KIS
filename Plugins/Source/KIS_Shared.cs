@@ -33,30 +33,6 @@ namespace KIS
             destPart.SendMessage("OnKISAction", bEventData, SendMessageOptions.DontRequireReceiver);
         }
 
-        // TODO: Deprecate.
-        public static void DebugLog(string text)
-        {
-            KSP_Dev.Logger.logInfo(text);
-        }
-
-        // TODO: Deprecate.
-        public static void DebugLog(string text, UnityEngine.Object context)
-        {
-            Debug.Log("[KIS] " + text, context);
-        }
-
-        // TODO: Deprecate.
-        public static void DebugWarning(string text)
-        {
-            KSP_Dev.Logger.logWarning(text);
-        }
-
-        // TODO: Deprecate.
-        public static void DebugError(string text)
-        {
-            KSP_Dev.Logger.logError(text);
-        }
-
         public static Part GetPartUnderCursor()
         {
             RaycastHit hit;
@@ -95,7 +71,7 @@ namespace KIS
             }
             else
             {
-                KIS_Shared.DebugError("Sound not found in the game database !");
+                KSP_Dev.Logger.logError("Sound not found in the game database !");
                 ScreenMessages.PostScreenMessage("Sound file : " + sndPath + " as not been found, please check your KAS installation !", 10, ScreenMessageStyle.UPPER_CENTER);
                 return false;
             }
@@ -186,7 +162,8 @@ namespace KIS
             catch
             {
                 // workaround for command module
-                KIS_Shared.DebugWarning("Error during part snapshot, spawning part for snapshot (workaround for command module)");
+                KSP_Dev.Logger.logWarning("Error during part snapshot, spawning part for snapshot"
+                                          + " (workaround for command module)");
                 Part p = (Part)UnityEngine.Object.Instantiate(part.partInfo.partPrefab);
                 p.gameObject.SetActive(true);
                 p.name = part.partInfo.name;
@@ -388,7 +365,7 @@ namespace KIS
             // Wait part to initialize
             while (!newPart.started && newPart.State != PartStates.DEAD)
             {
-                KIS_Shared.DebugLog("CreatePart - Waiting initialization of the part...");
+                KSP_Dev.Logger.logInfo("CreatePart - Waiting initialization of the part...");
                 if (tgtPart)
                 {
                     // Part stay in position 
@@ -416,7 +393,7 @@ namespace KIS
                 newPart.transform.position = tgtAttachNode.nodeTransform.TransformPoint(toPartLocalPos);
                 newPart.transform.rotation = tgtAttachNode.nodeTransform.rotation * toPartLocalRot;
             }
-            KIS_Shared.DebugLog("CreatePart - Coupling part...");
+            KSP_Dev.Logger.logInfo("CreatePart - Coupling part...");
             CouplePart(newPart, tgtPart, srcAttachNodeID, tgtAttachNode);
 
             if (onPartCoupled != null)
@@ -432,7 +409,9 @@ namespace KIS
             {
                 if (srcAttachNodeID == "srfAttach")
                 {
-                    KIS_Shared.DebugLog("Attach type : " + srcPart.srfAttachNode.nodeType + " | ID : " + srcPart.srfAttachNode.id);
+                    KSP_Dev.Logger.logInfo(
+                        "Attach type: {0} | ID : {1}",
+                        srcPart.srfAttachNode.nodeType, srcPart.srfAttachNode.id);
                     srcPart.attachMode = AttachModes.SRF_ATTACH;
                     srcPart.srfAttachNode.attachedPart = tgtPart;
                 }
@@ -441,7 +420,9 @@ namespace KIS
                     AttachNode srcAttachNode = srcPart.findAttachNode(srcAttachNodeID);
                     if (srcAttachNode != null)
                     {
-                        KIS_Shared.DebugLog("Attach type : " + srcPart.srfAttachNode.nodeType + " | ID : " + srcAttachNode.id);
+                        KSP_Dev.Logger.logInfo(
+                            "Attach type : {0} | ID : {1}",
+                            srcPart.srfAttachNode.nodeType, srcAttachNode.id);
                         srcPart.attachMode = AttachModes.STACK;
                         srcAttachNode.attachedPart = tgtPart;
                         if (tgtAttachNode != null)
@@ -451,13 +432,13 @@ namespace KIS
                     }
                     else
                     {
-                        KIS_Shared.DebugError("Source attach node not found !");
+                        KSP_Dev.Logger.logError("Source attach node not found !");
                     }
                 }
             }
             else
             {
-                KIS_Shared.DebugWarning("Missing source attach node !");
+                KSP_Dev.Logger.logWarning("Missing source attach node !");
             }
 
             srcPart.Couple(tgtPart);

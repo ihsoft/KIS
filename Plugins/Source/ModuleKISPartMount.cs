@@ -81,7 +81,8 @@ namespace KIS
                     AttachNode an = this.part.findAttachNode(attachNodeName);
                     if (an == null)
                     {
-                        KIS_Shared.DebugError("GetMountNodes - Node : " + attachNodeName + " not found !");
+                        KSP_Dev.Logger.logError(
+                            "GetMountNodes - Node : {0} not found !", attachNodeName);
                         continue;
                     }
 

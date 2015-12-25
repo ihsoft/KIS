@@ -149,7 +149,7 @@ namespace KIS
             sndFx.audio.playOnAwake = false;
             foreach (KIS_Item item in startEquip)
             {
-                KIS_Shared.DebugLog("equip " + item.availablePart.name);
+                KSP_Dev.Logger.logInfo("equip {0}", item.availablePart.name);
                 item.Equip();
             }
             RefreshMassAndVolume();
@@ -280,7 +280,9 @@ namespace KIS
                             }
                             else
                             {
-                                KIS_Shared.DebugWarning("No part node found on item " + availablePartName + ", creating new one from prefab");
+                                KSP_Dev.Logger.logWarning(
+                                    "No part node found on item {0}, creating new one from prefab",
+                                    availablePartName);
                                 item = AddItem(availablePart.partPrefab, qty, slot);
                             }
                             if (cn.HasValue("equipped") && item != null)
@@ -293,12 +295,13 @@ namespace KIS
                         }
                         else
                         {
-                            KIS_Shared.DebugError("Unable to load " + availablePartName + " from inventory");
+                            KSP_Dev.Logger.logError(
+                                "Unable to load {0} from inventory", availablePartName);
                         }
                     }
                     else
                     {
-                        KIS_Shared.DebugError("Unable to load an item from inventory");
+                        KSP_Dev.Logger.logError("Unable to load an item from inventory");
                     }
                 }
             }
@@ -345,7 +348,7 @@ namespace KIS
             }
             else
             {
-                KIS_Shared.DebugError("Sound not found in the game database !");
+                KSP_Dev.Logger.logError("Sound not found in the game database !");
                 ScreenMessages.PostScreenMessage("Sound file : " + sndPath + " has not been found, please check installation path !", 10, ScreenMessageStyle.UPPER_CENTER);
             }
             sndFx.audio.Play();
@@ -381,8 +384,9 @@ namespace KIS
                     if (items.Count > 0 && crewAtPodSeat == null)
                     {
                         ModuleKISInventory destInventory = fromToAction.to.GetComponent<ModuleKISInventory>();
-                        KIS_Shared.DebugLog("Item transfer | source " + this.part.name + " (" + this.podSeat + ")");
-                        KIS_Shared.DebugLog("Item transfer | destination :" + destInventory.part.name);
+                        KSP_Dev.Logger.logInfo("Item transfer | source {0} ({1})",
+                                               this.part.name, this.podSeat);
+                        KSP_Dev.Logger.logInfo("Item transfer | destination: {0}", destInventory.part.name);
                         MoveItems(this.items, destInventory);
                         this.RefreshMassAndVolume();
                         destInventory.RefreshMassAndVolume();
@@ -395,16 +399,20 @@ namespace KIS
                     // Workaround to set a seat index on pod without internal (because KSP don't do it for an unknow reason)
                     if (fromToAction.host.seatIdx == -1)
                     {
-                        KIS_Shared.DebugWarning("protoCrew seatIdx has been set to -1 ! (no internal ?)");
+                        KSP_Dev.Logger.logWarning(
+                            "protoCrew seatIdx has been set to -1 ! (no internal ?)");
                         fromToAction.host.seatIdx = GetFirstFreeSeatIdx(fromToAction.to);
-                        KIS_Shared.DebugLog("Setting seat to : " + fromToAction.host.seatIdx);
-                        if (fromToAction.host.seatIdx == -1) KIS_Shared.DebugError("A seat must be available!");
+                        KSP_Dev.Logger.logInfo("Setting seat to: {0}", fromToAction.host.seatIdx);
+                        if (fromToAction.host.seatIdx == -1) {
+                            KSP_Dev.Logger.logError("A seat must be available!");
+                        }
                     }
 
                     ProtoCrewMember crewAtPodSeat = fromToAction.from.protoModuleCrew.Find(x => x.seatIdx == podSeat);
                     if (items.Count > 0 && crewAtPodSeat == null)
                     {
-                        KIS_Shared.DebugLog("Item transfer | source :" + this.part.name + " (" + podSeat + ")");
+                        KSP_Dev.Logger.logInfo("Item transfer | source: {0} ({1})",
+                                               this.part.name, podSeat);
                         foreach (ModuleKISInventory destInventory in fromToAction.to.GetComponents<ModuleKISInventory>())
                         {
                             StartCoroutine(destInventory.WaitAndTransferItems(this.items, fromToAction.host, this));
@@ -422,14 +430,17 @@ namespace KIS
                     // Workaround to set a seat index on pod without internal (because KSP don't do it for an unknow reason)
                     if (fromToAction.host.seatIdx == -1)
                     {
-                        KIS_Shared.DebugWarning("protoCrew seatIdx has been set to -1 ! (no internal ?)");
+                        KSP_Dev.Logger.logWarning(
+                            "protoCrew seatIdx has been set to -1 ! (no internal ?)");
                         fromToAction.host.seatIdx = GetFirstFreeSeatIdx(fromToAction.to);
-                        KIS_Shared.DebugLog("Setting seat to : " + fromToAction.host.seatIdx);
-                        if (fromToAction.host.seatIdx == -1) KIS_Shared.DebugError("A seat must be available!");
+                        KSP_Dev.Logger.logInfo("Setting seat to: {0}", fromToAction.host.seatIdx);
+                        if (fromToAction.host.seatIdx == -1) {
+                            KSP_Dev.Logger.logError("A seat must be available!");
+                        }
                     }
 
                     ModuleKISInventory evaInventory = fromToAction.from.GetComponent<ModuleKISInventory>();
-                    KIS_Shared.DebugLog("Item transfer | source " + fromToAction.host.name);
+                    KSP_Dev.Logger.logInfo("Item transfer | source {0}", fromToAction.host.name);
                     List<KIS_Item> itemsToDrop = new List<KIS_Item>();
                     foreach (KeyValuePair<int, KIS_Item> item in evaInventory.items)
                     {
@@ -472,7 +483,8 @@ namespace KIS
             if (crewAtPodSeat == protoCrew)
             {
                 MoveItems(transferedItems, this);
-                KIS_Shared.DebugLog("Item transfer | destination :" + this.part.name + " (" + this.podSeat + ")");
+                KSP_Dev.Logger.logInfo("Item transfer | destination: {0} ({1})",
+                                       this.part.name, this.podSeat);
                 this.RefreshMassAndVolume();
                 if (srcInventory) srcInventory.RefreshMassAndVolume();
             }
@@ -593,7 +605,8 @@ namespace KIS
                 slot = GetFreeSlot();
                 if (slot == -1)
                 {
-                    KIS_Shared.DebugError("AddItem error : No free slot available for " + availablePart.title);
+                    KSP_Dev.Logger.logError(
+                        "AddItem error : No free slot available for {0}", availablePart.title);
                     return null;
                 }
             }
@@ -617,7 +630,8 @@ namespace KIS
                 slot = GetFreeSlot();
                 if (slot == -1)
                 {
-                    KIS_Shared.DebugError("AddItem error : No free slot available for " + part.partInfo.title);
+                    KSP_Dev.Logger.logError(
+                        "AddItem error : No free slot available for {0}", part.partInfo.title);
                     return null;
                 }
             }

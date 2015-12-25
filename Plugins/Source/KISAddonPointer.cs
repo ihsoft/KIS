@@ -111,7 +111,8 @@ namespace KIS
             }
             else
             {
-                KIS_Shared.DebugError("Awake(AttachPointer) Bip wrong sound not found in the game database !");
+                KSP_Dev.Logger.logError(
+                    "Awake(AttachPointer) Bip wrong sound not found in the game database !");
             }
         }
 
@@ -136,7 +137,7 @@ namespace KIS
 
         public static void StopPointer()
         {
-            KIS_Shared.DebugLog("StopPointer(pointer)");
+            KSP_Dev.Logger.logInfo("StopPointer(pointer)");
             running = false;
             ResetMouseOver();
             InputLockManager.RemoveControlLock("KISpointer");
@@ -601,7 +602,7 @@ namespace KIS
                 || Input.GetKeyDown(KeyCode.Return)
                 )
                 {
-                    KIS_Shared.DebugLog("Cancel key pressed, stop eva attach mode");
+                    KSP_Dev.Logger.logInfo("Cancel key pressed, stop eva attach mode");
                     StopPointer();
                     SendPointerClick(PointerTarget.Nothing, Vector3.zero, Quaternion.identity, null, null);
                 }
