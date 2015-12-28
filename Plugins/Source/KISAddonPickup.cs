@@ -834,17 +834,17 @@ namespace KIS
                 float partDist = Vector3.Distance(pickupModule.part.transform.position, position);
                 if (partDist <= nearestDistance)
                 {
-                    if (canPartAttachOnly == false && canStaticAttachOnly == false)
+                    if (!canPartAttachOnly && !canStaticAttachOnly)
                     {
                         nearestDistance = partDist;
                         nearestPModule = pickupModule;
                     }
-                    else if (canPartAttachOnly == true && pickupModule.allowPartAttach)
+                    else if (canPartAttachOnly && pickupModule.allowPartAttach)
                     {
                         nearestDistance = partDist;
                         nearestPModule = pickupModule;
                     }
-                    else if (canStaticAttachOnly == true && pickupModule.allowStaticAttach)
+                    else if (canStaticAttachOnly && pickupModule.allowStaticAttach)
                     {
                         nearestDistance = partDist;
                         nearestPModule = pickupModule;
