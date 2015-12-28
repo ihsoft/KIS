@@ -5,7 +5,6 @@ using UnityEngine;
 
 namespace KIS
 {
-    //FIXME: Should be in editor only.
     [KSPAddon(KSPAddon.Startup.MainMenu, true)]
     public class KISAddonEditorFilter : MonoBehaviour
     {
@@ -50,7 +49,7 @@ namespace KIS
         {
             RUI.Icons.Selectable.Icon icon = PartCategorizer.Instance.iconLoader.GetIcon(iconName);
             PartCategorizer.Category Filter = PartCategorizer.Instance.filters.Find(f => f.button.categoryName == category);
-            PartCategorizer.AddCustomSubcategoryFilter(Filter, subCategoryTitle, icon, p => EditorItemsFilter(p));
+            PartCategorizer.AddCustomSubcategoryFilter(Filter, subCategoryTitle, icon, EditorItemsFilter);
 
             RUIToggleButtonTyped button = Filter.button.activeButton;
             button.SetFalse(button, RUIToggleButtonTyped.ClickType.FORCED);
