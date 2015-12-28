@@ -189,8 +189,11 @@ namespace KIS
                     cursorTexture, ScaleMode.ScaleToFit);
                 
                 // Compile the whole hint text.
-                var allLines = new List<String>{cursorText, ""};
-                allLines.AddRange(cursorAdditionalTexts);
+                var allLines = new List<String>{cursorText};
+                if (cursorAdditionalTexts.Any()) {
+                    allLines.Add("");  // A linefeed between status and hint text. 
+                    allLines.AddRange(cursorAdditionalTexts);
+                }
                 var hintText = String.Join("\n", allLines.ToArray());
                 // Calculate the label region.
                 Vector2 textSize = hintWindowStyle.CalcSize(new GUIContent(hintText));
