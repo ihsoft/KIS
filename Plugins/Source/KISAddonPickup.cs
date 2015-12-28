@@ -573,11 +573,7 @@ namespace KIS
                 KISAddonCursor.CursorDefault();
             }
 
-            p.SetHighlight(false /* active */, true /* recursive */);
-            // HACK: Game will remember "recursive" setting and continue selecting the
-            // hierarchy on mouse hover. Do an explicit call with recusrive=false to reset it.
-            p.SetHighlight(false /* active */, false /* recursive */);
-
+            KIS_Shared.SetHierarchySelection(p, false);
             grabOk = false;
         }
 
@@ -875,6 +871,7 @@ namespace KIS
 
         public void Pickup(Part part)
         {
+            KIS_Shared.SetHierarchySelection(part, false /* isSelected */);
             draggedPart = part;
             draggedItem = null;
             Pickup();

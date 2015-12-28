@@ -632,6 +632,20 @@ namespace KIS
             return btnPress;
         }
 
+        /// <summary>Sets highlight status of the entire heierarchy.</summary>
+        /// <param name="hierarchyRoot">A root part of the hierarchy.</param>
+        /// <param name="isSelected">The status.</param>
+        public static void SetHierarchySelection(Part hierarchyRoot, bool isSelected) {
+            if (isSelected) {
+                hierarchyRoot.SetHighlight(true /* active */, true /* recursive */);
+            } else {
+                hierarchyRoot.SetHighlight(false /* active */, true /* recursive */);
+                // HACK: Game will remember "recursive" setting and continue selecting the
+                // hierarchy on mouse hover. Do an explicit call with recusrive=false to reset it.
+                hierarchyRoot.SetHighlight(false /* active */, false /* recursive */);
+            }
+        }
+
         /// <summary>Shows a formatted message with the specified location and timeout.</summary>
         /// <param name="style">A <c>ScreenMessageStyle</c> specifier.</param>
         /// <param name="duration">Delay before hiding the message in seconds.</param>
