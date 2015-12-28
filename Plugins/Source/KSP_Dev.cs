@@ -354,7 +354,6 @@ namespace KSP_Dev {
         /// <summary>Wraps a method with one argument which returns nothing.</summary>
         /// <param name="action">A method to wrap.</param>
         public static void Action<T1>(Action<T1> action, T1 arg1) {
-            action.Invoke(arg1);
             try {
                 action.Invoke(arg1);
             } catch (Exception e) {
