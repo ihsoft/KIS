@@ -2,9 +2,10 @@
 using System.Collections.Generic;
 using System.Collections;
 using System.Linq;
-using System.Text;
 using UnityEngine;
-using KSP.IO;
+using Contracts;
+using Contracts.Templates;
+using Contracts.Parameters;
 
 namespace KIS
 {
