@@ -417,7 +417,8 @@ namespace KIS
 
         public void Equip()
         {
-            if (!prefabModule) return;
+            // Only equip EVA kerbals.
+            if (!prefabModule || !inventory.vessel.isEVA) return;
             KSP_Dev.Logger.logInfo("Equip item {0}", this.availablePart.name);
 
             //Check skill if needed
