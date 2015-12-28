@@ -588,7 +588,7 @@ namespace KIS
 
             // Don't separate kerbals with their parts. They have a reason to be attached.
             if (part.name == "kerbalEVA" || part.name == "kerbalEVAfemale") {
-                KISAddonCursor.CursorEnable("KIS/Textures/forbidden", "Can't grab",
+                KISAddonCursor.CursorEnable("KIS/Textures/forbidden", "Can't detach",
                                             "(This kerbanaut looks too attached to the part)");
                 return;
             }
