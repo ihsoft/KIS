@@ -1681,7 +1681,7 @@ namespace KIS
                                         {
                                             KIS_Shared.SendKISMessage(KISAddonPickup.draggedPart, KIS_Shared.MessageAction.Store);
                                             AddItem(KISAddonPickup.draggedPart, 1, i);
-                                            if (HighLogic.LoadedSceneIsEditor == false)
+                                            if (!HighLogic.LoadedSceneIsEditor)
                                             {
                                                 KISAddonPickup.draggedPart.Die();
                                             }
