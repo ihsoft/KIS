@@ -1,0 +1,13 @@
+Current dev branch:
+- [FR]: Add a background when showing cursor status and hit text.
+- [FR] #96: Allow move/attach a group of parts. When grab mode is selected the whole hierarchy is highlited.
+- [Fix]: Don't equip items when loading non-eva kerbal. When vessel has multiple non-engineer kerbals, and there is one with an equipped screwdriwer an error "cannot quip" was showing on load.
+- [Fix] #97: Accept names with dots when overriding part settings in config. E.g. "mumech_MJ2_AR202" is correctly tarnslated into "mumech.MJ2.AR202".
+- [Fix] #87: Correctly handle "revert flight" action, and stop adding multiple callbacks that slow down editor UI.
+- [FR]: New mode "Re-dock" (shortcut: "y") - allows moving vessels docked to the station. No need to snipe the right part to deatch, the right docking port is found automatically.
+- ReFactoring: Added new KSP_Dev module to make development logging more simple and useful. Allows wrapping methods with exception handlers and setting logging level/filters via a config file located in KSP_Dev/settings.cfg file.
+- ReFactoring: Wrap many (but not all) Unity callback methods into exception handlers via KSP_Dev.
+- ReFactoring: Many style and comments changes which don't affect functionality.
+
+Version 1.2.3 (11 November 2015):
+- See changelog.md in the main branch.
