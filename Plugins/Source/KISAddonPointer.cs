@@ -25,6 +25,44 @@ namespace KIS
         public static Color colorMountOk = XKCDColors.SeaGreen;
         public static Color colorMountNok = XKCDColors.LightOrange;
         public static Color colorWrong = XKCDColors.Teal;
+        
+        /// <summary>
+        /// Defines parts that are allowed to be a target for "attach" action. Attaching to a part
+        /// that is not in the set will be forbidden. When set to <c>null</c> any part can be a
+        /// target.
+        /// </summary>
+        /// <remarks>
+        /// <para>Assigning a value to the property does immediate highlighting of the allowed parts
+        /// with <seealso cref="colorMountOk"/> color. Highlighting is only shown when pointer is
+        /// visible, and pointer module takes care to correctly show/hide the selection when pointer
+        /// is created/destroyed.</para>
+        /// <para>Pointer visibility state doesn't affect parts selection.</para>
+        /// </remarks>
+        public static HashSet<Part> allowedAttachmentParts {
+            get {
+                return _allowedAttachmentParts;
+            }
+            set {
+                // Erase old selection if pointer stopped or new selection set.
+                if (_allowedAttachmentParts != null
+                    && (!running || _allowedAttachmentParts != value)) {
+                    foreach (var p in _allowedAttachmentParts) {
+                        p.SetHighlightDefault();
+                    }
+                }
+                _allowedAttachmentParts = value;
+                // Highglight allowed parts if pointer is active.
+                if (running && _allowedAttachmentParts != null) {
+                    foreach (var p in _allowedAttachmentParts) {
+                        p.SetHighlightColor(colorMountOk);
+                        p.SetHighlight(true, false);
+                        p.SetHighlightType(Part.HighlightType.AlwaysOn);
+                    }
+                }
+            }
+        }
+        private static HashSet<Part> _allowedAttachmentParts;
+        
 
         private static bool _allowMount = false;
         public static bool allowMount
@@ -130,6 +168,7 @@ namespace KIS
                 MakePointer();
                
                 InputLockManager.SetControlLock(ControlTypes.ALLBUTCAMERAS, "KISpointer");
+                allowedAttachmentParts = allowedAttachmentParts; // Apply selection.
             }
         }
 
@@ -140,6 +179,7 @@ namespace KIS
             ResetMouseOver();
             InputLockManager.RemoveControlLock("KISpointer");
             DestroyPointer();
+            allowedAttachmentParts = allowedAttachmentParts; // Clear selection.
         }
 
         public void Update() {
@@ -485,7 +525,9 @@ namespace KIS
             bool cannotSurfaceAttach = false;
             bool invalidCurrentNode = false;
             bool itselfIsInvalid =
-                !allowPartItself && IsSameAssemblyChild(partToAttach, hoveredPart);
+                !allowPartItself && KIS_Shared.IsSameHierarchyChild(partToAttach, hoveredPart);
+            bool restrictedPart =
+                allowedAttachmentParts != null && !allowedAttachmentParts.Contains(hoveredPart);
             switch (pointerTarget)
             {
                 case PointerTarget.Static:
@@ -528,7 +570,7 @@ namespace KIS
             if (sourceDist > maxDist || targetDist > maxDist) {
                 color = colorDistNok;
             } else if (invalidTarget || cannotSurfaceAttach || invalidCurrentNode
-                       || itselfIsInvalid) {
+                       || itselfIsInvalid || restrictedPart) {
                 color = colorNok;
             }
             
@@ -583,6 +625,12 @@ namespace KIS
                     audioBipWrong.Play();
                     return;
                 }
+                else if (restrictedPart)
+                {
+                    KIS_Shared.ShowRightScreenMessage("Cannot attach to part: {0}", hoveredPart);
+                    audioBipWrong.Play();
+                    return;
+                }
                 else
                 {
                     SendPointerClick(pointerTarget, pointer.transform.position, pointer.transform.rotation, hoveredPart, GetCurrentAttachNode().id, hoveredNode);
@@ -631,22 +679,6 @@ namespace KIS
         public static AttachNode GetCurrentAttachNode()
         {
             return attachNodes[attachNodeIndex];
-        }
-
-        /// <summary>
-        /// Verifies if attaching part is not being attached to own child hierarchy.
-        /// </summary>
-        /// <param name="assemblyRoot">A root part of the assembly.</param>
-        /// <param name="child">A part being tested.</param>
-        /// <returns></returns>
-        private static bool IsSameAssemblyChild(Part assemblyRoot, Part child) {
-            for (Part part = child; part; part = part.parent) {
-                if (assemblyRoot == part) {
-                    KSP_Dev.Logger.logTrace("Attaching to self detected");
-                    return true;
-                }
-            }
-            return false;
         }
 
         /// <summary>Sets current pointer visible state.</summary>
