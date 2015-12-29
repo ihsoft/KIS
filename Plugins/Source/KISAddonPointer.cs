@@ -688,7 +688,6 @@ namespace KIS
             // Create one filter per mesh in the hierarhcy. Simple combining all meshes into one
             // larger mesh may have weird representation artifacts on different video cards.
             foreach (var combine in combines) {
-                KSP_Dev.Logger.logTrace("Add mesh filter for: {0}", combine.transform);
                 var mesh = new Mesh();
                 mesh.CombineMeshes(new CombineInstance[] {combine});
                 var childObj = new GameObject("KISPointerChildMesh");
