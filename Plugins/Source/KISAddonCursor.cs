@@ -188,7 +188,7 @@ namespace KIS
                 
                 // Compile the whole hint text.
                 var allLines = new List<String>{cursorText};
-                if (cursorAdditionalTexts.Any()) {
+                if (cursorAdditionalTexts != null && cursorAdditionalTexts.Any()) {
                     allLines.Add("");  // A linefeed between status and hint text. 
                     allLines.AddRange(cursorAdditionalTexts);
                 }
