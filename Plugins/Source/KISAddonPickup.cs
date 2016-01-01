@@ -354,6 +354,8 @@ namespace KIS
             }
             if (KISAddonPointer.isRunning && KISAddonPickup.instance.pointerMode == KISAddonPickup.PointerMode.Attach)
             {
+            // Cancelling "attach moving part" mode.
+                // Refresh original cursor state.
                 KISAddonPickup.instance.pointerMode = KISAddonPickup.PointerMode.Drop;
                 KIS_Shared.PlaySoundAtPoint("KIS/Sounds/click", FlightGlobals.ActiveVessel.transform.position);
             }
@@ -937,6 +939,8 @@ namespace KIS
 
         private void Pickup(PickupMode newPickupMode)
         {
+            KSP_Dev.Logger.logInfo("Start pickup in mode {0} from part: {1}",
+                                   newPickupMode, draggedPart);
             pickupMode = newPickupMode;
             cursorMode = CursorMode.Nothing;
             icon = new KIS_IconViewer(draggedPart, draggedIconResolution);
@@ -968,6 +972,8 @@ namespace KIS
 
         public void Drop(Part part, Part fromPart)
         {
+            KSP_Dev.Logger.logInfo("End pickup of {0} from part: {1}",
+                                   part, fromPart);
             if (!KISAddonPointer.isRunning)
             {
                 ModuleKISPickup pickupModule = GetActivePickupNearest(fromPart);
