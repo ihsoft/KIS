@@ -326,12 +326,14 @@ namespace KIS
                 return;
             }
             if (!KISAddonPointer.isRunning && !draggedPart && !grabActive)
+            // Entering "detach parts" mode.
             {
                 KISAddonCursor.StartPartDetection(OnMouseDetachPartClick, OnMouseDetachEnterPart, null, OnMouseDetachExitPart);
                 KISAddonCursor.CursorEnable("KIS/Textures/detach", "Detach");
                 detachActive = true;
                 cursorMode = CursorMode.Detach;
             }
+            // Entering "attach moving part" mode.
             if (KISAddonPointer.isRunning && KISAddonPointer.pointerTarget != KISAddonPointer.PointerTarget.PartMount
                 && KISAddonPickup.instance.pointerMode == KISAddonPickup.PointerMode.Drop)
             {
@@ -342,6 +344,7 @@ namespace KIS
 
         public void DisableAttachMode()
         {
+            // Cancelling "detach parts" mode.
             if (!KISAddonPointer.isRunning && cursorMode == CursorMode.Detach)
             {
                 detachActive = false;
@@ -620,7 +623,7 @@ namespace KIS
                 KISAddonCursor.CursorDefault();
             }
 
-            KIS_Shared.SetHierarchySelection(p, false);
+            KIS_Shared.SetHierarchySelection(p, false /* isSelected */);
             grabOk = false;
         }
 
@@ -657,8 +660,7 @@ namespace KIS
                 KISAddonCursor.CursorEnable("KIS/Textures/tooFar", "Too far", "(Move closer to the part)");
                 return;
             }
-
-
+            
             // Check if part is static attached
             if (item)
             {
@@ -688,7 +690,6 @@ namespace KIS
                     }
                 }
             }
-
 
             // Check if part can be detached
             if (!parentMount)
