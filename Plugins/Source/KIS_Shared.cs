@@ -137,7 +137,28 @@ namespace KIS
             }
             SendKISMessage(assemblyRoot, MessageAction.Decouple);
             Vessel oldVessel = assemblyRoot.vessel;
+            var formerParent = assemblyRoot.parent;
             assemblyRoot.decouple();
+
+            // HACK: As of KSP 1.0.5 some parts (e.g docking ports) can be attached by both a
+            // surface node and by a stack node which looks like an editor bug in some corner case.
+            // In this case decouple() will only clear the surface node leaving the stack one
+            // refering the parent. This misconfiguration will badly affect all further KIS
+            // operations on the part. Do a cleanup job here to workaround this bug.
+            var orphanNode = assemblyRoot.findAttachNodeByPart(formerParent);
+            if (orphanNode != null) {
+                KSP_Dev.Logger.logWarning(
+                    "KSP BUG: Cleanup orphan node {0} in the assembly", orphanNode.id);
+                orphanNode.attachedPart = null;
+                // Also, check that parent is properly cleaned up.
+                var parentOrphanNode = formerParent.findAttachNodeByPart(assemblyRoot);
+                if (parentOrphanNode != null) {
+                    KSP_Dev.Logger.logWarning(
+                        "KSP BUG: Cleanup orphan node {0} in the parent", parentOrphanNode.id);
+                    parentOrphanNode.attachedPart = null;
+                }
+            }
+            
             CleanupExternalLinks(oldVessel);
             CleanupExternalLinks(assemblyRoot.vessel);
 
