@@ -1,7 +1,10 @@
-Current dev branch:
+1.2.3-alpha5 (not released yet)
 - [FR]: When re-docking restrict attaching to the non-compatible docking ports, and highlight the compatible ones.
+- [Fix]: Cursor hints could work incorrectly when only cursor status was supplied.
+- [Fix]: Handle wrong assemblies that could have created due to a bug in the KSP editor.
+- [Fix]: Don't check parts count when working with inventory in editor. It could cause an error and block parts dragging.
 
-Alpha4:
+1.2.3-alpha4 (28 December 2015)
 - [FR]: Add a background when showing cursor status and hit text.
 - [FR] #96: Allow move/attach a group of parts. When grab mode is selected the whole hierarchy is highlited.
 - [Fix]: Don't equip items when loading non-eva kerbal. When vessel has multiple non-engineer kerbals, and there is one with an equipped screwdriwer an error "cannot quip" was showing on load.
