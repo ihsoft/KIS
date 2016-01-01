@@ -1232,48 +1232,6 @@ namespace KIS
             }
         }
 
-        /// <summary>Checks if the part and its children can be grabbed.</summary>
-        /// <remarks>Reports any condition that forbids the grabbing.</remarks>
-        /// <param name="part">A hierarchy root.</param>
-        /// <returns><c>true</c> when the hierarchy can be grabbed.</returns>
-        private bool CheckCanGrab(Part part) {
-            // Don't grab kerbals. It's weird, and they don't have attachment nodes anyways.
-            if (part.name == "kerbalEVA" || part.name == "kerbalEVAfemale") {
-                KISAddonCursor.CursorEnable(
-                    ForbiddenIcon, CannotGrabStatus, CannotMoveKerbonautText);
-                return false;
-            }
-            if (!HasActivePickupInRange(part)) {
-                KISAddonCursor.CursorEnable(TooFarIcon, TooFarStatus, TooFarText);
-                return false;
-            }
-
-            // Check part mass.
-            grabbedMass = KIS_Shared.GetAssemblyMass(part, out grabbedPartsCount);
-            float pickupMaxMass = GetAllPickupMaxMassInRange(part);
-            if (grabbedMass > pickupMaxMass)
-            {
-                KISAddonCursor.CursorEnable(
-                    TooHeavyIcon, TooHeavyStatus,
-                    String.Format(TooHeavyTextFmt, grabbedMass, pickupMaxMass));
-                return false;
-            }
-
-            // Check if there is a kerbonaut to handle the task.
-            ModuleKISPickup pickupModule = GetActivePickupNearest(part, canPartAttachOnly: true);
-            if (!pickupModule) {
-                if (FlightGlobals.ActiveVessel.isEVA) {
-                    KISAddonCursor.CursorEnable(NeedToolIcon, NeedToolStatus, NeedToolText);
-                } else {
-                    KISAddonCursor.CursorEnable(
-                        ForbiddenIcon, NotSupportedStatus, NotSupportedText);
-                }
-                return false;
-            }
-
-            return true;
-        }
-
         /// <summary>Deducts and selects a vessel form the hovered part.</summary>
         /// <remarks>The method goes up to the first parent docking port that is connected to a port
         /// of the same type. This point is considered a docking point, and from here detachment is
@@ -1340,8 +1298,56 @@ namespace KIS
             }
             KISAddonCursor.CursorEnable(GrabIcon, ReDockOkStatus, ReDockSelectVesselText);
         }
-    }
+    
+        /// <summary>
+        /// Checks if the part and its children can be grabbed and reports the errors.
+        /// </summary>
+        /// <remarks>Also, collects <seealso cref="grabbedMass"/> and
+        /// <seealso cref="grabbedPartsCount"/> of the attempted hierarchy.</remarks>
+        /// <param name="part">A hierarchy root being grabbed.</param>
+        /// <returns><c>true</c> when the hierarchy can be grabbed.</returns>
+        private bool CheckCanGrab(Part part) {
+            // Don't grab kerbals. It's weird, and they don't have attachment nodes anyways.
+            if (part.name == "kerbalEVA" || part.name == "kerbalEVAfemale") {
+                KISAddonCursor.CursorEnable(
+                    ForbiddenIcon, CannotGrabStatus, CannotMoveKerbonautText);
+                return false;
+            }
+            // Check there are kerbals in range.
+            if (!HasActivePickupInRange(part)) {
+                KISAddonCursor.CursorEnable(TooFarIcon, TooFarStatus, TooFarText);
+                return false;
+            }
+            // Check part mass.
+            grabbedMass = KIS_Shared.GetAssemblyMass(part, out grabbedPartsCount);
+            float pickupMaxMass = GetAllPickupMaxMassInRange(part);
+            if (grabbedMass > pickupMaxMass) {
+                KISAddonCursor.CursorEnable(
+                    TooHeavyIcon, TooHeavyStatus,
+                    String.Format(TooHeavyTextFmt, grabbedMass, pickupMaxMass));
+                return false;
+            }
+            // Check if attached part can be detached.
+            return CheckCanDetach(part);
+        }
+        
+        /// <summary>Checks if an attached part can be detached and reports the errors.</summary>
+        /// <remarks>If part has a parent it's attached. In order to detach the part there should be
+        /// a kerbonaut in range with a tool equipped.</remarks>
+        /// <param name="part">A hierarchy root being detached.</param>
+        /// <returns><c>true</c> when the hierarchy can be detached.</returns>
+        private bool CheckCanDetach(Part part) {
+            // If part is attached then check if the right tool is equipped to detach it.
+            if (part.parent != null
+                && !GetActivePickupNearest(part, canPartAttachOnly: true)) {
+                KISAddonCursor.CursorEnable(NeedToolIcon, NeedToolStatus, NeedToolToDetachText);
+                return false;
+            }
+            return true;
+        }
 
+    }
+    
     // Create an instance for managing inventory in the editor.
     [KSPAddon(KSPAddon.Startup.EditorAny, false /*once*/)]
     public class KISAddonPickupInEditor : KISAddonPickup
