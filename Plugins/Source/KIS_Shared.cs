@@ -684,6 +684,58 @@ namespace KIS
             }
         }
 
+        /// <summary>Returns nodes available for attaching.</summary>
+        /// <remarks>
+        /// When part has a surface attachment node it may (and usually does) point in the same
+        /// direction as a stack node. In such situation two different nodes in fact become the same
+        /// attachment point, and if one of them is occupied the other one should be considered
+        /// "blocked", i.e. not available for attachment. This method detects such situations and
+        /// doesn't return nodes that may result in collision.
+        /// </remarks>
+        /// <param name="p">A part to get nodes for.</param>
+        /// <param name="ignoreAttachedPart">Don't consider attachment node occupied if it's
+        /// attached to this part.</param>
+        /// <param name="needSrf">If <c>true</c> then free surface node should be retruned as well.
+        /// Otherwise, only the stack nodes are returned.</param>
+        /// <returns>A list of nodes that are available for attaching. If there is a surface node in
+        /// the result then it always goes first in the list.</returns>
+        public static List<AttachNode> GetAvailableAttachNodes(Part p,
+                                                               Part ignoreAttachedPart = null,
+                                                               bool needSrf = true) {
+            var result = new List<AttachNode>();
+            var srfNode = p.attachRules.srfAttach ? p.srfAttachNode : null;
+            bool srfHasPart = (srfNode != null && srfNode.attachedPart != null
+                               && srfNode.attachedPart != ignoreAttachedPart);
+            foreach (var an in p.attachNodes) {
+                // Skip occupied nodes.
+                if (an.attachedPart != null && an.attachedPart != ignoreAttachedPart) {
+                    KSP_Dev.Logger.logTrace("Skip occupied node {0} attached to: {1}",
+                                            an.id, an.attachedPart);
+                    // Reset surface node if it points in the same direction as the occupied node. 
+                    if (srfNode != null && an.orientation == srfNode.orientation) {
+                        KSP_Dev.Logger.logTrace(
+                            "Skip surface node pointing to {0} due to occupied node {1}",
+                            srfNode.orientation, an.id);
+                        srfNode = null;
+                    }
+                    continue;
+                }
+                // Skip free nodes that point in the same direction as an occupied surface node.
+                if (srfHasPart && an.orientation == srfNode.orientation) {
+                    KSP_Dev.Logger.logTrace("Skip {0} node pointing to {1} due to surface node",
+                                            an.id, an.orientation);
+                    continue;
+                }
+                KSP_Dev.Logger.logTrace("Accumulate {0} free node", an.id);
+                result.Add(an);
+            }
+            // Add a surface node if it's free. Always put it first in the list.
+            if (needSrf && srfNode != null && !srfHasPart) {
+                result.Insert(0, srfNode);
+            }
+            return result;
+        }
+        
         /// <summary>Shows a formatted message with the specified location and timeout.</summary>
         /// <param name="style">A <c>ScreenMessageStyle</c> specifier.</param>
         /// <param name="duration">Delay before hiding the message in seconds.</param>

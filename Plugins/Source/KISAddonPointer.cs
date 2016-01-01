@@ -359,12 +359,9 @@ namespace KIS
             }
             if (allowStack && GetCurrentAttachNode().nodeType != AttachNode.NodeType.Surface)
             {
-                foreach (AttachNode an in hoverPart.attachNodes)
+                foreach (var an in KIS_Shared.GetAvailableAttachNodes(hoverPart, needSrf:false))
                 {
-                    if (!an.attachedPart)
-                    {
-                        KIS_Shared.AssignAttachIcon(hoverPart, an, colorStack);
-                    }
+                    KIS_Shared.AssignAttachIcon(hoverPart, an, colorStack);
                 }
             }
             SendPointerState(pointerTarget, PointerState.OnMouseEnterPart, hoverPart, null);
@@ -749,74 +746,33 @@ namespace KIS
         /// If part has no valid attachment nodes.
         /// </exception>
         private static void MakePointerAttachNodes() {
-            attachNodes.Clear();
+            // Deatch will decouple from the parent so, ask to ignore it when looking for the nodes.
+            attachNodes = KIS_Shared.GetAvailableAttachNodes(
+                partToAttach, ignoreAttachedPart:partToAttach.parent);
+            if (!attachNodes.Any()) {
+                // It's too late to fallback. The caller should have checked if part has free nodes.                
+                throw new InvalidOperationException(String.Format(
+                    "No free attach nodes found for part: {0} (id={1})",
+                    partToAttach, partToAttach.flightID));
+            }
+
+            // Find the best default node.
             attachNodeIndex = -1;
-
-            // If root part allows surface mounting then the rest of the hierarchy can be
-            // attached either on the side of the surface node or on the opposite. The attach nodes
-            // oriented towards the assembly children must not be allowed for attaching to avoid
-            // collisions.
-            var childrenOrientation = Vector3.zero;
-            if (partToAttach.children.Any() && partToAttach.attachRules.srfAttach) {
-                var srfNode = partToAttach.srfAttachNode;
-                if (srfNode.attachedPart) {
-                    // Root is surface attached. Find direction of the children.
-                    childrenOrientation = srfNode.attachedPart == partToAttach.parent
-                        ? -srfNode.orientation : srfNode.orientation;
-                } else {
-                    // Root is stack attached. Go thru the nodes and find the direction.
-                    foreach (var an in partToAttach.attachNodes) {
-                        if (an.attachedPart && an.attachedPart.parent == partToAttach) {
-                            childrenOrientation = an.orientation;
-                            break;
-                        }
-                    }
-                }
-            }
-            
-            // Surface node is not listed in attachNodes, handle it separately.
-            if (partToAttach.attachRules.srfAttach
-                && !childrenOrientation.Equals(partToAttach.srfAttachNode.orientation)) {
+            if (attachNodes[0].nodeType == AttachNode.NodeType.Surface) {
+                // Surface is always the best one. May be not for docking ports, though.
                 KSP_Dev.Logger.logTrace("Surface node set to default");
-                attachNodes.Add(partToAttach.srfAttachNode);
                 attachNodeIndex = 0;
-            }
-
-            // Handle stack nodes.
-            foreach (AttachNode an in partToAttach.attachNodes) {
-                // Skip nodes occupied by children.
-                if (an.attachedPart && an.attachedPart.parent == partToAttach) {
-                    KSP_Dev.Logger.logTrace("Skip occupied node '{0}' attached to: {1}",
-                                            an.id, an.attachedPart);
-                    continue;
-                }
-                
-                // Skip nodes pointing towards the children.
-                if (childrenOrientation.Equals(an.orientation)) {
-                    KSP_Dev.Logger.logTrace("Skip node '{0}' oriented towards children, "
-                                            + " attached to: {1}", an.id, an.attachedPart);
-                    continue;
-                }
-
-                // Deduct the most appropriate default attach node. In VBH "bottom" is a usual
-                // node so, prefer it when available.
-                if (attachNodeIndex == -1 && an.id.Equals("bottom")) {
+            } else {
+                // In VAB "bottom" is a usual node so, prefer it when available.
+                attachNodeIndex = attachNodes.FindIndex(an => an.id.Equals("bottom"));
+                if (attachNodeIndex != -1) {
                     KSP_Dev.Logger.logTrace("Bottom node set to default");
-                    attachNodeIndex = attachNodes.Count();
+                } else {
+                    // Fallback if no default node is found.
+                    attachNodeIndex = 0;
+                    KSP_Dev.Logger.logTrace("Fallback: '{0}' node set to default",
+                                            attachNodes[attachNodeIndex].id);
                 }
-
-                attachNodes.Add(an);
-                KSP_Dev.Logger.logTrace("Added node: {0}", an.id);
-            }
-            
-            // Fallback if no default node is found.
-            if (attachNodeIndex == -1) {
-                if (!attachNodes.Any()) {
-                    throw new InvalidOperationException("No attach nodes found for the part!");
-                }
-                attachNodeIndex = 0;
-                KSP_Dev.Logger.logTrace(
-                    "'{0}' node set to default", attachNodes[attachNodeIndex].id);
             }
 
             // Make node transformations.
