@@ -57,6 +57,9 @@ namespace KIS
             {
                 delegateOnMouseExitPart(hoveredPart);
             }
+            if (hoveredPart != null) {
+                KIS_Shared.SetHierarchySelection(hoveredPart, false /* isSelected */);
+            }
             hoveredPart = null;
         }
 
