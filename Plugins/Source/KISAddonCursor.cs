@@ -11,9 +11,9 @@ namespace KIS
         private static bool cursorShow = false;
         private static bool partDetectionActive = false;
         
-        public static Texture2D cursorTexture = null;
-        public static string cursorText;
-        public static List<string> cursorAdditionalTexts;
+        private static Texture2D cursorTexture = null;
+        private static string cursorText;
+        private static List<string> cursorAdditionalTexts;
         public static Part hoveredPart = null;
         public static int partClickedFrame = -1;
         private static OnMousePartAction delegateOnMousePartClick;
@@ -125,14 +125,14 @@ namespace KIS
             }
         }
 
-        public static void CursorEnable(string texturePath, string text = "", string text2 = "")
+        public static void CursorEnable(string texturePath, string text, string text2)
         {
             List<String> texts = new List<String>();
             texts.Add(text2);
             CursorEnable(texturePath, text, texts);
         }
 
-        public static void CursorEnable(string texturePath, string text = "", List<string> additionalTexts = null)
+        public static void CursorEnable(string texturePath, string text, List<string> additionalTexts = null)
         {
             cursorShow = true;
             Screen.showCursor = false;
@@ -140,7 +140,6 @@ namespace KIS
             cursorText = text;
             cursorAdditionalTexts = additionalTexts;
         }
-
         
         public static void CursorDefault()
         {
