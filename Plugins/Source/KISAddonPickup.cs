@@ -116,6 +116,7 @@ namespace KIS
                     KISAddonPointer.useAttachRules = false;
                     KISAddonPointer.allowOffset = true;
                     KISAddonPointer.colorOk = Color.green;
+                    KISAddonPointer.allowedAttachmentParts = null;
                 }
                 if (value == PointerMode.Attach)
                 {
@@ -127,6 +128,7 @@ namespace KIS
                     KISAddonPointer.useAttachRules = true;
                     KISAddonPointer.allowOffset = false;
                     KISAddonPointer.colorOk = XKCDColors.Teal;
+                    KISAddonPointer.allowedAttachmentParts = null;
 
                     ModuleKISItem item = null;
                     Part attachPart = null;
@@ -190,7 +192,7 @@ namespace KIS
                     KISAddonPointer.useAttachRules = true;
                     KISAddonPointer.allowOffset = false;
                     KISAddonPointer.colorOk = XKCDColors.Teal;
-                    //TODO: Set allowed parts restriction here (same as the starting docking port).
+                    KISAddonPointer.allowedAttachmentParts = GetAllowedDockPorts();
                 }
                 KSP_Dev.Logger.logInfo("Set pointer mode to: {0}", value);
                 this._pointerMode = value;
@@ -1262,8 +1264,8 @@ namespace KIS
 
                     redockTarget = chkPart;
                     redockVesselName = dockingModule.vesselInfo.name;
-                    KSP_Dev.Logger.logTrace("Found vessel {0} at dock port {1}",
-                                            redockVesselName, chkPart);
+                    KSP_Dev.Logger.logTraceRepeated("Found vessel {0} at dock port {1}",
+                                                    redockVesselName, chkPart);
                     break;
                 }
             }
@@ -1352,6 +1354,39 @@ namespace KIS
             return true;
         }
 
+        /// <summary>
+        /// Finds and returns all docking ports that are allowed for the re-docking operation.
+        /// </summary>
+        /// <remarks>
+        /// Re-docking must be started and <seealso cref="redockTarget"/> populated with the vessel
+        /// root part.
+        /// </remarks>
+        /// <returns>A complete set of allowed docking ports.</returns>
+        private static HashSet<Part> GetAllowedDockPorts() {
+            var result = new HashSet<Part>();
+            var compatiblePorts =
+                redockTarget.vessel.parts.FindAll(p => p.name == redockTarget.name);
+            foreach (var port in compatiblePorts) {
+                if (KIS_Shared.IsSameHierarchyChild(redockTarget, port)) {
+                    // Skip ports of the moving vessel.
+                    continue;
+                }
+
+                var usedNodes = 0;
+                if (port.attachRules.srfAttach && port.srfAttachNode.attachedPart != null) {
+                    ++usedNodes;
+                }
+                var nodesWithParts = port.attachNodes.FindAll(p => p.attachedPart != null);
+                usedNodes += nodesWithParts.Count();
+                if (usedNodes < 2) {
+                    // Usual port has three nodes: one surface and two stacks. When any two of them
+                    // are occupied the docking is not possible.
+                    result.Add(port);
+                }
+            }
+            KSP_Dev.Logger.logInfo("Found {0} allowed docking ports", result.Count());
+            return result;
+        }
     }
     
     // Create an instance for managing inventory in the editor.

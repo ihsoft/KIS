@@ -1,4 +1,7 @@
 Current dev branch:
+- [FR]: When re-docking restrict attaching to the non-compatible docking ports, and highlight the compatible ones.
+
+Alpha4:
 - [FR]: Add a background when showing cursor status and hit text.
 - [FR] #96: Allow move/attach a group of parts. When grab mode is selected the whole hierarchy is highlited.
 - [Fix]: Don't equip items when loading non-eva kerbal. When vessel has multiple non-engineer kerbals, and there is one with an equipped screwdriwer an error "cannot quip" was showing on load.

@@ -654,6 +654,22 @@ namespace KIS
             return btnPress;
         }
 
+        /// <summary>
+        /// Helper method to verify if part is an indirect children of another part.
+        /// </summary>
+        /// <param name="rootPart">A root part of the hierarchy.</param>
+        /// <param name="child">A part being tested.</param>
+        /// <returns></returns>
+        public static bool IsSameHierarchyChild(object rootPart, Part child) {
+            for (Part part = child; part; part = part.parent) {
+                if (System.Object.ReferenceEquals(rootPart, part)) {
+                    KSP_Dev.Logger.logTrace("Attaching to self detected");
+                    return true;
+                }
+            }
+            return false;
+        }
+
         /// <summary>Sets highlight status of the entire heierarchy.</summary>
         /// <param name="hierarchyRoot">A root part of the hierarchy.</param>
         /// <param name="isSelected">The status.</param>
