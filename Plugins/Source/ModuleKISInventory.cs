@@ -763,7 +763,7 @@ namespace KIS
         /// <param name="p">A part to check.</param>
         /// <returns><c>true</c> if it's OK to put the part into the inventory.</returns>
         private bool VerifyIsNotAssembly(Part p) {
-            if (KISAddonPickup.grabbedPartsCount > 1) {
+            if (!HighLogic.LoadedSceneIsEditor && KISAddonPickup.grabbedPartsCount > 1) {
                 KIS_Shared.ShowCenterScreenMessage(
                     "Cannot put a part with children into the inventory."
                     + " There are {0} part(s) attached", KISAddonPickup.grabbedPartsCount - 1);
