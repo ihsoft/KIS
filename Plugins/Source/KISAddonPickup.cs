@@ -302,7 +302,7 @@ namespace KIS
                 return;
             }
             KISAddonCursor.StartPartDetection(OnMouseGrabPartClick, OnMouseGrabEnterPart, null, OnMouseGrabExitPart);
-            KISAddonCursor.CursorEnable("KIS/Textures/grab", "Grab", "");
+            KISAddonCursor.CursorEnable("KIS/Textures/grab", "Grab");
             grabActive = true;
             cursorMode = CursorMode.Grab;
         }
@@ -328,7 +328,7 @@ namespace KIS
             if (!KISAddonPointer.isRunning && !draggedPart && !grabActive)
             {
                 KISAddonCursor.StartPartDetection(OnMouseDetachPartClick, OnMouseDetachEnterPart, null, OnMouseDetachExitPart);
-                KISAddonCursor.CursorEnable("KIS/Textures/detach", "Detach", "");
+                KISAddonCursor.CursorEnable("KIS/Textures/detach", "Detach");
                 detachActive = true;
                 cursorMode = CursorMode.Detach;
             }
@@ -613,7 +613,7 @@ namespace KIS
         {
             if (grabActive)
             {
-                KISAddonCursor.CursorEnable("KIS/Textures/grab", "Grab", "");
+                KISAddonCursor.CursorEnable("KIS/Textures/grab", "Grab");
             }
             else
             {
@@ -819,7 +819,7 @@ namespace KIS
         {
             if (detachActive)
             {
-                KISAddonCursor.CursorEnable("KIS/Textures/detach", "Detach", "");
+                KISAddonCursor.CursorEnable("KIS/Textures/detach", "Detach");
             }
             else
             {
