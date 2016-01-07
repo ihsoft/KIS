@@ -52,11 +52,11 @@ namespace KIS
             "Kerbonauts can move themselves using jetpacks. Try to ask.";
         const string TooHeavyTextFmt = "Bring more kerbal [{0:F3}t > {1:F3}t]";
         const string TooFarText = "Move closer to the part";
-        const string NeedToolText = "This part can't be detached without a tool";
-        const string NotSupportedText = "Detach function is not supported on this part";
+        const string NeedToolText = "This part can't be attached without a tool";
         const string NeedToolToDetachText = "This part can't be detached without a tool";
         const string NeedToolToDetachFromGroundText =
             "This part can't be detached from the ground without a tool";
+        const string NotSupportedText = "The function is not supported on this part";
         const string CannotAttachText = "Attach function is not supported on this part";
         
         public static string grabKey = "g";
@@ -1267,7 +1267,6 @@ namespace KIS
                 return;
             }
 
-            // Find vessel's docking port.
             redockTarget = null;
             redockVesselName = null;
             for (var chkPart = part; chkPart; chkPart = chkPart.parent) {
@@ -1309,8 +1308,7 @@ namespace KIS
         }
         
         /// <summary>Erases re-docking vessel selection.</summary>
-        /// <param name="part">Not used.</param>
-        private void OnMouseRedockExitPart(Part p) {
+        private void OnMouseRedockExitPart(Part unusedPart) {
             if (cursorMode != CursorMode.ReDock) {
                 return;
             }
