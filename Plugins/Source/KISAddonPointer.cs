@@ -746,14 +746,23 @@ namespace KIS
         /// If part has no valid attachment nodes.
         /// </exception>
         private static void MakePointerAttachNodes() {
+            // Make node transformations.
+            if (pointerNodeTransform) { 
+                Destroy(pointerNodeTransform);
+            }
+            pointerNodeTransform = new GameObject("KASPointerPartNode").transform;
+
             // Deatch will decouple from the parent so, ask to ignore it when looking for the nodes.
             attachNodes = KIS_Shared.GetAvailableAttachNodes(
                 partToAttach, ignoreAttachedPart:partToAttach.parent);
             if (!attachNodes.Any()) {
-                // It's too late to fallback. The caller should have checked if part has free nodes.                
-                throw new InvalidOperationException(String.Format(
-                    "No free attach nodes found for part: {0} (id={1})",
-                    partToAttach, partToAttach.flightID));
+                //TODO: When there are no nodes try finding ones in the parent or in the children.
+                // Ideally, the caller should have checked if this part has free nodes. Now the only
+                // way is top pick *any* node. The surface one always exists so, it's a good
+                // candidate. Though, for many details it may result in a weird representation.
+                KSP_Dev.Logger.logError("Part {0} has no free nodes, use {1}",
+                                        partToAttach, partToAttach.srfAttachNode);
+                attachNodes.Add(partToAttach.srfAttachNode);
             }
 
             // Find the best default node.
@@ -775,11 +784,6 @@ namespace KIS
                 }
             }
 
-            // Make node transformations.
-            if (pointerNodeTransform) { 
-                Destroy(pointerNodeTransform);
-            }
-            pointerNodeTransform = new GameObject("KASPointerPartNode").transform;
             UpdatePointerAttachNode();
         }
 
