@@ -1346,9 +1346,67 @@ namespace KIS
         /// <returns><c>true</c> when the hierarchy can be detached.</returns>
         private bool CheckCanDetach(Part part) {
             // If part is attached then check if the right tool is equipped to detach it.
-            if (part.parent != null
-                && !GetActivePickupNearest(part, canPartAttachOnly: true)) {
-                KISAddonCursor.CursorEnable(NeedToolIcon, NeedToolStatus, NeedToolToDetachText);
+            if (!part.parent) {
+                return true;  // No parent, no detach needed.
+            }
+            
+            var item = part.GetComponent<ModuleKISItem>();
+            string rejectText = null;  // If null then detach is allowed.
+            if (item) {
+                // Handle KIS items.
+                if (part.parent.GetComponent<ModuleKISPartMount>() != null) {
+                    // Check if part is a ground base.
+                    if (item.staticAttached && item.allowStaticAttach == 2
+                        && !GetActivePickupNearest(part, canStaticAttachOnly: true)) {
+                        rejectText = NeedToolToDetachFromGroundText;
+                    }
+                } else {
+                    // Check specific KIS items
+                    if (item.allowPartAttach == 0) {
+                        // Part restricts attachments and detachments.
+                        //FIXME: Findout what part cannot be detached. And why.
+                        KSP_Dev.Logger.logError("Unknown item being detached: {0}", item);
+                        ReportCheckError("Can't detach", "(This part can't be detached)");
+                        return false;
+                    }
+                    if (item.allowPartAttach == 2) {
+                        // Part requires a tool to be detached.
+                        if (!GetActivePickupNearest(part, canPartAttachOnly: true)) {
+                            rejectText = NeedToolToDetachText;
+                        }
+                    }
+                }
+            } else {
+                // Handle regular game parts.
+                if (!GetActivePickupNearest(part, canPartAttachOnly: true)) {
+                    rejectText = NeedToolToDetachText;
+                }
+            }
+            if (rejectText != null) {
+                ReportCheckError(NeedToolStatus, rejectText, cursorIcon:NeedToolIcon);
+                return false;
+            }
+            
+            return true;
+        }
+
+        private bool CheckIsAttachable(Part part, bool reportToConsole = false) {
+            // Check if part has at least one free node.
+            var nodes = KIS_Shared.GetAvailableAttachNodes(part, part.parent);
+            if (!nodes.Any()) {
+                ReportCheckError(CannotAttachStatus, CannotAttachText, reportToConsole);
+                return false;
+            }
+
+            // Check if there is a kerbonaut with a tool to handle the task.
+            ModuleKISPickup pickupModule = GetActivePickupNearest(part, canPartAttachOnly: true);
+            if (!pickupModule) {
+                // Check if it's EVA engineer or a KAS item.
+                if (FlightGlobals.ActiveVessel.isEVA) {
+                    ReportCheckError(NeedToolStatus, NeedToolText, reportToConsole, NeedToolIcon);
+                } else {
+                    ReportCheckError(NotSupportedStatus, NotSupportedText, reportToConsole);
+                }
                 return false;
             }
             return true;
