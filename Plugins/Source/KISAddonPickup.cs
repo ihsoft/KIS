@@ -1115,14 +1115,7 @@ namespace KIS
                     {
                         CreateAttach(tgtPart, pos, rot, srcAttachNodeID, tgtAttachNode);
                     }
-                    // sound
-                    if (tgtPart)
-                    {
-                        ModuleKISPickup modulePickup = GetActivePickupNearest(pos);
-                        if (modulePickup) {
-                            AudioSource.PlayClipAtPoint(GameDatabase.Instance.GetAudioClip(modulePickup.attachPartSndPath), pos);
-                        }
-                    }
+                    KIS_UISoundPlayer.instance.PlayToolAttach();
                 }
             }
             draggedItem = null;
