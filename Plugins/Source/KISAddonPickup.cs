@@ -651,19 +651,8 @@ namespace KIS
                     }
                     else
                     {
-                        ModuleKISPickup pickupModule = GetActivePickupNearest(part, canPartAttachOnly: true);
-                        if (!pickupModule)
-                        {
-                            if (FlightGlobals.ActiveVessel.isEVA)
-                            {
-                                KISAddonCursor.CursorEnable("KIS/Textures/needtool", "Tool needed", "(Part can't be detached without a tool)");
-                                return;
-                            }
-                            else
-                            {
-                                KISAddonCursor.CursorEnable("KIS/Textures/forbidden", "Not supported", "(Detach function is not supported on this part)");
-                                return;
-                            }
+                        if (!CheckCanDetach(part)) {
+                            return;
                         }
                     }
                 }
