@@ -1162,8 +1162,8 @@ namespace KIS
 
                     redockTarget = chkPart;
                     redockVesselName = dockingModule.vesselInfo.name;
-                    KSPDev.Logger.logTraceRepeated("Found vessel {0} at dock port {1}",
-                                                   redockVesselName, chkPart);
+                    KSPDev.Logger.logTrace("Found vessel {0} at dock port {1}",
+                                           redockVesselName, chkPart);
                     break;
                 }
             }
