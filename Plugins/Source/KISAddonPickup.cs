@@ -1289,7 +1289,8 @@ namespace KIS
             }
             KIS_Shared.SetHierarchySelection(redockTarget, true /* isSelected */);
 
-            if (!CheckCanGrab(redockTarget)) {
+            if (!CheckCanGrab(redockTarget) || !CheckCanDetach(redockTarget) ||
+                !CheckIsAttachable(redockTarget)) {
                 return;
             }
 
@@ -1311,10 +1312,10 @@ namespace KIS
             if (cursorMode != CursorMode.ReDock) {
                 return;
             }
+            redockVesselName = null;
             if (redockTarget) {
                 KIS_Shared.SetHierarchySelection(redockTarget, false /* isSelected */);
                 redockTarget = null;
-                redockVesselName = null;
             }
             KISAddonCursor.CursorEnable(GrabIcon, ReDockOkStatus, ReDockSelectVesselText);
         }
