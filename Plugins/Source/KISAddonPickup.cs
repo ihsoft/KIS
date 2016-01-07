@@ -957,6 +957,7 @@ namespace KIS
         {
             KSP_Dev.Logger.logInfo("Start pickup in mode {0} from part: {1}",
                                    newPickupMode, draggedPart);
+            grabbedPart = null;
             pickupMode = newPickupMode;
             cursorMode = CursorMode.Nothing;
             icon = new KIS_IconViewer(draggedPart, draggedIconResolution);
@@ -988,6 +989,7 @@ namespace KIS
 
         public void Drop(Part part, Part fromPart)
         {
+            grabbedPart = part;
             KSP_Dev.Logger.logInfo("End pickup of {0} from part: {1}",
                                    part, fromPart);
             if (!KISAddonPointer.isRunning)
