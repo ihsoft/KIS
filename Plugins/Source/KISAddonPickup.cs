@@ -1228,7 +1228,7 @@ namespace KIS
             if (cursorMode != CursorMode.Nothing) {
                 return;
             }
-            List<ModuleKISPickup> pickupModules =
+            var pickupModules =
                 FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleKISPickup>();
             if (pickupModules.Count > 0) {
                 KSP_Dev.Logger.logInfo("Enable re-dock mode");
@@ -1267,6 +1267,8 @@ namespace KIS
 
             redockTarget = null;
             redockVesselName = null;
+
+            // Find vessel's docking port.
             for (var chkPart = part; chkPart; chkPart = chkPart.parent) {
                 // Only consider a docking port that is connected to the same type docking port, and
                 // has a vessel attached.
