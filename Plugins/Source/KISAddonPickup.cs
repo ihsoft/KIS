@@ -615,19 +615,17 @@ namespace KIS
 
         void OnMouseGrabPartClick(Part part)
         {
-            if (KISAddonPointer.isRunning) return;
-            if (hoverInventoryGui()) return;
-            if (HighLogic.LoadedSceneIsFlight)
-            {
-                if (grabOk && HasActivePickupInRange(part))
-                {
+            if (KISAddonPointer.isRunning || hoverInventoryGui()) {
+                return;
+            }
+            if (HighLogic.LoadedSceneIsFlight) {
+                if (grabOk) {
                     Pickup(part);
                 }
-            }
-            if (HighLogic.LoadedSceneIsEditor)
-            {
-                if (ModuleKISInventory.GetAllOpenInventories().Count == 0) return;
-                Pickup(part);
+            } else if (HighLogic.LoadedSceneIsEditor) {
+                if (ModuleKISInventory.GetAllOpenInventories().Any()) {
+                    Pickup(part);
+                }
             }
         }
 
