@@ -210,15 +210,17 @@ namespace KIS
             {
                 ShowInventory();
             }
-            // Use slot
-            slotKeyPress(KeyCode.Alpha1, 0, 1);
-            slotKeyPress(KeyCode.Alpha2, 1, 1);
-            slotKeyPress(KeyCode.Alpha3, 2, 1);
-            slotKeyPress(KeyCode.Alpha4, 3, 1);
-            slotKeyPress(KeyCode.Alpha5, 4, 1);
-            slotKeyPress(KeyCode.Alpha6, 5, 1);
-            slotKeyPress(KeyCode.Alpha7, 6, 1);
-            slotKeyPress(KeyCode.Alpha8, 7, 1);
+            // Use slot when not in drag mode.
+            if (!KISAddonPointer.isRunning) {
+                slotKeyPress(KeyCode.Alpha1, 0, 1);
+                slotKeyPress(KeyCode.Alpha2, 1, 1);
+                slotKeyPress(KeyCode.Alpha3, 2, 1);
+                slotKeyPress(KeyCode.Alpha4, 3, 1);
+                slotKeyPress(KeyCode.Alpha5, 4, 1);
+                slotKeyPress(KeyCode.Alpha6, 5, 1);
+                slotKeyPress(KeyCode.Alpha7, 6, 1);
+                slotKeyPress(KeyCode.Alpha8, 7, 1);
+            }
 
             // Use right hand tool
             if (Input.GetKeyDown(evaRightHandKey))

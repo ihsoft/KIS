@@ -1,4 +1,5 @@
 1.2.3-alpha5 (not released yet)
+- [FR]: Don't allow (un)equipping when dragging/moving a part.
 - [FR]: When re-docking restrict attaching to the non-compatible docking ports, and highlight the compatible ones.
 - [Fix]: Cursor hints could work incorrectly when only cursor status was supplied.
 - [Fix]: Handle wrong assemblies that could have created due to a bug in the KSP editor.
