@@ -1317,22 +1317,22 @@ namespace KIS
         private bool CheckCanGrab(Part part) {
             // Don't grab kerbals. It's weird, and they don't have attachment nodes anyways.
             if (part.name == "kerbalEVA" || part.name == "kerbalEVAfemale") {
-                KISAddonCursor.CursorEnable(
-                    ForbiddenIcon, CannotGrabStatus, CannotMoveKerbonautText);
+                ReportCheckError(CannotGrabStatus, CannotMoveKerbonautText);
                 return false;
             }
             // Check there are kerbals in range.
             if (!HasActivePickupInRange(part)) {
-                KISAddonCursor.CursorEnable(TooFarIcon, TooFarStatus, TooFarText);
+                ReportCheckError(TooFarStatus, TooFarText, cursorIcon:TooFarIcon);
                 return false;
             }
             // Check part mass.
             grabbedMass = KIS_Shared.GetAssemblyMass(part, out grabbedPartsCount);
             float pickupMaxMass = GetAllPickupMaxMassInRange(part);
             if (grabbedMass > pickupMaxMass) {
-                KISAddonCursor.CursorEnable(
-                    TooHeavyIcon, TooHeavyStatus,
-                    String.Format(TooHeavyTextFmt, grabbedMass, pickupMaxMass));
+                ReportCheckError(
+                    TooHeavyStatus,
+                    String.Format(TooHeavyTextFmt, grabbedMass, pickupMaxMass),
+                    cursorIcon:TooHeavyIcon);
                 return false;
             }
             // Check if attached part can be detached.
@@ -1386,6 +1386,27 @@ namespace KIS
             }
             KSP_Dev.Logger.logInfo("Found {0} allowed docking ports", result.Count());
             return result;
+        }
+
+        /// <summary>
+        /// Reports an action error either via cursor state or as a right screen message.
+        /// </summary>
+        /// <param name="error">A short error status.</param>
+        /// <param name="reason">A (reasonably) verbose error description.</param>
+        /// <param name="reportToConsole">If <c>true</c> then the error will be shown as a right
+        /// side screen message. Otherwise, the cursor status and hint texts will be changed.
+        /// </param>
+        /// <param name="cursorIcon">Specifies which cursor icon to use. Only makes sense when
+        /// <paramref name="reportToConsole"/> is <c>false</c>.</param>
+        private void ReportCheckError(string error, string reason,
+                                      bool reportToConsole = false,
+                                      string cursorIcon = ForbiddenIcon) {
+            if (reportToConsole) {
+                KIS_Shared.ShowRightScreenMessage("{0}: {1}", error, reason);
+                KIS_UISoundPlayer.instance.PlayBipWrong();
+            } else {
+                KISAddonCursor.CursorEnable(cursorIcon, error, reason);
+            }
         }
     }
     
