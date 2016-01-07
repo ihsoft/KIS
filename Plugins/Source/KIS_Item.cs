@@ -183,14 +183,14 @@ namespace KIS
             }
             if (nonStackableModule == 0 && GetResources().Count == 0)
             {
-                KSP_Dev.Logger.logInfo("No non-stackable module and ressource found on the part,"
+                KSPDev.Logger.logInfo("No non-stackable module and ressource found on the part,"
                                        + " set item as stackable");
                 this.stackable = true;
             }
             if (KISAddonConfig.stackableList.Contains(availablePart.name)
                 || availablePart.name.IndexOf('.') != -1 && KISAddonConfig.stackableList.Contains(availablePart.name.Replace('.', '_')))
             {
-                KSP_Dev.Logger.logInfo("Part name present in settings.cfg (node"
+                KSPDev.Logger.logInfo("Part name present in settings.cfg (node"
                                        + " StackableItemOverride), force item as stackable");
                 this.stackable = true;
             }
@@ -208,7 +208,7 @@ namespace KIS
             if (inventoryName != "") node.AddValue("inventoryName", inventoryName);
             if (equipped && (equipMode == EquipMode.Part || equipMode == EquipMode.Physic))
             {
-                KSP_Dev.Logger.logInfo(
+                KSPDev.Logger.logInfo(
                     "Update config node of equipped part: {0}", this.availablePart.title);
                 partNode.ClearData();
                 KIS_Shared.PartSnapshot(equippedPart).CopyTo(partNode);
@@ -328,7 +328,7 @@ namespace KIS
         }
 
         public void Update() {
-            KSP_Dev.LoggedCallWrapper.Action(Internal_Update);
+            KSPDev.LoggedCallWrapper.Action(Internal_Update);
         }
         
         private void Internal_Update()
@@ -419,7 +419,7 @@ namespace KIS
         {
             // Only equip EVA kerbals.
             if (!prefabModule || !inventory.vessel.isEVA) return;
-            KSP_Dev.Logger.logInfo("Equip item {0}", this.availablePart.name);
+            KSPDev.Logger.logInfo("Equip item {0}", this.availablePart.name);
 
             //Check skill if needed
             if (!String.IsNullOrEmpty(prefabModule.equipSkill))
@@ -480,7 +480,7 @@ namespace KIS
 
                 if (!evaTransform)
                 {
-                    KSP_Dev.Logger.logError("evaTransform not found ! ");
+                    KSPDev.Logger.logError("evaTransform not found ! ");
                     UnityEngine.Object.Destroy(equippedGameObj);
                     return;
                 }
@@ -502,14 +502,14 @@ namespace KIS
 
                 if (!evaTransform)
                 {
-                    KSP_Dev.Logger.logError("evaTransform not found ! ");
+                    KSPDev.Logger.logError("evaTransform not found ! ");
                     return;
                 }
 
                 Part alreadyEquippedPart = this.inventory.part.vessel.Parts.Find(p => p.partInfo.name == this.availablePart.name);
                 if (alreadyEquippedPart)
                 {
-                    KSP_Dev.Logger.logInfo("Part: {0} already found on eva",
+                    KSPDev.Logger.logInfo("Part: {0} already found on eva",
                                            this.availablePart.name);
                     equippedPart = alreadyEquippedPart;
                     OnEquippedPartCoupled(equippedPart);
@@ -545,7 +545,7 @@ namespace KIS
             }
             if (equipMode == EquipMode.Part || equipMode == EquipMode.Physic)
             {
-                KSP_Dev.Logger.logInfo("Update config node of equipped part: {0}",
+                KSPDev.Logger.logInfo("Update config node of equipped part: {0}",
                                        this.availablePart.title);
                 partNode.ClearData();
                 KIS_Shared.PartSnapshot(equippedPart).CopyTo(partNode);
@@ -610,7 +610,7 @@ namespace KIS
 
         public void Drop(Part fromPart = null)
         {
-            KSP_Dev.Logger.logInfo("Drop item");
+            KSPDev.Logger.logInfo("Drop item");
             if (fromPart == null) fromPart = inventory.part;
             Quaternion rot;
             Vector3 pos;

@@ -45,7 +45,7 @@ namespace KIS
             }
             else
             {
-                KSP_Dev.Logger.logError("The book has no pages configured");
+                KSPDev.Logger.logError("The book has no pages configured");
             }      
         }
 

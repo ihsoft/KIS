@@ -17,7 +17,7 @@ namespace KIS
 
         void Awake()
         {
-            KSP_Dev.LoggedCallWrapper.Action(Internal_Awake);
+            KSPDev.LoggedCallWrapper.Action(Internal_Awake);
         }
         
         private void Internal_Awake()

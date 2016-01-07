@@ -104,7 +104,7 @@ namespace KIS
             if (useExternalStaticAttach) return;
             if (staticAttached)
             {
-                KSP_Dev.Logger.logInfo("Re-attach static object (OnPartUnpack)");
+                KSPDev.Logger.logInfo("Re-attach static object (OnPartUnpack)");
                 GroundAttach();
             }
         }
@@ -131,7 +131,7 @@ namespace KIS
 
         public void GroundAttach()
         {
-            KSP_Dev.Logger.logInfo("Create kinematic rigidbody");
+            KSPDev.Logger.logInfo("Create kinematic rigidbody");
             if (connectedGameObject) Destroy(connectedGameObject);
             GameObject obj = new GameObject("KISBody");
             obj.AddComponent<Rigidbody>();
@@ -141,7 +141,7 @@ namespace KIS
             obj.transform.rotation = this.part.transform.rotation;
             connectedGameObject = obj;
 
-            KSP_Dev.Logger.logInfo("Create fixed joint on the kinematic rigidbody");
+            KSPDev.Logger.logInfo("Create fixed joint on the kinematic rigidbody");
             if (fixedJoint) Destroy(fixedJoint);
             FixedJoint CurJoint = this.part.gameObject.AddComponent<FixedJoint>();
             CurJoint.breakForce = staticAttachBreakForce;
@@ -156,7 +156,7 @@ namespace KIS
         {
             if (staticAttached)
             {
-                KSP_Dev.Logger.logInfo(
+                KSPDev.Logger.logInfo(
                     "Removing static rigidbody and fixed joint on: {0}", this.part.partInfo.title);
                 if (fixedJoint) Destroy(fixedJoint);
                 if (connectedGameObject) Destroy(connectedGameObject);

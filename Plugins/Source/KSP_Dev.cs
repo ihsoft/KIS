@@ -10,7 +10,7 @@ using Time = UnityEngine.Time;
 // duplications, bulky statements or "unnecessary" checks don't be fast fixing them. There may be
 // a reason why it's done as it is. 
 
-namespace KSP_Dev {
+namespace KSPDev {
 
     public enum LogLevel {
         EXCEPTION = -1000,  // You cannot stop it.
@@ -109,14 +109,14 @@ namespace KSP_Dev {
     /// <para>Use <seealso cref="allowedModules"/> to define modules that are allowed to log.
     /// "Module name" is a namespace of the module in the CS sources. E.g. logs from
     /// <c>namespace MyAddon { ... }</c> will be treated as logs from module <c>MyAddon</c>. Modules
-    /// can be set via <c>KSP_Dev</c> settings file at <c>KSPDevConfig/DevLogger/whitelistedModule
+    /// can be set via <c>KSPDev</c> settings file at <c>KSPDevConfig/DevLogger/whitelistedModule
     /// </c> path.</para>
     /// <para>Use <seealso cref="allowedSources"/> to define specific methods that are allowed to
     /// log. Method name includes namespace, class name and the name itself, e.g.
     /// <c>MyAddon.MyClass.MyMethod</c>. It must be a name of the immediate caller of the logging
     /// method. E.g. in case of call chain: <c>methodA() => methodB() => logInfo()</c> immediate
     /// caller name is <c>methodB</c>, and it will be checked against the whitelist. Methods can be
-    /// set via <c>KSP_Dev</c> settings file at <c>KSPDevConfig/DevLogger/whitelistedMethod</c>
+    /// set via <c>KSPDev</c> settings file at <c>KSPDevConfig/DevLogger/whitelistedMethod</c>
     /// path.</para>
     /// <para>Special case is stack trace. These logging methods take a <c>tag</c> parameter which
     /// is added to the method name, e.g. for the example above and tag "MyTag" the fully qualified
@@ -370,10 +370,10 @@ namespace KSP_Dev {
         
         public void Awake() {
             ConfigNode nodeSettings =
-                GameDatabase.Instance.GetConfigNode("KSP_Dev/settings/KSPDevConfig");
+                GameDatabase.Instance.GetConfigNode("KSPDev/settings/KSPDevConfig");
             if (nodeSettings == null) {
                 UnityEngine.Debug.LogWarning(
-                    "[KSP_Dev]: settings.cfg not found or invalid. Assume disabled state.");
+                    "[KSPDev]: settings.cfg not found or invalid. Assume disabled state.");
                 return;
             }
 
@@ -381,7 +381,7 @@ namespace KSP_Dev {
             var strLevel = nodeSettings.GetValue(LOGGING_LEVEL);
             if (string.IsNullOrEmpty(strLevel)) {
                 UnityEngine.Debug.LogWarning(
-                    "[KSP_Dev]: Logging level is not set or empty. Assume disabled state.");
+                    "[KSPDev]: Logging level is not set or empty. Assume disabled state.");
                 return;
             }
             switch (strLevel.ToUpper()) {
@@ -402,24 +402,24 @@ namespace KSP_Dev {
                 break;
             default:
                 UnityEngine.Debug.LogError(String.Format(
-                    "[KSP_Dev]: Logging level '{0}' is not recognized. Assume disabled state.",
+                    "[KSPDev]: Logging level '{0}' is not recognized. Assume disabled state.",
                     strLevel));
                 return;
             }
             if (Logger.logLevel == LogLevel.NONE) {
-                UnityEngine.Debug.Log("[KSP_Dev]: Logging DISABLED");
+                UnityEngine.Debug.Log("[KSPDev]: Logging DISABLED");
             }
             UnityEngine.Debug.Log(String.Format(
-                "[KSP_Dev]: Logging level set to: {0}", strLevel.ToUpper()));
+                "[KSPDev]: Logging level set to: {0}", strLevel.ToUpper()));
 
             // Load and initialize the logger.
             string loggerName = nodeSettings.GetValue(LOGGER_NAME);
             if (!string.IsNullOrEmpty(loggerName)) {
                 if (loggerName == "DevLogger") {
-                    UnityEngine.Debug.Log("[KSP_Dev]: Activate logger: " + loggerName);
+                    UnityEngine.Debug.Log("[KSPDev]: Activate logger: " + loggerName);
                     DevLogger.activate(nodeSettings.GetNode(loggerName));
                 } else {
-                    UnityEngine.Debug.LogWarning("[KSP_Dev]: Unknown logger: " + loggerName);
+                    UnityEngine.Debug.LogWarning("[KSPDev]: Unknown logger: " + loggerName);
                 }
             }
 
