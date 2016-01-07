@@ -487,9 +487,6 @@ namespace KIS
             }
             
             ModuleKISPartDrag pDrag = part.GetComponent<ModuleKISPartDrag>();
-            ModuleKISPartMount parentMount = null;
-            if (part.parent) parentMount = part.parent.GetComponent<ModuleKISPartMount>();
-            ModuleKISItem item = part.GetComponent<ModuleKISItem>();
 
             // Drag part over another one if possible (ex : mount)
             if (draggedPart && pDrag)
