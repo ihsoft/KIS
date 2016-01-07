@@ -362,7 +362,7 @@ namespace KSPDev {
         }
     }
 
-
+    
     [KSPAddon(KSPAddon.Startup.Instantly, true /*once*/)]
     class Loader : UnityEngine.MonoBehaviour {
         private const string LOGGING_LEVEL = "loggingLevel";
