@@ -38,6 +38,7 @@ namespace KIS
         const string ReDockOkStatus = "Re-dock";
         const string ReDockIsNotPossibleStatus = "Can't re-dock";
         const string CannotGrabStatus = "Can't grab";
+        const string CannotAttachStatus = "Can't attach";
         const string TooHeavyStatus = "Too heavy";
         const string TooFarStatus = "Too far";
         const string NotSupportedStatus = "Not supported";
@@ -53,6 +54,10 @@ namespace KIS
         const string TooFarText = "Move closer to the part";
         const string NeedToolText = "This part can't be detached without a tool";
         const string NotSupportedText = "Detach function is not supported on this part";
+        const string NeedToolToDetachText = "This part can't be detached without a tool";
+        const string NeedToolToDetachFromGroundText =
+            "This part can't be detached from the ground without a tool";
+        const string CannotAttachText = "Attach function is not supported on this part";
         
         public static string grabKey = "g";
         public static string attachKey = "h";
@@ -73,6 +78,7 @@ namespace KIS
 
         public static int grabbedPartsCount;
         public static float grabbedMass;  // Tons.
+        public static Part grabbedPart;
 
         private static Part redockTarget;
         private static string redockVesselName;
@@ -238,23 +244,20 @@ namespace KIS
                     DisableAttachMode();
                 }
 
-                // Ignore key clicks if poiner is already started.
-                if (!KISAddonPointer.isRunning) {
-                    // Check if grab key is pressed.
-                    if (Input.GetKeyDown(grabKey.ToLower())) {
-                        EnableGrabMode();
-                    }
-                    if (Input.GetKeyUp(grabKey.ToLower())) {
-                        DisableGrabMode();
-                    }
+                // Check if grab key is pressed.
+                if (Input.GetKeyDown(grabKey.ToLower())) {
+                    EnableGrabMode();
+                }
+                if (Input.GetKeyUp(grabKey.ToLower())) {
+                    DisableGrabMode();
+                }
 
-                    // Check if re-docking key is pressed.
-                    if (Input.GetKeyDown(redockKey.ToLower())) {
-                        EnableRedockingMode();
-                    }
-                    if (Input.GetKeyUp(redockKey.ToLower())) {
-                        DisableRedockingMode();
-                    }
+                // Check if re-docking key is pressed.
+                if (Input.GetKeyDown(redockKey.ToLower())) {
+                    EnableRedockingMode();
+                }
+                if (Input.GetKeyUp(redockKey.ToLower())) {
+                    DisableRedockingMode();
                 }
             }
 
@@ -297,10 +300,14 @@ namespace KIS
 
         public void EnableGrabMode()
         {
-            // Grab only if no other mode set and pickup module is present on the vessel.
-            List<ModuleKISPickup> pickupModules =
+            // Skip incompatible modes.
+            if (KISAddonPointer.isRunning || cursorMode != CursorMode.Nothing || draggedPart) {
+                return;
+            }
+            // Check if pickup module is present on the active vessel.
+            var pickupModules =
                 FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleKISPickup>();
-            if (cursorMode != CursorMode.Nothing || draggedPart || !pickupModules.Any()) {
+            if (!pickupModules.Any()) {
                 return;
             }
             KISAddonCursor.StartPartDetection(OnMouseGrabPartClick, OnMouseGrabEnterPart, null, OnMouseGrabExitPart);
@@ -321,14 +328,18 @@ namespace KIS
 
         public void EnableAttachMode()
         {
-            // Attach/detach only if no other mode set and pickup module is present on the vessel.
+            // Skip incompatible modes.
+            if (pointerMode == PointerMode.ReDock) {
+                return;
+            }
+            // Check if pickup module is present on the active vessel.
             List<ModuleKISPickup> pickupModules = 
                 FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleKISPickup>();
             if (cursorMode != CursorMode.Nothing || !pickupModules.Any()) {
                 return;
             }
-            if (!KISAddonPointer.isRunning && !draggedPart && !grabActive)
             // Entering "detach parts" mode.
+            if (!KISAddonPointer.isRunning && !draggedPart)
             {
                 KISAddonCursor.StartPartDetection(OnMouseDetachPartClick, OnMouseDetachEnterPart, null, OnMouseDetachExitPart);
                 KISAddonCursor.CursorEnable("KIS/Textures/detach", "Detach");
@@ -337,29 +348,33 @@ namespace KIS
             }
             // Entering "attach moving part" mode.
             if (KISAddonPointer.isRunning && KISAddonPointer.pointerTarget != KISAddonPointer.PointerTarget.PartMount
-                && KISAddonPickup.instance.pointerMode == KISAddonPickup.PointerMode.Drop)
+                && pointerMode == KISAddonPickup.PointerMode.Drop)
             {
-                KISAddonPickup.instance.pointerMode = KISAddonPickup.PointerMode.Attach;
-                KIS_Shared.PlaySoundAtPoint("KIS/Sounds/click", FlightGlobals.ActiveVessel.transform.position);
+                if (CheckIsAttachable(grabbedPart, reportToConsole:true)) {
+                    KIS_UISoundPlayer.instance.PlayClick();
+                    pointerMode = KISAddonPickup.PointerMode.Attach;
+                }
             }
         }
 
         public void DisableAttachMode()
         {
+            // Skip incompatible modes.
+            if (pointerMode == PointerMode.ReDock) {
+                return;
+            }
             // Cancelling "detach parts" mode.
-            if (!KISAddonPointer.isRunning && cursorMode == CursorMode.Detach)
+            if (!KISAddonPointer.isRunning)
             {
                 detachActive = false;
                 cursorMode = CursorMode.Nothing;
                 KISAddonCursor.StopPartDetection();
                 KISAddonCursor.CursorDefault();
             }
-            if (KISAddonPointer.isRunning && KISAddonPickup.instance.pointerMode == KISAddonPickup.PointerMode.Attach)
-            {
             // Cancelling "attach moving part" mode.
-                // Refresh original cursor state.
-                KISAddonPickup.instance.pointerMode = KISAddonPickup.PointerMode.Drop;
-                KIS_Shared.PlaySoundAtPoint("KIS/Sounds/click", FlightGlobals.ActiveVessel.transform.position);
+            if (KISAddonPointer.isRunning && pointerMode == PointerMode.Attach) {
+                KIS_UISoundPlayer.instance.PlayClick();
+                pointerMode = KISAddonPickup.PointerMode.Drop;
             }
         }
 
