@@ -82,6 +82,7 @@ namespace KIS
 
         private static Part redockTarget;
         private static string redockVesselName;
+        private static bool redockOk;
 
         public enum PointerMode { Drop, Attach, ReDock }
         private PointerMode _pointerMode = PointerMode.Drop;
@@ -1264,6 +1265,7 @@ namespace KIS
                 return;
             }
 
+            redockOk = false;
             redockTarget = null;
             redockVesselName = null;
 
@@ -1297,12 +1299,13 @@ namespace KIS
             // Re-docking is allowed.
             string cursorText = String.Format(ReDockStatusTextFmt, grabbedMass, redockVesselName);
             KISAddonCursor.CursorEnable(GrabOkIcon, ReDockOkStatus, cursorText);
+            redockOk = true;
         }
 
         /// <summary>Grabs re-docking vessel and starts movement.</summary>
         /// <param name="part">Not used.</param>
         private void OnMouseRedockPartClick(Part part) {
-            if (redockTarget) {
+            if (redockOk) {
                 Pickup(redockTarget);
             }
         }
@@ -1312,6 +1315,7 @@ namespace KIS
             if (cursorMode != CursorMode.ReDock) {
                 return;
             }
+            redockOk = false;
             redockVesselName = null;
             if (redockTarget) {
                 KIS_Shared.SetHierarchySelection(redockTarget, false /* isSelected */);
