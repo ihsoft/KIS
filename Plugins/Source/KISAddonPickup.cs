@@ -479,13 +479,6 @@ namespace KIS
             if (hoverInventoryGui()) return;
             if (draggedPart == part) return;
             
-            // Don't grab kerbals. It's weird, and they don't have attachment nodes anyways.
-            if (part.name == "kerbalEVA" || part.name == "kerbalEVAfemale") {
-                KISAddonCursor.CursorEnable("KIS/Textures/forbidden", "Can't grab",
-                                            "(Kerbanauts can move themselves. Try to ask)");
-                return;
-            }
-            
             ModuleKISPartDrag pDrag = part.GetComponent<ModuleKISPartDrag>();
 
             // Drag part over another one if possible (ex : mount)
