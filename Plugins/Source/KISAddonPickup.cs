@@ -1225,7 +1225,7 @@ namespace KIS
         
         /// <summary>Enables mode that allows re-docking a vessel attached to a station.</summary>
         private void EnableRedockingMode() {
-            if (cursorMode != CursorMode.Nothing) {
+            if (KISAddonPointer.isRunning || cursorMode != CursorMode.Nothing) {
                 return;
             }
             var pickupModules =
@@ -1235,7 +1235,6 @@ namespace KIS
                 KISAddonCursor.StartPartDetection(
                     OnMouseRedockPartClick, OnMouseRedockEnterPart, null,
                     OnMouseRedockExitPart);
-                KISAddonCursor.CursorEnable(GrabIcon, ReDockOkStatus, ReDockSelectVesselText);
                 cursorMode = CursorMode.ReDock;
             }
         }
