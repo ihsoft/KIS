@@ -12,7 +12,7 @@ namespace KIS
     {
         private static bool cursorShow = false;
         private static bool partDetectionActive = false;
-        
+
         public static Texture2D cursorTexture = null;
         public static string cursorText;
         public static List<string> cursorAdditionalTexts;
@@ -66,7 +66,7 @@ namespace KIS
                 {
                     if (delegateOnMouseHoverPart != null) delegateOnMouseHoverPart(part);
                 }
-                
+
                 if (part)
                 {
                     // OnMouseEnter
@@ -123,7 +123,18 @@ namespace KIS
             cursorAdditionalTexts = additionalTexts;
         }
 
-        
+        public static void CursorEnable(string[] texts)
+        {
+            if (texts.Length < 2) return;
+
+            List<String> textsList = new List<String>();
+            for (int i = 2; i < texts.Length; i++)
+            {
+                textsList.Add(texts[i]);
+            }
+            CursorEnable(texts[0], texts[1], textsList);
+        }
+
         public static void CursorDefault()
         {
             cursorShow = false;
