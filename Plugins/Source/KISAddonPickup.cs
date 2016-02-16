@@ -2,12 +2,10 @@
 using System.Collections.Generic;
 using System.Collections;
 using System.Linq;
-using System.Text;
 using UnityEngine;
 
 namespace KIS
 {
-    [KSPAddon(KSPAddon.Startup.EveryScene, false)]
     public class KISAddonPickup : MonoBehaviour
     {
         class EditorClickListener : MonoBehaviour
@@ -17,7 +15,6 @@ namespace KIS
             {
                 GetComponent<UIButton>().AddInputDelegate(new EZInputDelegate(OnInput));
                 editorPaction = GetComponent<EditorPartIcon>();
-
             }
 
             void OnInput(ref POINTER_INFO ptr)
@@ -29,8 +26,42 @@ namespace KIS
             }
         }
 
+        const string GrabIcon = "KIS/Textures/grab";
+        const string GrabOkIcon = "KIS/Textures/grabOk";
+        const string ForbiddenIcon = "KIS/Textures/forbidden";
+        const string TooFarIcon = "KIS/Textures/tooFar";
+        const string TooHeavyIcon = "KIS/Textures/tooHeavy";
+        const string NeedToolIcon = "KIS/Textures/needtool";
+        const string AttachOkIcon = "KIS/Textures/attachOk";
+
+        // Cursor status strings.
+        const string ReDockOkStatus = "Re-dock";
+        const string ReDockIsNotPossibleStatus = "Can't re-dock";
+        const string CannotGrabStatus = "Can't grab";
+        const string CannotAttachStatus = "Can't attach";
+        const string TooHeavyStatus = "Too heavy";
+        const string TooFarStatus = "Too far";
+        const string NotSupportedStatus = "Not supported";
+        const string NeedToolStatus = "Tool needed";
+
+        // Cursor hit text strings.
+        const string ReDockStatusTextFmt = "Vessel: {1}, mass {0:F3}t";
+        const string ReDockIsNotPossibleText = "No docked vessel found";
+        const string ReDockSelectVesselText = "Select a vessel";
+        const string CannotMoveKerbonautText =
+            "Kerbonauts can move themselves using jetpacks. Try to ask.";
+        const string TooHeavyTextFmt = "Bring more kerbal [{0:F3}t > {1:F3}t]";
+        const string TooFarText = "Move closer to the part";
+        const string NeedToolText = "This part can't be attached without a tool";
+        const string NeedToolToDetachText = "This part can't be detached without a tool";
+        const string NeedToolToDetachFromGroundText =
+            "This part can't be detached from the ground without a tool";
+        const string NotSupportedText = "The function is not supported on this part";
+        const string CannotAttachText = "Attach function is not supported on this part";
+        
         public static string grabKey = "g";
         public static string attachKey = "h";
+        public static string redockKey = "y";
         public static KIS_IconViewer icon;
         public static Part draggedPart;
         public static KIS_Item draggedItem;
@@ -43,9 +74,22 @@ namespace KIS
         private bool grabOk = false;
         private bool detachOk = false;
         private bool jetpackLock = false;
+        private bool delayedButtonUp = false;
 
-        public enum PointerMode { Drop, Attach }
+        public static int grabbedPartsCount;
+        public static float grabbedMass;  // Tons.
+        public static Part grabbedPart;
+
+        private static Part redockTarget;
+        private static string redockVesselName;
+        private static bool redockOk;
+
+        public enum PointerMode { Drop, Attach, ReDock }
         private PointerMode _pointerMode = PointerMode.Drop;
+        public enum CursorMode { Nothing, Detach, Grab, ReDock }
+        private CursorMode cursorMode = CursorMode.Nothing;
+        public enum PickupMode { Nothing, GrabFromInventory, Move, Undock }
+        private PickupMode pickupMode = PickupMode.Nothing;
         public PointerMode pointerMode
         {
             get
@@ -79,6 +123,7 @@ namespace KIS
                     KISAddonPointer.useAttachRules = false;
                     KISAddonPointer.allowOffset = true;
                     KISAddonPointer.colorOk = Color.green;
+                    KISAddonPointer.allowedAttachmentParts = null;
                 }
                 if (value == PointerMode.Attach)
                 {
@@ -90,6 +135,7 @@ namespace KIS
                     KISAddonPointer.useAttachRules = true;
                     KISAddonPointer.allowOffset = false;
                     KISAddonPointer.colorOk = XKCDColors.Teal;
+                    KISAddonPointer.allowedAttachmentParts = null;
 
                     ModuleKISItem item = null;
                     Part attachPart = null;
@@ -142,49 +188,80 @@ namespace KIS
                         KISAddonPointer.allowStatic = false;
                     }
                 }
+                if (value == PointerMode.ReDock) {
+                    KISAddonCursor.CursorEnable(AttachOkIcon,
+                                                String.Format("Re-docking: {0}", redockVesselName),
+                                                new List<string>() {"[Escape] to cancel"});
+                    KISAddonPointer.allowPart = false;
+                    KISAddonPointer.allowStatic = false;
+                    KISAddonPointer.allowEva = false;
+                    KISAddonPointer.allowPartItself = false;
+                    KISAddonPointer.useAttachRules = true;
+                    KISAddonPointer.allowOffset = false;
+                    KISAddonPointer.colorOk = XKCDColors.Teal;
+                    KISAddonPointer.allowedAttachmentParts = GetAllowedDockPorts();
+                }
+                KSPDev.Logger.logInfo("Set pointer mode to: {0}", value);
                 this._pointerMode = value;
             }
         }
 
         void Awake()
         {
+            KSPDev.LoggedCallWrapper.Action(Internal_Awake);
+        }
+
+        private void Internal_Awake()
+        {
             instance = this;
             if (HighLogic.LoadedSceneIsEditor)
             {
                 if (EditorPartList.Instance)
                 {
-                    EditorPartList.Instance.iconPrefab.gameObject.AddComponent<EditorClickListener>();
+                    var iconPrefab = EditorPartList.Instance.iconPrefab.gameObject;
+                    if (iconPrefab.GetComponent<EditorClickListener>() == null) {
+                        EditorPartList.Instance.iconPrefab.gameObject.AddComponent<EditorClickListener>();
+                    } else {
+                        KSPDev.Logger.logWarning("Skip adding click listener because it exists");
+                    }
                 }
             }
             GameEvents.onVesselChange.Add(new EventData<Vessel>.OnEvent(this.OnVesselChange));
         }
 
-        void Update()
+        public void Update() {
+            KSPDev.LoggedCallWrapper.Action(Internal_Update);
+        }
+
+        private void Internal_Update()
         {
-            // Check if grab key is pressed
-            if (HighLogic.LoadedSceneIsFlight)
-            {
-                if (Input.GetKeyDown(grabKey.ToLower()))
-                {
-                    EnableGrabMode();
-                }
-                if (Input.GetKeyUp(grabKey.ToLower()))
-                {
-                    DisableGrabMode();
-                }
-            }
-            // Check if attach/detach key is pressed
-            if (HighLogic.LoadedSceneIsFlight)
-            {
-                if (Input.GetKeyDown(attachKey.ToLower()))
-                {
+            // Check if action key is pressed for an EVA kerbal. 
+            if (HighLogic.LoadedSceneIsFlight && FlightGlobals.ActiveVessel.isEVA) {
+                // Check if attach/detach key is pressed
+                if (Input.GetKeyDown(attachKey.ToLower())) {
                     EnableAttachMode();
                 }
-                if (Input.GetKeyUp(attachKey.ToLower()))
-                {
+                if (Input.GetKeyUp(attachKey.ToLower())) {
                     DisableAttachMode();
                 }
+
+                // Check if grab key is pressed.
+                if (Input.GetKeyDown(grabKey.ToLower())) {
+                    EnableGrabMode();
+                }
+                if (Input.GetKeyUp(grabKey.ToLower())) {
+                    DisableGrabMode();
+                }
+
+                // Check if re-docking key is pressed.
+                if (Input.GetKeyDown(redockKey.ToLower())) {
+                    EnableRedockingMode();
+                }
+                if (Input.GetKeyUp(redockKey.ToLower())) {
+                    DisableRedockingMode();
+                }
             }
+
             // Drag editor parts
             if (HighLogic.LoadedSceneIsEditor)
             {
@@ -200,87 +277,105 @@ namespace KIS
                     }
                 }
             }
+
             // On drag released
             if (HighLogic.LoadedSceneIsEditor || HighLogic.LoadedSceneIsFlight)
             {
-                if (draggedPart && Input.GetMouseButtonUp(0))
+                if (draggedPart && (Input.GetMouseButtonUp(0) || delayedButtonUp))
                 {
-                    OnDragReleased();
+                    // In slow scenes mouse button can be pressed and released in just one frame.
+                    // As a result UP event may get handled before DOWN handlers which leads to
+                    // false action triggering. So, just postpone UP even by one frame when it
+                    // happens in the same frame as the DOWN event.
+                    if (KISAddonCursor.partClickedFrame == Time.frameCount) {
+                        KSPDev.Logger.logWarning(
+                            "Postponing mouse button up event in frame {0}", Time.frameCount);
+                        delayedButtonUp = true;  // Event will be handled in the next frame.
+                    } else {
+                        delayedButtonUp = false;
+                        OnDragReleased();
+                    }
                 }
             }
         }
 
         public void EnableGrabMode()
         {
-            if (!KISAddonPointer.isRunning)
-            {
-                List<ModuleKISPickup> pickupModules = FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleKISPickup>();
-                // Grab only if pickup module is present on vessel
-                if (pickupModules.Count > 0)
-                {
-                    if (!draggedPart)
-                    {
-                        KISAddonCursor.StartPartDetection(OnMouseGrabPartClick, OnMouseGrabEnterPart, null, OnMouseGrabExitPart);
-                        KISAddonCursor.CursorEnable("KIS/Textures/grab", "Grab", "");
-                        grabActive = true;
-                    }
-                }
+            // Skip incompatible modes.
+            if (KISAddonPointer.isRunning || cursorMode != CursorMode.Nothing || draggedPart) {
+                return;
             }
+            // Check if pickup module is present on the active vessel.
+            var pickupModules =
+                FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleKISPickup>();
+            if (!pickupModules.Any()) {
+                return;
+            }
+            KISAddonCursor.StartPartDetection(OnMouseGrabPartClick, OnMouseGrabEnterPart, null, OnMouseGrabExitPart);
+            KISAddonCursor.CursorEnable("KIS/Textures/grab", "Grab");
+            grabActive = true;
+            cursorMode = CursorMode.Grab;
         }
 
         public void DisableGrabMode()
         {
-            if (!KISAddonPointer.isRunning)
-            {
-                List<ModuleKISPickup> pickupModules = FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleKISPickup>();
-                if (pickupModules.Count > 0)
-                {
-                    if (!draggedPart)
-                    {
-                        grabActive = false;
-                        KISAddonCursor.StopPartDetection();
-                        KISAddonCursor.CursorDefault();
-                    }
-                }
+            if (cursorMode == CursorMode.Grab) {
+                grabActive = false;
+                cursorMode = CursorMode.Nothing;
+                KISAddonCursor.StopPartDetection();
+                KISAddonCursor.CursorDefault();
             }
         }
 
         public void EnableAttachMode()
         {
-            List<ModuleKISPickup> pickupModules = FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleKISPickup>();
-            // Attach/detach only if pickup module is present on vessel
-            if (pickupModules.Count > 0)
+            // Skip incompatible modes.
+            if (pointerMode == PointerMode.ReDock) {
+                return;
+            }
+            // Check if pickup module is present on the active vessel.
+            List<ModuleKISPickup> pickupModules = 
+                FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleKISPickup>();
+            if (cursorMode != CursorMode.Nothing || !pickupModules.Any()) {
+                return;
+            }
+            // Entering "detach parts" mode.
+            if (!KISAddonPointer.isRunning && !draggedPart)
             {
-                if (!draggedPart && !grabActive && !KISAddonPointer.isRunning)
-                {
-                    KISAddonCursor.StartPartDetection(OnMouseDetachPartClick, OnMouseDetachEnterPart, null, OnMouseDetachExitPart);
-                    KISAddonCursor.CursorEnable("KIS/Textures/detach", "Detach", "");
-                    detachActive = true;
-                }
-                if (KISAddonPointer.isRunning && KISAddonPointer.pointerTarget != KISAddonPointer.PointerTarget.PartMount)
-                {
-                    KISAddonPickup.instance.pointerMode = KISAddonPickup.PointerMode.Attach;
-                    KIS_Shared.PlaySoundAtPoint("KIS/Sounds/click", FlightGlobals.ActiveVessel.transform.position);
+                KISAddonCursor.StartPartDetection(OnMouseDetachPartClick, OnMouseDetachEnterPart, null, OnMouseDetachExitPart);
+                KISAddonCursor.CursorEnable("KIS/Textures/detach", "Detach");
+                detachActive = true;
+                cursorMode = CursorMode.Detach;
+            }
+            // Entering "attach moving part" mode.
+            if (KISAddonPointer.isRunning && KISAddonPointer.pointerTarget != KISAddonPointer.PointerTarget.PartMount
+                && pointerMode == KISAddonPickup.PointerMode.Drop)
+            {
+                if (CheckIsAttachable(grabbedPart, reportToConsole:true)) {
+                    KIS_UISoundPlayer.instance.PlayClick();
+                    pointerMode = KISAddonPickup.PointerMode.Attach;
                 }
             }
         }
 
         public void DisableAttachMode()
         {
-            List<ModuleKISPickup> pickupModules = FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleKISPickup>();
-            if (pickupModules.Count > 0)
+            // Skip incompatible modes.
+            if (pointerMode == PointerMode.ReDock) {
+                return;
+            }
+            // Cancelling "detach parts" mode.
+            if (!KISAddonPointer.isRunning)
             {
-                if (!draggedPart && !grabActive && !KISAddonPointer.isRunning)
-                {
-                    detachActive = false;
-                    KISAddonCursor.StopPartDetection();
-                    KISAddonCursor.CursorDefault();
-                }
-                if (KISAddonPointer.isRunning && KISAddonPickup.instance.pointerMode == KISAddonPickup.PointerMode.Attach)
-                {
-                    KISAddonPickup.instance.pointerMode = KISAddonPickup.PointerMode.Drop;
-                    KIS_Shared.PlaySoundAtPoint("KIS/Sounds/click", FlightGlobals.ActiveVessel.transform.position);
-                }
+                detachActive = false;
+                cursorMode = CursorMode.Nothing;
+                KISAddonCursor.StopPartDetection();
+                KISAddonCursor.CursorDefault();
+            }
+            // Cancelling "attach moving part" mode.
+            if (KISAddonPointer.isRunning && pointerMode == PointerMode.Attach) {
+                KIS_UISoundPlayer.instance.PlayClick();
+                pointerMode = KISAddonPickup.PointerMode.Drop;
             }
         }
 
@@ -296,6 +391,8 @@ namespace KIS
             draggedItem = null;
             draggedPart = null;
             movingPart = null;
+            redockTarget = null;
+            cursorMode = CursorMode.Nothing;
             KISAddonCursor.StopPartDetection();
             KISAddonCursor.CursorDefault();
         }
@@ -314,7 +411,7 @@ namespace KIS
                     {
                         Keva.JetpackDeployed = true;
                         jetpackLock = false;
-                        KIS_Shared.DebugLog("Jetpack mouse input re-enabled");
+                        KSPDev.Logger.logInfo("Jetpack mouse input re-enabled");
                     }
                 }
             }
@@ -381,10 +478,8 @@ namespace KIS
             if (KISAddonPointer.isRunning) return;
             if (hoverInventoryGui()) return;
             if (draggedPart == part) return;
+            
             ModuleKISPartDrag pDrag = part.GetComponent<ModuleKISPartDrag>();
-            ModuleKISPartMount parentMount = null;
-            if (part.parent) parentMount = part.parent.GetComponent<ModuleKISPartMount>();
-            ModuleKISItem item = part.GetComponent<ModuleKISItem>();
 
             // Drag part over another one if possible (ex : mount)
             if (draggedPart && pDrag)
@@ -402,144 +497,35 @@ namespace KIS
             // Do nothing if part is EVA
             if (part.vessel.isEVA) return;
 
-            // Check part distance
-            if (!HasActivePickupInRange(part))
-            {
-                KISAddonCursor.CursorEnable("KIS/Textures/tooFar", "Too far", "(Move closer to the part)");
+            KIS_Shared.SetHierarchySelection(part, true /* isSelected */);
+            if (!CheckCanGrab(part)) {
                 return;
             }
 
-            // Check part mass
-            float pMass = (part.mass + part.GetResourceMass());
-            float pickupMaxMass = GetAllPickupMaxMassInRange(part);
-            if (pMass > pickupMaxMass)
-            {
-                KISAddonCursor.CursorEnable("KIS/Textures/tooHeavy", "Too heavy", "(Bring more kerbal [" + pMass + " > " + pickupMaxMass + ")");
-                return;
-            }
+            // Grab icon.
+            string cursorTitle = part.parent ? "Detach & Grab" : "Grab";
+            string cursorText = grabbedPartsCount == 1
+                ? String.Format("({0})", part.partInfo.title)
+                : String.Format(
+                    "({0} with {1} attached parts)", part.partInfo.title, grabbedPartsCount - 1);
+            KISAddonCursor.CursorEnable("KIS/Textures/grabOk", cursorTitle, cursorText);
 
-            // Check if part can be detached and grabbed
-            if (!parentMount)
-            {
-                if (part.children.Count > 0 || part.parent)
-                {
-                    //Part with a child or a parent
-                    if (item)
-                    {
-                        if (item.allowPartAttach == 0)
-                        {
-                            KISAddonCursor.CursorEnable("KIS/Textures/forbidden", "Can't grab", "(This part can't be detached)");
-                            return;
-                        }
-                        else if (item.allowPartAttach == 2)
-                        {
-                            ModuleKISPickup pickupModule = GetActivePickupNearest(part, canPartAttachOnly: true);
-                            if (!pickupModule)
-                            {
-                                if (FlightGlobals.ActiveVessel.isEVA)
-                                {
-                                    KISAddonCursor.CursorEnable("KIS/Textures/needtool", "Tool needed", "(This part can't be detached without a tool)");
-                                    return;
-                                }
-                                else
-                                {
-                                    KISAddonCursor.CursorEnable("KIS/Textures/forbidden", "Not supported", "(Detach function is not supported on this part)");
-                                    return;
-                                }
-                            }
-                        }
-                    }
-                    else
-                    {
-                        ModuleKISPickup pickupModule = GetActivePickupNearest(part, canPartAttachOnly: true);
-                        if (!pickupModule)
-                        {
-                            if (FlightGlobals.ActiveVessel.isEVA)
-                            {
-                                KISAddonCursor.CursorEnable("KIS/Textures/needtool", "Tool needed", "(This part can't be detached without a tool)");
-                                return;
-                            }
-                            else
-                            {
-                                KISAddonCursor.CursorEnable("KIS/Textures/forbidden", "Not supported", "(Detach function is not supported on this part)");
-                                return;
-                            }
-                        }
-                    }
-                }
-                else
-                {
-                    // Part without childs and parent
-                    if (item)
-                    {
-                        if (item.staticAttached && item.allowStaticAttach == 2)
-                        {
-                            ModuleKISPickup pickupModule = GetActivePickupNearest(part, canStaticAttachOnly: true);
-                            if (!pickupModule)
-                            {
-                                if (FlightGlobals.ActiveVessel.isEVA)
-                                {
-                                    KISAddonCursor.CursorEnable("KIS/Textures/needtool", "Tool needed", "(This part can't be detached from the ground without a tool)");
-                                    return;
-                                }
-                                else
-                                {
-                                    KISAddonCursor.CursorEnable("KIS/Textures/forbidden", "Not supported", "(Detach from ground function is not supported on this part)");
-                                    return;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            // check number of part attached
-            if (part.parent)
-            {
-                if (part.children.Count > 0)
-                {
-                    KISAddonCursor.CursorEnable("KIS/Textures/forbidden", "Can't grab", "(" + (part.children.Count + 1) + " parts is attached to it)");
-                    return;
-                }
-            }
-            else
-            {
-                if (part.children.Count > 1)
-                {
-                    KISAddonCursor.CursorEnable("KIS/Textures/forbidden", "Can't grab", "(" + part.children.Count + " parts is attached to it)");
-                    return;
-                }
-            }
-
-            // Grab icon
-            if (part.children.Count > 0 || part.parent)
-            {
-                KISAddonCursor.CursorEnable("KIS/Textures/grabOk", "Detach & Grab", '(' + part.partInfo.title + ')');
-            }
-            else
-            {
-                KISAddonCursor.CursorEnable("KIS/Textures/grabOk", "Grab", '(' + part.partInfo.title + ')');
-            }
-
-            part.SetHighlight(true, false);
             grabOk = true;
         }
 
         void OnMouseGrabPartClick(Part part)
         {
-            if (KISAddonPointer.isRunning) return;
-            if (hoverInventoryGui()) return;
-            if (HighLogic.LoadedSceneIsFlight)
-            {
-                if (grabOk && HasActivePickupInRange(part))
-                {
+            if (KISAddonPointer.isRunning || hoverInventoryGui()) {
+                return;
+            }
+            if (HighLogic.LoadedSceneIsFlight) {
+                if (grabOk) {
                     Pickup(part);
                 }
-            }
-            if (HighLogic.LoadedSceneIsEditor)
-            {
-                if (ModuleKISInventory.GetAllOpenInventories().Count == 0) return;
-                Pickup(part);
+            } else if (HighLogic.LoadedSceneIsEditor) {
+                if (ModuleKISInventory.GetAllOpenInventories().Any()) {
+                    Pickup(part);
+                }
             }
         }
 
@@ -547,13 +533,14 @@ namespace KIS
         {
             if (grabActive)
             {
-                KISAddonCursor.CursorEnable("KIS/Textures/grab", "Grab", "");
+                KISAddonCursor.CursorEnable("KIS/Textures/grab", "Grab");
             }
             else
             {
                 KISAddonCursor.CursorDefault();
             }
-            p.SetHighlight(false, false);
+
+            KIS_Shared.SetHierarchySelection(p, false /* isSelected */);
             grabOk = false;
         }
 
@@ -565,6 +552,14 @@ namespace KIS
             if (KISAddonPointer.isRunning) return;
             if (hoverInventoryGui()) return;
             if (draggedPart) return;
+
+            // Don't separate kerbals with their parts. They have a reason to be attached.
+            if (part.name == "kerbalEVA" || part.name == "kerbalEVAfemale") {
+                KISAddonCursor.CursorEnable("KIS/Textures/forbidden", "Can't detach",
+                                            "(This kerbanaut looks too attached to the part)");
+                return;
+            }
+
             ModuleKISPartDrag pDrag = part.GetComponent<ModuleKISPartDrag>();
             ModuleKISItem item = part.GetComponent<ModuleKISItem>();
             ModuleKISPartMount parentMount = null;
@@ -582,8 +577,7 @@ namespace KIS
                 KISAddonCursor.CursorEnable("KIS/Textures/tooFar", "Too far", "(Move closer to the part)");
                 return;
             }
-
-
+            
             // Check if part is static attached
             if (item)
             {
@@ -613,7 +607,6 @@ namespace KIS
                     }
                 }
             }
-
 
             // Check if part can be detached
             if (!parentMount)
@@ -648,19 +641,8 @@ namespace KIS
                     }
                     else
                     {
-                        ModuleKISPickup pickupModule = GetActivePickupNearest(part, canPartAttachOnly: true);
-                        if (!pickupModule)
-                        {
-                            if (FlightGlobals.ActiveVessel.isEVA)
-                            {
-                                KISAddonCursor.CursorEnable("KIS/Textures/needtool", "Tool needed", "(Part can't be detached without a tool)");
-                                return;
-                            }
-                            else
-                            {
-                                KISAddonCursor.CursorEnable("KIS/Textures/forbidden", "Not supported", "(Detach function is not supported on this part)");
-                                return;
-                            }
+                        if (!CheckCanDetach(part)) {
+                            return;
                         }
                     }
                 }
@@ -744,7 +726,7 @@ namespace KIS
         {
             if (detachActive)
             {
-                KISAddonCursor.CursorEnable("KIS/Textures/detach", "Detach", "");
+                KISAddonCursor.CursorEnable("KIS/Textures/detach", "Detach");
             }
             else
             {
@@ -806,17 +788,17 @@ namespace KIS
                 float partDist = Vector3.Distance(pickupModule.part.transform.position, position);
                 if (partDist <= nearestDistance)
                 {
-                    if (canPartAttachOnly == false && canStaticAttachOnly == false)
+                    if (!canPartAttachOnly && !canStaticAttachOnly)
                     {
                         nearestDistance = partDist;
                         nearestPModule = pickupModule;
                     }
-                    else if (canPartAttachOnly == true && pickupModule.allowPartAttach)
+                    else if (canPartAttachOnly && pickupModule.allowPartAttach)
                     {
                         nearestDistance = partDist;
                         nearestPModule = pickupModule;
                     }
-                    else if (canStaticAttachOnly == true && pickupModule.allowStaticAttach)
+                    else if (canStaticAttachOnly && pickupModule.allowStaticAttach)
                     {
                         nearestDistance = partDist;
                         nearestPModule = pickupModule;
@@ -843,20 +825,29 @@ namespace KIS
 
         public void Pickup(Part part)
         {
+            KIS_Shared.SetHierarchySelection(part, false /* isSelected */);
             draggedPart = part;
             draggedItem = null;
-            Pickup();
+            if (cursorMode == CursorMode.Detach) {
+                KSPDev.Logger.logError("Deatch mode is not expected in Pickup()");
+            }
+            Pickup(cursorMode == CursorMode.ReDock ? PickupMode.Undock : PickupMode.Move);
         }
 
         public void Pickup(KIS_Item item)
         {
             draggedPart = item.availablePart.partPrefab;
             draggedItem = item;
-            Pickup();
+            Pickup(PickupMode.GrabFromInventory);
         }
 
-        private void Pickup()
+        private void Pickup(PickupMode newPickupMode)
         {
+            KSPDev.Logger.logInfo("Start pickup in mode {0} from part: {1}",
+                                  newPickupMode, draggedPart);
+            grabbedPart = null;
+            pickupMode = newPickupMode;
+            cursorMode = CursorMode.Nothing;
             icon = new KIS_IconViewer(draggedPart, draggedIconResolution);
             KISAddonCursor.StartPartDetection();
             grabActive = false;
@@ -872,7 +863,7 @@ namespace KIS
                     {
                         Keva.JetpackDeployed = false;
                         jetpackLock = true;
-                        KIS_Shared.DebugLog("Jetpack mouse input disabled");
+                        KSPDev.Logger.logInfo("Jetpack mouse input disabled");
                     }
                 }
             }
@@ -886,6 +877,9 @@ namespace KIS
 
         public void Drop(Part part, Part fromPart)
         {
+            grabbedPart = part;
+            KSPDev.Logger.logInfo("End pickup of {0} from part: {1}",
+                                  part, fromPart);
             if (!KISAddonPointer.isRunning)
             {
                 ModuleKISPickup pickupModule = GetActivePickupNearest(fromPart);
@@ -903,11 +897,14 @@ namespace KIS
                         KISAddonPointer.scale = 1;
                     }
                     KISAddonPointer.StartPointer(part, OnPointerAction, OnPointerState, pickupModule.transform);
-                    pointerMode = PointerMode.Drop;
+
+                    pointerMode = pickupMode == PickupMode.Undock
+                        ? PointerMode.ReDock
+                        : PointerMode.Drop;
                 }
                 else
                 {
-                    KIS_Shared.DebugError("No active pickup nearest !");
+                    KSPDev.Logger.logError("No active pickup nearest !");
                 }
             }
             KISAddonCursor.StopPartDetection();
@@ -998,7 +995,7 @@ namespace KIS
                         CreateDrop(tgtPart, pos, rot);
                     }
                 }
-                if (pointerMode == PointerMode.Attach)
+                if (pointerMode == PointerMode.Attach || pointerMode == PointerMode.ReDock)
                 {
                     if (movingPart)
                     {
@@ -1008,12 +1005,7 @@ namespace KIS
                     {
                         CreateAttach(tgtPart, pos, rot, srcAttachNodeID, tgtAttachNode);
                     }
-                    // sound
-                    ModuleKISPickup modulePickup = GetActivePickupNearest(pos);
-                    if (tgtPart)
-                    {
-                        if (modulePickup) AudioSource.PlayClipAtPoint(GameDatabase.Instance.GetAudioClip(modulePickup.attachPartSndPath), pos);
-                    }
+                    KIS_UISoundPlayer.instance.PlayToolAttach();
                 }
             }
             draggedItem = null;
@@ -1024,7 +1016,7 @@ namespace KIS
 
         private void MoveDrop(Part tgtPart, Vector3 pos, Quaternion rot)
         {
-            KIS_Shared.DebugLog("Move part");
+            KSPDev.Logger.logInfo("Move part");
             ModuleKISPickup modulePickup = GetActivePickupNearest(pos);
             if (modulePickup)
             {
@@ -1043,9 +1035,9 @@ namespace KIS
                 }
                 AudioSource.PlayClipAtPoint(GameDatabase.Instance.GetAudioClip(modulePickup.dropSndPath), pos);
             }
-            KIS_Shared.DecoupleFromAll(movingPart);
-            movingPart.transform.position = pos;
-            movingPart.transform.rotation = rot;
+            KIS_Shared.DecoupleAssembly(movingPart);
+            movingPart.vessel.SetPosition(pos);
+            movingPart.vessel.SetRotation(rot);
             KIS_Shared.SendKISMessage(movingPart, KIS_Shared.MessageAction.DropEnd, KISAddonPointer.GetCurrentAttachNode(), tgtPart);
             KISAddonPointer.StopPointer();
             movingPart = null;
@@ -1053,7 +1045,7 @@ namespace KIS
 
         private Part CreateDrop(Part tgtPart, Vector3 pos, Quaternion rot)
         {
-            KIS_Shared.DebugLog("Create & drop part");
+            KSPDev.Logger.logInfo("Create & drop part");
             ModuleKISPickup modulePickup = GetActivePickupNearest(pos);
             draggedItem.StackRemove(1);
             Part newPart = KIS_Shared.CreatePart(draggedItem.partNode, pos, rot, draggedItem.inventory.part);
@@ -1067,15 +1059,15 @@ namespace KIS
 
         private void MoveAttach(Part tgtPart, Vector3 pos, Quaternion rot, string srcAttachNodeID = null, AttachNode tgtAttachNode = null)
         {
-            KIS_Shared.DebugLog("Move part & attach");
+            KSPDev.Logger.logInfo("Move part & attach");
             KIS_Shared.SendKISMessage(movingPart, KIS_Shared.MessageAction.AttachStart, KISAddonPointer.GetCurrentAttachNode(), tgtPart, tgtAttachNode);
-            KIS_Shared.DecoupleFromAll(movingPart);
-            movingPart.transform.position = pos;
-            movingPart.transform.rotation = rot;
-
+            KIS_Shared.DecoupleAssembly(movingPart);
+            movingPart.vessel.SetPosition(pos);
+            movingPart.vessel.SetRotation(rot);
+            
             ModuleKISItem moduleItem = movingPart.GetComponent<ModuleKISItem>();
             bool useExternalPartAttach = false;
-            if (moduleItem) if (moduleItem.useExternalPartAttach) useExternalPartAttach = true;
+            useExternalPartAttach = moduleItem && moduleItem.useExternalPartAttach;
             if (tgtPart && !useExternalPartAttach)
             {
                 KIS_Shared.CouplePart(movingPart, tgtPart, srcAttachNodeID, tgtAttachNode);
@@ -1089,7 +1081,7 @@ namespace KIS
 
         private Part CreateAttach(Part tgtPart, Vector3 pos, Quaternion rot, string srcAttachNodeID = null, AttachNode tgtAttachNode = null)
         {
-            KIS_Shared.DebugLog("Create part & attach");
+            KSPDev.Logger.logInfo("Create part & attach");
             Part newPart;
             draggedItem.StackRemove(1);
             bool useExternalPartAttach = false;
@@ -1114,6 +1106,277 @@ namespace KIS
         {
             KIS_Shared.SendKISMessage(createdPart, KIS_Shared.MessageAction.AttachEnd, KISAddonPointer.GetCurrentAttachNode(), tgtPart, tgtAttachNode);
         }
+        
+        /// <summary>Enables mode that allows re-docking a vessel attached to a station.</summary>
+        private void EnableRedockingMode() {
+            if (KISAddonPointer.isRunning || cursorMode != CursorMode.Nothing) {
+                return;
+            }
+            var pickupModules =
+                FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleKISPickup>();
+            if (pickupModules.Count > 0) {
+                KSPDev.Logger.logInfo("Enable re-dock mode");
+                KISAddonCursor.StartPartDetection(
+                    OnMouseRedockPartClick, OnMouseRedockEnterPart, null,
+                    OnMouseRedockExitPart);
+                cursorMode = CursorMode.ReDock;
+            }
+        }
 
+        /// <summary>Disables re-docking mode.</summary>
+        private void DisableRedockingMode() {
+            if (cursorMode == CursorMode.ReDock) {
+                KSPDev.Logger.logInfo("Disable re-dock mode");
+                if (redockTarget) {
+                    KIS_Shared.SetHierarchySelection(redockTarget, false /* isSelected */);
+                }
+                cursorMode = CursorMode.Nothing;
+                KISAddonCursor.StopPartDetection();
+                KISAddonCursor.CursorDefault();
+            }
+        }
+
+        /// <summary>Deducts and selects a vessel form the hovered part.</summary>
+        /// <remarks>The method goes up to the first parent docking port that is connected to a port
+        /// of the same type. This point is considered a docking point, and from here detachment is
+        /// started.</remarks>
+        /// <param name="part">A child part to start scanning from.</param>
+        private void OnMouseRedockEnterPart(Part part) {
+            // Abort on an async state change.
+            if (!HighLogic.LoadedSceneIsFlight || hoverInventoryGui()
+                || cursorMode != CursorMode.ReDock) {
+                return;
+            }
+
+            redockOk = false;
+            redockTarget = null;
+            redockVesselName = null;
+
+            // Find vessel's docking port.
+            for (var chkPart = part; chkPart; chkPart = chkPart.parent) {
+                // Only consider a docking port that is connected to the same type docking port, and
+                // has a vessel attached.
+                var dockingModule = chkPart.GetComponent<ModuleDockingNode>();
+                if (dockingModule && chkPart.parent && chkPart.parent.name == chkPart.name
+                    && dockingModule.vesselInfo != null) {
+
+                    redockTarget = chkPart;
+                    redockVesselName = dockingModule.vesselInfo.name;
+                    KSPDev.Logger.logTrace("Found vessel {0} at dock port {1}",
+                                           redockVesselName, chkPart);
+                    break;
+                }
+            }
+            if (!redockTarget) {
+                KISAddonCursor.CursorEnable(
+                    ForbiddenIcon, ReDockIsNotPossibleStatus, ReDockIsNotPossibleText);
+                return;
+            }
+            KIS_Shared.SetHierarchySelection(redockTarget, true /* isSelected */);
+
+            if (!CheckCanGrab(redockTarget) || !CheckCanDetach(redockTarget) ||
+                !CheckIsAttachable(redockTarget)) {
+                return;
+            }
+
+            // Re-docking is allowed.
+            string cursorText = String.Format(ReDockStatusTextFmt, grabbedMass, redockVesselName);
+            KISAddonCursor.CursorEnable(GrabOkIcon, ReDockOkStatus, cursorText);
+            redockOk = true;
+        }
+
+        /// <summary>Grabs re-docking vessel and starts movement.</summary>
+        /// <param name="part">Not used.</param>
+        private void OnMouseRedockPartClick(Part part) {
+            if (redockOk) {
+                Pickup(redockTarget);
+            }
+        }
+        
+        /// <summary>Erases re-docking vessel selection.</summary>
+        private void OnMouseRedockExitPart(Part unusedPart) {
+            if (cursorMode != CursorMode.ReDock) {
+                return;
+            }
+            redockOk = false;
+            redockVesselName = null;
+            if (redockTarget) {
+                KIS_Shared.SetHierarchySelection(redockTarget, false /* isSelected */);
+                redockTarget = null;
+            }
+            KISAddonCursor.CursorEnable(GrabIcon, ReDockOkStatus, ReDockSelectVesselText);
+        }
+    
+        /// <summary>
+        /// Checks if the part and its children can be grabbed and reports the errors.
+        /// </summary>
+        /// <remarks>Also, collects <seealso cref="grabbedMass"/> and
+        /// <seealso cref="grabbedPartsCount"/> of the attempted hierarchy.</remarks>
+        /// <param name="part">A hierarchy root being grabbed.</param>
+        /// <returns><c>true</c> when the hierarchy can be grabbed.</returns>
+        private bool CheckCanGrab(Part part) {
+            // Don't grab kerbals. It's weird, and they don't have attachment nodes anyways.
+            if (part.name == "kerbalEVA" || part.name == "kerbalEVAfemale") {
+                ReportCheckError(CannotGrabStatus, CannotMoveKerbonautText);
+                return false;
+            }
+            // Check there are kerbals in range.
+            if (!HasActivePickupInRange(part)) {
+                ReportCheckError(TooFarStatus, TooFarText, cursorIcon:TooFarIcon);
+                return false;
+            }
+            // Check part mass.
+            grabbedMass = KIS_Shared.GetAssemblyMass(part, out grabbedPartsCount);
+            float pickupMaxMass = GetAllPickupMaxMassInRange(part);
+            if (grabbedMass > pickupMaxMass) {
+                ReportCheckError(
+                    TooHeavyStatus,
+                    String.Format(TooHeavyTextFmt, grabbedMass, pickupMaxMass),
+                    cursorIcon:TooHeavyIcon);
+                return false;
+            }
+            // Check if attached part can be detached.
+            return CheckCanDetach(part);
+        }
+        
+        /// <summary>Checks if an attached part can be detached and reports the errors.</summary>
+        /// <remarks>If part has a parent it's attached. In order to detach the part there should be
+        /// a kerbonaut in range with a tool equipped.</remarks>
+        /// <param name="part">A hierarchy root being detached.</param>
+        /// <returns><c>true</c> when the hierarchy can be detached.</returns>
+        private bool CheckCanDetach(Part part) {
+            // If part is attached then check if the right tool is equipped to detach it.
+            if (!part.parent) {
+                return true;  // No parent, no detach needed.
+            }
+            
+            var item = part.GetComponent<ModuleKISItem>();
+            string rejectText = null;  // If null then detach is allowed.
+            if (item) {
+                // Handle KIS items.
+                if (part.parent.GetComponent<ModuleKISPartMount>() != null) {
+                    // Check if part is a ground base.
+                    if (item.staticAttached && item.allowStaticAttach == 2
+                        && !GetActivePickupNearest(part, canStaticAttachOnly: true)) {
+                        rejectText = NeedToolToDetachFromGroundText;
+                    }
+                } else {
+                    // Check specific KIS items
+                    if (item.allowPartAttach == 0) {
+                        // Part restricts attachments and detachments.
+                        //FIXME: Findout what part cannot be detached. And why.
+                        KSPDev.Logger.logError("Unknown item being detached: {0}", item);
+                        ReportCheckError("Can't detach", "(This part can't be detached)");
+                        return false;
+                    }
+                    if (item.allowPartAttach == 2) {
+                        // Part requires a tool to be detached.
+                        if (!GetActivePickupNearest(part, canPartAttachOnly: true)) {
+                            rejectText = NeedToolToDetachText;
+                        }
+                    }
+                }
+            } else {
+                // Handle regular game parts.
+                if (!GetActivePickupNearest(part, canPartAttachOnly: true)) {
+                    rejectText = NeedToolToDetachText;
+                }
+            }
+            if (rejectText != null) {
+                ReportCheckError(NeedToolStatus, rejectText, cursorIcon:NeedToolIcon);
+                return false;
+            }
+            
+            return true;
+        }
+
+        private bool CheckIsAttachable(Part part, bool reportToConsole = false) {
+            // Check if part has at least one free node.
+            var nodes = KIS_Shared.GetAvailableAttachNodes(part, part.parent);
+            if (!nodes.Any()) {
+                ReportCheckError(CannotAttachStatus, CannotAttachText, reportToConsole);
+                return false;
+            }
+
+            // Check if there is a kerbonaut with a tool to handle the task.
+            ModuleKISPickup pickupModule = GetActivePickupNearest(part, canPartAttachOnly: true);
+            if (!pickupModule) {
+                // Check if it's EVA engineer or a KAS item.
+                if (FlightGlobals.ActiveVessel.isEVA) {
+                    ReportCheckError(NeedToolStatus, NeedToolText, reportToConsole, NeedToolIcon);
+                } else {
+                    ReportCheckError(NotSupportedStatus, NotSupportedText, reportToConsole);
+                }
+                return false;
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// Finds and returns all docking ports that are allowed for the re-docking operation.
+        /// </summary>
+        /// <remarks>
+        /// Re-docking must be started and <seealso cref="redockTarget"/> populated with the vessel
+        /// root part.
+        /// </remarks>
+        /// <returns>A complete set of allowed docking ports.</returns>
+        private static HashSet<Part> GetAllowedDockPorts() {
+            var result = new HashSet<Part>();
+            var compatiblePorts =
+                redockTarget.vessel.parts.FindAll(p => p.name == redockTarget.name);
+            foreach (var port in compatiblePorts) {
+                if (KIS_Shared.IsSameHierarchyChild(redockTarget, port)) {
+                    // Skip ports of the moving vessel.
+                    continue;
+                }
+
+                var usedNodes = 0;
+                if (port.attachRules.srfAttach && port.srfAttachNode.attachedPart != null) {
+                    ++usedNodes;
+                }
+                var nodesWithParts = port.attachNodes.FindAll(p => p.attachedPart != null);
+                usedNodes += nodesWithParts.Count();
+                if (usedNodes < 2) {
+                    // Usual port has three nodes: one surface and two stacks. When any two of them
+                    // are occupied the docking is not possible.
+                    result.Add(port);
+                }
+            }
+            KSPDev.Logger.logInfo("Found {0} allowed docking ports", result.Count());
+            return result;
+        }
+
+        /// <summary>
+        /// Reports an action error either via cursor state or as a right screen message.
+        /// </summary>
+        /// <param name="error">A short error status.</param>
+        /// <param name="reason">A (reasonably) verbose error description.</param>
+        /// <param name="reportToConsole">If <c>true</c> then the error will be shown as a right
+        /// side screen message. Otherwise, the cursor status and hint texts will be changed.
+        /// </param>
+        /// <param name="cursorIcon">Specifies which cursor icon to use. Only makes sense when
+        /// <paramref name="reportToConsole"/> is <c>false</c>.</param>
+        private void ReportCheckError(string error, string reason,
+                                      bool reportToConsole = false,
+                                      string cursorIcon = ForbiddenIcon) {
+            if (reportToConsole) {
+                KIS_Shared.ShowRightScreenMessage("{0}: {1}", error, reason);
+                KIS_UISoundPlayer.instance.PlayBipWrong();
+            } else {
+                KISAddonCursor.CursorEnable(cursorIcon, error, reason);
+            }
+        }
+    }
+    
+    // Create an instance for managing inventory in the editor.
+    [KSPAddon(KSPAddon.Startup.EditorAny, false /*once*/)]
+    public class KISAddonPickupInEditor : KISAddonPickup
+    {
+    }
+
+    // Create an instance for accessing inventory in EVA.
+    [KSPAddon(KSPAddon.Startup.Flight, false /*once*/)]
+    public class KISAddonPickupInFlight : KISAddonPickup
+    {
     }
 }

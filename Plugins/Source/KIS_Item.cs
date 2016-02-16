@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Linq;
 using System.Collections.Generic;
-using System.Collections;
-using System.Text;
 using UnityEngine;
 
 namespace KIS
@@ -185,12 +183,15 @@ namespace KIS
             }
             if (nonStackableModule == 0 && GetResources().Count == 0)
             {
-                KIS_Shared.DebugLog("No non-stackable module and ressource found on the part, set item as stackable");
+                KSPDev.Logger.logInfo("No non-stackable module and ressource found on the part,"
+                                       + " set item as stackable");
                 this.stackable = true;
             }
-            if (KISAddonConfig.stackableList.Contains(availablePart.name))
+            if (KISAddonConfig.stackableList.Contains(availablePart.name)
+                || availablePart.name.IndexOf('.') != -1 && KISAddonConfig.stackableList.Contains(availablePart.name.Replace('.', '_')))
             {
-                KIS_Shared.DebugLog("Part name present in settings.cfg (node StackableItemOverride), force item as stackable");
+                KSPDev.Logger.logInfo("Part name present in settings.cfg (node"
+                                       + " StackableItemOverride), force item as stackable");
                 this.stackable = true;
             }
         }
@@ -207,7 +208,8 @@ namespace KIS
             if (inventoryName != "") node.AddValue("inventoryName", inventoryName);
             if (equipped && (equipMode == EquipMode.Part || equipMode == EquipMode.Physic))
             {
-                KIS_Shared.DebugLog("Update config node of equipped part : " + this.availablePart.title);
+                KSPDev.Logger.logInfo(
+                    "Update config node of equipped part: {0}", this.availablePart.title);
                 partNode.ClearData();
                 KIS_Shared.PartSnapshot(equippedPart).CopyTo(partNode);
             }
@@ -325,7 +327,11 @@ namespace KIS
             icon = null;
         }
 
-        public void Update()
+        public void Update() {
+            KSPDev.LoggedCallWrapper.Action(Internal_Update);
+        }
+        
+        private void Internal_Update()
         {
             if (equippedGameObj)
             {
@@ -411,11 +417,12 @@ namespace KIS
 
         public void Equip()
         {
-            if (!prefabModule) return;
-            KIS_Shared.DebugLog("Equip item " + this.availablePart.name);
+            // Only equip EVA kerbals.
+            if (!prefabModule || !inventory.vessel.isEVA) return;
+            KSPDev.Logger.logInfo("Equip item {0}", this.availablePart.name);
 
             //Check skill if needed
-            if (prefabModule.equipSkill != null && prefabModule.equipSkill != "")
+            if (!String.IsNullOrEmpty(prefabModule.equipSkill))
             {
                 bool skillFound = false;
                 List<ProtoCrewMember> protoCrewMembers = inventory.vessel.GetVesselCrew();
@@ -473,7 +480,7 @@ namespace KIS
 
                 if (!evaTransform)
                 {
-                    KIS_Shared.DebugError("evaTransform not found ! ");
+                    KSPDev.Logger.logError("evaTransform not found ! ");
                     UnityEngine.Object.Destroy(equippedGameObj);
                     return;
                 }
@@ -495,14 +502,15 @@ namespace KIS
 
                 if (!evaTransform)
                 {
-                    KIS_Shared.DebugError("evaTransform not found ! ");
+                    KSPDev.Logger.logError("evaTransform not found ! ");
                     return;
                 }
 
                 Part alreadyEquippedPart = this.inventory.part.vessel.Parts.Find(p => p.partInfo.name == this.availablePart.name);
                 if (alreadyEquippedPart)
                 {
-                    KIS_Shared.DebugLog("Part : " + this.availablePart.name + " already found on eva");
+                    KSPDev.Logger.logInfo("Part: {0} already found on eva",
+                                           this.availablePart.name);
                     equippedPart = alreadyEquippedPart;
                     OnEquippedPartCoupled(equippedPart);
                 }
@@ -537,7 +545,8 @@ namespace KIS
             }
             if (equipMode == EquipMode.Part || equipMode == EquipMode.Physic)
             {
-                KIS_Shared.DebugLog("Update config node of equipped part : " + this.availablePart.title);
+                KSPDev.Logger.logInfo("Update config node of equipped part: {0}",
+                                       this.availablePart.title);
                 partNode.ClearData();
                 KIS_Shared.PartSnapshot(equippedPart).CopyTo(partNode);
                 equippedPart.Die();
@@ -601,7 +610,7 @@ namespace KIS
 
         public void Drop(Part fromPart = null)
         {
-            KIS_Shared.DebugLog("Drop item");
+            KSPDev.Logger.logInfo("Drop item");
             if (fromPart == null) fromPart = inventory.part;
             Quaternion rot;
             Vector3 pos;

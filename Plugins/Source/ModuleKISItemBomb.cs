@@ -35,6 +35,11 @@ namespace KIS
 
         public override void OnStart(StartState state)
         {
+            KSPDev.LoggedCallWrapper.Action(Internal_OnStart, state);
+        }
+
+        private void Internal_OnStart(StartState state)
+        {
             base.OnStart(state);
             if (state == StartState.Editor || state == StartState.None) return;
             Events["Activate"].guiName = activateText;
