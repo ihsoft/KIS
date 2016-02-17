@@ -34,6 +34,8 @@ namespace KIS
             if (nodeGlobal.HasValue("breathableAtmoPressure")) breathableAtmoPressure = float.Parse(nodeGlobal.GetValue("breathableAtmoPressure"));
 
             ConfigNode nodeEvaInventory = nodeSettings.GetNode("EvaInventory");
+            LoadEvaInventoryConfig(nodeEvaInventory);
+
             ConfigNode nodeEvaPickup = nodeSettings.GetNode("EvaPickup");
             ConfigNode nodeStackable = nodeSettings.GetNode("StackableItemOverride");
             ConfigNode nodeStackableModule = nodeSettings.GetNode("StackableModule");
@@ -162,6 +164,8 @@ namespace KIS
 
         private void SetInventoryConfig(ConfigNode node, ModuleKISInventory moduleInventory)
         {
+            // TODO: Load values into static members and move code into LoadEvaInventoryConfig().
+            // FIXME: Re-factor to ReadCfgSetting() method. 
             if (node.HasValue("inventoryKey")) moduleInventory.evaInventoryKey = node.GetValue("inventoryKey");
             if (node.HasValue("rightHandKey")) moduleInventory.evaRightHandKey = node.GetValue("rightHandKey");
             if (node.HasValue("helmetKey")) moduleInventory.evaHelmetKey = node.GetValue("helmetKey");
@@ -173,6 +177,22 @@ namespace KIS
             if (node.HasValue("maxVolume")) moduleInventory.maxVolume = float.Parse(node.GetValue("maxVolume"));
             if (node.HasValue("openSndPath")) moduleInventory.openSndPath = node.GetValue("openSndPath");
             if (node.HasValue("closeSndPath")) moduleInventory.closeSndPath = node.GetValue("closeSndPath");
+        }
+        
+        /// <summary>Loads config settings for EvaInventory.</summary>
+        /// <param name="node">A config node to load data from.</param>
+        private void LoadEvaInventoryConfig(ConfigNode node) {
+            // Inventory hotkeys.
+            KIS_Shared.ReadCfgSetting(
+                node, "slotHotkeysEnabled", ref ModuleKISInventory.inventoryKeysEnabled);
+            KIS_Shared.ReadCfgSetting(node, "slotHotkey1", ref ModuleKISInventory.slotHotkey1);
+            KIS_Shared.ReadCfgSetting(node, "slotHotkey2", ref ModuleKISInventory.slotHotkey2);
+            KIS_Shared.ReadCfgSetting(node, "slotHotkey3", ref ModuleKISInventory.slotHotkey3);
+            KIS_Shared.ReadCfgSetting(node, "slotHotkey4", ref ModuleKISInventory.slotHotkey4);
+            KIS_Shared.ReadCfgSetting(node, "slotHotkey5", ref ModuleKISInventory.slotHotkey5);
+            KIS_Shared.ReadCfgSetting(node, "slotHotkey6", ref ModuleKISInventory.slotHotkey6);
+            KIS_Shared.ReadCfgSetting(node, "slotHotkey7", ref ModuleKISInventory.slotHotkey7);
+            KIS_Shared.ReadCfgSetting(node, "slotHotkey8", ref ModuleKISInventory.slotHotkey8);
         }
     }
 

@@ -1,1 +1,2 @@
 Alpha changes since last release:
+- [Feature] #101: Allow configuring EVA inventory hotkeys via a config file.

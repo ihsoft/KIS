@@ -46,6 +46,18 @@ namespace KIS
         public string evaInventoryKey = "tab";
         public string evaRightHandKey = "x";
         public string evaHelmetKey = "j";
+        
+        // Inventory hotkeys control. 
+        public static bool inventoryKeysEnabled = true;
+        public static KeyCode slotHotkey1 = KeyCode.Alpha1;
+        public static KeyCode slotHotkey2 = KeyCode.Alpha2;
+        public static KeyCode slotHotkey3 = KeyCode.Alpha3;
+        public static KeyCode slotHotkey4 = KeyCode.Alpha4;
+        public static KeyCode slotHotkey5 = KeyCode.Alpha5;
+        public static KeyCode slotHotkey6 = KeyCode.Alpha6;
+        public static KeyCode slotHotkey7 = KeyCode.Alpha7;
+        public static KeyCode slotHotkey8 = KeyCode.Alpha8;
+
         public string openGuiName;
         public float totalVolume = 0;
         public int podSeat = 0;
@@ -212,14 +224,14 @@ namespace KIS
             }
             // Use slot when not in drag mode.
             if (!KISAddonPointer.isRunning) {
-                slotKeyPress(KeyCode.Alpha1, 0, 1);
-                slotKeyPress(KeyCode.Alpha2, 1, 1);
-                slotKeyPress(KeyCode.Alpha3, 2, 1);
-                slotKeyPress(KeyCode.Alpha4, 3, 1);
-                slotKeyPress(KeyCode.Alpha5, 4, 1);
-                slotKeyPress(KeyCode.Alpha6, 5, 1);
-                slotKeyPress(KeyCode.Alpha7, 6, 1);
-                slotKeyPress(KeyCode.Alpha8, 7, 1);
+                slotKeyPress(slotHotkey1, 0, 1);
+                slotKeyPress(slotHotkey2, 1, 1);
+                slotKeyPress(slotHotkey3, 2, 1);
+                slotKeyPress(slotHotkey4, 3, 1);
+                slotKeyPress(slotHotkey5, 4, 1);
+                slotKeyPress(slotHotkey6, 5, 1);
+                slotKeyPress(slotHotkey7, 6, 1);
+                slotKeyPress(slotHotkey8, 7, 1);
             }
 
             // Use right hand tool
@@ -572,6 +584,12 @@ namespace KIS
 
         private void slotKeyPress(KeyCode kc, int slot, int delay = 1)
         {
+            if (kc == KeyCode.None || !inventoryKeysEnabled) {
+                return;
+            }
+
+            // TODO: Add a check for shift keys to not trigger use action on combinations with
+            // Shift, Ctrl, and Alt.
             if (Input.GetKeyDown(kc))
             {
                 keyPressTime = Time.time;
