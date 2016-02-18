@@ -3,9 +3,6 @@ using System.Collections.Generic;
 using System.Collections;
 using System.Linq;
 using UnityEngine;
-using Contracts;
-using Contracts.Templates;
-using Contracts.Parameters;
 
 namespace KIS
 {

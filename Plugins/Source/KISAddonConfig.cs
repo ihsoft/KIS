@@ -1,6 +1,6 @@
-﻿using System;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Collections.Generic;
+using System;
 using UnityEngine;
 
 namespace KIS
@@ -175,5 +175,4 @@ namespace KIS
             if (node.HasValue("closeSndPath")) moduleInventory.closeSndPath = node.GetValue("closeSndPath");
         }
     }
-
 }
