@@ -41,6 +41,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="KISAddonCursor.cs" />
+    <Compile Include="KSPDev.cs" />
     <Compile Include="ModuleKISItemEvaPropellant.cs" />
     <Compile Include="KIS_IconViewer.cs" />
     <Compile Include="ModuleKISItemBook.cs" />

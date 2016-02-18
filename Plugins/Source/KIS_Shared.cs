@@ -2,9 +2,7 @@
 using System.Collections.Generic;
 using System.Collections;
 using System.Linq;
-using System.Text;
 using UnityEngine;
-using KSP.IO;
 
 namespace KIS
 {
@@ -13,9 +11,62 @@ namespace KIS
         public Part part;
     }
 
+    [KSPAddon(KSPAddon.Startup.EveryScene, false /*once*/)]
+    public class KIS_UISoundPlayer : MonoBehaviour {
+        public static KIS_UISoundPlayer instance;
+
+        // TODO: Read these settings from a config.
+        private static readonly string bipWrongSndPath = "KIS/Sounds/bipwrong";
+        private static readonly string clickSndPath = "KIS/Sounds/click";
+        private static readonly string attachPartSndPath = "KIS/Sounds/attachScrewdriver";
+
+        private readonly GameObject audioGo = new GameObject();
+        private AudioSource audioBipWrong;
+        private AudioSource audioClick;
+        private AudioSource audioAttach;
+
+        /// <summary>Plays a sound indicating a wrong action that was blocked.</summary>
+        public void PlayBipWrong() {
+            audioBipWrong.Play();
+        }
+
+        /// <summary>Plays a sound indicating an action was accepted.</summary>
+        public void PlayClick() {
+            audioClick.Play();
+        }
+
+        /// <summary>Plays a sound indicating a part was attached using a tool.</summary>
+        public void PlayToolAttach() {
+            audioAttach.Play();
+        }
+
+        void Awake() {
+            KSPDev.Logger.logInfo("Loading UI sounds for KIS...");
+            InitSound(bipWrongSndPath, out audioBipWrong);
+            InitSound(clickSndPath, out audioClick);
+            InitSound(attachPartSndPath, out audioAttach);
+            instance = this;
+        }
+        
+        private void InitSound(string clipPath, out AudioSource source) {
+            KSPDev.Logger.logInfo("Loading clip: {0}", clipPath);
+            source = audioGo.AddComponent<AudioSource>();
+            source.volume = GameSettings.UI_VOLUME;
+            source.panLevel = 0;  //set as 2D audiosource
+
+            if (GameDatabase.Instance.ExistsAudioClip(clipPath)) {
+                source.clip = GameDatabase.Instance.GetAudioClip(clipPath);
+            } else {
+                KSPDev.Logger.logError("Cannot locate clip: {0}", clipPath);
+            }
+        }
+    }
+
     static public class KIS_Shared
     {
-        public static bool debugLog = true;
+        // TODO: Read it from the config.
+        private const float DefaultMessageTimeout = 5f;  // Seconds.
+        
         public static string bipWrongSndPath = "KIS/Sounds/bipwrong";
         public delegate void OnPartCoupled(Part createdPart, Part tgtPart = null, AttachNode tgtAttachNode = null);
 
@@ -29,32 +80,6 @@ namespace KIS
             bEventData.Set("targetPart", tgtPart);
             bEventData.Set("targetNode", tgtNode);
             destPart.SendMessage("OnKISAction", bEventData, SendMessageOptions.DontRequireReceiver);
-        }
-
-        public static void DebugLog(string text)
-        {
-            if (debugLog) Debug.Log("[KIS] " + text);
-        }
-
-        public static void DebugLog(string text, UnityEngine.Object context)
-        {
-            if (debugLog) Debug.Log("[KIS] " + text, context);
-        }
-
-        public static void DebugWarning(string text)
-        {
-            if (debugLog)
-            {
-                Debug.LogWarning("[KIS] " + text);
-            }
-        }
-
-        public static void DebugError(string text)
-        {
-            if (debugLog)
-            {
-                Debug.LogError("[KIS] " + text);
-            }
         }
 
         public static Part GetPartUnderCursor()
@@ -95,48 +120,103 @@ namespace KIS
             }
             else
             {
-                KIS_Shared.DebugError("Sound not found in the game database !");
+                KSPDev.Logger.logError("Sound not found in the game database !");
                 ScreenMessages.PostScreenMessage("Sound file : " + sndPath + " as not been found, please check your KAS installation !", 10, ScreenMessageStyle.UPPER_CENTER);
                 return false;
             }
         }
 
-        public static void DecoupleFromAll(Part p)
+        /// <summary>
+        /// Walks thru the hierarchy and calculates the total mass of the assembly.
+        /// </summary>
+        /// <param name="rootPart">A root part of the assembly.</param>
+        /// <param name="childrenCount">[out] A total number of children in the assembly.</param>
+        /// <returns>Full mass of the hierarchy.</returns>
+        public static float GetAssemblyMass(Part rootPart, out int childrenCount)
         {
-            SendKISMessage(p, MessageAction.Decouple);
-            if (p.parent)
-            {
-                p.decouple();
-                //name container if needed
-                ModuleKISInventory inv = p.GetComponent<ModuleKISInventory>();
-                if (inv)
-                {
-                    if (inv.invName != "")
-                    {
-                        p.vessel.vesselName = inv.part.partInfo.title + " | " + inv.invName;
-                    }
-                    else
-                    {
-                        p.vessel.vesselName = inv.part.partInfo.title;
-                    }
-                }
+            childrenCount = 0;
+            return Internal_GetAssemblyMass(rootPart, ref childrenCount);
+        }
+
+        /// <summary>Recursive implementation of <c>GetAssemblyMass</c>.</summary>
+        private static float Internal_GetAssemblyMass(Part rootPart, ref int childrenCount)
+        {
+            float totalMass = rootPart.mass + rootPart.GetResourceMass();
+            ++childrenCount;
+            foreach (Part child in rootPart.children) {
+                totalMass += Internal_GetAssemblyMass(child, ref childrenCount);
             }
-            if (p.children.Count != 0)
-            {
-                DecoupleAllChilds(p);
+            return totalMass;
+        }
+
+        /// <summary>Fixes all structural links to another vessel(s).</summary>
+        /// <remarks>
+        /// Normally compound parts should handle decoupling themselves but sometimes they do it
+        /// horribly wrong. For instance, stock strut connector tries to restore connection when
+        /// part is re-attached to the former vessel which may produce a collision. This method
+        /// deletes all compound parts with target pointing to a different vessel.
+        /// </remarks>
+        /// <param name="vessel">Vessel to fix links for.</param>
+        // TODO: Break the link instead of destroying the part.
+        // TODO: Handle KAS and other popular plugins connectors.         
+        public static void CleanupExternalLinks(Vessel vessel)
+        {
+            var parts = vessel.parts.FindAll(p => p is CompoundPart);
+            KSPDev.Logger.logInfo(
+                "Check {0} compound part(s) in vessel: {1}", parts.Count(), vessel);
+            foreach (var part in parts) {
+                var compoundPart = part as CompoundPart;
+                if (compoundPart.target && compoundPart.target.vessel != vessel) {
+                    KSPDev.Logger.logTrace(
+                        "Destroy compound part '{0}' which links '{1}' to '{2}'",
+                        compoundPart, compoundPart.parent, compoundPart.target);
+                    compoundPart.Die();
+                }
             }
         }
 
-        public static void DecoupleAllChilds(Part p)
+        /// <summary>Decouples <paramref name="assemblyRoot"/> from the vessel.</summary>
+        /// <remarks>Also does external links cleanup on both vessels.</remarks>
+        /// <param name="assemblyRoot">An assembly to decouple.</param>
+        public static void DecoupleAssembly(Part assemblyRoot)
         {
-            List<Part> partList = new List<Part>();
-            foreach (Part pc in p.children)
-            {
-                partList.Add(pc);
+            if (!assemblyRoot.parent) {
+                return;  // Nothing to decouple.
             }
-            foreach (Part pc2 in partList)
-            {
-                if (pc2.parent) pc2.decouple();
+            SendKISMessage(assemblyRoot, MessageAction.Decouple);
+            Vessel oldVessel = assemblyRoot.vessel;
+            var formerParent = assemblyRoot.parent;
+            assemblyRoot.decouple();
+
+            // HACK: As of KSP 1.0.5 some parts (e.g docking ports) can be attached by both a
+            // surface node and by a stack node which looks like an editor bug in some corner case.
+            // In this case decouple() will only clear the surface node leaving the stack one
+            // refering the parent. This misconfiguration will badly affect all further KIS
+            // operations on the part. Do a cleanup job here to workaround this bug.
+            var orphanNode = assemblyRoot.findAttachNodeByPart(formerParent);
+            if (orphanNode != null) {
+                KSPDev.Logger.logWarning(
+                    "KSP BUG: Cleanup orphan node {0} in the assembly", orphanNode.id);
+                orphanNode.attachedPart = null;
+                // Also, check that parent is properly cleaned up.
+                var parentOrphanNode = formerParent.findAttachNodeByPart(assemblyRoot);
+                if (parentOrphanNode != null) {
+                    KSPDev.Logger.logWarning(
+                        "KSP BUG: Cleanup orphan node {0} in the parent", parentOrphanNode.id);
+                    parentOrphanNode.attachedPart = null;
+                }
+            }
+            
+            CleanupExternalLinks(oldVessel);
+            CleanupExternalLinks(assemblyRoot.vessel);
+
+            ModuleKISInventory inv = assemblyRoot.GetComponent<ModuleKISInventory>();
+            if (inv) {
+                if (inv.invName != "") {
+                    assemblyRoot.vessel.vesselName = inv.part.partInfo.title + " | " + inv.invName;
+                } else {
+                    assemblyRoot.vessel.vesselName = inv.part.partInfo.title;
+                }
             }
         }
 
@@ -152,7 +232,8 @@ namespace KIS
             catch
             {
                 // workaround for command module
-                KIS_Shared.DebugWarning("Error during part snapshot, spawning part for snapshot (workaround for command module)");
+                KSPDev.Logger.logWarning("Error during part snapshot, spawning part for snapshot"
+                                          + " (workaround for command module)");
                 Part p = (Part)UnityEngine.Object.Instantiate(part.partInfo.partPrefab);
                 p.gameObject.SetActive(true);
                 p.name = part.partInfo.name;
@@ -282,6 +363,8 @@ namespace KIS
             newPart.Unpack();
             newPart.InitializeModules();
 
+            //FIXME: [Error]: Actor::setLinearVelocity: Actor must be (non-kinematic) dynamic!
+            //FIXME: [Error]: Actor::setAngularVelocity: Actor must be (non-kinematic) dynamic!            
             if (coupleToPart)
             {
                 newPart.rigidbody.velocity = coupleToPart.rigidbody.velocity;
@@ -352,7 +435,7 @@ namespace KIS
             // Wait part to initialize
             while (!newPart.started && newPart.State != PartStates.DEAD)
             {
-                KIS_Shared.DebugLog("CreatePart - Waiting initialization of the part...");
+                KSPDev.Logger.logInfo("CreatePart - Waiting initialization of the part...");
                 if (tgtPart)
                 {
                     // Part stay in position 
@@ -380,7 +463,7 @@ namespace KIS
                 newPart.transform.position = tgtAttachNode.nodeTransform.TransformPoint(toPartLocalPos);
                 newPart.transform.rotation = tgtAttachNode.nodeTransform.rotation * toPartLocalRot;
             }
-            KIS_Shared.DebugLog("CreatePart - Coupling part...");
+            KSPDev.Logger.logInfo("CreatePart - Coupling part...");
             CouplePart(newPart, tgtPart, srcAttachNodeID, tgtAttachNode);
 
             if (onPartCoupled != null)
@@ -396,7 +479,9 @@ namespace KIS
             {
                 if (srcAttachNodeID == "srfAttach")
                 {
-                    KIS_Shared.DebugLog("Attach type : " + srcPart.srfAttachNode.nodeType + " | ID : " + srcPart.srfAttachNode.id);
+                    KSPDev.Logger.logInfo(
+                        "Attach type: {0} | ID : {1}",
+                        srcPart.srfAttachNode.nodeType, srcPart.srfAttachNode.id);
                     srcPart.attachMode = AttachModes.SRF_ATTACH;
                     srcPart.srfAttachNode.attachedPart = tgtPart;
                 }
@@ -405,7 +490,9 @@ namespace KIS
                     AttachNode srcAttachNode = srcPart.findAttachNode(srcAttachNodeID);
                     if (srcAttachNode != null)
                     {
-                        KIS_Shared.DebugLog("Attach type : " + srcPart.srfAttachNode.nodeType + " | ID : " + srcAttachNode.id);
+                        KSPDev.Logger.logInfo(
+                            "Attach type : {0} | ID : {1}",
+                            srcPart.srfAttachNode.nodeType, srcAttachNode.id);
                         srcPart.attachMode = AttachModes.STACK;
                         srcAttachNode.attachedPart = tgtPart;
                         if (tgtAttachNode != null)
@@ -415,13 +502,13 @@ namespace KIS
                     }
                     else
                     {
-                        KIS_Shared.DebugError("Source attach node not found !");
+                        KSPDev.Logger.logError("Source attach node not found !");
                     }
                 }
             }
             else
             {
-                KIS_Shared.DebugWarning("Missing source attach node !");
+                KSPDev.Logger.logWarning("Missing source attach node !");
             }
 
             srcPart.Couple(tgtPart);
@@ -615,5 +702,128 @@ namespace KIS
             return btnPress;
         }
 
+        /// <summary>
+        /// Helper method to verify if part is an indirect children of another part.
+        /// </summary>
+        /// <param name="rootPart">A root part of the hierarchy.</param>
+        /// <param name="child">A part being tested.</param>
+        /// <returns></returns>
+        public static bool IsSameHierarchyChild(object rootPart, Part child) {
+            for (Part part = child; part; part = part.parent) {
+                if (System.Object.ReferenceEquals(rootPart, part)) {
+                    KSPDev.Logger.logTrace("Attaching to self detected");
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /// <summary>Sets highlight status of the entire heierarchy.</summary>
+        /// <param name="hierarchyRoot">A root part of the hierarchy.</param>
+        /// <param name="isSelected">The status.</param>
+        public static void SetHierarchySelection(Part hierarchyRoot, bool isSelected) {
+            if (isSelected) {
+                hierarchyRoot.SetHighlight(true /* active */, true /* recursive */);
+            } else {
+                hierarchyRoot.SetHighlight(false /* active */, true /* recursive */);
+                // HACK: Game will remember "recursive" setting and continue selecting the
+                // hierarchy on mouse hover. Do an explicit call with recusrive=false to reset it.
+                hierarchyRoot.SetHighlight(false /* active */, false /* recursive */);
+            }
+        }
+
+        /// <summary>Returns nodes available for attaching.</summary>
+        /// <remarks>
+        /// When part has a surface attachment node it may (and usually does) point in the same
+        /// direction as a stack node. In such situation two different nodes in fact become the same
+        /// attachment point, and if one of them is occupied the other one should be considered
+        /// "blocked", i.e. not available for attachment. This method detects such situations and
+        /// doesn't return nodes that may result in collision.
+        /// </remarks>
+        /// <param name="p">A part to get nodes for.</param>
+        /// <param name="ignoreAttachedPart">Don't consider attachment node occupied if it's
+        /// attached to this part.</param>
+        /// <param name="needSrf">If <c>true</c> then free surface node should be retruned as well.
+        /// Otherwise, only the stack nodes are returned.</param>
+        /// <returns>A list of nodes that are available for attaching. If there is a surface node in
+        /// the result then it always goes first in the list.</returns>
+        public static List<AttachNode> GetAvailableAttachNodes(Part p,
+                                                               Part ignoreAttachedPart = null,
+                                                               bool needSrf = true) {
+            var result = new List<AttachNode>();
+            var srfNode = p.attachRules.srfAttach ? p.srfAttachNode : null;
+            bool srfHasPart = (srfNode != null && srfNode.attachedPart != null
+                               && srfNode.attachedPart != ignoreAttachedPart);
+            foreach (var an in p.attachNodes) {
+                // Skip occupied nodes.
+                if (an.attachedPart != null && an.attachedPart != ignoreAttachedPart) {
+                    KSPDev.Logger.logTrace("Skip occupied node {0} attached to: {1}",
+                                            an.id, an.attachedPart);
+                    // Reset surface node if it points in the same direction as the occupied node. 
+                    if (srfNode != null && an.orientation == srfNode.orientation) {
+                        KSPDev.Logger.logTrace(
+                            "Skip surface node pointing to {0} due to occupied node {1}",
+                            srfNode.orientation, an.id);
+                        srfNode = null;
+                    }
+                    continue;
+                }
+                // Skip free nodes that point in the same direction as an occupied surface node.
+                if (srfHasPart && an.orientation == srfNode.orientation) {
+                    KSPDev.Logger.logTrace("Skip {0} node pointing to {1} due to surface node",
+                                            an.id, an.orientation);
+                    continue;
+                }
+                KSPDev.Logger.logTrace("Accumulate {0} free node", an.id);
+                result.Add(an);
+            }
+            // Add a surface node if it's free. Always put it first in the list.
+            if (needSrf && srfNode != null && !srfHasPart) {
+                result.Insert(0, srfNode);
+            }
+            return result;
+        }
+        
+        /// <summary>Shows a formatted message with the specified location and timeout.</summary>
+        /// <param name="style">A <c>ScreenMessageStyle</c> specifier.</param>
+        /// <param name="duration">Delay before hiding the message in seconds.</param>
+        /// <param name="fmt"><c>String.Format()</c> formatting string.</param>
+        /// <param name="args">Arguments for the formattign string.</param>
+        public static void ShowScreenMessage(
+            ScreenMessageStyle style, float duration, String fmt, params object[] args) {
+            ScreenMessages.PostScreenMessage(String.Format(fmt, args), duration, style);
+        }
+
+        /// <summary>Shows a message in the upper center area with the specified timeout.</summary>
+        /// <param name="duration">Delay before hiding the message in seconds.</param>
+        /// <param name="fmt"><c>String.Format()</c> formatting string.</param>
+        /// <param name="args">Arguments for the formattign string.</param>
+        public static void ShowCenterScreenMessageWithTimeout(
+            float duration, String fmt, params object[] args) {
+            ShowScreenMessage(ScreenMessageStyle.UPPER_CENTER, duration, fmt, args);
+        }
+
+        /// <summary>Shows a message in the upper center area with a default timeout.</summary>
+        /// <param name="fmt"><c>String.Format()</c> formatting string.</param>
+        /// <param name="args">Arguments for the formattign string.</param>
+        public static void ShowCenterScreenMessage(String fmt, params object[] args) {
+            ShowCenterScreenMessageWithTimeout(DefaultMessageTimeout, fmt, args);
+        }
+        
+        /// <summary>Shows a message in the upper right corner with the specified timeout.</summary>
+        /// <param name="duration">Delay before hiding the message in seconds.</param>
+        /// <param name="fmt"><c>String.Format()</c> formatting string.</param>
+        /// <param name="args">Arguments for the formattign string.</param>
+        public static void ShowRightScreenMessageWithTimeout(
+            float duration, String fmt, params object[] args) {
+            ShowScreenMessage(ScreenMessageStyle.UPPER_RIGHT, duration, fmt, args);
+        }
+
+        /// <summary>Shows a message in the upper center area with a default timeout.</summary>
+        /// <param name="fmt"><c>String.Format()</c> formatting string.</param>
+        /// <param name="args">Arguments for the formattign string.</param>
+        public static void ShowRightScreenMessage(String fmt, params object[] args) {
+            ShowRightScreenMessageWithTimeout(DefaultMessageTimeout, fmt, args);
+        }
     }
 }

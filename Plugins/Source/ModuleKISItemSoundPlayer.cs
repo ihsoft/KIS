@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Linq;
-using System.Collections.Generic;
-using System.Collections;
-using System.Text;
 using UnityEngine;
 
 namespace KIS
@@ -19,6 +16,11 @@ namespace KIS
 
 
         public override void OnStart(StartState state)
+        {
+            KSPDev.LoggedCallWrapper.Action(Internal_OnStart, state);
+        }
+
+        private void Internal_OnStart(StartState state)
         {
             base.OnStart(state);
             if (state == StartState.None) return;
