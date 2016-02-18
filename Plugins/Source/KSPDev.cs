@@ -37,33 +37,23 @@ namespace KSPDev {
         public delegate void logException_Delegate(Exception ex);
 
         public static logStackTrace_Delegate logStackTrace =
-            NullLogger.logStackTrace;
+            DevLogger.logStackTrace;
 
         public static logTrace_Delegate logTrace =
-            NullLogger.logTrace;
+            DevLogger.logTrace;
         public static logInfo_Delegate logInfo =
-            NullLogger.logInfo;
+            DevLogger.logInfo;
         public static logWarning_Delegate logWarning =
-            NullLogger.logWarning;
+            DevLogger.logWarning;
         public static logError_Delegate logError =
-            NullLogger.logError;
+            DevLogger.logError;
 
         /// <summary>Logs an exception with the stack trace.</summary>
         /// <param name="ex">An exception to log.</param>
         public static logException_Delegate logException =
-            NullLogger.logException;
+            DevLogger.logException;
     }
 
-    /// <summary>Logger implementation that does nothing. I.e. no logging.</summary>
-    static class NullLogger {
-        public static void logStackTrace(LogLevel level, string tag) {}
-        public static void logTrace(String fmt, params object[] args) {}
-        public static void logInfo(String fmt, params object[] args) {}
-        public static void logWarning(String fmt, params object[] args) {}
-        public static void logError(String fmt, params object[] args) {}
-        public static void logException(Exception ex) {}
-    }
-    
     /// <summary>
     /// A development logger that respects logging level and supports string formatting.
     /// </summary>

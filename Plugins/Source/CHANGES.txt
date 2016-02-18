@@ -1,1 +1,2 @@
 Alpha changes since last release:
+- [Internal] Deprecate NullLogger. By default use DevLogger with level INFO.
