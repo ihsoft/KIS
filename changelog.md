@@ -1,4 +1,4 @@
-### 1.2.4
+### 1.2.4 (17 February 2016)
 - [Feature] #96: Allow move/attach a group of parts. When grab mode is selected the whole hierarchy is highlited.
 - [Feature]: New mode "Re-dock" (shortcut: "y"). Allows moving vessels docked to the station. No need to snipe the right part to deatch, the right docking port is found automatically. The port allowed for re-docking are highlighed with green color.
 - [Enhancement] Added semi-black background when showing cursor status and hint text to improve visibility in light scenes.
