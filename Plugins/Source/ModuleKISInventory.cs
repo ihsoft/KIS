@@ -377,24 +377,25 @@ namespace KIS
 
         void OnCrewTransferred(GameEvents.HostedFromToAction<ProtoCrewMember, Part> fromToAction)
         {
-            if (fromToAction.from == this.part)
+            if (fromToAction.from == this.part && invType == InventoryType.Pod)
             {
-                if (invType == InventoryType.Pod && fromToAction.to.vessel.isEVA)
+                if (fromToAction.to.vessel.isEVA)
                 {
                     // pod to eva
                     ProtoCrewMember crewAtPodSeat = fromToAction.from.protoModuleCrew.Find(x => x.seatIdx == podSeat);
                     if (items.Count > 0 && crewAtPodSeat == null)
                     {
                         ModuleKISInventory destInventory = fromToAction.to.GetComponent<ModuleKISInventory>();
-                        KSPDev.Logger.logInfo("Item transfer | source {0} ({1})",
+                        KSPDev.Logger.logInfo("Items transfer | source {0} ({1})",
                                                this.part.name, this.podSeat);
-                        KSPDev.Logger.logInfo("Item transfer | destination: {0}", destInventory.part.name);
+                        KSPDev.Logger.logInfo("Items transfer | destination: {0}",
+                                              destInventory.part.name);
                         MoveItems(this.items, destInventory);
                         this.RefreshMassAndVolume();
                         destInventory.RefreshMassAndVolume();
                     }
                 }
-                if (invType == InventoryType.Pod && !fromToAction.to.vessel.isEVA)
+                else
                 {
                     // pod to pod
 
@@ -402,7 +403,7 @@ namespace KIS
                     if (fromToAction.host.seatIdx == -1)
                     {
                         KSPDev.Logger.logWarning(
-                            "protoCrew seatIdx has been set to -1 ! (no internal ?)");
+                            "protoCrew seatIdx is set to -1 ! (no internal ?)");
                         fromToAction.host.seatIdx = GetFirstFreeSeatIdx(fromToAction.to);
                         KSPDev.Logger.logInfo("Setting seat to: {0}", fromToAction.host.seatIdx);
                         if (fromToAction.host.seatIdx == -1) {
@@ -413,7 +414,7 @@ namespace KIS
                     ProtoCrewMember crewAtPodSeat = fromToAction.from.protoModuleCrew.Find(x => x.seatIdx == podSeat);
                     if (items.Count > 0 && crewAtPodSeat == null)
                     {
-                        KSPDev.Logger.logInfo("Item transfer | source: {0} ({1})",
+                        KSPDev.Logger.logInfo("Items transfer | source: {0} ({1})",
                                                this.part.name, podSeat);
                         // Find target seat and schedule a coroutine.
                         var destInventory = fromToAction.to.GetComponents<ModuleKISInventory>()
@@ -424,9 +425,9 @@ namespace KIS
                 }
             }
 
-            if (fromToAction.to == this.part)
+            if (fromToAction.to == this.part && invType == InventoryType.Pod)
             {
-                if (invType == InventoryType.Pod && fromToAction.from.vessel.isEVA)
+                if (fromToAction.from.vessel.isEVA)
                 {
                     // eva to pod
 
