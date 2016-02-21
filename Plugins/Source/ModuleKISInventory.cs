@@ -48,7 +48,7 @@ namespace KIS
         public string evaHelmetKey = "j";
         public string openGuiName;
         public float totalVolume = 0;
-        public int podSeat = 0;
+        public int podSeat = -1;
         public InventoryType invType = InventoryType.Container;
         public enum InventoryType { Container, Pod, Eva }
         private float keyPressTime = 0f;
@@ -415,10 +415,11 @@ namespace KIS
                     {
                         KSPDev.Logger.logInfo("Item transfer | source: {0} ({1})",
                                                this.part.name, podSeat);
-                        foreach (ModuleKISInventory destInventory in fromToAction.to.GetComponents<ModuleKISInventory>())
-                        {
-                            StartCoroutine(destInventory.WaitAndTransferItems(this.items, fromToAction.host, this));
-                        }
+                        // Find target seat and schedule a coroutine.
+                        var destInventory = fromToAction.to.GetComponents<ModuleKISInventory>()
+                            .ToList().Find(x => x.podSeat == fromToAction.host.seatIdx);
+                        StartCoroutine(destInventory.WaitAndTransferItems(
+                            this.items, fromToAction.host, this));
                     }
                 }
             }

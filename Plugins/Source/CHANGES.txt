@@ -1,1 +1,2 @@
 Alpha changes since last release:
+- [Fix] #103: Part (not seat) inventory overwritten by crew inventory when transferring crew into it.
