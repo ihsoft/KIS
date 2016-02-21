@@ -406,9 +406,6 @@ namespace KIS
                             "protoCrew seatIdx is set to -1 ! (no internal ?)");
                         fromToAction.host.seatIdx = GetFirstFreeSeatIdx(fromToAction.to);
                         KSPDev.Logger.logInfo("Setting seat to: {0}", fromToAction.host.seatIdx);
-                        if (fromToAction.host.seatIdx == -1) {
-                            KSPDev.Logger.logError("A seat must be available!");
-                        }
                     }
 
                     ProtoCrewMember crewAtPodSeat = fromToAction.from.protoModuleCrew.Find(x => x.seatIdx == podSeat);
@@ -477,6 +474,7 @@ namespace KIS
                     return i;
                 }
             }
+            KSPDev.Logger.logError("Cannot find a free seat in: {0}", p.name);
             return -1;
         }
 
