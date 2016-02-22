@@ -874,6 +874,16 @@ namespace KIS
                 // Check if inventory can be opened from interior/exterior
                 if (HighLogic.LoadedSceneIsFlight)
                 {
+                    // Don't allow access to the container being carried by a kerbal. Its state is
+                    // serialized in the kerbal's invenotry so, any changes will be reverted once
+                    // the container is dropped.
+                    // TODO: Find a way to update serialized state and remove this check (#89). 
+                    if (GetComponent<ModuleKISItemEvaTweaker>() && vessel.isEVA) {
+                        ScreenMessages.PostScreenMessage(
+                            "This storage is not accessible while carried !",
+                            4, ScreenMessageStyle.UPPER_CENTER);
+                        return;
+                    }
                     if (FlightGlobals.ActiveVessel.isEVA && !externalAccess)
                     {
                         ScreenMessages.PostScreenMessage("This storage is not accessible from the outside !", 4, ScreenMessageStyle.UPPER_CENTER);
