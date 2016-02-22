@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections;
+using System.ComponentModel;
 using System.Linq;
 using UnityEngine;
 
@@ -124,6 +125,32 @@ namespace KIS
                 ScreenMessages.PostScreenMessage("Sound file : " + sndPath + " as not been found, please check your KAS installation !", 10, ScreenMessageStyle.UPPER_CENTER);
                 return false;
             }
+        }
+
+        /// <summary>A helper method to read configuration settings.</summary>
+        /// <remarks>If value from the config node cannot be parsed to the required type
+        /// (determined by <paramref name="value"/>) then a warning debug log is written and method
+        /// returns <c>false</c>. In this case <paramref name="value"/> stays unchanged so, have it
+        /// assigned with a default value.</remarks>
+        /// <param name="node">A node to lookup value in.</param>
+        /// <param name="name">A value name.</param>
+        /// <param name="value">[out] A variable to store the parsed value.</param>
+        /// <returns><c>true</c> if config value parsed successfully or no setting found for the
+        /// name.</returns>
+        public static bool ReadCfgSetting<T>(ConfigNode node, string name, ref T value)
+        {
+            if (node.HasValue(name)) {
+                var cfgValue = node.GetValue(name);
+                try {
+                    value = (T) TypeDescriptor.GetConverter(typeof(T)).ConvertFromString(cfgValue);
+                } catch (Exception) {
+                    KSPDev.Logger.logWarning("Cannot parse config value \"{2}\" for setting"
+                                             + " {0}/{1}. Using default value: {3}",
+                                             node.name, name, cfgValue, value);
+                    return false;
+                }
+            }
+            return true;
         }
 
         /// <summary>
