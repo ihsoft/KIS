@@ -3,7 +3,10 @@
 ##WINDOWS users
 
 ###Prerequisites
-- C# runtime of version 4 or higher.
+- For building:
+  - Get C# runtime of version 4.0 or higher.
+  - Create a virtual drive pointing to KSP installation: `subst q: <path to KSP root>`. I.e. if `KSP.exe` lives in `S:\Steam\Kerbal Space Program\` then this is the root.
+    - If you choose not to do that or the drive letter is different then you also need to change `KIS.csproj` project file to correct references and post-build actions.
 - For making releases:
   - Python 2.7 or greater.
   - Owner or collaborator permissions in [Github repository](https://github.com/KospY/KIS).
