@@ -46,9 +46,21 @@ namespace KIS
         public string evaInventoryKey = "tab";
         public string evaRightHandKey = "x";
         public string evaHelmetKey = "j";
+        
+        // Inventory hotkeys control. 
+        public static bool inventoryKeysEnabled = true;
+        public static KeyCode slotHotkey1 = KeyCode.Alpha1;
+        public static KeyCode slotHotkey2 = KeyCode.Alpha2;
+        public static KeyCode slotHotkey3 = KeyCode.Alpha3;
+        public static KeyCode slotHotkey4 = KeyCode.Alpha4;
+        public static KeyCode slotHotkey5 = KeyCode.Alpha5;
+        public static KeyCode slotHotkey6 = KeyCode.Alpha6;
+        public static KeyCode slotHotkey7 = KeyCode.Alpha7;
+        public static KeyCode slotHotkey8 = KeyCode.Alpha8;
+
         public string openGuiName;
         public float totalVolume = 0;
-        public int podSeat = 0;
+        public int podSeat = -1;
         public InventoryType invType = InventoryType.Container;
         public enum InventoryType { Container, Pod, Eva }
         private float keyPressTime = 0f;
@@ -212,14 +224,14 @@ namespace KIS
             }
             // Use slot when not in drag mode.
             if (!KISAddonPointer.isRunning) {
-                slotKeyPress(KeyCode.Alpha1, 0, 1);
-                slotKeyPress(KeyCode.Alpha2, 1, 1);
-                slotKeyPress(KeyCode.Alpha3, 2, 1);
-                slotKeyPress(KeyCode.Alpha4, 3, 1);
-                slotKeyPress(KeyCode.Alpha5, 4, 1);
-                slotKeyPress(KeyCode.Alpha6, 5, 1);
-                slotKeyPress(KeyCode.Alpha7, 6, 1);
-                slotKeyPress(KeyCode.Alpha8, 7, 1);
+                slotKeyPress(slotHotkey1, 0, 1);
+                slotKeyPress(slotHotkey2, 1, 1);
+                slotKeyPress(slotHotkey3, 2, 1);
+                slotKeyPress(slotHotkey4, 3, 1);
+                slotKeyPress(slotHotkey5, 4, 1);
+                slotKeyPress(slotHotkey6, 5, 1);
+                slotKeyPress(slotHotkey7, 6, 1);
+                slotKeyPress(slotHotkey8, 7, 1);
             }
 
             // Use right hand tool
@@ -377,24 +389,25 @@ namespace KIS
 
         void OnCrewTransferred(GameEvents.HostedFromToAction<ProtoCrewMember, Part> fromToAction)
         {
-            if (fromToAction.from == this.part)
+            if (fromToAction.from == this.part && invType == InventoryType.Pod)
             {
-                if (invType == InventoryType.Pod && fromToAction.to.vessel.isEVA)
+                if (fromToAction.to.vessel.isEVA)
                 {
                     // pod to eva
                     ProtoCrewMember crewAtPodSeat = fromToAction.from.protoModuleCrew.Find(x => x.seatIdx == podSeat);
                     if (items.Count > 0 && crewAtPodSeat == null)
                     {
                         ModuleKISInventory destInventory = fromToAction.to.GetComponent<ModuleKISInventory>();
-                        KSPDev.Logger.logInfo("Item transfer | source {0} ({1})",
+                        KSPDev.Logger.logInfo("Items transfer | source {0} ({1})",
                                                this.part.name, this.podSeat);
-                        KSPDev.Logger.logInfo("Item transfer | destination: {0}", destInventory.part.name);
+                        KSPDev.Logger.logInfo("Items transfer | destination: {0}",
+                                              destInventory.part.name);
                         MoveItems(this.items, destInventory);
                         this.RefreshMassAndVolume();
                         destInventory.RefreshMassAndVolume();
                     }
                 }
-                if (invType == InventoryType.Pod && !fromToAction.to.vessel.isEVA)
+                else
                 {
                     // pod to pod
 
@@ -402,30 +415,28 @@ namespace KIS
                     if (fromToAction.host.seatIdx == -1)
                     {
                         KSPDev.Logger.logWarning(
-                            "protoCrew seatIdx has been set to -1 ! (no internal ?)");
+                            "protoCrew seatIdx is set to -1 ! (no internal ?)");
                         fromToAction.host.seatIdx = GetFirstFreeSeatIdx(fromToAction.to);
                         KSPDev.Logger.logInfo("Setting seat to: {0}", fromToAction.host.seatIdx);
-                        if (fromToAction.host.seatIdx == -1) {
-                            KSPDev.Logger.logError("A seat must be available!");
-                        }
                     }
 
                     ProtoCrewMember crewAtPodSeat = fromToAction.from.protoModuleCrew.Find(x => x.seatIdx == podSeat);
                     if (items.Count > 0 && crewAtPodSeat == null)
                     {
-                        KSPDev.Logger.logInfo("Item transfer | source: {0} ({1})",
+                        KSPDev.Logger.logInfo("Items transfer | source: {0} ({1})",
                                                this.part.name, podSeat);
-                        foreach (ModuleKISInventory destInventory in fromToAction.to.GetComponents<ModuleKISInventory>())
-                        {
-                            StartCoroutine(destInventory.WaitAndTransferItems(this.items, fromToAction.host, this));
-                        }
+                        // Find target seat and schedule a coroutine.
+                        var destInventory = fromToAction.to.GetComponents<ModuleKISInventory>()
+                            .ToList().Find(x => x.podSeat == fromToAction.host.seatIdx);
+                        StartCoroutine(destInventory.WaitAndTransferItems(
+                            this.items, fromToAction.host, this));
                     }
                 }
             }
 
-            if (fromToAction.to == this.part)
+            if (fromToAction.to == this.part && invType == InventoryType.Pod)
             {
-                if (invType == InventoryType.Pod && fromToAction.from.vessel.isEVA)
+                if (fromToAction.from.vessel.isEVA)
                 {
                     // eva to pod
 
@@ -475,6 +486,7 @@ namespace KIS
                     return i;
                 }
             }
+            KSPDev.Logger.logError("Cannot find a free seat in: {0}", p.name);
             return -1;
         }
 
@@ -572,6 +584,12 @@ namespace KIS
 
         private void slotKeyPress(KeyCode kc, int slot, int delay = 1)
         {
+            if (kc == KeyCode.None || !inventoryKeysEnabled) {
+                return;
+            }
+
+            // TODO: Add a check for shift keys to not trigger use action on combinations with
+            // Shift, Ctrl, and Alt.
             if (Input.GetKeyDown(kc))
             {
                 keyPressTime = Time.time;
@@ -874,6 +892,16 @@ namespace KIS
                 // Check if inventory can be opened from interior/exterior
                 if (HighLogic.LoadedSceneIsFlight)
                 {
+                    // Don't allow access to the container being carried by a kerbal. Its state is
+                    // serialized in the kerbal's invenotry so, any changes will be reverted once
+                    // the container is dropped.
+                    // TODO: Find a way to update serialized state and remove this check (#89). 
+                    if (GetComponent<ModuleKISItemEvaTweaker>() && vessel.isEVA) {
+                        ScreenMessages.PostScreenMessage(
+                            "This storage is not accessible while carried !",
+                            4, ScreenMessageStyle.UPPER_CENTER);
+                        return;
+                    }
                     if (FlightGlobals.ActiveVessel.isEVA && !externalAccess)
                     {
                         ScreenMessages.PostScreenMessage("This storage is not accessible from the outside !", 4, ScreenMessageStyle.UPPER_CENTER);
