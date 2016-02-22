@@ -1,4 +1,1 @@
 Alpha changes since last release:
-- [Fix] #103: Part (not seat) inventory overwritten by crew inventory when transferring crew into it.
-- [Fix] #89: Portable containers revert to previous content when dropped. For now only restrict using of such inventories to not loose items. Which promotes this bug to enchancement.
-- [Feature] #101: Allow configuring EVA inventory hotkeys via a config file.
