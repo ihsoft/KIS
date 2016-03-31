@@ -129,7 +129,7 @@ namespace KSPDev {
     /// <summary>A wrapper to catch and log exceptions from the methods</summary>
     /// <remarks>Delegate all engine events and other sensitive methods to the appropriate
     /// <c>Action</c> handler. Any exception in execution will be logged via
-    /// <seealso cref="Logger.logException"/> giving the whole context and location of the
+    /// <see cref="Logger.logException"/> giving the whole context and location of the
     /// problem.</remarks>
     static public class LoggedCallWrapper {
         /// <summary>Wraps a simple method with no arguments which returns nothing.</summary>
@@ -164,7 +164,7 @@ namespace KSPDev {
                 GameDatabase.Instance.GetConfigNode("KSPDev/settings/KSPDevConfig");
             if (nodeSettings == null) {
                 UnityEngine.Debug.LogWarning(
-                    "[KSPDev]: settings.cfg not found or invalid. Assume disabled state.");
+                    "[KSPDev]: settings.cfg not found or invalid. Assume INFO level logging.");
                 return;
             }
 
