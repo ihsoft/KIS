@@ -1281,8 +1281,13 @@ namespace KIS
             // Check if part has at least one free node.
             var nodes = KIS_Shared.GetAvailableAttachNodes(part, part.parent);
             if (!nodes.Any()) {
-                ReportCheckError(CannotAttachStatus, CannotAttachText, reportToConsole);
-                return false;
+                // Check if it's a static attachable item. Those are not required to have nodes
+                // since they attach to the ground.
+                var item = part.GetComponent<ModuleKISItem>();
+                if (!item || item.allowStaticAttach == 0) {
+                    ReportCheckError(CannotAttachStatus, CannotAttachText, reportToConsole);
+                    return false;
+                }
             }
 
             // Check if there is a kerbonaut with a tool to handle the task.
