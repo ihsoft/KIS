@@ -1,4 +1,5 @@
-﻿using System;
+﻿using KSPDev.LogUtils;
+using System;
 using System.Linq;
 
 namespace KIS
@@ -21,7 +22,7 @@ namespace KIS
 
                 if (eatCount > 3)
                 {
-                    KSPDev.Logger.logInfo("Burp incoming...");
+                    Logger.logInfo("Burp incoming...");
                     System.Random rnd = new System.Random();
                     int delay = rnd.Next(1, 5);
                     item.inventory.DelayedAction(Burp, item, delay);

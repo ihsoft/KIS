@@ -1,4 +1,5 @@
-﻿using System;
+﻿using KSPDev.LogUtils;
+using System;
 using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
@@ -16,11 +17,6 @@ namespace KIS
         public FXGroup sndFxStore;
 
         public override void OnStart(StartState state)
-        {
-            KSPDev.LoggedCallWrapper.Action(Internal_OnStart, state);
-        }
-
-        private void Internal_OnStart(StartState state)
         {
             base.OnStart(state);
             if (state != StartState.None)
@@ -79,8 +75,7 @@ namespace KIS
                     AttachNode an = this.part.findAttachNode(attachNodeName);
                     if (an == null)
                     {
-                        KSPDev.Logger.logError(
-                            "GetMountNodes - Node : {0} not found !", attachNodeName);
+                        Logger.logError("GetMountNodes - Node : {0} not found !", attachNodeName);
                         continue;
                     }
 

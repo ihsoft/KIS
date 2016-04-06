@@ -33,6 +33,9 @@
     <Reference Include="Assembly-CSharp">
       <HintPath>Q:\KSP_Data\Managed\Assembly-CSharp.dll</HintPath>
     </Reference>
+    <Reference Include="KSPDev_Utils">
+      <HintPath>..\KSPDev_Utils.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="UnityEngine">
@@ -41,7 +44,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="KISAddonCursor.cs" />
-    <Compile Include="KSPDev.cs" />
     <Compile Include="ModuleKISItemEvaPropellant.cs" />
     <Compile Include="KIS_IconViewer.cs" />
     <Compile Include="ModuleKISItemBook.cs" />

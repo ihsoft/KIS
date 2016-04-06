@@ -1,4 +1,5 @@
-﻿using System;
+﻿using KSPDev.LogUtils;
+using System;
 using System.Collections.Generic;
 using System.Collections;
 using System.ComponentModel;
@@ -42,7 +43,7 @@ namespace KIS
         }
 
         void Awake() {
-            KSPDev.Logger.logInfo("Loading UI sounds for KIS...");
+            Logger.logInfo("Loading UI sounds for KIS...");
             InitSound(bipWrongSndPath, out audioBipWrong);
             InitSound(clickSndPath, out audioClick);
             InitSound(attachPartSndPath, out audioAttach);
@@ -50,7 +51,7 @@ namespace KIS
         }
         
         private void InitSound(string clipPath, out AudioSource source) {
-            KSPDev.Logger.logInfo("Loading clip: {0}", clipPath);
+            Logger.logInfo("Loading clip: {0}", clipPath);
             source = audioGo.AddComponent<AudioSource>();
             source.volume = GameSettings.UI_VOLUME;
             source.panLevel = 0;  //set as 2D audiosource
@@ -58,7 +59,7 @@ namespace KIS
             if (GameDatabase.Instance.ExistsAudioClip(clipPath)) {
                 source.clip = GameDatabase.Instance.GetAudioClip(clipPath);
             } else {
-                KSPDev.Logger.logError("Cannot locate clip: {0}", clipPath);
+                Logger.logError("Cannot locate clip: {0}", clipPath);
             }
         }
     }
@@ -121,7 +122,7 @@ namespace KIS
             }
             else
             {
-                KSPDev.Logger.logError("Sound not found in the game database !");
+                Logger.logError("Sound not found in the game database !");
                 ScreenMessages.PostScreenMessage("Sound file : " + sndPath + " as not been found, please check your KAS installation !", 10, ScreenMessageStyle.UPPER_CENTER);
                 return false;
             }
@@ -144,7 +145,7 @@ namespace KIS
                 try {
                     value = (T) TypeDescriptor.GetConverter(typeof(T)).ConvertFromString(cfgValue);
                 } catch (Exception) {
-                    KSPDev.Logger.logWarning("Cannot parse config value \"{2}\" for setting"
+                    Logger.logWarning("Cannot parse config value \"{2}\" for setting"
                                              + " {0}/{1}. Using default value: {3}",
                                              node.name, name, cfgValue, value);
                     return false;
@@ -189,12 +190,12 @@ namespace KIS
         public static void CleanupExternalLinks(Vessel vessel)
         {
             var parts = vessel.parts.FindAll(p => p is CompoundPart);
-            KSPDev.Logger.logInfo(
+            Logger.logInfo(
                 "Check {0} compound part(s) in vessel: {1}", parts.Count(), vessel);
             foreach (var part in parts) {
                 var compoundPart = part as CompoundPart;
                 if (compoundPart.target && compoundPart.target.vessel != vessel) {
-                    KSPDev.Logger.logTrace(
+                    Logger.logInfo(
                         "Destroy compound part '{0}' which links '{1}' to '{2}'",
                         compoundPart, compoundPart.parent, compoundPart.target);
                     compoundPart.Die();
@@ -222,13 +223,13 @@ namespace KIS
             // operations on the part. Do a cleanup job here to workaround this bug.
             var orphanNode = assemblyRoot.findAttachNodeByPart(formerParent);
             if (orphanNode != null) {
-                KSPDev.Logger.logWarning(
+                Logger.logWarning(
                     "KSP BUG: Cleanup orphan node {0} in the assembly", orphanNode.id);
                 orphanNode.attachedPart = null;
                 // Also, check that parent is properly cleaned up.
                 var parentOrphanNode = formerParent.findAttachNodeByPart(assemblyRoot);
                 if (parentOrphanNode != null) {
-                    KSPDev.Logger.logWarning(
+                    Logger.logWarning(
                         "KSP BUG: Cleanup orphan node {0} in the parent", parentOrphanNode.id);
                     parentOrphanNode.attachedPart = null;
                 }
@@ -259,8 +260,8 @@ namespace KIS
             catch
             {
                 // workaround for command module
-                KSPDev.Logger.logWarning("Error during part snapshot, spawning part for snapshot"
-                                          + " (workaround for command module)");
+                Logger.logWarning("Error during part snapshot, spawning part for snapshot"
+                                  + " (workaround for command module)");
                 Part p = (Part)UnityEngine.Object.Instantiate(part.partInfo.partPrefab);
                 p.gameObject.SetActive(true);
                 p.name = part.partInfo.name;
@@ -462,7 +463,7 @@ namespace KIS
             // Wait part to initialize
             while (!newPart.started && newPart.State != PartStates.DEAD)
             {
-                KSPDev.Logger.logInfo("CreatePart - Waiting initialization of the part...");
+                Logger.logInfo("CreatePart - Waiting initialization of the part...");
                 if (tgtPart)
                 {
                     // Part stay in position 
@@ -490,7 +491,7 @@ namespace KIS
                 newPart.transform.position = tgtAttachNode.nodeTransform.TransformPoint(toPartLocalPos);
                 newPart.transform.rotation = tgtAttachNode.nodeTransform.rotation * toPartLocalRot;
             }
-            KSPDev.Logger.logInfo("CreatePart - Coupling part...");
+            Logger.logInfo("CreatePart - Coupling part...");
             CouplePart(newPart, tgtPart, srcAttachNodeID, tgtAttachNode);
 
             if (onPartCoupled != null)
@@ -506,9 +507,8 @@ namespace KIS
             {
                 if (srcAttachNodeID == "srfAttach")
                 {
-                    KSPDev.Logger.logInfo(
-                        "Attach type: {0} | ID : {1}",
-                        srcPart.srfAttachNode.nodeType, srcPart.srfAttachNode.id);
+                    Logger.logInfo("Attach type: {0} | ID : {1}",
+                                   srcPart.srfAttachNode.nodeType, srcPart.srfAttachNode.id);
                     srcPart.attachMode = AttachModes.SRF_ATTACH;
                     srcPart.srfAttachNode.attachedPart = tgtPart;
                 }
@@ -517,9 +517,8 @@ namespace KIS
                     AttachNode srcAttachNode = srcPart.findAttachNode(srcAttachNodeID);
                     if (srcAttachNode != null)
                     {
-                        KSPDev.Logger.logInfo(
-                            "Attach type : {0} | ID : {1}",
-                            srcPart.srfAttachNode.nodeType, srcAttachNode.id);
+                        Logger.logInfo("Attach type : {0} | ID : {1}",
+                                       srcPart.srfAttachNode.nodeType, srcAttachNode.id);
                         srcPart.attachMode = AttachModes.STACK;
                         srcAttachNode.attachedPart = tgtPart;
                         if (tgtAttachNode != null)
@@ -529,13 +528,13 @@ namespace KIS
                     }
                     else
                     {
-                        KSPDev.Logger.logError("Source attach node not found !");
+                        Logger.logError("Source attach node not found !");
                     }
                 }
             }
             else
             {
-                KSPDev.Logger.logWarning("Missing source attach node !");
+                Logger.logWarning("Missing source attach node !");
             }
 
             srcPart.Couple(tgtPart);
@@ -738,7 +737,6 @@ namespace KIS
         public static bool IsSameHierarchyChild(object rootPart, Part child) {
             for (Part part = child; part; part = part.parent) {
                 if (System.Object.ReferenceEquals(rootPart, part)) {
-                    KSPDev.Logger.logTrace("Attaching to self detected");
                     return true;
                 }
             }
@@ -784,24 +782,16 @@ namespace KIS
             foreach (var an in p.attachNodes) {
                 // Skip occupied nodes.
                 if (an.attachedPart != null && an.attachedPart != ignoreAttachedPart) {
-                    KSPDev.Logger.logTrace("Skip occupied node {0} attached to: {1}",
-                                            an.id, an.attachedPart);
                     // Reset surface node if it points in the same direction as the occupied node. 
                     if (srfNode != null && an.orientation == srfNode.orientation) {
-                        KSPDev.Logger.logTrace(
-                            "Skip surface node pointing to {0} due to occupied node {1}",
-                            srfNode.orientation, an.id);
                         srfNode = null;
                     }
                     continue;
                 }
                 // Skip free nodes that point in the same direction as an occupied surface node.
                 if (srfHasPart && an.orientation == srfNode.orientation) {
-                    KSPDev.Logger.logTrace("Skip {0} node pointing to {1} due to surface node",
-                                            an.id, an.orientation);
                     continue;
                 }
-                KSPDev.Logger.logTrace("Accumulate {0} free node", an.id);
                 result.Add(an);
             }
             // Add a surface node if it's free. Always put it first in the list.

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using KSPDev.LogUtils;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -64,11 +65,6 @@ namespace KIS
         }
 
         public void Update() {
-            KSPDev.LoggedCallWrapper.Action(Internal_Update);
-        }
-
-        private void Internal_Update()
-        {
             if (partDetectionActive)
             {
                 Part part = KIS_Shared.GetPartUnderCursor();
@@ -78,7 +74,6 @@ namespace KIS
                     if (part)
                     {
                         partClickedFrame = Time.frameCount;
-                        KSPDev.Logger.logTrace("Set click frame {0}", partClickedFrame);
                         if (delegateOnMousePartClick != null) delegateOnMousePartClick(part);
                     }
                 }

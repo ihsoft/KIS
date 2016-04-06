@@ -1,1 +1,2 @@
 Alpha changes since last release:
+- Deprecate internal KSPDev in favor of external KSPDev_Utils library.

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using KSPDev.LogUtils;
+using System;
 using System.Collections.Generic;
 using System.Collections;
 using System.Linq;
@@ -201,17 +202,12 @@ namespace KIS
                     KISAddonPointer.colorOk = XKCDColors.Teal;
                     KISAddonPointer.allowedAttachmentParts = GetAllowedDockPorts();
                 }
-                KSPDev.Logger.logInfo("Set pointer mode to: {0}", value);
+                Logger.logInfo("Set pointer mode to: {0}", value);
                 this._pointerMode = value;
             }
         }
 
         void Awake()
-        {
-            KSPDev.LoggedCallWrapper.Action(Internal_Awake);
-        }
-
-        private void Internal_Awake()
         {
             instance = this;
             if (HighLogic.LoadedSceneIsEditor)
@@ -222,7 +218,7 @@ namespace KIS
                     if (iconPrefab.GetComponent<EditorClickListener>() == null) {
                         EditorPartList.Instance.iconPrefab.gameObject.AddComponent<EditorClickListener>();
                     } else {
-                        KSPDev.Logger.logWarning("Skip adding click listener because it exists");
+                        Logger.logWarning("Skip adding click listener because it exists");
                     }
                 }
             }
@@ -230,11 +226,6 @@ namespace KIS
         }
 
         public void Update() {
-            KSPDev.LoggedCallWrapper.Action(Internal_Update);
-        }
-
-        private void Internal_Update()
-        {
             // Check if action key is pressed for an EVA kerbal. 
             if (HighLogic.LoadedSceneIsFlight && FlightGlobals.ActiveVessel.isEVA) {
                 // Check if attach/detach key is pressed
@@ -288,7 +279,7 @@ namespace KIS
                     // false action triggering. So, just postpone UP even by one frame when it
                     // happens in the same frame as the DOWN event.
                     if (KISAddonCursor.partClickedFrame == Time.frameCount) {
-                        KSPDev.Logger.logWarning(
+                        Logger.logWarning(
                             "Postponing mouse button up event in frame {0}", Time.frameCount);
                         delayedButtonUp = true;  // Event will be handled in the next frame.
                     } else {
@@ -411,7 +402,7 @@ namespace KIS
                     {
                         Keva.JetpackDeployed = true;
                         jetpackLock = false;
-                        KSPDev.Logger.logInfo("Jetpack mouse input re-enabled");
+                        Logger.logInfo("Jetpack mouse input re-enabled");
                     }
                 }
             }
@@ -829,7 +820,7 @@ namespace KIS
             draggedPart = part;
             draggedItem = null;
             if (cursorMode == CursorMode.Detach) {
-                KSPDev.Logger.logError("Deatch mode is not expected in Pickup()");
+                Logger.logError("Deatch mode is not expected in Pickup()");
             }
             Pickup(cursorMode == CursorMode.ReDock ? PickupMode.Undock : PickupMode.Move);
         }
@@ -843,8 +834,7 @@ namespace KIS
 
         private void Pickup(PickupMode newPickupMode)
         {
-            KSPDev.Logger.logInfo("Start pickup in mode {0} from part: {1}",
-                                  newPickupMode, draggedPart);
+            Logger.logInfo("Start pickup in mode {0} from part: {1}", newPickupMode, draggedPart);
             grabbedPart = null;
             pickupMode = newPickupMode;
             cursorMode = CursorMode.Nothing;
@@ -863,7 +853,7 @@ namespace KIS
                     {
                         Keva.JetpackDeployed = false;
                         jetpackLock = true;
-                        KSPDev.Logger.logInfo("Jetpack mouse input disabled");
+                        Logger.logInfo("Jetpack mouse input disabled");
                     }
                 }
             }
@@ -878,8 +868,7 @@ namespace KIS
         public void Drop(Part part, Part fromPart)
         {
             grabbedPart = part;
-            KSPDev.Logger.logInfo("End pickup of {0} from part: {1}",
-                                  part, fromPart);
+            Logger.logInfo("End pickup of {0} from part: {1}", part, fromPart);
             if (!KISAddonPointer.isRunning)
             {
                 ModuleKISPickup pickupModule = GetActivePickupNearest(fromPart);
@@ -904,7 +893,7 @@ namespace KIS
                 }
                 else
                 {
-                    KSPDev.Logger.logError("No active pickup nearest !");
+                    Logger.logError("No active pickup nearest !");
                 }
             }
             KISAddonCursor.StopPartDetection();
@@ -1016,7 +1005,7 @@ namespace KIS
 
         private void MoveDrop(Part tgtPart, Vector3 pos, Quaternion rot)
         {
-            KSPDev.Logger.logInfo("Move part");
+            Logger.logInfo("Move part");
             ModuleKISPickup modulePickup = GetActivePickupNearest(pos);
             if (modulePickup)
             {
@@ -1045,7 +1034,7 @@ namespace KIS
 
         private Part CreateDrop(Part tgtPart, Vector3 pos, Quaternion rot)
         {
-            KSPDev.Logger.logInfo("Create & drop part");
+            Logger.logInfo("Create & drop part");
             ModuleKISPickup modulePickup = GetActivePickupNearest(pos);
             draggedItem.StackRemove(1);
             Part newPart = KIS_Shared.CreatePart(draggedItem.partNode, pos, rot, draggedItem.inventory.part);
@@ -1059,7 +1048,7 @@ namespace KIS
 
         private void MoveAttach(Part tgtPart, Vector3 pos, Quaternion rot, string srcAttachNodeID = null, AttachNode tgtAttachNode = null)
         {
-            KSPDev.Logger.logInfo("Move part & attach");
+            Logger.logInfo("Move part & attach");
             KIS_Shared.SendKISMessage(movingPart, KIS_Shared.MessageAction.AttachStart, KISAddonPointer.GetCurrentAttachNode(), tgtPart, tgtAttachNode);
             KIS_Shared.DecoupleAssembly(movingPart);
             movingPart.vessel.SetPosition(pos);
@@ -1081,7 +1070,7 @@ namespace KIS
 
         private Part CreateAttach(Part tgtPart, Vector3 pos, Quaternion rot, string srcAttachNodeID = null, AttachNode tgtAttachNode = null)
         {
-            KSPDev.Logger.logInfo("Create part & attach");
+            Logger.logInfo("Create part & attach");
             Part newPart;
             draggedItem.StackRemove(1);
             bool useExternalPartAttach = false;
@@ -1115,7 +1104,7 @@ namespace KIS
             var pickupModules =
                 FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleKISPickup>();
             if (pickupModules.Count > 0) {
-                KSPDev.Logger.logInfo("Enable re-dock mode");
+                Logger.logInfo("Enable re-dock mode");
                 KISAddonCursor.StartPartDetection(
                     OnMouseRedockPartClick, OnMouseRedockEnterPart, null,
                     OnMouseRedockExitPart);
@@ -1126,7 +1115,7 @@ namespace KIS
         /// <summary>Disables re-docking mode.</summary>
         private void DisableRedockingMode() {
             if (cursorMode == CursorMode.ReDock) {
-                KSPDev.Logger.logInfo("Disable re-dock mode");
+                Logger.logInfo("Disable re-dock mode");
                 if (redockTarget) {
                     KIS_Shared.SetHierarchySelection(redockTarget, false /* isSelected */);
                 }
@@ -1162,8 +1151,6 @@ namespace KIS
 
                     redockTarget = chkPart;
                     redockVesselName = dockingModule.vesselInfo.name;
-                    KSPDev.Logger.logTrace("Found vessel {0} at dock port {1}",
-                                           redockVesselName, chkPart);
                     break;
                 }
             }
@@ -1265,7 +1252,7 @@ namespace KIS
                     if (item.allowPartAttach == 0) {
                         // Part restricts attachments and detachments.
                         //FIXME: Findout what part cannot be detached. And why.
-                        KSPDev.Logger.logError("Unknown item being detached: {0}", item);
+                        Logger.logError("Unknown item being detached: {0}", item);
                         ReportCheckError("Can't detach", "(This part can't be detached)");
                         return false;
                     }
@@ -1342,7 +1329,7 @@ namespace KIS
                     result.Add(port);
                 }
             }
-            KSPDev.Logger.logInfo("Found {0} allowed docking ports", result.Count());
+            Logger.logInfo("Found {0} allowed docking ports", result.Count());
             return result;
         }
 
