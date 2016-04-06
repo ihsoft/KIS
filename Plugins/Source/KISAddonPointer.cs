@@ -748,7 +748,7 @@ namespace KIS
             if (!attachNodes.Any()) {
                 //TODO: When there are no nodes try finding ones in the parent or in the children.
                 // Ideally, the caller should have checked if this part has free nodes. Now the only
-                // way is top pick *any* node. The surface one always exists so, it's a good
+                // way is to pick *any* node. The surface one always exists so, it's a good
                 // candidate. Though, for many details it may result in a weird representation.
                 Logger.logError("Part {0} has no free nodes, use {1}",
                                 partToAttach, partToAttach.srfAttachNode);
