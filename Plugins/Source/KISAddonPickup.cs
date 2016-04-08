@@ -1,4 +1,5 @@
-﻿using KSPDev.LogUtils;
+﻿using KSP.UI.Screens;
+using KSPDev.LogUtils;
 using System;
 using System.Collections.Generic;
 using System.Collections;
@@ -214,9 +215,9 @@ namespace KIS
             {
                 if (EditorPartList.Instance)
                 {
-                    var iconPrefab = EditorPartList.Instance.iconPrefab.gameObject;
+                    var iconPrefab = EditorPartList.Instance.partPrefab.gameObject;
                     if (iconPrefab.GetComponent<EditorClickListener>() == null) {
-                        EditorPartList.Instance.iconPrefab.gameObject.AddComponent<EditorClickListener>();
+                        EditorPartList.Instance.partPrefab.gameObject.AddComponent<EditorClickListener>();
                     } else {
                         Logger.logWarning("Skip adding click listener because it exists");
                     }

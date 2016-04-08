@@ -133,7 +133,7 @@ namespace KIS
         public static void CursorEnable(string texturePath, string text, List<string> additionalTexts = null)
         {
             cursorShow = true;
-            Screen.showCursor = false;
+            UnityEngine.Cursor.visible = false;
             cursorTexture = GameDatabase.Instance.GetTexture(texturePath, false);
             cursorText = text;
             cursorAdditionalTexts = additionalTexts;
@@ -142,13 +142,13 @@ namespace KIS
         public static void CursorDefault()
         {
             cursorShow = false;
-            Screen.showCursor = true;
+            UnityEngine.Cursor.visible = true;
         }
 
         public static void CursorDisable()
         {
             cursorShow = false;
-            Screen.showCursor = false;
+            UnityEngine.Cursor.visible = false;
         }
 
         /// <summary>Makes a texture with the requested background color.</summary>

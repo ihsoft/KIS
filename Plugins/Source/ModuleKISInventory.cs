@@ -151,7 +151,7 @@ namespace KIS
             sndFx.audio.volume = GameSettings.SHIP_VOLUME;
             sndFx.audio.rolloffMode = AudioRolloffMode.Linear;
             sndFx.audio.dopplerLevel = 0f;
-            sndFx.audio.panLevel = 1f;
+            sndFx.audio.spatialBlend = 1f;
             sndFx.audio.maxDistance = 10;
             sndFx.audio.loop = false;
             sndFx.audio.playOnAwake = false;
@@ -337,12 +337,12 @@ namespace KIS
                 if (uiSnd)
                 {
                     sndFx.audio.volume = GameSettings.UI_VOLUME;
-                    sndFx.audio.panLevel = 0;  //set as 2D audiosource
+                    sndFx.audio.spatialBlend = 0;  //set as 2D audiosource
                 }
                 else
                 {
                     sndFx.audio.volume = GameSettings.SHIP_VOLUME;
-                    sndFx.audio.panLevel = 1;  //set as 3D audiosource
+                    sndFx.audio.spatialBlend = 1;  //set as 3D audiosource
                 }
             }
             else

@@ -54,7 +54,7 @@ namespace KIS
             Logger.logInfo("Loading clip: {0}", clipPath);
             source = audioGo.AddComponent<AudioSource>();
             source.volume = GameSettings.UI_VOLUME;
-            source.panLevel = 0;  //set as 2D audiosource
+            source.spatialBlend = 0;  //set as 2D audiosource
 
             if (GameDatabase.Instance.ExistsAudioClip(clipPath)) {
                 source.clip = GameDatabase.Instance.GetAudioClip(clipPath);
@@ -111,7 +111,7 @@ namespace KIS
             group.audio.volume = GameSettings.SHIP_VOLUME;
             group.audio.rolloffMode = AudioRolloffMode.Linear;
             group.audio.dopplerLevel = 0f;
-            group.audio.panLevel = 1f;
+            group.audio.spatialBlend = 1f;
             group.audio.maxDistance = maxDistance;
             group.audio.loop = loop;
             group.audio.playOnAwake = false;

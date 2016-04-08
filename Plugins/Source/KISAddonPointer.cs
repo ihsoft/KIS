@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace KIS
 {
@@ -135,7 +136,7 @@ namespace KIS
         {
             audioBipWrong = audioGo.AddComponent<AudioSource>();
             audioBipWrong.volume = GameSettings.UI_VOLUME;
-            audioBipWrong.panLevel = 0;  //set as 2D audiosource
+            audioBipWrong.spatialBlend = 0;  //set as 2D audiosource
 
             if (GameDatabase.Instance.ExistsAudioClip(KIS_Shared.bipWrongSndPath))
             {
@@ -711,7 +712,7 @@ namespace KIS
                 var childObj = new GameObject("KISPointerChildMesh");
 
                 var meshRenderer = childObj.AddComponent<MeshRenderer>();
-                meshRenderer.castShadows = false;
+                meshRenderer.shadowCastingMode = ShadowCastingMode.Off;
                 meshRenderer.receiveShadows = false;
 
                 var filter = childObj.AddComponent<MeshFilter>();
