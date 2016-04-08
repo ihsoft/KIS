@@ -1,3 +1,8 @@
+### 1.2.6 (7 April 2016)
+This version does NOT support KSP 1.1 yet! Version 1.2.7 will.
+- [Fix]: #108: Parts with no attach nodes cannot be static attached.
+- [Change]: Some cleanup to make code more compatible with pre-release of KSP 1.1.
+
 ### 1.2.5 (22 February 2016)
 - [Feature] #101: Allow configuring EVA inventory hotkeys via a config file.
 - [Fix] #103: Part (not seat) inventory overwritten by crew inventory when transferring crew into it.
