@@ -12,6 +12,7 @@
     }, 
     "NAME": "Kerbal Inventory System", 
     "URL": "https://raw.githubusercontent.com/KospY/KIS/master/kis.version", 
+    "CHANGE_LOG_URL": "https://raw.githubusercontent.com/KospY/KIS/master/changelog.md",
     "VERSION": {
         "BUILD": 0, 
         "MAJOR": 1, 
