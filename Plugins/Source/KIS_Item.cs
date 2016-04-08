@@ -1,8 +1,7 @@
-﻿using System;
+﻿using KSPDev.LogUtils;
+using System;
 using System.Linq;
 using System.Collections.Generic;
-using System.Collections;
-using System.Text;
 using UnityEngine;
 
 namespace KIS
@@ -185,12 +184,15 @@ namespace KIS
             }
             if (nonStackableModule == 0 && GetResources().Count == 0)
             {
-                KIS_Shared.DebugLog("No non-stackable module and ressource found on the part, set item as stackable");
+                Logger.logInfo("No non-stackable module and ressource found on the part, set item"
+                               + " as stackable");
                 this.stackable = true;
             }
-            if (KISAddonConfig.stackableList.Contains(availablePart.name))
+            if (KISAddonConfig.stackableList.Contains(availablePart.name)
+                || availablePart.name.IndexOf('.') != -1 && KISAddonConfig.stackableList.Contains(availablePart.name.Replace('.', '_')))
             {
-                KIS_Shared.DebugLog("Part name present in settings.cfg (node StackableItemOverride), force item as stackable");
+                Logger.logInfo("Part name present in settings.cfg (node StackableItemOverride),"
+                                + " force item as stackable");
                 this.stackable = true;
             }
         }
@@ -207,7 +209,8 @@ namespace KIS
             if (inventoryName != "") node.AddValue("inventoryName", inventoryName);
             if (equipped && (equipMode == EquipMode.Part || equipMode == EquipMode.Physic))
             {
-                KIS_Shared.DebugLog("Update config node of equipped part : " + this.availablePart.title);
+                Logger.logInfo(
+                    "Update config node of equipped part: {0}", this.availablePart.title);
                 partNode.ClearData();
                 KIS_Shared.PartSnapshot(equippedPart).CopyTo(partNode);
             }
@@ -325,15 +328,21 @@ namespace KIS
             icon = null;
         }
 
-        public void Update()
-        {
-            if (equippedGameObj)
-            {
+        public void Update() {
+            if (equippedGameObj) {
                 equippedGameObj.transform.rotation = evaTransform.rotation * Quaternion.Euler(prefabModule.equipDir);
                 equippedGameObj.transform.position = evaTransform.TransformPoint(prefabModule.equipPos);
-                if (equippedPart) if (equippedPart.rigidbody) equippedPart.rigidbody.velocity = equippedPart.vessel.rootPart.rigidbody.velocity;
+                if (equippedPart && equippedPart.GetComponent<Rigidbody>()) {
+                    var equippedPartRigidbody = equippedPart.GetComponent<Rigidbody>();
+                    var vesselRootRigidbody =
+                        equippedPart.vessel.rootPart.GetComponent<Rigidbody>();
+                    equippedPartRigidbody.velocity = vesselRootRigidbody.velocity;
+                    equippedPartRigidbody.angularVelocity = vesselRootRigidbody.angularVelocity;
+                }
             }
-            if (prefabModule) prefabModule.OnItemUpdate(this);
+            if (prefabModule) {
+                prefabModule.OnItemUpdate(this);
+            }
         }
 
         public void GUIUpdate()
@@ -411,11 +420,12 @@ namespace KIS
 
         public void Equip()
         {
-            if (!prefabModule) return;
-            KIS_Shared.DebugLog("Equip item " + this.availablePart.name);
+            // Only equip EVA kerbals.
+            if (!prefabModule || !inventory.vessel.isEVA) return;
+            Logger.logInfo("Equip item {0}", this.availablePart.name);
 
             //Check skill if needed
-            if (prefabModule.equipSkill != null && prefabModule.equipSkill != "")
+            if (!String.IsNullOrEmpty(prefabModule.equipSkill))
             {
                 bool skillFound = false;
                 List<ProtoCrewMember> protoCrewMembers = inventory.vessel.GetVesselCrew();
@@ -473,7 +483,7 @@ namespace KIS
 
                 if (!evaTransform)
                 {
-                    KIS_Shared.DebugError("evaTransform not found ! ");
+                    Logger.logError("evaTransform not found ! ");
                     UnityEngine.Object.Destroy(equippedGameObj);
                     return;
                 }
@@ -495,14 +505,14 @@ namespace KIS
 
                 if (!evaTransform)
                 {
-                    KIS_Shared.DebugError("evaTransform not found ! ");
+                    Logger.logError("evaTransform not found ! ");
                     return;
                 }
 
                 Part alreadyEquippedPart = this.inventory.part.vessel.Parts.Find(p => p.partInfo.name == this.availablePart.name);
                 if (alreadyEquippedPart)
                 {
-                    KIS_Shared.DebugLog("Part : " + this.availablePart.name + " already found on eva");
+                    Logger.logInfo("Part: {0} already found on eva", availablePart.name);
                     equippedPart = alreadyEquippedPart;
                     OnEquippedPartCoupled(equippedPart);
                 }
@@ -537,7 +547,7 @@ namespace KIS
             }
             if (equipMode == EquipMode.Part || equipMode == EquipMode.Physic)
             {
-                KIS_Shared.DebugLog("Update config node of equipped part : " + this.availablePart.title);
+                Logger.logInfo("Update config node of equipped part: {0}", availablePart.title);
                 partNode.ClearData();
                 KIS_Shared.PartSnapshot(equippedPart).CopyTo(partNode);
                 equippedPart.Die();
@@ -572,7 +582,7 @@ namespace KIS
                 {
                     UnityEngine.Object.DestroyImmediate(equippedPart.collisionEnhancer);
                 }
-                UnityEngine.Object.Destroy(equippedPart.rigidbody);
+                UnityEngine.Object.Destroy(equippedPart.GetComponent<Rigidbody>());
             }
 
             if (equipMode == EquipMode.Physic)
@@ -592,7 +602,7 @@ namespace KIS
 
                 //Create physic join
                 FixedJoint evaJoint = equippedPart.gameObject.AddComponent<FixedJoint>();
-                evaJoint.connectedBody = this.inventory.part.rigidbody;//evaCollider.attachedRigidbody;
+                evaJoint.connectedBody = inventory.part.GetComponent<Rigidbody>();//evaCollider.attachedRigidbody;
                 evaJoint.breakForce = 5;
                 evaJoint.breakTorque = 5;
                 KIS_Shared.ResetCollisionEnhancer(equippedPart);
@@ -601,7 +611,7 @@ namespace KIS
 
         public void Drop(Part fromPart = null)
         {
-            KIS_Shared.DebugLog("Drop item");
+            Logger.logInfo("Drop item");
             if (fromPart == null) fromPart = inventory.part;
             Quaternion rot;
             Vector3 pos;

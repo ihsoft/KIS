@@ -1,8 +1,7 @@
-﻿using System;
+﻿using KSPDev.LogUtils;
+using System;
 using System.Linq;
 using System.Collections.Generic;
-using System.Collections;
-using System.Text;
 using UnityEngine;
 
 namespace KIS
@@ -47,7 +46,7 @@ namespace KIS
             }
             else
             {
-                KIS_Shared.DebugError("The book has no pages configured");
+                Logger.logError("The book has no pages configured");
             }      
         }
 

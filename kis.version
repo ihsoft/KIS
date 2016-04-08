@@ -1,24 +1,22 @@
 {
-    "NAME"           : "Kerbal Inventory System",
-    "URL"            : "https://raw.githubusercontent.com/KospY/KIS/master/kis.version",
-    "DOWNLOAD"       : "http://forum.kerbalspaceprogram.com/threads/113111",
-    "CHANGE_LOG_URL" : "https://raw.githubusercontent.com/KospY/KIS/master/changelog.md",
-    "GITHUB":
-    {
-        "USERNAME":   "KospY",
-        "REPOSITORY": "KIS"
-    },
-    "VERSION":
-    {
-        "MAJOR": 1,
-        "MINOR": 2,
-        "PATCH": 2,
-        "BUILD": 0
-    },
-    "KSP_VERSION":
-    {
-        "MAJOR": 1,
-        "MINOR": 0,
-        "PATCH": 4
+    "CHANGE_LOG_URL": "https://raw.githubusercontent.com/KospY/KIS/master/changelog.md", 
+    "DOWNLOAD": "http://forum.kerbalspaceprogram.com/threads/113111", 
+    "GITHUB": {
+        "REPOSITORY": "KIS", 
+        "USERNAME": "KospY"
+    }, 
+    "KSP_VERSION": {
+        "MAJOR": 1, 
+        "MINOR": 0, 
+        "PATCH": 5
+    }, 
+    "NAME": "Kerbal Inventory System", 
+    "URL": "https://raw.githubusercontent.com/KospY/KIS/master/kis.version", 
+    "CHANGE_LOG_URL": "https://raw.githubusercontent.com/KospY/KIS/master/changelog.md",
+    "VERSION": {
+        "BUILD": 0, 
+        "MAJOR": 1, 
+        "MINOR": 2, 
+        "PATCH": 6
     }
 }

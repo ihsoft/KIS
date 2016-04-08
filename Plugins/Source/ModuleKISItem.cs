@@ -1,8 +1,6 @@
-﻿using System;
+﻿using KSPDev.LogUtils;
+using System;
 using System.Linq;
-using System.Collections.Generic;
-using System.Collections;
-using System.Text;
 using UnityEngine;
 
 namespace KIS
@@ -107,7 +105,7 @@ namespace KIS
             if (useExternalStaticAttach) return;
             if (staticAttached)
             {
-                KIS_Shared.DebugLog("Re-attach static object (OnPartUnpack)");
+                Logger.logInfo("Re-attach static object (OnPartUnpack)");
                 GroundAttach();
             }
         }
@@ -134,22 +132,22 @@ namespace KIS
 
         public void GroundAttach()
         {
-            KIS_Shared.DebugLog("Create kinematic rigidbody");
+            Logger.logInfo("Create kinematic rigidbody");
             if (connectedGameObject) Destroy(connectedGameObject);
             GameObject obj = new GameObject("KISBody");
-            obj.AddComponent<Rigidbody>();
-            obj.rigidbody.mass = 100;
-            obj.rigidbody.isKinematic = true;
+            var objRigidbody = obj.AddComponent<Rigidbody>();
+            objRigidbody.mass = 100;
+            objRigidbody.isKinematic = true;
             obj.transform.position = this.part.transform.position;
             obj.transform.rotation = this.part.transform.rotation;
             connectedGameObject = obj;
 
-            KIS_Shared.DebugLog("Create fixed joint on the kinematic rigidbody");
+            Logger.logInfo("Create fixed joint on the kinematic rigidbody");
             if (fixedJoint) Destroy(fixedJoint);
             FixedJoint CurJoint = this.part.gameObject.AddComponent<FixedJoint>();
             CurJoint.breakForce = staticAttachBreakForce;
             CurJoint.breakTorque = staticAttachBreakForce;
-            CurJoint.connectedBody = obj.rigidbody;
+            CurJoint.connectedBody = objRigidbody;
             fixedJoint = CurJoint;
             this.part.vessel.Landed = true;
             staticAttached = true;
@@ -159,7 +157,8 @@ namespace KIS
         {
             if (staticAttached)
             {
-                KIS_Shared.DebugLog("Removing static rigidbody and fixed joint on " + this.part.partInfo.title);
+                Logger.logInfo(
+                    "Removing static rigidbody and fixed joint on: {0}", this.part.partInfo.title);
                 if (fixedJoint) Destroy(fixedJoint);
                 if (connectedGameObject) Destroy(connectedGameObject);
                 fixedJoint = null;

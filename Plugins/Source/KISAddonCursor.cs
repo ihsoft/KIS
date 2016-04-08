@@ -1,8 +1,7 @@
-﻿using System;
+﻿using KSPDev.LogUtils;
+using System;
 using System.Collections.Generic;
-using System.Collections;
 using System.Linq;
-using System.Text;
 using UnityEngine;
 
 namespace KIS
@@ -13,16 +12,30 @@ namespace KIS
         private static bool cursorShow = false;
         private static bool partDetectionActive = false;
         
-        public static Texture2D cursorTexture = null;
-        public static string cursorText;
-        public static List<string> cursorAdditionalTexts;
+        private static Texture2D cursorTexture = null;
+        private static string cursorText;
+        private static List<string> cursorAdditionalTexts;
         public static Part hoveredPart = null;
+        public static int partClickedFrame = -1;
         private static OnMousePartAction delegateOnMousePartClick;
         private static OnMousePartAction delegateOnMouseEnterPart;
         private static OnMousePartAction delegateOnMouseHoverPart;
         private static OnMousePartAction delegateOnMouseExitPart;
         public delegate void OnMousePartAction(Part part);
 
+        // Cursor hint text settings.
+        private const int ActionIconSize = 24;  // It's quare.
+        private const int HintFontSize = 10;
+        private const int HintTextLeftMargin = 4;  // A gap between action icon and the text.
+        private static Color hintBackground = new Color(0.0f, 0.0f, 0.0f, 0.5f);
+        private static GUIStyle hintWindowStyle = new GUIStyle {
+            normal = {
+                background = CreateTextureFromColour(hintBackground),
+                textColor = Color.white
+            },
+            padding = new RectOffset(3, 3, 3, 3),
+            fontSize = HintFontSize
+        };
 
         public static void StartPartDetection()
         {
@@ -45,11 +58,13 @@ namespace KIS
             {
                 delegateOnMouseExitPart(hoveredPart);
             }
+            if (hoveredPart != null) {
+                KIS_Shared.SetHierarchySelection(hoveredPart, false /* isSelected */);
+            }
             hoveredPart = null;
         }
 
-        void Update()
-        {
+        public void Update() {
             if (partDetectionActive)
             {
                 Part part = KIS_Shared.GetPartUnderCursor();
@@ -58,6 +73,7 @@ namespace KIS
                 {
                     if (part)
                     {
+                        partClickedFrame = Time.frameCount;
                         if (delegateOnMousePartClick != null) delegateOnMousePartClick(part);
                     }
                 }
@@ -107,14 +123,14 @@ namespace KIS
             }
         }
 
-        public static void CursorEnable(string texturePath, string text = "", string text2 = "")
+        public static void CursorEnable(string texturePath, string text, string text2)
         {
             List<String> texts = new List<String>();
             texts.Add(text2);
             CursorEnable(texturePath, text, texts);
         }
 
-        public static void CursorEnable(string texturePath, string text = "", List<string> additionalTexts = null)
+        public static void CursorEnable(string texturePath, string text, List<string> additionalTexts = null)
         {
             cursorShow = true;
             Screen.showCursor = false;
@@ -122,7 +138,6 @@ namespace KIS
             cursorText = text;
             cursorAdditionalTexts = additionalTexts;
         }
-
         
         public static void CursorDefault()
         {
@@ -136,6 +151,20 @@ namespace KIS
             Screen.showCursor = false;
         }
 
+        /// <summary>Makes a texture with the requested background color.</summary>
+        /// <remarks>
+        /// Borrowed from <see href="https://github.com/CYBUTEK/KerbalEngineer">KER Redux</see>
+        /// </remarks>
+        /// <param name="colour"></param>
+        /// <returns></returns>
+        private static Texture2D CreateTextureFromColour(Color colour)
+        {
+            var texture = new Texture2D(1, 1, TextureFormat.ARGB32, false);
+            texture.SetPixel(1, 1, colour);
+            texture.Apply();
+            return texture;
+        }
+
         private void OnGUI()
         {
             /*
@@ -147,17 +176,28 @@ namespace KIS
 
             if (cursorShow)
             {
-                GUI.DrawTexture(new Rect(Event.current.mousePosition.x - 12, Event.current.mousePosition.y - 12, 24, 24), cursorTexture, ScaleMode.ScaleToFit);
-                GUI.Label(new Rect(Event.current.mousePosition.x + 16, Event.current.mousePosition.y - 10, 400, 20), cursorText);
-
-                GUIStyle StyleComments = new GUIStyle(GUI.skin.label);
-                StyleComments.fontSize = 10;
-                int i = 5;
-                foreach (String text in cursorAdditionalTexts)
-                {
-                    GUI.Label(new Rect(Event.current.mousePosition.x + 16, Event.current.mousePosition.y + i, 400, 20), text, StyleComments);
-                    i = i + 15;
+                // Display action icon.
+                GUI.DrawTexture(
+                    new Rect(Event.current.mousePosition.x - ActionIconSize / 2,
+                             Event.current.mousePosition.y - ActionIconSize / 2,
+                             ActionIconSize, ActionIconSize),
+                    cursorTexture, ScaleMode.ScaleToFit);
+                
+                // Compile the whole hint text.
+                var allLines = new List<String>{cursorText};
+                if (cursorAdditionalTexts != null && cursorAdditionalTexts.Any()) {
+                    allLines.Add("");  // A linefeed between status and hint text. 
+                    allLines.AddRange(cursorAdditionalTexts);
                 }
+                var hintText = String.Join("\n", allLines.ToArray());
+                // Calculate the label region.
+                Vector2 textSize = hintWindowStyle.CalcSize(new GUIContent(hintText));
+                var hintLabelRect = new Rect(
+                    Event.current.mousePosition.x + ActionIconSize / 2 + HintTextLeftMargin,
+                    Event.current.mousePosition.y - ActionIconSize / 2,
+                    textSize.x, textSize.y);
+
+                GUI.Label(hintLabelRect, hintText, hintWindowStyle);
             }
         }
     }

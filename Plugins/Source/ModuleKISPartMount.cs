@@ -1,8 +1,7 @@
-﻿using System;
+﻿using KSPDev.LogUtils;
+using System;
 using System.Linq;
 using System.Collections.Generic;
-using System.Collections;
-using System.Text;
 using UnityEngine;
 
 namespace KIS
@@ -76,7 +75,7 @@ namespace KIS
                     AttachNode an = this.part.findAttachNode(attachNodeName);
                     if (an == null)
                     {
-                        KIS_Shared.DebugError("GetMountNodes - Node : " + attachNodeName + " not found !");
+                        Logger.logError("GetMountNodes - Node : {0} not found !", attachNodeName);
                         continue;
                     }
 

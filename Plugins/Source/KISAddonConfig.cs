@@ -1,8 +1,7 @@
-﻿using System;
-using System.Linq;
+﻿using KSPDev.LogUtils;
 using System.Collections.Generic;
-using System.Collections;
-using System.Text;
+using System.Linq;
+using System;
 using UnityEngine;
 
 namespace KIS
@@ -17,11 +16,11 @@ namespace KIS
         public void Awake()
         {
             // Set inventory module for every eva kerbal
-            KIS_Shared.DebugLog("Set KIS config...");
+            Logger.logInfo("Set KIS config...");
             ConfigNode nodeSettings = GameDatabase.Instance.GetConfigNode("KIS/settings/KISConfig");
             if (nodeSettings == null)
             {
-                KIS_Shared.DebugError("KIS settings.cfg not found or invalid !");
+                Logger.logError("KIS settings.cfg not found or invalid !");
                 return;
             }
 
@@ -31,6 +30,8 @@ namespace KIS
             if (nodeGlobal.HasValue("breathableAtmoPressure")) breathableAtmoPressure = float.Parse(nodeGlobal.GetValue("breathableAtmoPressure"));
 
             ConfigNode nodeEvaInventory = nodeSettings.GetNode("EvaInventory");
+            LoadEvaInventoryConfig(nodeEvaInventory);
+
             ConfigNode nodeEvaPickup = nodeSettings.GetNode("EvaPickup");
             ConfigNode nodeStackable = nodeSettings.GetNode("StackableItemOverride");
             ConfigNode nodeStackableModule = nodeSettings.GetNode("StackableModule");
@@ -64,7 +65,7 @@ namespace KIS
                 if (nodeGlobal.HasValue("kerbalDefaultMass")) evaInventory.kerbalDefaultMass = float.Parse(nodeGlobal.GetValue("kerbalDefaultMass"));
                 SetInventoryConfig(nodeEvaInventory, evaInventory);
                 evaInventory.invType = ModuleKISInventory.InventoryType.Eva;
-                KIS_Shared.DebugLog("Eva inventory module loaded successfully");
+                Logger.logInfo("Eva inventory module loaded successfully");
             }
 
             // Set pickup module for eva
@@ -84,7 +85,7 @@ namespace KIS
                 if (nodeEvaPickup.HasValue("attachStaticSndPath")) evaPickup.attachStaticSndPath = nodeEvaPickup.GetValue("attachStaticSndPath");
                 if (nodeEvaPickup.HasValue("detachStaticSndPath")) evaPickup.detachStaticSndPath = nodeEvaPickup.GetValue("detachStaticSndPath");
                 if (nodeEvaPickup.HasValue("draggedIconResolution")) KISAddonPickup.draggedIconResolution = int.Parse(nodeEvaPickup.GetValue("draggedIconResolution"));
-                KIS_Shared.DebugLog("Eva pickup module loaded successfully");
+                Logger.logInfo("Eva pickup module loaded successfully");
             }
 
             //-------Female Kerbal
@@ -102,7 +103,7 @@ namespace KIS
                 if (nodeGlobal.HasValue("kerbalDefaultMass")) evaFemaleInventory.kerbalDefaultMass = float.Parse(nodeGlobal.GetValue("kerbalDefaultMass"));
                 SetInventoryConfig(nodeEvaInventory, evaFemaleInventory);
                 evaFemaleInventory.invType = ModuleKISInventory.InventoryType.Eva;
-                KIS_Shared.DebugLog("Eva inventory module loaded successfully");
+                Logger.logInfo("Eva inventory module loaded successfully");
             }
 
             // Set pickup module for eva
@@ -122,11 +123,11 @@ namespace KIS
                 if (nodeEvaPickup.HasValue("attachStaticSndPath")) evaFemalePickup.attachStaticSndPath = nodeEvaPickup.GetValue("attachStaticSndPath");
                 if (nodeEvaPickup.HasValue("detachStaticSndPath")) evaFemalePickup.detachStaticSndPath = nodeEvaPickup.GetValue("detachStaticSndPath");
                 if (nodeEvaPickup.HasValue("draggedIconResolution")) KISAddonPickup.draggedIconResolution = int.Parse(nodeEvaPickup.GetValue("draggedIconResolution"));
-                KIS_Shared.DebugLog("Eva pickup module loaded successfully");
+                Logger.logInfo("Eva pickup module loaded successfully");
             }
 
             // Set inventory module for every pod with crew capacity
-            KIS_Shared.DebugLog("Loading pod inventory...");
+            Logger.logInfo("Loading pod inventory...");
             foreach (AvailablePart avPart in PartLoader.LoadedPartsList)
             {
                 if (avPart.name == "kerbalEVA") continue;
@@ -134,7 +135,7 @@ namespace KIS
                 if (avPart.name == "kerbalEVAfemale") continue;
                 if (!avPart.partPrefab) continue;
                 if (avPart.partPrefab.CrewCapacity < 1) continue;
-                KIS_Shared.DebugLog("Found part with CrewCapacity : " + avPart.name);
+                Logger.logInfo("Found part with CrewCapacity: {0}", avPart.name);
 
 
                 for (int i = 0; i < avPart.partPrefab.CrewCapacity; i++)
@@ -145,11 +146,13 @@ namespace KIS
                         SetInventoryConfig(nodeEvaInventory, moduleInventory);
                         moduleInventory.podSeat = i;
                         moduleInventory.invType = ModuleKISInventory.InventoryType.Pod;
-                        KIS_Shared.DebugLog("Pod inventory module(s) for seat " + i + " loaded successfully");
+                        Logger.logInfo(
+                            "Pod inventory module(s) for seat {0} loaded successfully", i);
                     }
                     catch
                     {
-                        KIS_Shared.DebugWarning("Pod inventory module(s) for seat " + i + " can't be loaded !");
+                        Logger.logWarning(
+                            "Pod inventory module(s) for seat {0} can't be loaded!", i);
                     }
                 }
             }
@@ -157,6 +160,8 @@ namespace KIS
 
         private void SetInventoryConfig(ConfigNode node, ModuleKISInventory moduleInventory)
         {
+            // TODO: Load values into static members and move code into LoadEvaInventoryConfig().
+            // FIXME: Re-factor to ReadCfgSetting() method. 
             if (node.HasValue("inventoryKey")) moduleInventory.evaInventoryKey = node.GetValue("inventoryKey");
             if (node.HasValue("rightHandKey")) moduleInventory.evaRightHandKey = node.GetValue("rightHandKey");
             if (node.HasValue("helmetKey")) moduleInventory.evaHelmetKey = node.GetValue("helmetKey");
@@ -169,6 +174,21 @@ namespace KIS
             if (node.HasValue("openSndPath")) moduleInventory.openSndPath = node.GetValue("openSndPath");
             if (node.HasValue("closeSndPath")) moduleInventory.closeSndPath = node.GetValue("closeSndPath");
         }
+        
+        /// <summary>Loads config settings for EvaInventory.</summary>
+        /// <param name="node">A config node to load data from.</param>
+        private void LoadEvaInventoryConfig(ConfigNode node) {
+            // Inventory hotkeys.
+            KIS_Shared.ReadCfgSetting(
+                node, "slotHotkeysEnabled", ref ModuleKISInventory.inventoryKeysEnabled);
+            KIS_Shared.ReadCfgSetting(node, "slotHotkey1", ref ModuleKISInventory.slotHotkey1);
+            KIS_Shared.ReadCfgSetting(node, "slotHotkey2", ref ModuleKISInventory.slotHotkey2);
+            KIS_Shared.ReadCfgSetting(node, "slotHotkey3", ref ModuleKISInventory.slotHotkey3);
+            KIS_Shared.ReadCfgSetting(node, "slotHotkey4", ref ModuleKISInventory.slotHotkey4);
+            KIS_Shared.ReadCfgSetting(node, "slotHotkey5", ref ModuleKISInventory.slotHotkey5);
+            KIS_Shared.ReadCfgSetting(node, "slotHotkey6", ref ModuleKISInventory.slotHotkey6);
+            KIS_Shared.ReadCfgSetting(node, "slotHotkey7", ref ModuleKISInventory.slotHotkey7);
+            KIS_Shared.ReadCfgSetting(node, "slotHotkey8", ref ModuleKISInventory.slotHotkey8);
+        }
     }
-
 }

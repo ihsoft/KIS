@@ -14,8 +14,8 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
+    <DebugType>Full</DebugType>
+    <Optimize>False</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
@@ -31,12 +31,15 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Assembly-CSharp">
-      <HintPath>D:\Games\KSP\KSP_Data\Managed\Assembly-CSharp.dll</HintPath>
+      <HintPath>Q:\KSP_Data\Managed\Assembly-CSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="KSPDev_Utils">
+      <HintPath>..\KSPDev_Utils.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="UnityEngine">
-      <HintPath>D:\Games\KSP\KSP_Data\Managed\UnityEngine.dll</HintPath>
+      <HintPath>Q:\KSP_Data\Managed\UnityEngine.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -64,11 +67,8 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>IF EXIST "C:\games\KSP" xcopy "$(TargetPath)" "C:\games\KSP\GameData\KIS\Plugins\" /Y
-IF EXIST "D:\games\KSP" xcopy "$(TargetPath)" "D:\games\KSP\GameData\KIS\Plugins\" /Y
-IF EXIST "E:\games\KSP" xcopy "$(TargetPath)" "E:\games\KSP\GameData\KIS\Plugins\" /Y
-del /q $(TargetDir)
-del /q $(SolutionDir)\obj\Debug\</PostBuildEvent>
+    <PostBuildEvent>IF EXIST "Q:\GameData\KIS" xcopy "$(TargetPath)" "Q:\GameData\KIS\Plugins\" /Y
+</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
