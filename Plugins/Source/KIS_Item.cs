@@ -329,13 +329,20 @@ namespace KIS
         }
 
         public void Update() {
-            if (equippedGameObj)
-            {
+            if (equippedGameObj) {
                 equippedGameObj.transform.rotation = evaTransform.rotation * Quaternion.Euler(prefabModule.equipDir);
                 equippedGameObj.transform.position = evaTransform.TransformPoint(prefabModule.equipPos);
-                if (equippedPart) if (equippedPart.rigidbody) equippedPart.rigidbody.velocity = equippedPart.vessel.rootPart.rigidbody.velocity;
+                if (equippedPart && equippedPart.GetComponent<Rigidbody>()) {
+                    var equippedPartRigidbody = equippedPart.GetComponent<Rigidbody>();
+                    var vesselRootRigidbody =
+                        equippedPart.vessel.rootPart.GetComponent<Rigidbody>();
+                    equippedPartRigidbody.velocity = vesselRootRigidbody.velocity;
+                    equippedPartRigidbody.angularVelocity = vesselRootRigidbody.angularVelocity;
+                }
             }
-            if (prefabModule) prefabModule.OnItemUpdate(this);
+            if (prefabModule) {
+                prefabModule.OnItemUpdate(this);
+            }
         }
 
         public void GUIUpdate()
@@ -575,7 +582,7 @@ namespace KIS
                 {
                     UnityEngine.Object.DestroyImmediate(equippedPart.collisionEnhancer);
                 }
-                UnityEngine.Object.Destroy(equippedPart.rigidbody);
+                UnityEngine.Object.Destroy(equippedPart.GetComponent<Rigidbody>());
             }
 
             if (equipMode == EquipMode.Physic)
@@ -595,7 +602,7 @@ namespace KIS
 
                 //Create physic join
                 FixedJoint evaJoint = equippedPart.gameObject.AddComponent<FixedJoint>();
-                evaJoint.connectedBody = this.inventory.part.rigidbody;//evaCollider.attachedRigidbody;
+                evaJoint.connectedBody = inventory.part.GetComponent<Rigidbody>();//evaCollider.attachedRigidbody;
                 evaJoint.breakForce = 5;
                 evaJoint.breakTorque = 5;
                 KIS_Shared.ResetCollisionEnhancer(equippedPart);

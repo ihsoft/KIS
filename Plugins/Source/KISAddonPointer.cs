@@ -234,15 +234,14 @@ namespace KIS
                 if (tgtPart && !tgtKerbalEva)
                 {
                     float currentDist = Mathf.Infinity;
-                    foreach (AttachNode an in tgtPart.attachNodes)
-                    {
-                        if (an.icon)
-                        {
+                    foreach (AttachNode an in tgtPart.attachNodes) {
+                        if (an.icon) {
                             float dist;
-                            if (an.icon.renderer.bounds.IntersectRay(FlightCamera.fetch.mainCamera.ScreenPointToRay(Input.mousePosition), out dist))
-                            {
-                                if (dist < currentDist)
-                                {
+                            var cameraToMouseRay =
+                                FlightCamera.fetch.mainCamera.ScreenPointToRay(Input.mousePosition);
+                            var iconRenderer = an.icon.GetComponent<Renderer>();
+                            if (iconRenderer.bounds.IntersectRay(cameraToMouseRay, out dist)) {
+                                if (dist < currentDist) {
                                     tgtAttachNode = an;
                                     currentDist = dist;
                                 }

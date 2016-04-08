@@ -946,7 +946,7 @@ namespace KIS
             {
                 if (skmr.name == "helmet" || skmr.name == "visor")
                 {
-                    skmr.renderer.enabled = active;
+                    skmr.GetComponent<Renderer>().enabled = active;
                     helmetEquipped = active;
                 }
             }
@@ -958,8 +958,8 @@ namespace KIS
                 if (light.name == "headlamp")
                 {
                     light.enabled = active;
-                    light.transform.Find("flare1").renderer.enabled = active;
-                    light.transform.Find("flare2").renderer.enabled = active;
+                    light.transform.Find("flare1").GetComponent<Renderer>().enabled = active;
+                    light.transform.Find("flare2").GetComponent<Renderer>().enabled = active;
                 }
             }
 
