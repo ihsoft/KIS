@@ -1,3 +1,4 @@
 Alpha changes since last release:
-- Deprecate internal KSPDev in favor of external KSPDev_Utils library.
-- Fix #108: Parts with no attach nodes cannot be static attached.
+- [Internal]: Deprecate internal KSPDev in favor of external KSPDev_Utils library.
+- [Fix]: Fix #108: Parts with no attach nodes cannot be static attached.
+- [Internal]: Stop using fields deprecated in KSP 1.1 to make further migration easier.

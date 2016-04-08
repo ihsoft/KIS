@@ -392,24 +392,22 @@ namespace KIS
             newPart.InitializeModules();
 
             //FIXME: [Error]: Actor::setLinearVelocity: Actor must be (non-kinematic) dynamic!
-            //FIXME: [Error]: Actor::setAngularVelocity: Actor must be (non-kinematic) dynamic!            
-            if (coupleToPart)
-            {
-                newPart.rigidbody.velocity = coupleToPart.rigidbody.velocity;
-                newPart.rigidbody.angularVelocity = coupleToPart.rigidbody.angularVelocity;
-            }
-            else
-            {
-                if (fromPart.rigidbody)
-                {
-                    newPart.rigidbody.velocity = fromPart.rigidbody.velocity;
-                    newPart.rigidbody.angularVelocity = fromPart.rigidbody.angularVelocity;
-                }
-                else
-                {
+            //FIXME: [Error]: Actor::setAngularVelocity: Actor must be (non-kinematic) dynamic!
+            var newPartRigidbody = newPart.GetComponent<Rigidbody>();
+            if (coupleToPart) {
+                var couplePartRigidbody = coupleToPart.GetComponent<Rigidbody>();
+                newPartRigidbody.velocity = couplePartRigidbody.velocity;
+                newPartRigidbody.angularVelocity = couplePartRigidbody.angularVelocity;
+            } else {
+                var fromPartRigidbody = fromPart.GetComponent<Rigidbody>();
+                if (fromPartRigidbody) {
+                    newPartRigidbody.velocity = fromPartRigidbody.velocity;
+                    newPartRigidbody.angularVelocity = fromPartRigidbody.angularVelocity;
+                } else {
                     // If fromPart is a carried container
-                    newPart.rigidbody.velocity = fromPart.vessel.rootPart.rigidbody.velocity;
-                    newPart.rigidbody.angularVelocity = fromPart.vessel.rootPart.rigidbody.angularVelocity;
+                    var vesselRootRigidbody = fromPart.vessel.rootPart.GetComponent<Rigidbody>();
+                    newPartRigidbody.velocity = vesselRootRigidbody.velocity;
+                    newPartRigidbody.angularVelocity = vesselRootRigidbody.angularVelocity;
                 }
             }
 
@@ -525,7 +523,10 @@ namespace KIS
                         {
                             tgtAttachNode.attachedPart = srcPart;
                         }
-                    }
+                        else
+                        {
+                            Logger.logWarning("Target node is null");
+                        }                    }
                     else
                     {
                         Logger.logError("Source attach node not found !");
@@ -630,12 +631,14 @@ namespace KIS
             if (!node.icon)
             {
                 node.icon = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                if (node.icon.collider) UnityEngine.Object.DestroyImmediate(node.icon.collider);
-                if (node.icon.renderer)
-                {
-                    node.icon.renderer.material = new Material(Shader.Find("Transparent/Diffuse"));
+                if (node.icon.GetComponent<Collider>()) {
+                    UnityEngine.Object.DestroyImmediate(node.icon.GetComponent<Collider>());
+                }
+                var iconRenderer = node.icon.GetComponent<Renderer>();
+                if (iconRenderer) {
+                    iconRenderer.material = new Material(Shader.Find("Transparent/Diffuse"));
                     iconColor.a = 0.5f;
-                    node.icon.renderer.material.color = iconColor;
+                    iconRenderer.material.color = iconColor;
                 }
                 node.icon.transform.parent = part.transform;
                 if (name != null) node.icon.name = name;
