@@ -77,6 +77,8 @@ STRUCTURE = collections.OrderedDict({
   '/GameData/KIS/Plugins' : [
     '/Plugins/MiniAVC.dll',
     '/Plugins/Source/bin/Release/KIS.dll',
+    '/Plugins/KSPDev_Utils.dll',
+    '/Plugins/KSPDev_Utils_License.md',
   ],
 })
 
