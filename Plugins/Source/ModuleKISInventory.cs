@@ -1069,7 +1069,6 @@ namespace KIS
             {
                 if (guiMainWindowPos.Contains(Event.current.mousePosition) && !clickThroughLocked)
                 {
-                    EditorTooltip.Instance.HideToolTip();
                     InputLockManager.SetControlLock(ControlTypes.EDITOR_PAD_PICK_PLACE, "KISInventoryEditorLock");
                     clickThroughLocked = true;
                 }
