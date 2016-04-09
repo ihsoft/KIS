@@ -19,7 +19,7 @@ namespace KIS
             // drag-n-scroll feature (and it cannot be stopped).
             var button = GetComponent<PointerClickHandler>();
             button.onPointerClick.AddListener(OnPartIconClick);
-            // TODO(IgorZ): Detect pointer movements, and show hint text about "ALT" key. 
+            // TODO(ihsoft): Detect pointer movements, and show hint text about "ALT" key. 
           }
 
           /// <summary>Unregisters handlers.</summary>
@@ -37,17 +37,16 @@ namespace KIS
               // Right click also pins part's tooltip. So, to let it disappear on mouse blur execute
               // an unpin action. Exact order of the click event handlers is undetermined for the
               // control so, do it in the next frame via a coroutine.
-              var tooltip = GetComponent<KSP.UI.Screens.Editor.PartListTooltipController>();
-              StartCoroutine(UnpinTooltipInTheNextFrame(tooltip));
+              StartCoroutine(UnpinTooltipInTheNextFrame());
               
               var partIcon = GetComponent<EditorPartIcon>();
               KISAddonPickup.instance.OnMouseGrabPartClick(partIcon.partInfo.partPrefab);
             }
           }
 
-          /// <param name="tooltip">Can be <c>null</c>.</param>
-          private IEnumerator UnpinTooltipInTheNextFrame(IPinnableTooltipController tooltip) {
+          private IEnumerator UnpinTooltipInTheNextFrame() {
             yield return 0;  // Wait exactly one frame.
+            var tooltip = GetComponent<KSP.UI.Screens.Editor.PartListTooltipController>();
             if (tooltip != null && tooltip.IsPinned()) {
               tooltip.Unpin();
             }
