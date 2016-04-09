@@ -1,1 +1,7 @@
 Alpha changes since last release:
+- [Change] IMPORTANT! Deprecate dragging parts from the editor's category list
+  via a left mouse button. Untity 5 uses this event to start "drag-n-scroll"
+  event, and overriding this behavior doesn't look a good idea. Now, KIS reacts
+  only to Alt+Right click to grab a part from the editor's category list.
+  Between KIS invetories parts still can be moved using usual left mosue button
+  drag behavior.

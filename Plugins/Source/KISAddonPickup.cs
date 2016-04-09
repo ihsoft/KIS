@@ -1,31 +1,38 @@
-﻿using KSP.UI.Screens;
+using KSP.UI;
+using KSP.UI.Screens;
 using KSPDev.LogUtils;
 using System;
 using System.Collections.Generic;
 using System.Collections;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace KIS
 {
     public class KISAddonPickup : MonoBehaviour
     {
-        class EditorClickListener : MonoBehaviour
-        {
-            EditorPartIcon editorPaction;
-            void Start()
-            {
-                GetComponent<UIButton>().AddInputDelegate(new EZInputDelegate(OnInput));
-                editorPaction = GetComponent<EditorPartIcon>();
-            }
+        class EditorClickListener : MonoBehaviour {
+          void Start() {
+            // Do not react on left mouse button press since Unity 5 uses this event to start
+            // drag-n-scroll feature (and it cannot be stopped).
+            var button = GetComponent<PointerClickHandler>();
+            button.onPointerClick.AddListener(OnPartIconClick);
+          }
 
-            void OnInput(ref POINTER_INFO ptr)
-            {
-                if (ptr.evt == POINTER_INFO.INPUT_EVENT.PRESS)
-                {
-                    if (!editorPaction.isGrey) KISAddonPickup.instance.OnMouseGrabPartClick(editorPaction.partInfo.partPrefab);
-                }
+          void OnDestroy() {
+            var button = GetComponent<PointerClickHandler>();
+            button.onPointerClick.RemoveListener(OnPartIconClick);
+          }
+
+          void OnPartIconClick(PointerEventData eventData) {
+            // In the editor category only react to Alt+Right click.
+            if ((Input.GetKey(KeyCode.RightAlt) || Input.GetKey(KeyCode.LeftAlt))
+                && eventData.button == PointerEventData.InputButton.Right) {
+              var partIcon = GetComponent<EditorPartIcon>();
+              KISAddonPickup.instance.OnMouseGrabPartClick(partIcon.partInfo.partPrefab);
             }
+          }
         }
 
         const string GrabIcon = "KIS/Textures/grab";
