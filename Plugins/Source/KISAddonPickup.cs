@@ -262,17 +262,14 @@ namespace KIS
             }
 
             // Drag editor parts
-            if (HighLogic.LoadedSceneIsEditor)
+            if (HighLogic.LoadedSceneIsEditor && Input.GetMouseButtonDown(0))
             {
-                if (Input.GetMouseButtonDown(0))
+                if (InputLockManager.IsUnlocked(ControlTypes.EDITOR_PAD_PICK_PLACE))
                 {
-                    if (!UIManager.instance.DidPointerHitUI(0) && InputLockManager.IsUnlocked(ControlTypes.EDITOR_PAD_PICK_PLACE))
+                    Part part = KIS_Shared.GetPartUnderCursor();
+                    if (part)
                     {
-                        Part part = KIS_Shared.GetPartUnderCursor();
-                        if (part)
-                        {
-                            OnMouseGrabPartClick(part);
-                        }
+                        OnMouseGrabPartClick(part);
                     }
                 }
             }
