@@ -13,24 +13,43 @@ namespace KIS
     public class KISAddonPickup : MonoBehaviour
     {
         class EditorClickListener : MonoBehaviour {
+          /// <summary>Registers click handlers on the editor's category icon.</summary>
           void Start() {
             // Do not react on left mouse button press since Unity 5 uses this event to start
             // drag-n-scroll feature (and it cannot be stopped).
             var button = GetComponent<PointerClickHandler>();
             button.onPointerClick.AddListener(OnPartIconClick);
+            // TODO(IgorZ): Detect pointer movements, and show hint text about "ALT" key. 
           }
 
+          /// <summary>Unregisters handlers.</summary>
           void OnDestroy() {
             var button = GetComponent<PointerClickHandler>();
             button.onPointerClick.RemoveListener(OnPartIconClick);
           }
 
+          /// <summary>Grabs a part when the RIGHT mouse button is clicked while hodling down ANY
+          /// of of the ALTs keys.</summary>
           void OnPartIconClick(PointerEventData eventData) {
             // In the editor category only react to Alt+Right click.
             if ((Input.GetKey(KeyCode.RightAlt) || Input.GetKey(KeyCode.LeftAlt))
                 && eventData.button == PointerEventData.InputButton.Right) {
+              // Right click also pins part's tooltip. So, to let it disappear on mouse blur execute
+              // an unpin action. Exact order of the click event handlers is undetermined for the
+              // control so, do it in the next frame via a coroutine.
+              var tooltip = GetComponent<KSP.UI.Screens.Editor.PartListTooltipController>();
+              StartCoroutine(UnpinTooltipInTheNextFrame(tooltip));
+              
               var partIcon = GetComponent<EditorPartIcon>();
               KISAddonPickup.instance.OnMouseGrabPartClick(partIcon.partInfo.partPrefab);
+            }
+          }
+
+          /// <param name="tooltip">Can be <c>null</c>.</param>
+          private IEnumerator UnpinTooltipInTheNextFrame(IPinnableTooltipController tooltip) {
+            yield return 0;  // Wait exactly one frame.
+            if (tooltip != null && tooltip.IsPinned()) {
+              tooltip.Unpin();
             }
           }
         }
