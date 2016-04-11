@@ -39,7 +39,7 @@ DEST_RELEASES = '..'
 # file name with no extension.
 DEST_RELEASE_NAME_FMT = 'KIS_v%d.%d.%d'
 # A file name format for releases with build field other than zero.
-DEST_RELEASE_NAME_WITH_BUILD_FMT = 'KAS_v%d.%d.%d_build%d'
+DEST_RELEASE_NAME_WITH_BUILD_FMT = 'KIS_v%d.%d.%d_build%d'
 # The name of the destintation binary.
 DEST_VERSIONED_BINARY = '/KIS.dll'
 
