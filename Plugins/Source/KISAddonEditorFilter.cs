@@ -1,4 +1,5 @@
-﻿using KSP.UI.Screens;
+﻿using KSPDev.LogUtils;
+using KSP.UI.Screens;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,6 +20,16 @@ namespace KIS
 
         void Awake()
         {
+            // FIXME: Drop on release.
+            Logger.logWarning("Test version of KIS detected!!!");
+            PopupDialog.SpawnPopupDialog(
+                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), "KIS Pre-Release",
+                "You're using a test version of KIS that is intended to be used for testing"
+                + " purposes only.\nMake sure you've made backups of your savefiles since they"
+                + " may get badly broken!",
+                "I agree to take this risk", false /* persistAcrossScenes */, HighLogic.UISkin,
+                isModal: false);
+
             GameEvents.onGUIEditorToolbarReady.Add(SubCategories);
 
             avPartItems.Clear();
