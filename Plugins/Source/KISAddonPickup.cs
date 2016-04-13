@@ -1,6 +1,9 @@
+using JetBrains.Annotations;
 using KSP.UI;
 using KSP.UI.Screens;
+using KSPDev.ConfigUtils;
 using KSPDev.LogUtils;
+using KSPDev.GUIUtils;
 using System;
 using System.Collections.Generic;
 using System.Collections;
@@ -10,46 +13,55 @@ using UnityEngine.EventSystems;
 
 namespace KIS
 {
+    [PersistentFieldsFile("KIS/settings.cfg", "")]
     public class KISAddonPickup : MonoBehaviour
     {
-        class EditorClickListener : MonoBehaviour {
+        private class EditorClickListener : MonoBehaviour,
+                                            IBeginDragHandler, IDragHandler, IEndDragHandler {
+          private EditorPartIcon partIcon;
+          private bool dragStarted;
+          private const PointerEventData.InputButton PartDragButton =
+              PointerEventData.InputButton.Left;
+
+          public virtual void OnBeginDrag(PointerEventData eventData) {
+            Logger.logWarning("OnBeginDrag");
+            // Start dargging for KIS or delegate event to the editor.
+            if (eventData.button == PartDragButton
+                && EventChecker.IsModifierCombinationPressed(editorGrabPartModifiers)) {
+              Logger.logWarning("Start KIS dragging");
+              dragStarted = true;
+              KISAddonPickup.instance.OnMouseGrabPartClick(partIcon.partInfo.partPrefab);
+            } else {
+              EditorPartList.Instance.partListScrollRect.OnBeginDrag(eventData);
+            }
+          }
+          
+          public virtual void OnDrag(PointerEventData eventData) {
+            // If not KIS dragging then delegate to the editor. KIS dragging is handled in the
+            // KISAddonPickup.Update() method.
+            // TODO: Handle KIS parts dragging here.
+            if (!dragStarted) {
+              EditorPartList.Instance.partListScrollRect.OnDrag(eventData);
+            }
+          }
+          
+          public virtual void OnEndDrag(PointerEventData eventData) {
+            Logger.logWarning("OnEndDrag");
+            // If not KIS dragging then delegate to the editor. KIS dragging is handled in the
+            // KISAddonPickup.Update() method.
+            // TODO: Handle KIS parts dropping here.
+            if (!dragStarted) {
+              EditorPartList.Instance.partListScrollRect.OnEndDrag(eventData);
+            } else if (eventData.button == PartDragButton) {
+              Logger.logWarning("Stop KIS dragging");
+              dragStarted = false;
+            }
+          }
+          
           /// <summary>Registers click handlers on the editor's category icon.</summary>
           void Start() {
-            // Do not react on left mouse button press since Unity 5 uses this event to start
-            // drag-n-scroll feature (and it cannot be stopped).
-            var button = GetComponent<PointerClickHandler>();
-            button.onPointerClick.AddListener(OnPartIconClick);
-            // TODO(ihsoft): Detect pointer movements, and show hint text about "ALT" key. 
-          }
-
-          /// <summary>Unregisters handlers.</summary>
-          void OnDestroy() {
-            var button = GetComponent<PointerClickHandler>();
-            button.onPointerClick.RemoveListener(OnPartIconClick);
-          }
-
-          /// <summary>Grabs a part when the RIGHT mouse button is clicked while hodling down ANY
-          /// of of the ALTs keys.</summary>
-          void OnPartIconClick(PointerEventData eventData) {
-            // In the editor category only react to Alt+Right click.
-            if ((Input.GetKey(KeyCode.RightAlt) || Input.GetKey(KeyCode.LeftAlt))
-                && eventData.button == PointerEventData.InputButton.Right) {
-              // Right click also pins part's tooltip. So, to let it disappear on mouse blur execute
-              // an unpin action. Exact order of the click event handlers is undetermined for the
-              // control so, do it in the next frame via a coroutine.
-              StartCoroutine(UnpinTooltipInTheNextFrame());
-              
-              var partIcon = GetComponent<EditorPartIcon>();
-              KISAddonPickup.instance.OnMouseGrabPartClick(partIcon.partInfo.partPrefab);
-            }
-          }
-
-          private IEnumerator UnpinTooltipInTheNextFrame() {
-            yield return 0;  // Wait exactly one frame.
-            var tooltip = GetComponent<KSP.UI.Screens.Editor.PartListTooltipController>();
-            if (tooltip != null && tooltip.IsPinned()) {
-              tooltip.Unpin();
-            }
+            // Getting components is not a cheap operation so, cache anything we can.
+            partIcon = GetComponent<EditorPartIcon>();              
           }
         }
 
@@ -85,6 +97,9 @@ namespace KIS
             "This part can't be detached from the ground without a tool";
         const string NotSupportedText = "The function is not supported on this part";
         const string CannotAttachText = "Attach function is not supported on this part";
+
+        [PersistentField("KISConfig/Editor/partGrabModifiers")]
+        static KeyModifiers editorGrabPartModifiers = KeyModifiers.None;
         
         public static string grabKey = "g";
         public static string attachKey = "h";
@@ -249,6 +264,7 @@ namespace KIS
                 }
             }
             GameEvents.onVesselChange.Add(new EventData<Vessel>.OnEvent(this.OnVesselChange));
+            ConfigAccessor.ReadFieldsInType(typeof(KISAddonPickup), this /* instance */);
         }
 
         public void Update() {
