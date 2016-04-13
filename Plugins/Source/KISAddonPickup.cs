@@ -1385,13 +1385,13 @@ namespace KIS
     
     // Create an instance for managing inventory in the editor.
     [KSPAddon(KSPAddon.Startup.EditorAny, false /*once*/)]
-    public class KISAddonPickupInEditor : KISAddonPickup
+    internal class KISAddonPickupInEditor : KISAddonPickup
     {
     }
 
     // Create an instance for accessing inventory in EVA.
     [KSPAddon(KSPAddon.Startup.Flight, false /*once*/)]
-    public class KISAddonPickupInFlight : KISAddonPickup
+    internal class KISAddonPickupInFlight : KISAddonPickup
     {
     }
 }
