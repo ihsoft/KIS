@@ -24,11 +24,9 @@ namespace KIS
               PointerEventData.InputButton.Left;
 
           public virtual void OnBeginDrag(PointerEventData eventData) {
-            Logger.logWarning("OnBeginDrag");
             // Start dargging for KIS or delegate event to the editor.
             if (eventData.button == PartDragButton
                 && EventChecker.IsModifierCombinationPressed(editorGrabPartModifiers)) {
-              Logger.logWarning("Start KIS dragging");
               dragStarted = true;
               KISAddonPickup.instance.OnMouseGrabPartClick(partIcon.partInfo.partPrefab);
             } else {
@@ -46,14 +44,12 @@ namespace KIS
           }
           
           public virtual void OnEndDrag(PointerEventData eventData) {
-            Logger.logWarning("OnEndDrag");
             // If not KIS dragging then delegate to the editor. KIS dragging is handled in the
             // KISAddonPickup.Update() method.
             // TODO: Handle KIS parts dropping here.
             if (!dragStarted) {
               EditorPartList.Instance.partListScrollRect.OnEndDrag(eventData);
             } else if (eventData.button == PartDragButton) {
-              Logger.logWarning("Stop KIS dragging");
               dragStarted = false;
             }
           }
