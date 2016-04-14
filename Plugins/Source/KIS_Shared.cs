@@ -358,9 +358,9 @@ namespace KIS
 
         public static Part CreatePart(ConfigNode partConfig, Vector3 position, Quaternion rotation, Part fromPart, Part coupleToPart = null, string srcAttachNodeID = null, AttachNode tgtAttachNode = null, OnPartCoupled onPartCoupled = null)
         {
-            ConfigNode node_copy = new ConfigNode();
+            var node_copy = new ConfigNode();
             partConfig.CopyTo(node_copy);
-            ProtoPartSnapshot snapshot = new ProtoPartSnapshot(node_copy, null, HighLogic.CurrentGame);
+            var snapshot = new ProtoPartSnapshot(node_copy, null, HighLogic.CurrentGame);
 
             if (HighLogic.CurrentGame.flightState.ContainsFlightID(snapshot.flightID) || snapshot.flightID == 0)
             {
@@ -393,24 +393,22 @@ namespace KIS
 
             //FIXME: [Error]: Actor::setLinearVelocity: Actor must be (non-kinematic) dynamic!
             //FIXME: [Error]: Actor::setAngularVelocity: Actor must be (non-kinematic) dynamic!
-            var newPartRigidbody = newPart.GetComponent<Rigidbody>();
             if (coupleToPart) {
-                var couplePartRigidbody = coupleToPart.GetComponent<Rigidbody>();
-                newPartRigidbody.velocity = couplePartRigidbody.velocity;
-                newPartRigidbody.angularVelocity = couplePartRigidbody.angularVelocity;
+                newPart.Rigidbody.velocity = coupleToPart.Rigidbody.velocity;
+                newPart.Rigidbody.angularVelocity = coupleToPart.Rigidbody.angularVelocity;
             } else {
-                var fromPartRigidbody = fromPart.GetComponent<Rigidbody>();
-                if (fromPartRigidbody) {
-                    newPartRigidbody.velocity = fromPartRigidbody.velocity;
-                    newPartRigidbody.angularVelocity = fromPartRigidbody.angularVelocity;
+                if (fromPart.rb) {
+                    newPart.Rigidbody.velocity = fromPart.Rigidbody.velocity;
+                    newPart.Rigidbody.angularVelocity = fromPart.Rigidbody.angularVelocity;
                 } else {
                     // If fromPart is a carried container
-                    var vesselRootRigidbody = fromPart.vessel.rootPart.GetComponent<Rigidbody>();
-                    newPartRigidbody.velocity = vesselRootRigidbody.velocity;
-                    newPartRigidbody.angularVelocity = vesselRootRigidbody.angularVelocity;
+                    newPart.Rigidbody.velocity = fromPart.vessel.rootPart.Rigidbody.velocity;
+                    newPart.Rigidbody.angularVelocity =
+                        fromPart.vessel.rootPart.Rigidbody.angularVelocity;
                 }
             }
 
+            // New part by default is coupled with the active vessel.
             newPart.decouple();
 
             if (coupleToPart)
@@ -458,7 +456,7 @@ namespace KIS
                 }
             }
 
-            // Wait part to initialize
+            // Wait part to initialize            
             while (!newPart.started && newPart.State != PartStates.DEAD)
             {
                 Logger.logInfo("CreatePart - Waiting initialization of the part...");

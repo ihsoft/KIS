@@ -332,12 +332,11 @@ namespace KIS
             if (equippedGameObj) {
                 equippedGameObj.transform.rotation = evaTransform.rotation * Quaternion.Euler(prefabModule.equipDir);
                 equippedGameObj.transform.position = evaTransform.TransformPoint(prefabModule.equipPos);
-                if (equippedPart && equippedPart.GetComponent<Rigidbody>()) {
-                    var equippedPartRigidbody = equippedPart.GetComponent<Rigidbody>();
-                    var vesselRootRigidbody =
-                        equippedPart.vessel.rootPart.GetComponent<Rigidbody>();
-                    equippedPartRigidbody.velocity = vesselRootRigidbody.velocity;
-                    equippedPartRigidbody.angularVelocity = vesselRootRigidbody.angularVelocity;
+                if (equippedPart && equippedPart.Rigidbody) {
+                    equippedPart.Rigidbody.velocity =
+                        equippedPart.vessel.rootPart.Rigidbody.velocity;
+                    equippedPart.Rigidbody.angularVelocity =
+                        equippedPart.vessel.rootPart.Rigidbody.angularVelocity;
                 }
             }
             if (prefabModule) {

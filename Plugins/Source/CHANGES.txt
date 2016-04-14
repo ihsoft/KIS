@@ -10,5 +10,10 @@ Alpha 2:
 - [Enhancement] Add new setting in the config to specify key modifiers that
   activate dragging in editor category list. By defaul it's set to None which
   preserves same behavior as in 1.0.5.
-- [Internal] Improve vesion tags to vetter identify KIS target and version.
+- [Internal] Improve vesion tags to better specify KIS target and version.
 - [Internal] Add KSP dependency to KSPDev_Utils 0.10.
+
+Alpha 3 (candidate):
+- [Enhancement] Improved search tags and descriptions in parts.
+- [Internal] Migrate from `Part.rb` to `Part.Rigidbody` to handle parts with no rigidbody (e.g. radial adapter).
+- [Fix] Parts got replicated and attachment didn't work when surface attaching parts onto radial adapter.
