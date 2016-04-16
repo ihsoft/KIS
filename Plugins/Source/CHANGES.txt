@@ -24,3 +24,4 @@ Alpha 4 (candidate):
 - [Enhancement] Minor descriptions changes in the parts.
 - [Fix] React on joint break on static attached items.
 - [Internal] When attaching static part from inventory wait till it's started.
+- [Change] Make static attached items kinematic to prevent immediate joint breakage. A temporary fix for KSP 1.1.

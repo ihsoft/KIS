@@ -146,6 +146,11 @@ namespace KIS
             part.vessel.Landed = true;
             yield return new WaitForFixedUpdate();
 
+            // Stop physics on the part to prevent immediate breaking of the joint.
+            // FIXME(ihsoft): Remove it once 1.1 issue with broken joints is fixed.
+            Logger.logInfo("Enable kinematic rigindbody on part: {0}", part);
+            part.Rigidbody.isKinematic = true;
+  
             Logger.logInfo("Create kinematic rigidbody");
             if (connectedGameObject) Destroy(connectedGameObject);
             var obj = new GameObject("KISBody");
@@ -181,6 +186,10 @@ namespace KIS
                 fixedJoint = null;
                 connectedGameObject = null;
                 staticAttached = false;
+
+                // Enable physics back.
+                // FIXME(ihsoft): Remove it once 1.1 issue with broken joints is fixed.
+                part.Rigidbody.isKinematic = false;
             }
         }
 
