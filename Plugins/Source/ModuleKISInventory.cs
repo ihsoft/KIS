@@ -8,7 +8,6 @@ using UnityEngine;
 
 namespace KIS
 {
-
     public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifier
     {
         // Inventory
@@ -749,12 +748,26 @@ namespace KIS
             return contentCost;
         }
 
-        public float GetModuleCost(float defaultCost)
+	      // IPartCostModifier
+      	public ModifierChangeWhen GetModuleCostChangeWhen() {
+          // TODO(ihsoft): Figure out what value is right.
+          return ModifierChangeWhen.FIXED;
+      	}
+
+	      // IPartCostModifier
+        public float GetModuleCost(float defaultCost, ModifierStagingSituation sit)
         {
             return GetContentCost();
         }
 
-        public float GetModuleMass(float defaultMass)
+        // IPartMassModifier
+        public ModifierChangeWhen GetModuleMassChangeWhen() {
+          // TODO(ihsoft): Figure out what value is right.
+          return ModifierChangeWhen.FIXED;
+        }
+        
+        // IPartMassModifier
+        public float GetModuleMass(float defaultMass, ModifierStagingSituation sit)
         {
             return GetContentMass();
         }
