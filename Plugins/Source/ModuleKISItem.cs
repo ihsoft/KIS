@@ -151,6 +151,12 @@ namespace KIS
             fixedJoint = CurJoint;
             this.part.vessel.Landed = true;
             staticAttached = true;
+
+        // Resets item state when joint is broken.
+        // A callback from MonoBehaviour.
+        void OnJointBreak(float breakForce) {
+          Logger.logWarning("A ground joint has just been broken! Force: {0}", breakForce);
+          GroundDetach();
         }
 
         public void GroundDetach()

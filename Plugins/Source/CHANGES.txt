@@ -22,3 +22,4 @@ Alpha 4 (candidate):
 - [Internal] Report mod's version when showing pre-release warning.
 - [Internal] Fix cimpiling for vuild KSP 1.1.1209.
 - [Enhancement] Minor descriptions changes in the parts.
+- [Fix] React on joint break on static attached items.
