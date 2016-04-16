@@ -1,4 +1,5 @@
-﻿using KSPDev.LogUtils;
+﻿using System.Collections;
+using KSPDev.LogUtils;
 using System;
 using System.Linq;
 using UnityEngine;
@@ -132,25 +133,35 @@ namespace KIS
 
         public void GroundAttach()
         {
+            staticAttached = true;
+            StartCoroutine(WaitAndStaticAttach());
+        }
+        
+        IEnumerator WaitAndStaticAttach() {
+            // Wait for part to become active in case of it came from inventory.
+            while (!part.started && part.State != PartStates.DEAD) {
+                yield return new WaitForFixedUpdate();
+            }
+
+            part.vessel.Landed = true;
+            yield return new WaitForFixedUpdate();
+
             Logger.logInfo("Create kinematic rigidbody");
             if (connectedGameObject) Destroy(connectedGameObject);
-            GameObject obj = new GameObject("KISBody");
+            var obj = new GameObject("KISBody");
             var objRigidbody = obj.AddComponent<Rigidbody>();
             objRigidbody.mass = 100;
             objRigidbody.isKinematic = true;
-            obj.transform.position = this.part.transform.position;
-            obj.transform.rotation = this.part.transform.rotation;
+            obj.transform.position = part.transform.position;
+            obj.transform.rotation = part.transform.rotation;
             connectedGameObject = obj;
 
             Logger.logInfo("Create fixed joint on the kinematic rigidbody");
             if (fixedJoint) Destroy(fixedJoint);
-            FixedJoint CurJoint = this.part.gameObject.AddComponent<FixedJoint>();
-            CurJoint.breakForce = staticAttachBreakForce;
-            CurJoint.breakTorque = staticAttachBreakForce;
-            CurJoint.connectedBody = objRigidbody;
-            fixedJoint = CurJoint;
-            this.part.vessel.Landed = true;
-            staticAttached = true;
+            fixedJoint = part.gameObject.AddComponent<FixedJoint>();
+            fixedJoint.breakForce = staticAttachBreakForce;
+            fixedJoint.breakTorque = staticAttachBreakForce;
+        }
 
         // Resets item state when joint is broken.
         // A callback from MonoBehaviour.

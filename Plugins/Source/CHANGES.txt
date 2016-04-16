@@ -23,3 +23,4 @@ Alpha 4 (candidate):
 - [Internal] Fix cimpiling for vuild KSP 1.1.1209.
 - [Enhancement] Minor descriptions changes in the parts.
 - [Fix] React on joint break on static attached items.
+- [Internal] When attaching static part from inventory wait till it's started.
