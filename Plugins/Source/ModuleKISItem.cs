@@ -63,7 +63,6 @@ namespace KIS
         public bool staticAttached = false;
 
         private FixedJoint fixedJoint;
-        private GameObject connectedGameObject;
 
         public virtual void OnItemUse(KIS_Item item, KIS_Item.UseFrom useFrom)
         {
@@ -142,26 +141,9 @@ namespace KIS
             while (!part.started && part.State != PartStates.DEAD) {
                 yield return new WaitForFixedUpdate();
             }
-
             part.vessel.Landed = true;
-            yield return new WaitForFixedUpdate();
 
-            // Stop physics on the part to prevent immediate breaking of the joint.
-            // FIXME(ihsoft): Remove it once 1.1 issue with broken joints is fixed.
-            Logger.logInfo("Enable kinematic rigindbody on part: {0}", part);
-            part.Rigidbody.isKinematic = true;
-  
-            Logger.logInfo("Create kinematic rigidbody");
-            if (connectedGameObject) Destroy(connectedGameObject);
-            var obj = new GameObject("KISBody");
-            var objRigidbody = obj.AddComponent<Rigidbody>();
-            objRigidbody.mass = 100;
-            objRigidbody.isKinematic = true;
-            obj.transform.position = part.transform.position;
-            obj.transform.rotation = part.transform.rotation;
-            connectedGameObject = obj;
-
-            Logger.logInfo("Create fixed joint on the kinematic rigidbody");
+            Logger.logInfo("Create fixed joint attached to the world");
             if (fixedJoint) Destroy(fixedJoint);
             fixedJoint = part.gameObject.AddComponent<FixedJoint>();
             fixedJoint.breakForce = staticAttachBreakForce;
@@ -186,14 +168,8 @@ namespace KIS
                 Logger.logInfo(
                     "Removing static rigidbody and fixed joint on: {0}", this.part.partInfo.title);
                 if (fixedJoint) Destroy(fixedJoint);
-                if (connectedGameObject) Destroy(connectedGameObject);
                 fixedJoint = null;
-                connectedGameObject = null;
                 staticAttached = false;
-
-                // Enable physics back.
-                // FIXME(ihsoft): Remove it once 1.1 issue with broken joints is fixed.
-                part.Rigidbody.isKinematic = false;
             }
         }
 
