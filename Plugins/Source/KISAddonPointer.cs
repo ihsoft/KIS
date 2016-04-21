@@ -200,11 +200,10 @@ namespace KIS
                 }
 
                 // Check target type
-                Part tgtPart = null;
+                var tgtPart = Mouse.HoveredPart;
                 KerbalEVA tgtKerbalEva = null;
                 AttachNode tgtAttachNode = null;
 
-                tgtPart = Mouse.HoveredPart;
                 if (!tgtPart)
                 {
                     // check linked part
@@ -317,7 +316,6 @@ namespace KIS
                         hoveredPart = null;
                     }
                 }
-
             }
         }
 

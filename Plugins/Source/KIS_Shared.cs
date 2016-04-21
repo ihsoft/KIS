@@ -382,8 +382,6 @@ namespace KIS
             newPart.Unpack();
             newPart.InitializeModules();
 
-            //FIXME: [Error]: Actor::setLinearVelocity: Actor must be (non-kinematic) dynamic!
-            //FIXME: [Error]: Actor::setAngularVelocity: Actor must be (non-kinematic) dynamic!
             if (coupleToPart) {
                 newPart.Rigidbody.velocity = coupleToPart.Rigidbody.velocity;
                 newPart.Rigidbody.angularVelocity = coupleToPart.Rigidbody.angularVelocity;
