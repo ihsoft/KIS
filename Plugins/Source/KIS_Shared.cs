@@ -738,12 +738,14 @@ namespace KIS
         /// <param name="isSelected">The status.</param>
         public static void SetHierarchySelection(Part hierarchyRoot, bool isSelected) {
             if (isSelected) {
-                hierarchyRoot.SetHighlight(true /* active */, true /* recursive */);
+                hierarchyRoot.SetHighlight(true, true /* recursive */);
             } else {
-                hierarchyRoot.SetHighlight(false /* active */, true /* recursive */);
-                // HACK: Game will remember "recursive" setting and continue selecting the
-                // hierarchy on mouse hover. Do an explicit call with recusrive=false to reset it.
-                hierarchyRoot.SetHighlight(false /* active */, false /* recursive */);
+                hierarchyRoot.SetHighlight(false, true /* recursive */);
+                hierarchyRoot.RecurseHighlight = false;
+                // Restore highlighting of the currently hovered part.
+                if (Mouse.HoveredPart == hierarchyRoot) {
+                  hierarchyRoot.SetHighlight(true, false /* recursive */);
+                }
             }
         }
 
