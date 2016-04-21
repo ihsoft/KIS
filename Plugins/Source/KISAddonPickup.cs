@@ -296,7 +296,7 @@ namespace KIS
             {
                 if (InputLockManager.IsUnlocked(ControlTypes.EDITOR_PAD_PICK_PLACE))
                 {
-                    Part part = KIS_Shared.GetPartUnderCursor();
+                    Part part = Mouse.HoveredPart;
                     if (part)
                     {
                         OnMouseGrabPartClick(part);

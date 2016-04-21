@@ -84,20 +84,11 @@ namespace KIS
             destPart.SendMessage("OnKISAction", bEventData, SendMessageOptions.DontRequireReceiver);
         }
 
+        // TODO: Deprecate the method after June 2016.
+        [ObsoleteAttribute("Use Mouse.HoveredPart instead", true)]
         public static Part GetPartUnderCursor()
         {
-            RaycastHit hit;
-            Part part = null;
-            Camera cam = null;
-            if (HighLogic.LoadedSceneIsEditor) cam = EditorLogic.fetch.editorCamera;
-            if (HighLogic.LoadedSceneIsFlight) cam = FlightCamera.fetch.mainCamera;
-
-            if (Physics.Raycast(cam.ScreenPointToRay(Input.mousePosition), out hit, 1000, 557059))
-            {
-                //part = hit.transform.gameObject.GetComponent<Part>();
-                part = (Part)UIPartActionController.GetComponentUpwards("Part", hit.collider.gameObject);
-            }
-            return part;
+            return Mouse.HoveredPart;
         }
 
         public static void PlaySoundAtPoint(string soundPath, Vector3 position)

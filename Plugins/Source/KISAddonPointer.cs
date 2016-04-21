@@ -204,7 +204,7 @@ namespace KIS
                 KerbalEVA tgtKerbalEva = null;
                 AttachNode tgtAttachNode = null;
 
-                tgtPart = KIS_Shared.GetPartUnderCursor();
+                tgtPart = Mouse.HoveredPart;
                 if (!tgtPart)
                 {
                     // check linked part

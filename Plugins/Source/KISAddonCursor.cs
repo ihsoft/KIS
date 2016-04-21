@@ -67,7 +67,7 @@ namespace KIS
         public void Update() {
             if (partDetectionActive)
             {
-                Part part = KIS_Shared.GetPartUnderCursor();
+                Part part = Mouse.HoveredPart;
                 // OnMouseDown
                 if (Input.GetMouseButtonDown(0))
                 {
@@ -111,7 +111,7 @@ namespace KIS
             {
                 if (InputLockManager.IsUnlocked(ControlTypes.EDITOR_PAD_PICK_PLACE))
                 {
-                    Part part = KIS_Shared.GetPartUnderCursor();
+                    Part part = Mouse.HoveredPart;
                     if (part)
                     {
                         if (delegateOnMousePartClick != null) delegateOnMousePartClick(part);
