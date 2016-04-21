@@ -171,8 +171,12 @@ namespace KIS
         // Resets item state when joint is broken.
         // A callback from MonoBehaviour.
         void OnJointBreak(float breakForce) {
-          Logger.logWarning("A ground joint has just been broken! Force: {0}", breakForce);
-          GroundDetach();
+            if (staticAttached) {
+                Logger.logWarning("A static joint has just been broken! Force: {0}", breakForce);
+            } else {
+                Logger.logWarning("A fixed joint has just been broken! Force: {0}", breakForce);
+            }
+            GroundDetach();
         }
 
         public void GroundDetach()
