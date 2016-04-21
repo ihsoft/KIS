@@ -192,7 +192,9 @@ namespace KIS
             {
                 //Cast ray
                 Ray ray = FlightCamera.fetch.mainCamera.ScreenPointToRay(Input.mousePosition);
-                if (!Physics.Raycast(ray, out hit, 500, 557059))
+                var colliderHit = Physics.Raycast(
+                    ray, out hit, maxDistance: 500, layerMask: (int) KspLayers.COMMON);
+                if (!colliderHit)
                 {
                     pointerTarget = PointerTarget.Nothing;
                     ResetMouseOver();
