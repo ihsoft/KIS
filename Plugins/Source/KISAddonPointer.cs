@@ -685,9 +685,9 @@ namespace KIS
                 // Otherwise, the highlighted part mesh will be drawn over the pointer.               
                 renderQueue = hoveredPart.HighlightRenderers[0].material.renderQueue;
             }
-          
             foreach (var mr in pointer.GetComponentsInChildren<MeshRenderer>()) {
-                if (mr.enabled == isVisible && mr.material.renderQueue == renderQueue) {
+                if (mr.enabled == isVisible
+                  && (renderQueue == -1 || mr.material.renderQueue == renderQueue)) {
                     return;  // Abort if current state is already up to date.
                 }
                 mr.enabled = isVisible;
