@@ -108,7 +108,7 @@ namespace KIS
         public static float aboveOffsetStep = 0.05f;
 
         private static bool running = false;
-        public static Part hoveredPart = null;
+        private static Part hoveredPart = null;
         public static AttachNode hoveredNode = null;
         private static GameObject pointer;
         private static List<MeshRenderer> allModelMr;
