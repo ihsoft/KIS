@@ -681,7 +681,7 @@ namespace KIS
             }
             var renderQueue = -1;
             if (hoveredPart && hoveredPart.HighlightRendererCount > 0) {
-                // If highlight renderers are activated alight pointer's renderer queue with them.
+                // If highlight renderers are activated align pointer's renderer queue with them.
                 // Otherwise, the highlighted part mesh will be drawn over the pointer.               
                 renderQueue = hoveredPart.HighlightRenderers[0].material.renderQueue;
             }
