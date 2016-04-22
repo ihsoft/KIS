@@ -1,30 +1,64 @@
-﻿using KSPDev.LogUtils;
+using JetBrains.Annotations;
+using KSP.UI;
+using KSP.UI.Screens;
+using KSPDev.ConfigUtils;
+using KSPDev.LogUtils;
+using KSPDev.GUIUtils;
 using System;
 using System.Collections.Generic;
 using System.Collections;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace KIS
 {
+    [PersistentFieldsFile("KIS/settings.cfg", "")]
     public class KISAddonPickup : MonoBehaviour
     {
-        class EditorClickListener : MonoBehaviour
-        {
-            EditorPartIcon editorPaction;
-            void Start()
-            {
-                GetComponent<UIButton>().AddInputDelegate(new EZInputDelegate(OnInput));
-                editorPaction = GetComponent<EditorPartIcon>();
-            }
+        private class EditorClickListener : MonoBehaviour,
+                                            IBeginDragHandler, IDragHandler, IEndDragHandler {
+          private EditorPartIcon partIcon;
+          private bool dragStarted;
+          private const PointerEventData.InputButton PartDragButton =
+              PointerEventData.InputButton.Left;
 
-            void OnInput(ref POINTER_INFO ptr)
-            {
-                if (ptr.evt == POINTER_INFO.INPUT_EVENT.PRESS)
-                {
-                    if (!editorPaction.isGrey) KISAddonPickup.instance.OnMouseGrabPartClick(editorPaction.partInfo.partPrefab);
-                }
+          public virtual void OnBeginDrag(PointerEventData eventData) {
+            // Start dargging for KIS or delegate event to the editor.
+            if (eventData.button == PartDragButton
+                && EventChecker.IsModifierCombinationPressed(editorGrabPartModifiers)) {
+              dragStarted = true;
+              KISAddonPickup.instance.OnMouseGrabPartClick(partIcon.partInfo.partPrefab);
+            } else {
+              EditorPartList.Instance.partListScrollRect.OnBeginDrag(eventData);
             }
+          }
+          
+          public virtual void OnDrag(PointerEventData eventData) {
+            // If not KIS dragging then delegate to the editor. KIS dragging is handled in the
+            // KISAddonPickup.Update() method.
+            // TODO: Handle KIS parts dragging here.
+            if (!dragStarted) {
+              EditorPartList.Instance.partListScrollRect.OnDrag(eventData);
+            }
+          }
+          
+          public virtual void OnEndDrag(PointerEventData eventData) {
+            // If not KIS dragging then delegate to the editor. KIS dragging is handled in the
+            // KISAddonPickup.Update() method.
+            // TODO: Handle KIS parts dropping here.
+            if (!dragStarted) {
+              EditorPartList.Instance.partListScrollRect.OnEndDrag(eventData);
+            } else if (eventData.button == PartDragButton) {
+              dragStarted = false;
+            }
+          }
+          
+          /// <summary>Registers click handlers on the editor's category icon.</summary>
+          void Start() {
+            // Getting components is not a cheap operation so, cache anything we can.
+            partIcon = GetComponent<EditorPartIcon>();              
+          }
         }
 
         const string GrabIcon = "KIS/Textures/grab";
@@ -59,6 +93,9 @@ namespace KIS
             "This part can't be detached from the ground without a tool";
         const string NotSupportedText = "The function is not supported on this part";
         const string CannotAttachText = "Attach function is not supported on this part";
+
+        [PersistentField("KISConfig/Editor/partGrabModifiers")]
+        static KeyModifiers editorGrabPartModifiers = KeyModifiers.None;
         
         public static string grabKey = "g";
         public static string attachKey = "h";
@@ -214,15 +251,16 @@ namespace KIS
             {
                 if (EditorPartList.Instance)
                 {
-                    var iconPrefab = EditorPartList.Instance.iconPrefab.gameObject;
+                    var iconPrefab = EditorPartList.Instance.partPrefab.gameObject;
                     if (iconPrefab.GetComponent<EditorClickListener>() == null) {
-                        EditorPartList.Instance.iconPrefab.gameObject.AddComponent<EditorClickListener>();
+                        EditorPartList.Instance.partPrefab.gameObject.AddComponent<EditorClickListener>();
                     } else {
                         Logger.logWarning("Skip adding click listener because it exists");
                     }
                 }
             }
             GameEvents.onVesselChange.Add(new EventData<Vessel>.OnEvent(this.OnVesselChange));
+            ConfigAccessor.ReadFieldsInType(typeof(KISAddonPickup), this /* instance */);
         }
 
         public void Update() {
@@ -254,17 +292,14 @@ namespace KIS
             }
 
             // Drag editor parts
-            if (HighLogic.LoadedSceneIsEditor)
+            if (HighLogic.LoadedSceneIsEditor && Input.GetMouseButtonDown(0))
             {
-                if (Input.GetMouseButtonDown(0))
+                if (InputLockManager.IsUnlocked(ControlTypes.EDITOR_PAD_PICK_PLACE))
                 {
-                    if (!UIManager.instance.DidPointerHitUI(0) && InputLockManager.IsUnlocked(ControlTypes.EDITOR_PAD_PICK_PLACE))
+                    Part part = Mouse.HoveredPart;
+                    if (part)
                     {
-                        Part part = KIS_Shared.GetPartUnderCursor();
-                        if (part)
-                        {
-                            OnMouseGrabPartClick(part);
-                        }
+                        OnMouseGrabPartClick(part);
                     }
                 }
             }
@@ -1362,13 +1397,13 @@ namespace KIS
     
     // Create an instance for managing inventory in the editor.
     [KSPAddon(KSPAddon.Startup.EditorAny, false /*once*/)]
-    public class KISAddonPickupInEditor : KISAddonPickup
+    internal class KISAddonPickupInEditor : KISAddonPickup
     {
     }
 
     // Create an instance for accessing inventory in EVA.
     [KSPAddon(KSPAddon.Startup.Flight, false /*once*/)]
-    public class KISAddonPickupInFlight : KISAddonPickup
+    internal class KISAddonPickupInFlight : KISAddonPickup
     {
     }
 }

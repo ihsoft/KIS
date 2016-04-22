@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace KIS
 {
@@ -107,7 +108,7 @@ namespace KIS
         public static float aboveOffsetStep = 0.05f;
 
         private static bool running = false;
-        public static Part hoveredPart = null;
+        private static Part hoveredPart = null;
         public static AttachNode hoveredNode = null;
         private static GameObject pointer;
         private static List<MeshRenderer> allModelMr;
@@ -135,7 +136,7 @@ namespace KIS
         {
             audioBipWrong = audioGo.AddComponent<AudioSource>();
             audioBipWrong.volume = GameSettings.UI_VOLUME;
-            audioBipWrong.panLevel = 0;  //set as 2D audiosource
+            audioBipWrong.spatialBlend = 0;  //set as 2D audiosource
 
             if (GameDatabase.Instance.ExistsAudioClip(KIS_Shared.bipWrongSndPath))
             {
@@ -191,7 +192,9 @@ namespace KIS
             {
                 //Cast ray
                 Ray ray = FlightCamera.fetch.mainCamera.ScreenPointToRay(Input.mousePosition);
-                if (!Physics.Raycast(ray, out hit, 500, 557059))
+                var colliderHit = Physics.Raycast(
+                    ray, out hit, maxDistance: 500, layerMask: (int) KspLayers.COMMON);
+                if (!colliderHit)
                 {
                     pointerTarget = PointerTarget.Nothing;
                     ResetMouseOver();
@@ -199,11 +202,10 @@ namespace KIS
                 }
 
                 // Check target type
-                Part tgtPart = null;
+                var tgtPart = Mouse.HoveredPart;
                 KerbalEVA tgtKerbalEva = null;
                 AttachNode tgtAttachNode = null;
 
-                tgtPart = KIS_Shared.GetPartUnderCursor();
                 if (!tgtPart)
                 {
                     // check linked part
@@ -316,7 +318,6 @@ namespace KIS
                         hoveredPart = null;
                     }
                 }
-
             }
         }
 
@@ -678,13 +679,22 @@ namespace KIS
             if (!pointer) {
                 throw new InvalidOperationException("Pointer doesn't exist");
             }
+            var renderQueue = -1;
+            if (hoveredPart && hoveredPart.HighlightRendererCount > 0) {
+                // If highlight renderers are activated align pointer's renderer queue with them.
+                // Otherwise, the highlighted part mesh will be drawn over the pointer.               
+                renderQueue = hoveredPart.HighlightRenderers[0].material.renderQueue;
+            }
             foreach (var mr in pointer.GetComponentsInChildren<MeshRenderer>()) {
-                if (mr.enabled == isVisible) {
+                if (mr.enabled == isVisible
+                  && (renderQueue == -1 || mr.material.renderQueue == renderQueue)) {
                     return;  // Abort if current state is already up to date.
                 }
                 mr.enabled = isVisible;
+                mr.material.renderQueue = renderQueue;
             }
-            Logger.logInfo("Pointer visibility state set to: {0}", isVisible);
+            Logger.logInfo("Pointer state set to: visibility={0}, renderer queue={1}",
+                           isVisible, renderQueue);
         }
 
         /// <summary>Makes a game object to represent currently dragging assembly.</summary>
@@ -711,7 +721,7 @@ namespace KIS
                 var childObj = new GameObject("KISPointerChildMesh");
 
                 var meshRenderer = childObj.AddComponent<MeshRenderer>();
-                meshRenderer.castShadows = false;
+                meshRenderer.shadowCastingMode = ShadowCastingMode.Off;
                 meshRenderer.receiveShadows = false;
 
                 var filter = childObj.AddComponent<MeshFilter>();

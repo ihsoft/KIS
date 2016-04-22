@@ -1,4 +1,5 @@
-﻿using KSPDev.LogUtils;
+﻿using System.Collections;
+using KSPDev.LogUtils;
 using System;
 using System.Linq;
 using UnityEngine;
@@ -62,7 +63,6 @@ namespace KIS
         public bool staticAttached = false;
 
         private FixedJoint fixedJoint;
-        private GameObject connectedGameObject;
 
         public virtual void OnItemUse(KIS_Item item, KIS_Item.UseFrom useFrom)
         {
@@ -132,25 +132,33 @@ namespace KIS
 
         public void GroundAttach()
         {
-            Logger.logInfo("Create kinematic rigidbody");
-            if (connectedGameObject) Destroy(connectedGameObject);
-            GameObject obj = new GameObject("KISBody");
-            var objRigidbody = obj.AddComponent<Rigidbody>();
-            objRigidbody.mass = 100;
-            objRigidbody.isKinematic = true;
-            obj.transform.position = this.part.transform.position;
-            obj.transform.rotation = this.part.transform.rotation;
-            connectedGameObject = obj;
-
-            Logger.logInfo("Create fixed joint on the kinematic rigidbody");
-            if (fixedJoint) Destroy(fixedJoint);
-            FixedJoint CurJoint = this.part.gameObject.AddComponent<FixedJoint>();
-            CurJoint.breakForce = staticAttachBreakForce;
-            CurJoint.breakTorque = staticAttachBreakForce;
-            CurJoint.connectedBody = objRigidbody;
-            fixedJoint = CurJoint;
-            this.part.vessel.Landed = true;
             staticAttached = true;
+            StartCoroutine(WaitAndStaticAttach());
+        }
+        
+        IEnumerator WaitAndStaticAttach() {
+            // Wait for part to become active in case of it came from inventory.
+            while (!part.started && part.State != PartStates.DEAD) {
+                yield return new WaitForFixedUpdate();
+            }
+            part.vessel.Landed = true;
+
+            Logger.logInfo("Create fixed joint attached to the world");
+            if (fixedJoint) Destroy(fixedJoint);
+            fixedJoint = part.gameObject.AddComponent<FixedJoint>();
+            fixedJoint.breakForce = staticAttachBreakForce;
+            fixedJoint.breakTorque = staticAttachBreakForce;
+        }
+
+        // Resets item state when joint is broken.
+        // A callback from MonoBehaviour.
+        void OnJointBreak(float breakForce) {
+            if (staticAttached) {
+                Logger.logWarning("A static joint has just been broken! Force: {0}", breakForce);
+            } else {
+                Logger.logWarning("A fixed joint has just been broken! Force: {0}", breakForce);
+            }
+            GroundDetach();
         }
 
         public void GroundDetach()
@@ -160,9 +168,7 @@ namespace KIS
                 Logger.logInfo(
                     "Removing static rigidbody and fixed joint on: {0}", this.part.partInfo.title);
                 if (fixedJoint) Destroy(fixedJoint);
-                if (connectedGameObject) Destroy(connectedGameObject);
                 fixedJoint = null;
-                connectedGameObject = null;
                 staticAttached = false;
             }
         }

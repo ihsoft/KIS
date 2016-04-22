@@ -54,7 +54,7 @@ namespace KIS
             Logger.logInfo("Loading clip: {0}", clipPath);
             source = audioGo.AddComponent<AudioSource>();
             source.volume = GameSettings.UI_VOLUME;
-            source.panLevel = 0;  //set as 2D audiosource
+            source.spatialBlend = 0;  //set as 2D audiosource
 
             if (GameDatabase.Instance.ExistsAudioClip(clipPath)) {
                 source.clip = GameDatabase.Instance.GetAudioClip(clipPath);
@@ -84,20 +84,11 @@ namespace KIS
             destPart.SendMessage("OnKISAction", bEventData, SendMessageOptions.DontRequireReceiver);
         }
 
+        // TODO: Deprecate the method after June 2016.
+        [ObsoleteAttribute("Use Mouse.HoveredPart instead", true)]
         public static Part GetPartUnderCursor()
         {
-            RaycastHit hit;
-            Part part = null;
-            Camera cam = null;
-            if (HighLogic.LoadedSceneIsEditor) cam = EditorLogic.fetch.editorCamera;
-            if (HighLogic.LoadedSceneIsFlight) cam = FlightCamera.fetch.mainCamera;
-
-            if (Physics.Raycast(cam.ScreenPointToRay(Input.mousePosition), out hit, 1000, 557059))
-            {
-                //part = hit.transform.gameObject.GetComponent<Part>();
-                part = (Part)UIPartActionController.GetComponentUpwards("Part", hit.collider.gameObject);
-            }
-            return part;
+            return Mouse.HoveredPart;
         }
 
         public static void PlaySoundAtPoint(string soundPath, Vector3 position)
@@ -111,7 +102,7 @@ namespace KIS
             group.audio.volume = GameSettings.SHIP_VOLUME;
             group.audio.rolloffMode = AudioRolloffMode.Linear;
             group.audio.dopplerLevel = 0f;
-            group.audio.panLevel = 1f;
+            group.audio.spatialBlend = 1f;
             group.audio.maxDistance = maxDistance;
             group.audio.loop = loop;
             group.audio.playOnAwake = false;
@@ -358,9 +349,9 @@ namespace KIS
 
         public static Part CreatePart(ConfigNode partConfig, Vector3 position, Quaternion rotation, Part fromPart, Part coupleToPart = null, string srcAttachNodeID = null, AttachNode tgtAttachNode = null, OnPartCoupled onPartCoupled = null)
         {
-            ConfigNode node_copy = new ConfigNode();
+            var node_copy = new ConfigNode();
             partConfig.CopyTo(node_copy);
-            ProtoPartSnapshot snapshot = new ProtoPartSnapshot(node_copy, null, HighLogic.CurrentGame);
+            var snapshot = new ProtoPartSnapshot(node_copy, null, HighLogic.CurrentGame);
 
             if (HighLogic.CurrentGame.flightState.ContainsFlightID(snapshot.flightID) || snapshot.flightID == 0)
             {
@@ -391,26 +382,22 @@ namespace KIS
             newPart.Unpack();
             newPart.InitializeModules();
 
-            //FIXME: [Error]: Actor::setLinearVelocity: Actor must be (non-kinematic) dynamic!
-            //FIXME: [Error]: Actor::setAngularVelocity: Actor must be (non-kinematic) dynamic!
-            var newPartRigidbody = newPart.GetComponent<Rigidbody>();
             if (coupleToPart) {
-                var couplePartRigidbody = coupleToPart.GetComponent<Rigidbody>();
-                newPartRigidbody.velocity = couplePartRigidbody.velocity;
-                newPartRigidbody.angularVelocity = couplePartRigidbody.angularVelocity;
+                newPart.Rigidbody.velocity = coupleToPart.Rigidbody.velocity;
+                newPart.Rigidbody.angularVelocity = coupleToPart.Rigidbody.angularVelocity;
             } else {
-                var fromPartRigidbody = fromPart.GetComponent<Rigidbody>();
-                if (fromPartRigidbody) {
-                    newPartRigidbody.velocity = fromPartRigidbody.velocity;
-                    newPartRigidbody.angularVelocity = fromPartRigidbody.angularVelocity;
+                if (fromPart.rb) {
+                    newPart.Rigidbody.velocity = fromPart.Rigidbody.velocity;
+                    newPart.Rigidbody.angularVelocity = fromPart.Rigidbody.angularVelocity;
                 } else {
                     // If fromPart is a carried container
-                    var vesselRootRigidbody = fromPart.vessel.rootPart.GetComponent<Rigidbody>();
-                    newPartRigidbody.velocity = vesselRootRigidbody.velocity;
-                    newPartRigidbody.angularVelocity = vesselRootRigidbody.angularVelocity;
+                    newPart.Rigidbody.velocity = fromPart.vessel.rootPart.Rigidbody.velocity;
+                    newPart.Rigidbody.angularVelocity =
+                        fromPart.vessel.rootPart.Rigidbody.angularVelocity;
                 }
             }
 
+            // New part by default is coupled with the active vessel.
             newPart.decouple();
 
             if (coupleToPart)
@@ -458,7 +445,7 @@ namespace KIS
                 }
             }
 
-            // Wait part to initialize
+            // Wait part to initialize            
             while (!newPart.started && newPart.State != PartStates.DEAD)
             {
                 Logger.logInfo("CreatePart - Waiting initialization of the part...");
@@ -751,12 +738,14 @@ namespace KIS
         /// <param name="isSelected">The status.</param>
         public static void SetHierarchySelection(Part hierarchyRoot, bool isSelected) {
             if (isSelected) {
-                hierarchyRoot.SetHighlight(true /* active */, true /* recursive */);
+                hierarchyRoot.SetHighlight(true, true /* recursive */);
             } else {
-                hierarchyRoot.SetHighlight(false /* active */, true /* recursive */);
-                // HACK: Game will remember "recursive" setting and continue selecting the
-                // hierarchy on mouse hover. Do an explicit call with recusrive=false to reset it.
-                hierarchyRoot.SetHighlight(false /* active */, false /* recursive */);
+                hierarchyRoot.SetHighlight(false, true /* recursive */);
+                hierarchyRoot.RecurseHighlight = false;
+                // Restore highlighting of the currently hovered part.
+                if (Mouse.HoveredPart == hierarchyRoot) {
+                  hierarchyRoot.SetHighlight(true, false /* recursive */);
+                }
             }
         }
 

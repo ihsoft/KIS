@@ -1,1 +1,36 @@
 Alpha changes since last release:
+- [Change] IMPORTANT! Deprecate dragging parts from the editor's category list
+  via a left mouse button. Untity 5 uses this event to start "drag-n-scroll"
+  event, and overriding this behavior doesn't look a good idea. Now, KIS reacts
+  only to Alt+Right click to grab a part from the editor's category list.
+  Between KIS invetories parts still can be moved using usual left mosue button
+  drag behavior.
+
+Alpha 2:
+- [Enhancement] Add new setting in the config to specify key modifiers that
+  activate dragging in editor category list. By defaul it's set to None which
+  preserves same behavior as in 1.0.5.
+- [Internal] Improve vesion tags to better specify KIS target and version.
+- [Internal] Add KSP dependency to KSPDev_Utils 0.10.
+
+Alpha 3:
+- [Enhancement] Improved search tags and descriptions in parts.
+- [Internal] Migrate from `Part.rb` to `Part.Rigidbody` to handle parts with no rigidbody (e.g. radial adapter).
+- [Fix] Parts got replicated and attachment didn't work when surface attaching parts onto radial adapter.
+
+Alpha 4:
+- [Internal] Report mod's version when showing pre-release warning.
+- [Internal] Fix cimpiling for vuild KSP 1.1.1209.
+- [Enhancement] Minor descriptions changes in the parts.
+- [Fix] React on joint break on static attached items.
+- [Internal] When attaching static part from inventory wait till it's started.
+- [Change] Make static attached items kinematic to prevent immediate joint breakage. A temporary fix for KSP 1.1.
+
+Alpha 5 (candidate):
+- [Internal] Use KSP method to detect hovered part.
+- [Fix] Match rendering queue of KIS pointer to the part's highlight renderers to prevent overlapping issue.
+- [Fix] Restore highlighting of the hovered part when deselecting a hierarchy.
+- [Change] Increase static attach strength on ground base to prevent joint breakage.
+- [Fix] Fix bottom attach node on ground base to make it more stable and prevent explosions on physics start.
+- [Internal] Attach ground parts to the world instead of invisible rigidbody.
+- [Change] Revert turning static attached items kinematic.

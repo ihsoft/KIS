@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle ("KIS: Kerbal Inventory System")]
+[assembly: AssemblyTitle ("Kerbal Inventory System")]
 [assembly: AssemblyDescription ("")]
 [assembly: AssemblyConfiguration ("")]
 [assembly: AssemblyCompany ("Kerbal Systems")]
@@ -30,6 +30,7 @@ using System.Runtime.InteropServices;
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("1.2.6")]
-[assembly: AssemblyInformationalVersion("1.2.6")]
+[assembly: AssemblyVersion("1.2.7.5")]
+[assembly: AssemblyInformationalVersion("1.2.7 build 5 for KSP 1.1")]
 [assembly: KSPAssembly("KIS", 1, 2)]
+[assembly: KSPAssemblyDependency("KSPDev_Utils", 0, 10)]

@@ -41,7 +41,7 @@ namespace KIS
             sndFxStore.audio.volume = GameSettings.SHIP_VOLUME;
             sndFxStore.audio.rolloffMode = AudioRolloffMode.Linear;
             sndFxStore.audio.dopplerLevel = 0f;
-            sndFxStore.audio.panLevel = 1f;
+            sndFxStore.audio.spatialBlend = 1f;
             sndFxStore.audio.maxDistance = 10;
             sndFxStore.audio.loop = false;
             sndFxStore.audio.playOnAwake = false;

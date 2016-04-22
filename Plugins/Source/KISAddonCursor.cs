@@ -67,7 +67,7 @@ namespace KIS
         public void Update() {
             if (partDetectionActive)
             {
-                Part part = KIS_Shared.GetPartUnderCursor();
+                Part part = Mouse.HoveredPart;
                 // OnMouseDown
                 if (Input.GetMouseButtonDown(0))
                 {
@@ -107,17 +107,14 @@ namespace KIS
                 }
             }
 
-            if (HighLogic.LoadedSceneIsEditor)
+            if (HighLogic.LoadedSceneIsEditor && Input.GetMouseButtonDown(0))
             {
-                if (Input.GetMouseButtonDown(0))
+                if (InputLockManager.IsUnlocked(ControlTypes.EDITOR_PAD_PICK_PLACE))
                 {
-                    if (!UIManager.instance.DidPointerHitUI(0) && InputLockManager.IsUnlocked(ControlTypes.EDITOR_PAD_PICK_PLACE))
+                    Part part = Mouse.HoveredPart;
+                    if (part)
                     {
-                        Part part = KIS_Shared.GetPartUnderCursor();
-                        if (part)
-                        {
-                            if (delegateOnMousePartClick != null) delegateOnMousePartClick(part);
-                        }
+                        if (delegateOnMousePartClick != null) delegateOnMousePartClick(part);
                     }
                 }
             }
@@ -133,7 +130,7 @@ namespace KIS
         public static void CursorEnable(string texturePath, string text, List<string> additionalTexts = null)
         {
             cursorShow = true;
-            Screen.showCursor = false;
+            UnityEngine.Cursor.visible = false;
             cursorTexture = GameDatabase.Instance.GetTexture(texturePath, false);
             cursorText = text;
             cursorAdditionalTexts = additionalTexts;
@@ -142,13 +139,13 @@ namespace KIS
         public static void CursorDefault()
         {
             cursorShow = false;
-            Screen.showCursor = true;
+            UnityEngine.Cursor.visible = true;
         }
 
         public static void CursorDisable()
         {
             cursorShow = false;
-            Screen.showCursor = false;
+            UnityEngine.Cursor.visible = false;
         }
 
         /// <summary>Makes a texture with the requested background color.</summary>
