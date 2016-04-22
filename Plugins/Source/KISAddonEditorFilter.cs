@@ -20,23 +20,6 @@ namespace KIS
 
         void Awake()
         {
-            // FIXME: Drop on release.
-            var versionAttr =
-                Attribute.GetCustomAttribute(
-                    GetType().Assembly,
-                    typeof(AssemblyInformationalVersionAttribute)) 
-                as AssemblyInformationalVersionAttribute;
-            var versionTitle =
-                string.Format("KIS Pre-Release: {0}", versionAttr.InformationalVersion);
-            Logger.logWarning("Test version detected!!! " + versionTitle);
-            PopupDialog.SpawnPopupDialog(
-                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), versionTitle,
-                "You're using a test version of KIS that is intended to be used for testing"
-                + " purposes only.\nMake sure you've made backups of your savefiles since they"
-                + " may get badly broken!",
-                "I agree to take this risk", false /* persistAcrossScenes */, HighLogic.UISkin,
-                isModal: false);
-
             GameEvents.onGUIEditorToolbarReady.Add(SubCategories);
 
             avPartItems.Clear();
