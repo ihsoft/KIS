@@ -1,3 +1,16 @@
+### 1.2.7 (21 April 2016)
+- [Change] KSP 1.1 supported!
+- [Change] Increase static attach strength on ground base to prevent joint breakage.
+- [Enhancement] Add new setting in the config to specify key modifiers that
+  activate dragging in editor category list. By default it's set to `None` which
+  preserves same behavior as in 1.0.5.
+- [Enhancement] Improved search tags and descriptions in parts.
+- [Fix] Parts got replicated and attachment didn't work when surface attaching parts onto radial adapter.
+- [Fix] React on joint break on static attached items.
+- [Fix] Match rendering queue of KIS pointer to the part's highlight renderers to prevent overlapping issue.
+- [Fix] Restore highlighting of the hovered part when deselecting a hierarchy.
+- [Fix] Fix bottom attach node on ground base to make it more stable and prevent explosions on physics start.
+
 ### 1.2.6 (7 April 2016)
 This version does NOT support KSP 1.1 yet! Version 1.2.7 will.
 - [Fix]: #108: Parts with no attach nodes cannot be static attached.
