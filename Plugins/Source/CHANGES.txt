@@ -28,9 +28,9 @@ Alpha 4:
 
 Alpha 5 (candidate):
 - [Internal] Use KSP method to detect hovered part.
-- [Fix] Match rendering queue of KIS pointer to the part's highlight renderers to preven overlapping issue.
-- [Fix] Restore highlighting of the hovered part when deselecting a hirerachy.
-- [Change] Increase static attach strength on ground base to preven joint breakage.
-- [Fix] Fix bootom attach node on ground base to make it more stable and prevent explosions on physics start.
+- [Fix] Match rendering queue of KIS pointer to the part's highlight renderers to prevent overlapping issue.
+- [Fix] Restore highlighting of the hovered part when deselecting a hierarchy.
+- [Change] Increase static attach strength on ground base to prevent joint breakage.
+- [Fix] Fix bottom attach node on ground base to make it more stable and prevent explosions on physics start.
 - [Internal] Attach ground parts to the world instead of invisible rigidbody.
 - [Change] Revert turning static attached items kinematic.
