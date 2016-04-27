@@ -66,7 +66,12 @@ public class KIS_UISoundPlayer : MonoBehaviour {
 static public class KIS_Shared {
   // TODO: Read it from the config.
   private const float DefaultMessageTimeout = 5f; // Seconds.
-      
+
+  /// <summary>Mesh render queue of the highlight part layer.</summary>
+  /// <remarks>When other renderers need to be drawn on the part they should have queue set to this
+  /// or higher value. Otherwise, the part's highliting will overwrite the output.</remarks>
+  public const int HighlighedPartRenderQueue = 4000;  // As of KSP 1.1.1230
+
   public static string bipWrongSndPath = "KIS/Sounds/bipwrong";
   public delegate void OnPartCoupled(Part createdPart, Part tgtPart = null,
                                      AttachNode tgtAttachNode = null);
@@ -571,6 +576,7 @@ static public class KIS_Shared {
         iconRenderer.material = new Material(Shader.Find("Transparent/Diffuse"));
         iconColor.a = 0.5f;
         iconRenderer.material.color = iconColor;
+        iconRenderer.material.renderQueue = HighlighedPartRenderQueue;
       }
       node.icon.transform.parent = part.transform;
       if (name != null)

@@ -581,22 +581,15 @@ public class KISAddonPointer : MonoBehaviour {
     if (!pointer) {
       throw new InvalidOperationException("Pointer doesn't exist");
     }
-    var renderQueue = -1;
-    if (hoveredPart && hoveredPart.HighlightRendererCount > 0) {
-      // If highlight renderers are activated align pointer's renderer queue with them.
-      // Otherwise, the highlighted part mesh will be drawn over the pointer.               
-      renderQueue = hoveredPart.HighlightRenderers[0].material.renderQueue;
-    }
     foreach (var mr in pointer.GetComponentsInChildren<MeshRenderer>()) {
       if (mr.enabled == isVisible
-          && (renderQueue == -1 || mr.material.renderQueue == renderQueue)) {
+          && mr.material.renderQueue == KIS_Shared.HighlighedPartRenderQueue) {
         return;  // Abort if current state is already up to date.
       }
       mr.enabled = isVisible;
-      mr.material.renderQueue = renderQueue;
+      mr.material.renderQueue = KIS_Shared.HighlighedPartRenderQueue;
     }
-    Logger.logInfo("Pointer state set to: visibility={0}, renderer queue={1}",
-                   isVisible, renderQueue);
+    Logger.logInfo("Pointer state set to: visibility={0}", isVisible);
   }
 
   /// <summary>Makes a game object to represent currently dragging assembly.</summary>
