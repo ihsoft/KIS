@@ -432,19 +432,23 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     // Update context menu
     if (invType == InventoryType.Pod) {
       if (HighLogic.LoadedSceneIsEditor) {
-        Events["ShowInventory"].guiActive = Events["ShowInventory"].guiActiveUnfocused = true;
+        Events["ShowInventory"].guiActive = true;
+        Events["ShowInventory"].guiActiveUnfocused = true;
         Events["ShowInventory"].guiName = "Seat " + podSeat + " inventory";
       } else {
-        Events["ShowInventory"].guiActive = Events["ShowInventory"].guiActiveUnfocused = false;
+        Events["ShowInventory"].guiActive = false;
+        Events["ShowInventory"].guiActiveUnfocused = false;
         ProtoCrewMember crewAtPodSeat = this.part.protoModuleCrew.Find(x => x.seatIdx == podSeat);
         if (crewAtPodSeat != null) {
           string kerbalName = crewAtPodSeat.name.Split(' ').FirstOrDefault();
-          Events["ShowInventory"].guiActive = Events["ShowInventory"].guiActiveUnfocused = true;
+          Events["ShowInventory"].guiActive = true;
+          Events["ShowInventory"].guiActiveUnfocused = true;
           Events["ShowInventory"].guiName = kerbalName + "'s inventory";
         }
       }
     } else {
-      Events["ShowInventory"].guiActive = Events["ShowInventory"].guiActiveUnfocused = true;
+      Events["ShowInventory"].guiActive = true;
+      Events["ShowInventory"].guiActiveUnfocused = true;
       Events["ShowInventory"].guiName = "Inventory";
       if (invName != "") {
         Events["ShowInventory"].guiName = "Inventory | " + invName;

@@ -550,9 +550,7 @@ static public class KIS_Shared {
   }
 
   public static Quaternion GetNodeRotation(AttachNode attachNode) {
-    Quaternion rotation;
-    rotation = Quaternion.LookRotation(attachNode.orientation);
-    return rotation;
+    return Quaternion.LookRotation(attachNode.orientation);
   }
 
   public static void AssignAttachIcon(Part part, AttachNode node, Color iconColor,
