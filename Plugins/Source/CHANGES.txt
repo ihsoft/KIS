@@ -1,2 +1,3 @@
 Pre-release changes:
+- [Fix] #121: In node attach mode the connection points markers get overlapped by the part's mesh.
 - [Fix] #122: For some parts attach point is wrongly detected.
