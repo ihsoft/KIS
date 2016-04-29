@@ -410,7 +410,6 @@ public class KISAddonPointer : MonoBehaviour {
     if (pointerTarget == PointerTarget.PartMount) {
       //Mount snap
       KIS_Shared.MoveAlign(pointer.transform, pointerNodeTransform, hoveredNode.nodeTransform);
-      pointer.transform.rotation *= Quaternion.Euler(hoveredNode.orientation);
     } else if (pointerTarget == PointerTarget.PartNode) {
       //Part node snap
       KIS_Shared.MoveAlign(pointer.transform, pointerNodeTransform,
