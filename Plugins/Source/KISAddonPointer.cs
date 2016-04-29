@@ -657,24 +657,7 @@ public class KISAddonPointer : MonoBehaviour {
                       partToAttach, partToAttach.srfAttachNode);
       attachNodes.Add(partToAttach.srfAttachNode);
     }
-
-    // Find the best default node.
-    attachNodeIndex = -1;
-    if (attachNodes[0].nodeType == AttachNode.NodeType.Surface) {
-      // Surface is always the best one. May be not for docking ports, though.
-      Logger.logInfo("Surface node set to default");
-      attachNodeIndex = 0;
-    } else {
-      // In VAB "bottom" is a usual node so, prefer it when available.
-      attachNodeIndex = attachNodes.FindIndex(an => an.id.Equals("bottom"));
-      if (attachNodeIndex != -1) {
-        Logger.logInfo("Bottom node set to default");
-      } else {
-        // Fallback if no default node is found.
-        attachNodeIndex = 0;
-        Logger.logInfo("Fallback: '{0}' node set to default", attachNodes[attachNodeIndex].id);
-      }
-    }
+    attachNodeIndex = 0;  // Expect that first node is the best default.
 
     UpdatePointerAttachNode();
   }

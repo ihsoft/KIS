@@ -725,8 +725,8 @@ static public class KIS_Shared {
   /// attached to this part.</param>
   /// <param name="needSrf">If <c>true</c> then free surface node should be retruned as well.
   /// Otherwise, only the stack nodes are returned.</param>
-  /// <returns>A list of nodes that are available for attaching. If there is a surface node in
-  /// the result then it always goes first in the list.</returns>
+  /// <returns>A list of nodes that are available for attaching. First nodes in the list are the
+  /// most preferable for the part.</returns>
   public static List<AttachNode> GetAvailableAttachNodes(Part p,
                                                          Part ignoreAttachedPart = null,
                                                          bool needSrf = true) {
@@ -747,11 +747,24 @@ static public class KIS_Shared {
       if (srfHasPart && an.orientation == srfNode.orientation) {
         continue;
       }
-      result.Add(an);
+      // Put "bottom" and "top" nodes before anything else. If part is stackable then bottom node is
+      // the most used node, and top one is the second most used.
+      if (an.id == "bottom") {
+        result.Insert(0, an);  // Always go first in the list.
+      } else if (an.id == "top") {
+        // Put "top" node after "bottom" but before anything else.
+        if (result.Count > 0 && result[0].id == "bottom") {
+          result.Insert(1, an);
+        } else {
+          result.Insert(0, an);
+        }
+      } else {
+        result.Add(an);  // All other nodes are added at the end.
+      }
     }
-    // Add a surface node if it's free. Always put it first in the list.
+    // Add a surface node if it's free.
     if (needSrf && srfNode != null && !srfHasPart) {
-      result.Insert(0, srfNode);
+      result.Add(srfNode);
     }
     return result;
   }
