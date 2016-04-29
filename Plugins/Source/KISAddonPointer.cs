@@ -346,13 +346,13 @@ public class KISAddonPointer : MonoBehaviour {
   }
 
   static void ResetMouseOver() {
-    if (hoveredPart) {
-      OnMouseExitPart(hoveredPart);
-      hoveredPart = null;
-    }
     if (hoveredNode != null) {
       OnMouseExitNode(hoveredNode);
       hoveredNode = null;
+    }
+    if (hoveredPart) {
+      OnMouseExitPart(hoveredPart);
+      hoveredPart = null;
     }
   }
 
