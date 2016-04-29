@@ -10,7 +10,7 @@ public class ModuleKISPartMount : PartModule {
   [KSPField]
   public string sndStorePath = "KIS/Sounds/containerMount";
   [KSPField]
-  public string mountedPartNode = "bottom";
+  public string mountedPartNode = AttachNodeId.Bottom;
   [KSPField]
   public bool allowRelease = true;
   public FXGroup sndFxStore;

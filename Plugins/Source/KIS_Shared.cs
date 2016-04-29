@@ -63,6 +63,14 @@ public class KIS_UISoundPlayer : MonoBehaviour {
   }
 }
 
+/// <summary>Constants for standard attach node ids.</summary>
+public static class AttachNodeId {
+  /// <summary>Stack node "bottom".</summary>
+  public const string Bottom = "bottom";
+  /// <summary>Stack node "top".</summary>
+  public const string Top = "top";
+}
+
 static public class KIS_Shared {
   // TODO: Read it from the config.
   private const float DefaultMessageTimeout = 5f; // Seconds.
@@ -749,11 +757,11 @@ static public class KIS_Shared {
       }
       // Put "bottom" and "top" nodes before anything else. If part is stackable then bottom node is
       // the most used node, and top one is the second most used.
-      if (an.id == "bottom") {
+      if (an.id == AttachNodeId.Bottom) {
         result.Insert(0, an);  // Always go first in the list.
-      } else if (an.id == "top") {
+      } else if (an.id == AttachNodeId.Top) {
         // Put "top" node after "bottom" but before anything else.
-        if (result.Count > 0 && result[0].id == "bottom") {
+        if (result.Count > 0 && result[0].id == AttachNodeId.Bottom) {
           result.Insert(1, an);
         } else {
           result.Insert(0, an);
