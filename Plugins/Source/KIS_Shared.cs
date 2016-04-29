@@ -556,7 +556,7 @@ static public class KIS_Shared {
   public static void AssignAttachIcon(Part part, AttachNode node, Color iconColor,
                                       string name = null) {
     // Create NodeTransform if needed
-    if (node.nodeTransform == null) {
+    if (!node.nodeTransform) {
       node.nodeTransform = new GameObject("KISNodeTransf").transform;
       node.nodeTransform.parent = part.transform;
       node.nodeTransform.localPosition = node.position;
@@ -720,15 +720,15 @@ static public class KIS_Shared {
   /// <returns>A list of nodes that are available for attaching. If there is a surface node in
   /// the result then it always goes first in the list.</returns>
   public static List<AttachNode> GetAvailableAttachNodes(Part p,
-    Part ignoreAttachedPart = null,
-    bool needSrf = true) {
+                                                         Part ignoreAttachedPart = null,
+                                                         bool needSrf = true) {
     var result = new List<AttachNode>();
     var srfNode = p.attachRules.srfAttach ? p.srfAttachNode : null;
     bool srfHasPart = (srfNode != null && srfNode.attachedPart != null
                        && srfNode.attachedPart != ignoreAttachedPart);
     foreach (var an in p.attachNodes) {
       // Skip occupied nodes.
-      if (an.attachedPart != null && an.attachedPart != ignoreAttachedPart) {
+      if (an.attachedPart && an.attachedPart != ignoreAttachedPart) {
         // Reset surface node if it points in the same direction as the occupied node. 
         if (srfNode != null && an.orientation == srfNode.orientation) {
           srfNode = null;
@@ -753,8 +753,8 @@ static public class KIS_Shared {
   /// <param name="duration">Delay before hiding the message in seconds.</param>
   /// <param name="fmt"><c>String.Format()</c> formatting string.</param>
   /// <param name="args">Arguments for the formattign string.</param>
-  public static void ShowScreenMessage(
-    ScreenMessageStyle style, float duration, String fmt, params object[] args) {
+  public static void ShowScreenMessage(ScreenMessageStyle style, float duration,
+                                       String fmt, params object[] args) {
     ScreenMessages.PostScreenMessage(String.Format(fmt, args), duration, style);
   }
 
@@ -762,8 +762,8 @@ static public class KIS_Shared {
   /// <param name="duration">Delay before hiding the message in seconds.</param>
   /// <param name="fmt"><c>String.Format()</c> formatting string.</param>
   /// <param name="args">Arguments for the formattign string.</param>
-  public static void ShowCenterScreenMessageWithTimeout(
-    float duration, String fmt, params object[] args) {
+  public static void ShowCenterScreenMessageWithTimeout(float duration, String fmt,
+                                                        params object[] args) {
     ShowScreenMessage(ScreenMessageStyle.UPPER_CENTER, duration, fmt, args);
   }
 
