@@ -666,10 +666,11 @@ public class KISAddonPointer : MonoBehaviour {
   private static void UpdatePointerAttachNode() {
     var node = GetCurrentAttachNode();
     pointerNodeTransform.localPosition = node.position;
-    // HACK(ihsoft): For some reason Z orientation axis is get mirrored in the parts. It results in
-    //   a weird behavior when aligning parts in "back" or "front" node attach modes. It may be a
-    //   KIS code bug but I gave up finding it.
-    pointerNodeTransform.localRotation = KIS_Shared.GetNodeRotation(node, mirrorZ: true);
+    // HACK(ihsoft): For some reason Z orientation axis is get mirrored in the parts for the stack
+    //   nodes. It results in a weird behavior when aligning parts in "back" or "front" node attach
+    //   modes. It may be a KIS code bug but I gave up finding it.
+    pointerNodeTransform.localRotation =
+        KIS_Shared.GetNodeRotation(node, mirrorZ: node.nodeType != AttachNode.NodeType.Surface);
   }
       
   /// <summary>Destroyes object(s) allocated to represent a pointer.</summary>
