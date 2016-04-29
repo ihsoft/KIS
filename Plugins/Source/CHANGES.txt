@@ -1,1 +1,2 @@
 Pre-release changes:
+- [Fix] #122: For some parts attach point is wrongly detected.

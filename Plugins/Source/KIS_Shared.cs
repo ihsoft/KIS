@@ -495,8 +495,7 @@ static public class KIS_Shared {
                                Quaternion adjust) {
     Vector3 refDir = hit.transform.TransformDirection(Vector3.up);
     Quaternion rotation = Quaternion.LookRotation(hit.normal, refDir);
-    source.rotation = (rotation * adjust) * childNode.localRotation;
-    source.position = source.position - (childNode.position - hit.point);
+    MoveAlign(source, childNode, hit.point, rotation * adjust);
   }
 
   public static void MoveAlign(Transform source, Transform childNode, Transform target,
@@ -549,8 +548,17 @@ static public class KIS_Shared {
     return null;
   }
 
-  public static Quaternion GetNodeRotation(AttachNode attachNode) {
-    return Quaternion.LookRotation(attachNode.orientation);
+  /// <summary>Returns a rotation for the attach node.</summary>
+  /// <param name="attachNode">A node to get orientation from.</param>
+  /// <param name="mirrorZ">If <c>true</c> then Z axis in the node's orientation will be mirrored.
+  /// E.g. <c>(1, 1, 1)</c> will be translated into <c>(1, 1, -1)</c>.</param>
+  /// <returns>Rotation quaternion.</returns>
+  public static Quaternion GetNodeRotation(AttachNode attachNode, bool mirrorZ = false) {
+    var orientation = attachNode.orientation;
+    if (mirrorZ) {
+      orientation.z = -orientation.z;
+    }
+    return Quaternion.LookRotation(orientation);
   }
 
   public static void AssignAttachIcon(Part part, AttachNode node, Color iconColor,
