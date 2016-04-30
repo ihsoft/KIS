@@ -656,42 +656,24 @@ public class KISAddonPickup : MonoBehaviour {
     detachActive = false;
     KISAddonCursor.StopPartDetection();
     KISAddonCursor.CursorDefault();
-    ModuleKISItem item = part.GetComponent<ModuleKISItem>();
 
-    if (item) {
-      if (item.staticAttached) {
-        item.GroundDetach();
-        if (item.allowPartAttach == ModuleKISItem.ItemAttachMode.AllowedAlways) {
-          ModuleKISPickup pickupModule = GetActivePickupNearest(part);
-          KIS_Shared.PlaySoundAtPoint(pickupModule.detachStaticSndPath,
-                                      pickupModule.part.transform.position);
-        }
-        if (item.allowPartAttach == ModuleKISItem.ItemAttachMode.AllowedWithKisTool) {
-          ModuleKISPickup pickupModule = GetActivePickupNearest(part, canStaticAttachOnly: true);
-          KIS_Shared.PlaySoundAtPoint(pickupModule.detachStaticSndPath,
-                                      pickupModule.part.transform.position);
-        }
-        return;
-      }
+    // Get actor's pickup module. Not having one is very suspicious but not a blocker. 
+    var pickupModule = FlightGlobals.ActiveVessel.GetComponent<ModuleKISPickup>();
+    if (!pickupModule) {
+      Logger.logError("Unexpected actor executed KIS action via UI: {0}",
+                      FlightGlobals.ActiveVessel);
     }
 
-    part.decouple();
-
-    if (item) {
-      if (item.allowPartAttach == ModuleKISItem.ItemAttachMode.AllowedAlways) {
-        ModuleKISPickup pickupModule = GetActivePickupNearest(part);
-        KIS_Shared.PlaySoundAtPoint(pickupModule.detachPartSndPath,
-                                    pickupModule.part.transform.position);
-      }
-      if (item.allowPartAttach == ModuleKISItem.ItemAttachMode.AllowedWithKisTool) {
-        ModuleKISPickup pickupModule = GetActivePickupNearest(part, canPartAttachOnly: true);
-        KIS_Shared.PlaySoundAtPoint(pickupModule.detachPartSndPath,
-                                    pickupModule.part.transform.position);
-      }
+    // Deatch part and play detach sound if one available.
+    ModuleKISItem item = part.GetComponent<ModuleKISItem>();
+    if (item && item.staticAttached) {
+      item.GroundDetach();  // Parts attached to the ground need special attention.
     } else {
-      ModuleKISPickup pickupModule = GetActivePickupNearest(part, canPartAttachOnly: true);
-      KIS_Shared.PlaySoundAtPoint(pickupModule.detachPartSndPath,
-                                  pickupModule.part.transform.position);
+      part.decouple();  // Regular parts detach via regular methods.
+    }
+    if (pickupModule) {
+      KIS_Shared.PlaySoundAtPoint(
+          pickupModule.detachStaticSndPath, pickupModule.part.transform.position);
     }
   }
 
