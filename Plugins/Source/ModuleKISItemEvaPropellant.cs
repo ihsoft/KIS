@@ -7,14 +7,16 @@ public class ModuleKISItemEvaPropellant : ModuleKISItem {
   [KSPField]
   public string refuelSndPath = "KIS/Sounds/refuelEva";
 
+  public const string EvaPropellantResource = "EVA Propellant";
+
   public override void OnItemUse(KIS_Item item, KIS_Item.UseFrom useFrom) {
     if (useFrom != KIS_Item.UseFrom.KeyUp) {
       if (item.inventory.invType == ModuleKISInventory.InventoryType.Pod) {
         // Refuel item
         ScreenMessages.PostScreenMessage("Fuel tank refueled", 5, ScreenMessageStyle.UPPER_CENTER);
         foreach (KIS_Item.ResourceInfo itemRessource in item.GetResources()) {
-          if (itemRessource.resourceName == "EVA Propellant") {
-            item.SetResource("EVA Propellant", itemRessource.maxAmount);
+          if (itemRessource.resourceName == EvaPropellantResource) {
+            item.SetResource(EvaPropellantResource, itemRessource.maxAmount);
             item.inventory.PlaySound(refuelSndPath, false, false);
           }
         }
@@ -22,18 +24,18 @@ public class ModuleKISItemEvaPropellant : ModuleKISItem {
       if (item.inventory.invType == ModuleKISInventory.InventoryType.Eva) {
         // Refuel eva
         foreach (KIS_Item.ResourceInfo itemRessource in item.GetResources()) {
-          if (itemRessource.resourceName == "EVA Propellant") {
+          if (itemRessource.resourceName == EvaPropellantResource) {
             PartResource evaRessource = item.inventory.part.GetComponent<PartResource>();
             if (evaRessource) {
               double amountToFill = evaRessource.maxAmount - evaRessource.amount;
               if (itemRessource.amount > amountToFill) {
-                ScreenMessages.PostScreenMessage("EVA pack refueled",
-                                                 5, ScreenMessageStyle.UPPER_CENTER);
+                ScreenMessages.PostScreenMessage(
+                    "EVA pack refueled", 5, ScreenMessageStyle.UPPER_CENTER);
                 evaRessource.amount = evaRessource.maxAmount;
-                item.SetResource("EVA Propellant", (itemRessource.amount - amountToFill));
+                item.SetResource(EvaPropellantResource, (itemRessource.amount - amountToFill));
                 if (item.equippedPart) {  
                   PartResource equippedTankRessource = item.equippedPart.Resources.list.Find(
-                      p => p.resourceName == "EVA Propellant");
+                      p => p.resourceName == EvaPropellantResource);
                   if (equippedTankRessource) {
                     equippedTankRessource.amount = (itemRessource.amount - amountToFill);
                   }
