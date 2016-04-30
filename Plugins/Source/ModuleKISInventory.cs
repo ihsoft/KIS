@@ -109,6 +109,9 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
   private KIS_Item debugItem;
   public static bool debugContextMenu = false;
 
+  // Messages.  
+  const string NoItemEquippedMsg = "Cannot use equipped item because nothing is equipped";
+
   public override string GetInfo() {
     var sb = new StringBuilder();
     sb.AppendFormat("<b>Max Volume</b>: {0:F2} L", maxVolume);
@@ -218,6 +221,9 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
       KIS_Item rightHandItem = GetEquipedItem("rightHand");
       if (rightHandItem != null) {
         rightHandItem.Use(KIS_Item.UseFrom.KeyDown);
+      } else {
+        KIS_UISoundPlayer.instance.PlayBipWrong();
+        KIS_Shared.ShowRightScreenMessage(NoItemEquippedMsg);
       }
     }
 
