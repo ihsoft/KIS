@@ -1092,7 +1092,7 @@ public class KISAddonPickup : MonoBehaviour {
     }
     if (!redockTarget) {
       KISAddonCursor.CursorEnable(
-        ForbiddenIcon, ReDockIsNotPossibleStatus, ReDockIsNotPossibleText);
+          ForbiddenIcon, ReDockIsNotPossibleStatus, ReDockIsNotPossibleText);
       return;
     }
     KIS_Shared.SetHierarchySelection(redockTarget, true /* isSelected */);

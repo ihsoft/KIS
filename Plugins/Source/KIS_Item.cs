@@ -31,20 +31,17 @@ public class KIS_Item {
     Drop,
     Equip,
     Custom
-
   }
   public enum UseFrom {
     KeyDown,
     KeyUp,
     InventoryShortcut,
     ContextMenu
-
   }
   public enum EquipMode {
     Model,
     Part,
     Physic
-
   }
   public float resourceMass = 0;
   public float contentMass = 0;
