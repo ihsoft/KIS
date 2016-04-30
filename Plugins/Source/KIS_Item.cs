@@ -101,6 +101,10 @@ public class KIS_Item {
   public float totalCost { get { return (cost + contentCost) * quantity; } }
   public float totalMass { get { return stackDryMass + resourceMass + contentMass; } }
 
+  /// <summary>A breaking force of a joint that attaches equipped item to the kerbal.</summary>
+  /// TODO: Read it from the items's config. See #128.
+  const float EqippedPartJointBreakForce = 50.0f;
+
   /// <summary>Creates a new part from save.</summary>
   public KIS_Item(AvailablePart availablePart, ConfigNode itemNode, ModuleKISInventory inventory,
                   float quantity = 1) {
@@ -566,8 +570,8 @@ public class KIS_Item {
       //Create physic join
       FixedJoint evaJoint = equippedPart.gameObject.AddComponent<FixedJoint>();
       evaJoint.connectedBody = inventory.part.Rigidbody;//evaCollider.attachedRigidbody;
-      evaJoint.breakForce = 5;
-      evaJoint.breakTorque = 5;
+      evaJoint.breakForce = EqippedPartJointBreakForce;
+      evaJoint.breakTorque = EqippedPartJointBreakForce;
       KIS_Shared.ResetCollisionEnhancer(equippedPart);
     }
   }
