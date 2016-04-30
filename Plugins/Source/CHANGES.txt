@@ -3,3 +3,4 @@ Pre-release changes:
 - [Fix] #122: For some parts attach point is wrongly detected.
 - [Change] When attaching a part with stack nodes by default prefer "bottom" and "top" attach nodes as they are most used ones.
 - [Fix] #124: Parts with allowPartAttach = 1 still require a tool.
+- [Change] Turn allowPartAttach and allowStaticAttach fields of KISItem into enums. Integers are still accepted but in the new parts using of enum names is encouraged.

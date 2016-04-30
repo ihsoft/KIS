@@ -204,9 +204,9 @@ public class KISAddonPickup : MonoBehaviour {
         }
 
         if (item) {
-          if (item.allowStaticAttach == 1) {
+          if (item.allowStaticAttach == ModuleKISItem.ItemAttachMode.AllowedAlways) {
             KISAddonPointer.allowStatic = true;
-          } else if (item.allowStaticAttach == 2) {
+          } else if (item.allowStaticAttach == ModuleKISItem.ItemAttachMode.AllowedWithKisTool) {
             ModuleKISPickup pickupModule =
                 GetActivePickupNearest(attachPart, canStaticAttachOnly: true);
             if (pickupModule) {
@@ -214,9 +214,9 @@ public class KISAddonPickup : MonoBehaviour {
             }
           }
 
-          if (item.allowPartAttach == 1) {
+          if (item.allowPartAttach == ModuleKISItem.ItemAttachMode.AllowedAlways) {
             KISAddonPointer.allowPart = true;
-          } else if (item.allowPartAttach == 2) {
+          } else if (item.allowPartAttach == ModuleKISItem.ItemAttachMode.AllowedWithKisTool) {
             ModuleKISPickup pickupModule =
                 GetActivePickupNearest(attachPart, canPartAttachOnly: true);
             if (pickupModule) {
@@ -576,7 +576,9 @@ public class KISAddonPickup : MonoBehaviour {
     if (item) {
       if (item.staticAttached) {
         ModuleKISPickup pickupModule = GetActivePickupNearest(part, canStaticAttachOnly: true);
-        if ((item.allowStaticAttach == 1) || (pickupModule && item.allowStaticAttach == 2)) {
+        if ((item.allowStaticAttach == ModuleKISItem.ItemAttachMode.AllowedAlways)
+            || (pickupModule
+                && item.allowStaticAttach == ModuleKISItem.ItemAttachMode.AllowedWithKisTool)) {
           part.SetHighlightColor(XKCDColors.Periwinkle);
           part.SetHighlight(true, false);
           KISAddonCursor.CursorEnable("KIS/Textures/detachOk", "Detach from ground",
@@ -601,10 +603,10 @@ public class KISAddonPickup : MonoBehaviour {
       if (part.children.Count > 0 || part.parent) {
         //Part with a child or a parent
         if (item) {
-          if (item.allowPartAttach == 0) {
+          if (item.allowPartAttach == ModuleKISItem.ItemAttachMode.Disabled) {
             KISAddonCursor.CursorEnable("KIS/Textures/forbidden", "Can't detach",
                                         "(This part can't be detached)");
-          } else if (item.allowPartAttach == 2) {
+          } else if (item.allowPartAttach == ModuleKISItem.ItemAttachMode.AllowedWithKisTool) {
             ModuleKISPickup pickupModule = GetActivePickupNearest(part, canPartAttachOnly: true);
             if (!pickupModule) {
               if (FlightGlobals.ActiveVessel.isEVA) {
@@ -659,12 +661,12 @@ public class KISAddonPickup : MonoBehaviour {
     if (item) {
       if (item.staticAttached) {
         item.GroundDetach();
-        if (item.allowPartAttach == 1) {
+        if (item.allowPartAttach == ModuleKISItem.ItemAttachMode.AllowedAlways) {
           ModuleKISPickup pickupModule = GetActivePickupNearest(part);
           KIS_Shared.PlaySoundAtPoint(pickupModule.detachStaticSndPath,
                                       pickupModule.part.transform.position);
         }
-        if (item.allowPartAttach == 2) {
+        if (item.allowPartAttach == ModuleKISItem.ItemAttachMode.AllowedWithKisTool) {
           ModuleKISPickup pickupModule = GetActivePickupNearest(part, canStaticAttachOnly: true);
           KIS_Shared.PlaySoundAtPoint(pickupModule.detachStaticSndPath,
                                       pickupModule.part.transform.position);
@@ -676,12 +678,12 @@ public class KISAddonPickup : MonoBehaviour {
     part.decouple();
 
     if (item) {
-      if (item.allowPartAttach == 1) {
+      if (item.allowPartAttach == ModuleKISItem.ItemAttachMode.AllowedAlways) {
         ModuleKISPickup pickupModule = GetActivePickupNearest(part);
         KIS_Shared.PlaySoundAtPoint(pickupModule.detachPartSndPath,
                                     pickupModule.part.transform.position);
       }
-      if (item.allowPartAttach == 2) {
+      if (item.allowPartAttach == ModuleKISItem.ItemAttachMode.AllowedWithKisTool) {
         ModuleKISPickup pickupModule = GetActivePickupNearest(part, canPartAttachOnly: true);
         KIS_Shared.PlaySoundAtPoint(pickupModule.detachPartSndPath,
                                     pickupModule.part.transform.position);
@@ -1178,20 +1180,21 @@ public class KISAddonPickup : MonoBehaviour {
       // Handle KIS items.
       if (part.parent.GetComponent<ModuleKISPartMount>() != null) {
         // Check if part is a ground base.
-        if (item.staticAttached && item.allowStaticAttach == 2
+        if (item.staticAttached
+            && item.allowStaticAttach == ModuleKISItem.ItemAttachMode.AllowedWithKisTool
             && !GetActivePickupNearest(part, canStaticAttachOnly: true)) {
           rejectText = NeedToolToDetachFromGroundText;
         }
       } else {
         // Check specific KIS items
-        if (item.allowPartAttach == 0) {
+        if (item.allowPartAttach == ModuleKISItem.ItemAttachMode.Disabled) {
           // Part restricts attachments and detachments.
           //FIXME: Findout what part cannot be detached. And why.
           Logger.logError("Unknown item being detached: {0}", item);
           ReportCheckError("Can't detach", "(This part can't be detached)");
           return false;
         }
-        if (item.allowPartAttach == 2) {
+        if (item.allowPartAttach == ModuleKISItem.ItemAttachMode.AllowedWithKisTool) {
           // Part requires a tool to be detached.
           if (!GetActivePickupNearest(part, canPartAttachOnly: true)) {
             rejectText = NeedToolToDetachText;
@@ -1220,14 +1223,15 @@ public class KISAddonPickup : MonoBehaviour {
     if (!nodes.Any()) {
       // Check if it's a static attachable item. Those are not required to have nodes
       // since they attach to the ground.
-      if (!item || item.allowStaticAttach == 0) {
+      if (!item || item.allowStaticAttach == ModuleKISItem.ItemAttachMode.Disabled) {
         ReportCheckError(CannotAttachStatus, CannotAttachText, reportToConsole);
         return false;
       }
     }
 
     // Check if KISItem part is allowed for attach without a tool.
-    if (item && (item.allowPartAttach == 1 || item.allowStaticAttach == 1)) {
+    if (item && (item.allowPartAttach == ModuleKISItem.ItemAttachMode.AllowedAlways
+                 || item.allowStaticAttach == ModuleKISItem.ItemAttachMode.AllowedAlways)) {
       return true;
     }
 

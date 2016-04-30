@@ -7,6 +7,21 @@ using UnityEngine;
 namespace KIS {
 
 public class ModuleKISItem : PartModule {
+  /// <summary>Specifies how item can be attached.</summary>
+  public enum ItemAttachMode {
+    /// <summary>Not initialized. Special value.</summary>
+    Unknown = -1,
+    /// <summary>The item cannot be attached.</summary>
+    Disabled = 0,
+    /// <summary>The item can be attached with bare hands.</summary>
+    /// <remarks>EVA skill is not checked. Anyone can attach such items.</remarks>
+    AllowedAlways = 1,
+    /// <summary>The item can be attached only if a KIS attach tool is equipped.</summary>
+    /// <remarks>The tool may apply extra limitations on the attach action. E.g. wrenches cannot
+    /// attach to stack nodes.</remarks>
+    AllowedWithKisTool = 2
+  }
+  
   [KSPField]
   public string moveSndPath = "KIS/Sounds/itemMove";
   [KSPField]
@@ -48,11 +63,9 @@ public class ModuleKISItem : PartModule {
   [KSPField]
   public bool editorItemsCategory = true;
   [KSPField]
-  public int allowPartAttach = 2;
-  // 0:false / 1:true / 2:Attach tool needed
+  public ItemAttachMode allowPartAttach = ItemAttachMode.AllowedWithKisTool;
   [KSPField]
-  public int allowStaticAttach = 0;
-  // 0:false / 1:true / 2:Attach tool needed
+  public ItemAttachMode allowStaticAttach = ItemAttachMode.Disabled;
   [KSPField]
   public bool useExternalPartAttach = false;
   // For KAS
@@ -89,7 +102,7 @@ public class ModuleKISItem : PartModule {
   }
 
   public virtual void OnPartUnpack() {
-    if (allowStaticAttach == 0 || useExternalStaticAttach) {
+    if (allowStaticAttach == ItemAttachMode.Disabled || useExternalStaticAttach) {
       return;
     }
     if (staticAttached) {
@@ -99,7 +112,7 @@ public class ModuleKISItem : PartModule {
   }
 
   public void OnKISAction(BaseEventData baseEventData) {
-    if (allowStaticAttach == 0 || useExternalStaticAttach) {
+    if (allowStaticAttach == ItemAttachMode.Disabled || useExternalStaticAttach) {
       return;
     }
     string action = baseEventData.GetString("action");
@@ -126,7 +139,7 @@ public class ModuleKISItem : PartModule {
     staticAttached = true;
     StartCoroutine(WaitAndStaticAttach());
   }
-      
+
   IEnumerator WaitAndStaticAttach() {
     // Wait for part to become active in case of it came from inventory.
     while (!part.started && part.State != PartStates.DEAD) {
