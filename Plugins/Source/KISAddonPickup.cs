@@ -821,7 +821,8 @@ public class KISAddonPickup : MonoBehaviour {
     Logger.logInfo("End pickup of {0} from part: {1}", part, fromPart);
     if (!KISAddonPointer.isRunning) {
       ModuleKISPickup pickupModule = GetActivePickupNearest(fromPart);
-      if (pickupModule) {
+      int unusedPartsCount;
+      if (pickupModule && CheckMass(part, out unusedPartsCount, reportToConsole: true)) {
         KISAddonPointer.allowPart = true;
         KISAddonPointer.allowEva = true;
         KISAddonPointer.allowMount = true;
@@ -838,8 +839,6 @@ public class KISAddonPickup : MonoBehaviour {
         pointerMode = pickupMode == PickupMode.Undock
             ? PointerMode.ReDock
             : PointerMode.Drop;
-      } else {
-        Logger.logError("No active pickup nearest !");
       }
     }
     KISAddonCursor.StopPartDetection();
@@ -1150,17 +1149,29 @@ public class KISAddonPickup : MonoBehaviour {
       ReportCheckError(TooFarStatus, TooFarText, cursorIcon: TooFarIcon);
       return false;
     }
-    // Check part mass.
+    // Check if attached part has acceptable mass and can be detached.
+    return CheckMass(part, out grabbedPartsCount) && CheckCanDetach(part);
+  }
+
+  /// <summary>Calculates grabbed part/assembly mass and reports if it's too heavy.</summary>
+  /// <param name="part">A part or assembly root to check mass for.</param>
+  /// <param name="grabbedPartsCount">A return parameter to give number of parts in the assembly.
+  /// </param>
+  /// <param name="reportToConsole">If <c>true</c> then error is only reported on the screen (it's a
+  /// game's "console"). Otherwise, excess of mass only results in changing cursor icon to
+  /// <seealso cref="TooHeavyIcon"/>.</param>
+  /// <returns><c>true</c> if total mass is within the limits.</returns>
+  private bool CheckMass(Part part, out int grabbedPartsCount, bool reportToConsole = false) {
     grabbedMass = KIS_Shared.GetAssemblyMass(part, out grabbedPartsCount);
     float pickupMaxMass = GetAllPickupMaxMassInRange(part);
     if (grabbedMass > pickupMaxMass) {
       ReportCheckError(TooHeavyStatus,
                        String.Format(TooHeavyTextFmt, grabbedMass, pickupMaxMass),
-                       cursorIcon: TooHeavyIcon);
+                       cursorIcon: TooHeavyIcon,
+                       reportToConsole: reportToConsole);
       return false;
     }
-    // Check if attached part can be detached.
-    return CheckCanDetach(part);
+    return true;
   }
 
   /// <summary>Checks if an attached part can be detached and reports the errors.</summary>
