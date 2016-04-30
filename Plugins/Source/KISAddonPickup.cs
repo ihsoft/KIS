@@ -84,7 +84,7 @@ public class KISAddonPickup : MonoBehaviour {
       "Kerbonauts can move themselves using jetpacks. Try to ask.";
   const string TooHeavyTextFmt = "Bring more kerbal [{0:F3}t > {1:F3}t]";
   const string TooFarText = "Move closer to the part";
-  const string NeedToolText = "This part can't be attached without a tool";
+  const string NeedToolToAttachText = "This part can't be attached without a tool";
   const string NeedToolToDetachText = "This part can't be detached without a tool";
   const string NeedToolToDetachFromGroundText =
       "This part can't be detached from the ground without a tool";
@@ -1213,16 +1213,22 @@ public class KISAddonPickup : MonoBehaviour {
   }
 
   private bool CheckIsAttachable(Part part, bool reportToConsole = false) {
+    var item = part.GetComponent<ModuleKISItem>();
+
     // Check if part has at least one free node.
     var nodes = KIS_Shared.GetAvailableAttachNodes(part, part.parent);
     if (!nodes.Any()) {
       // Check if it's a static attachable item. Those are not required to have nodes
       // since they attach to the ground.
-      var item = part.GetComponent<ModuleKISItem>();
       if (!item || item.allowStaticAttach == 0) {
         ReportCheckError(CannotAttachStatus, CannotAttachText, reportToConsole);
         return false;
       }
+    }
+
+    // Check if KISItem part is allowed for attach without a tool.
+    if (item && (item.allowPartAttach == 1 || item.allowStaticAttach == 1)) {
+      return true;
     }
 
     // Check if there is a kerbonaut with a tool to handle the task.
@@ -1230,12 +1236,13 @@ public class KISAddonPickup : MonoBehaviour {
     if (!pickupModule) {
       // Check if it's EVA engineer or a KAS item.
       if (FlightGlobals.ActiveVessel.isEVA) {
-        ReportCheckError(NeedToolStatus, NeedToolText, reportToConsole, NeedToolIcon);
+        ReportCheckError(NeedToolStatus, NeedToolToAttachText, reportToConsole, NeedToolIcon);
       } else {
         ReportCheckError(NotSupportedStatus, NotSupportedText, reportToConsole);
       }
       return false;
     }
+
     return true;
   }
 
