@@ -5,3 +5,4 @@ Pre-release changes:
 - [Fix] #124: Parts with allowPartAttach = 1 still require a tool.
 - [Change] Turn allowPartAttach and allowStaticAttach fields of KISItem into enums. Integers are still accepted but in the new parts using of enum names is encouraged.
 - [Enhancement] Show error messag when "X" is pressed and no item is equipped.
+- [Fix] #116: Mass limit is not checked when grabbing from inventory.
