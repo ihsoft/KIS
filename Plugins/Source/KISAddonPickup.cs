@@ -1162,7 +1162,7 @@ public class KISAddonPickup : MonoBehaviour {
     // Check if attached part can be detached.
     return CheckCanDetach(part);
   }
-      
+
   /// <summary>Checks if an attached part can be detached and reports the errors.</summary>
   /// <remarks>If part has a parent it's attached. In order to detach the part there should be
   /// a kerbonaut in range with a tool equipped.</remarks>
@@ -1215,6 +1215,8 @@ public class KISAddonPickup : MonoBehaviour {
     return true;
   }
 
+  /// <summary>Checks if part can be attached. At least in theory.</summary>
+  /// <remarks>This method doesn't say if part *will* be attached if such attempt is made.</remarks>   
   private bool CheckIsAttachable(Part part, bool reportToConsole = false) {
     var item = part.GetComponent<ModuleKISItem>();
 
