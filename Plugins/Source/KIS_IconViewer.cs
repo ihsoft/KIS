@@ -2,151 +2,136 @@
 using System.Linq;
 using UnityEngine;
 
-namespace KIS
-{
-    public class KIS_IconViewer
-    {
-        private float iconPosY = 0;
-        private int mask = 22;
-        private float lightIntensity = 0.4f;
-        private float zoom = 0.75f;
+namespace KIS {
 
-        private Camera cam;
-        private static Light iconLight;
-        private static int camStaticIndex = 0;
-        private static int iconCount = 0;
-        private int camIndex;
-        public GameObject iconPrefab;
-        public Texture texture;
+public class KIS_IconViewer {
+  private float iconPosY = 0;
+  private int mask = 22;
+  private float lightIntensity = 0.4f;
+  private float zoom = 0.75f;
 
-        public KIS_IconViewer(Part p, int resolution)
-        {
-            if (p.partInfo.name == "kerbalEVA" || p.partInfo.name == "kerbalEVAfemale")
-            {
-                // Icon Camera
-                GameObject camGo = new GameObject("KASCamItem" + camStaticIndex);
-                camGo.transform.parent = p.transform;
-                camGo.transform.localPosition = Vector3.zero + new Vector3(0, 0.35f, 0.7f);
-                camGo.transform.localRotation = Quaternion.identity;
-                camGo.transform.Rotate(0.0f, 180f, 0.0f);
-                cam = camGo.AddComponent<Camera>();
-                cam.orthographic = true;
-                cam.orthographicSize = 0.35f;
-                cam.clearFlags = CameraClearFlags.Color;
-                // Render texture
-                RenderTexture tex = new RenderTexture(resolution, resolution, 8);
-                this.texture = tex;
+  private Camera cam;
+  private static Light iconLight;
+  private static int camStaticIndex = 0;
+  private static int iconCount = 0;
+  private int camIndex;
+  public GameObject iconPrefab;
+  public Texture texture;
 
-                cam.cullingMask = Camera.main.cullingMask;
-                cam.farClipPlane = 1f;
+  public KIS_IconViewer(Part p, int resolution) {
+    if (p.partInfo.name == "kerbalEVA" || p.partInfo.name == "kerbalEVAfemale") {
+      // Icon Camera
+      GameObject camGo = new GameObject("KASCamItem" + camStaticIndex);
+      camGo.transform.parent = p.transform;
+      camGo.transform.localPosition = Vector3.zero + new Vector3(0, 0.35f, 0.7f);
+      camGo.transform.localRotation = Quaternion.identity;
+      camGo.transform.Rotate(0.0f, 180f, 0.0f);
+      cam = camGo.AddComponent<Camera>();
+      cam.orthographic = true;
+      cam.orthographicSize = 0.35f;
+      cam.clearFlags = CameraClearFlags.Color;
+      // Render texture
+      RenderTexture tex = new RenderTexture(resolution, resolution, 8);
+      this.texture = tex;
 
-                // Texture
-                cam.targetTexture = tex;
-                cam.ResetAspect();
-            }
-            else
-            {
-                // Instantiate part icon
-                iconPrefab = UnityEngine.Object.Instantiate((UnityEngine.Object)p.partInfo.iconPrefab) as GameObject;
-                
-                // Command Seat Icon Fix (Temporary workaround until squad fix the broken shader)
-                Shader fixShader = Shader.Find("KSP/Alpha/Cutoff Bumped");
-                foreach (Renderer r in iconPrefab.GetComponentsInChildren<Renderer>(true))
-                {
-                    foreach (Material m in r.materials)
-                    {
-                        if (m.shader.name == "KSP/Alpha/Cutoff")
-                        {
-                            m.shader = fixShader;
-                        }
-                    }
-                }
+      cam.cullingMask = Camera.main.cullingMask;
+      cam.farClipPlane = 1f;
 
-                iconPrefab.SetActive(true);
+      // Texture
+      cam.targetTexture = tex;
+      cam.ResetAspect();
+    } else {
+      // Instantiate part icon
+      iconPrefab = UnityEngine.Object.Instantiate((UnityEngine.Object)p.partInfo.iconPrefab)
+          as GameObject;
 
-                // Icon Camera
-                GameObject camGo = new GameObject("KASCamItem" + camStaticIndex);
-                camGo.transform.position = new Vector3(camStaticIndex, iconPosY, 0);
-                camGo.transform.rotation = Quaternion.identity;
-                cam = camGo.AddComponent<Camera>();
-                cam.orthographic = true;
-                cam.orthographicSize = zoom;
-                cam.clearFlags = CameraClearFlags.Color;
-                // Render texture
-                RenderTexture tex = new RenderTexture(resolution, resolution, 8);
-                this.texture = tex;
-
-                //light
-                if (iconLight == null)
-                {
-                    GameObject lightGo = new GameObject("KASLight");
-                    iconLight = lightGo.AddComponent<Light>();
-                    iconLight.cullingMask = 1 << mask;
-                    iconLight.type = LightType.Directional;
-                    iconLight.intensity = lightIntensity;
-                }
-
-                // Layer
-                cam.cullingMask = 1 << mask;
-                SetLayerRecursively(iconPrefab, mask);
-
-                // Texture
-                cam.targetTexture = tex;
-                cam.ResetAspect();
-
-                // Cam index
-                this.camIndex = camStaticIndex;
-                camStaticIndex += 2;
-                ResetPos();
-            }
-            iconCount += 1;
+      // Command Seat Icon Fix (Temporary workaround until squad fix the broken shader)
+      Shader fixShader = Shader.Find("KSP/Alpha/Cutoff Bumped");
+      foreach (Renderer r in iconPrefab.GetComponentsInChildren<Renderer>(true)) {
+        foreach (Material m in r.materials) {
+          if (m.shader.name == "KSP/Alpha/Cutoff") {
+            m.shader = fixShader;
+          }
         }
+      }
 
-        ~KIS_IconViewer()
-        {
-            UnityEngine.Object.Destroy(cam.gameObject);
-            if (iconPrefab) UnityEngine.Object.Destroy(iconPrefab);
-            this.iconPrefab = null;
-            this.texture = null;
-            iconCount -= 1;
-            if (iconCount == 0)
-            {
-                camStaticIndex = 0;
-            }
-        }
+      iconPrefab.SetActive(true);
 
-        public void Rotate()
-        {
-            iconPrefab.transform.Rotate(0.0f, 1f, 0.0f);
-        }
+      // Icon Camera
+      GameObject camGo = new GameObject("KASCamItem" + camStaticIndex);
+      camGo.transform.position = new Vector3(camStaticIndex, iconPosY, 0);
+      camGo.transform.rotation = Quaternion.identity;
+      cam = camGo.AddComponent<Camera>();
+      cam.orthographic = true;
+      cam.orthographicSize = zoom;
+      cam.clearFlags = CameraClearFlags.Color;
+      // Render texture
+      RenderTexture tex = new RenderTexture(resolution, resolution, 8);
+      this.texture = tex;
 
-        public void ResetPos()
-        {
-            iconPrefab.transform.position = new Vector3(camIndex, iconPosY, 2f);
-            iconPrefab.transform.rotation = Quaternion.Euler(-15f, 0.0f, 0.0f);
-            iconPrefab.transform.Rotate(0.0f, -30f, 0.0f);
-        }
+      //light
+      if (iconLight == null) {
+        GameObject lightGo = new GameObject("KASLight");
+        iconLight = lightGo.AddComponent<Light>();
+        iconLight.cullingMask = 1 << mask;
+        iconLight.type = LightType.Directional;
+        iconLight.intensity = lightIntensity;
+      }
 
-        public static void ResetCamIndex()
-        {
-            camStaticIndex = 0;
-        }
+      // Layer
+      cam.cullingMask = 1 << mask;
+      SetLayerRecursively(iconPrefab, mask);
 
-        void SetLayerRecursively(GameObject obj, int newLayer)
-        {
-            if (null == obj)
-            {
-                return;
-            }
-            obj.layer = newLayer;
-            foreach (Transform child in obj.transform)
-            {
-                if (null == child)
-                {
-                    continue;
-                }
-                SetLayerRecursively(child.gameObject, newLayer);
-            }
-        }
+      // Texture
+      cam.targetTexture = tex;
+      cam.ResetAspect();
+
+      // Cam index
+      this.camIndex = camStaticIndex;
+      camStaticIndex += 2;
+      ResetPos();
     }
+    iconCount += 1;
+  }
+
+  ~KIS_IconViewer() {
+    UnityEngine.Object.Destroy(cam.gameObject);
+    if (iconPrefab)
+      UnityEngine.Object.Destroy(iconPrefab);
+    this.iconPrefab = null;
+    this.texture = null;
+    iconCount -= 1;
+    if (iconCount == 0) {
+      camStaticIndex = 0;
+    }
+  }
+
+  public void Rotate() {
+    iconPrefab.transform.Rotate(0.0f, 1f, 0.0f);
+  }
+
+  public void ResetPos() {
+    iconPrefab.transform.position = new Vector3(camIndex, iconPosY, 2f);
+    iconPrefab.transform.rotation = Quaternion.Euler(-15f, 0.0f, 0.0f);
+    iconPrefab.transform.Rotate(0.0f, -30f, 0.0f);
+  }
+
+  public static void ResetCamIndex() {
+    camStaticIndex = 0;
+  }
+
+  void SetLayerRecursively(GameObject obj, int newLayer) {
+    if (null == obj) {
+      return;
+    }
+    obj.layer = newLayer;
+    foreach (Transform child in obj.transform) {
+      if (null == child) {
+        continue;
+      }
+      SetLayerRecursively(child.gameObject, newLayer);
+    }
+  }
 }
+
+}  // namespace
