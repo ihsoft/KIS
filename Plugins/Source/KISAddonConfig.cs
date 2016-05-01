@@ -1,4 +1,5 @@
-﻿using KSPDev.LogUtils;
+﻿using KSPDev.ConfigUtils;
+using KSPDev.LogUtils;
 using System.Collections.Generic;
 using System.Linq;
 using System;
@@ -7,12 +8,20 @@ using UnityEngine;
 namespace KIS {
 
 [KSPAddon(KSPAddon.Startup.SpaceCentre, true)]
+[PersistentFieldsFile("KIS/settings.cfg", "KISConfig")]
 class KISAddonConfig : MonoBehaviour {
   public static List<string> stackableList = new List<string>();
   public static List<string> stackableModules = new List<string>();
   public static float breathableAtmoPressure = 0.5f;
+  
+  [PersistentField("Editor/PodInventory/addToAllSeats", isCollection = true)]
+  public static List<String> defaultItemsForAllSeats = new List<string>();
+  [PersistentField("Editor/PodInventory/addToTheFirstSeatOnly", isCollection = true)]
+  public static List<String> defaultItemsForTheFirstSeat = new List<string>();
 
   public void Awake() {
+    ConfigAccessor.ReadFieldsInType(GetType(), this);
+    
     // Set inventory module for every eva kerbal
     Logger.logInfo("Set KIS config...");
     ConfigNode nodeSettings = GameDatabase.Instance.GetConfigNode("KIS/settings/KISConfig");

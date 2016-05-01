@@ -132,6 +132,21 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     if (HighLogic.LoadedSceneIsEditor) {
       InputLockManager.RemoveControlLock("KISInventoryLock");
       guiMainWindowPos = defaultEditorPos;
+      
+      // Add default items to the seats of a newly added pod.
+      if (podSeat != -1) {
+        if (KISAddonConfig.defaultItemsForAllSeats.Count > 0) {
+          Logger.logInfo(
+              "Adding default item(s) into seat's {0} inventory of part {1}: {2}",
+              podSeat, part.name, Logger.C2S(KISAddonConfig.defaultItemsForAllSeats));
+          AddItems(KISAddonConfig.defaultItemsForAllSeats);
+        }
+        if (podSeat == 0 && KISAddonConfig.defaultItemsForTheFirstSeat.Count > 0) {
+          Logger.logInfo("Adding default item(s) into the first seat of part {0}: {1}",
+                         part.name, Logger.C2S(KISAddonConfig.defaultItemsForTheFirstSeat));
+          AddItems(KISAddonConfig.defaultItemsForTheFirstSeat);
+        }
+      }
     } else {
       guiMainWindowPos = defaultFlightPos;
     }
@@ -1524,6 +1539,20 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
           tooltipItem.icon.ResetPos();
         }
         tooltipItem = mouseOverItem;
+      }
+    }
+  }
+
+  /// <summary>Adds the specified items into the inventory.</summary>
+  /// <param name="itemNames">A list of names of the parts.</param>
+  private void AddItems(List<string> itemNames) {
+    foreach (var defItemName in itemNames) {
+      var defPart = PartLoader.getPartInfoByName(defItemName);
+      if (defPart != null) {
+        AddItem(defPart.partPrefab);
+      } else {
+        Logger.logError("Cannot make item {0} specified as a default for the pod seat",
+                        defItemName);
       }
     }
   }
