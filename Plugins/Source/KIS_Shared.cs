@@ -247,22 +247,21 @@ static public class KIS_Shared {
   }
 
   public static ConfigNode PartSnapshot(Part part) {
-    ConfigNode node = new ConfigNode("PART");
-    ProtoPartSnapshot snapshot = null;
-    try {
-      // Seems fine with a null vessel in 0.23 if some empty lists are allocated below
-      snapshot = new ProtoPartSnapshot(part, null);
-    } catch {
-      // workaround for command module
-      Logger.logWarning(
-          "Error during part snapshot, spawning part for snapshot (workaround for command module)");
-      Part p = (Part)UnityEngine.Object.Instantiate(part.partInfo.partPrefab);
+    var node = new ConfigNode("PART");
+    ProtoPartSnapshot snapshot;
+    if (HighLogic.LoadedSceneIsEditor) {
+      // Don't trust parts provided by the editor. They may have uninitialized modules. Since in the
+      // editor part's state is always default it's safe to just create a snapshot from prefab.
+      var p = (Part) UnityEngine.Object.Instantiate(part.partInfo.partPrefab);
       p.gameObject.SetActive(true);
       p.name = part.partInfo.name;
       p.InitializeModules();
       snapshot = new ProtoPartSnapshot(p, null);
-      UnityEngine.Object.Destroy(p.gameObject);
+      UnityEngine.Object.DestroyImmediate(p.gameObject);
+    } else {
+      snapshot = new ProtoPartSnapshot(part, null);
     }
+
     snapshot.attachNodes = new List<AttachNodeSnapshot>();
     snapshot.srfAttachNode = new AttachNodeSnapshot("attach,-1");
     snapshot.symLinks = new List<ProtoPartSnapshot>();

@@ -8,3 +8,4 @@ Pre-release changes:
 - [Fix] #116: Mass limit is not checked when grabbing from inventory.
 - [Fix] #118: Detach of static attached part results in NPE.
 - [Change] Temporarily increase breaking force of equipped items by x10 (i.e. up to 50). Old settings of 5 is too weak for such applications as eva chutes. Also see bug #128.
+- [Fix] #119: Adding an item into inventory in the editor shows KSP error in the logs.
