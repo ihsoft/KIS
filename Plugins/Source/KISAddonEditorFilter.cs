@@ -24,13 +24,10 @@ public class KISAddonEditorFilter : MonoBehaviour {
         continue;
       }
       ModuleKISItem moduleItem = avPart.partPrefab.GetComponent<ModuleKISItem>();
-      if (moduleItem) {
-        if (moduleItem.editorItemsCategory) {
-          avPartItems.Add(avPart);
-        }
+      if (moduleItem && moduleItem.editorItemsCategory) {
+        avPartItems.Add(avPart);
       }
     }
-
   }
 
   private bool EditorItemsFilter(AvailablePart avPart) {
