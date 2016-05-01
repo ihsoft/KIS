@@ -248,19 +248,7 @@ static public class KIS_Shared {
 
   public static ConfigNode PartSnapshot(Part part) {
     var node = new ConfigNode("PART");
-    ProtoPartSnapshot snapshot;
-    if (HighLogic.LoadedSceneIsEditor) {
-      // Don't trust parts provided by the editor. They may have uninitialized modules. Since in the
-      // editor part's state is always default it's safe to just create a snapshot from prefab.
-      var p = (Part) UnityEngine.Object.Instantiate(part.partInfo.partPrefab);
-      p.gameObject.SetActive(true);
-      p.name = part.partInfo.name;
-      p.InitializeModules();
-      snapshot = new ProtoPartSnapshot(p, null);
-      UnityEngine.Object.DestroyImmediate(p.gameObject);
-    } else {
-      snapshot = new ProtoPartSnapshot(part, null);
-    }
+    var snapshot = new ProtoPartSnapshot(part, null);
 
     snapshot.attachNodes = new List<AttachNodeSnapshot>();
     snapshot.srfAttachNode = new AttachNodeSnapshot("attach,-1");
