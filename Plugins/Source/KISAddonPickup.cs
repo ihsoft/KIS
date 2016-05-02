@@ -74,6 +74,7 @@ public class KISAddonPickup : MonoBehaviour {
     }
   }
 
+  // Icons paths.
   const string GrabIcon = "KIS/Textures/grab";
   const string GrabOkIcon = "KIS/Textures/grabOk";
   const string ForbiddenIcon = "KIS/Textures/forbidden";
@@ -110,14 +111,22 @@ public class KISAddonPickup : MonoBehaviour {
   [PersistentField("Editor/partGrabModifiers")]
   static KeyModifiers editorGrabPartModifiers = KeyModifiers.None;
 
+  [PersistentField("EvaPickup/grabKey")]
   public static string grabKey = "g";
+
+  [PersistentField("EvaPickup/attachKey")]
   public static string attachKey = "h";
+
+  [PersistentField("EvaPickup/redockKey")]
   public static string redockKey = "y";
+
+  [PersistentField("EvaPickup/draggedIconResolution")]
+  public static int draggedIconResolution = 64;
+
   public static KIS_IconViewer icon;
   public static Part draggedPart;
   public static KIS_Item draggedItem;
   public static int draggedIconSize = 50;
-  public static int draggedIconResolution = 64;
   public static Part movingPart;
   public static KISAddonPickup instance;
   public bool grabActive = false;
