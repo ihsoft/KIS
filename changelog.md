@@ -1,3 +1,17 @@
+### 1.2.8 (2 May 2016)
+- [Change] Compatibility change for KSP 1.1.2.
+- [Change] When attaching a part with stack nodes by default prefer "bottom" and "top" attach nodes as they are most used ones.
+- [Change] Turn allowPartAttach and allowStaticAttach fields of KISItem into enums. Integers are still accepted but in the new parts using of enum names is encouraged.
+- [Change] Temporarily increase breaking force of equipped items by x10 (up to 50). Old settings of 5 is too weak for such applications as eva chutes. Also see bug #128.
+- [Enhancement] Show error message when "X" is pressed and no item is equipped.
+- [Enhancement] #117: Auto add common items to the seats.
+- [Fix] #116: Mass limit is not checked when grabbing from inventory.
+- [Fix] #118: Detach of static attached part results in NPE.
+- [Fix] #119: Adding an item into inventory in the editor shows KSP error in the logs.
+- [Fix] #121: In node attach mode the connection points markers get overlapped by the part's mesh.
+- [Fix] #122: For some parts attach point is wrongly detected.
+- [Fix] #124: Parts with allowPartAttach = 1 still require a tool.
+
 ### 1.2.7 (21 April 2016)
 - [Change] KSP 1.1 supported!
 - [Change] Increase static attach strength on ground base to prevent joint breakage.
