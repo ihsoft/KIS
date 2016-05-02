@@ -11,7 +11,7 @@ using UnityEngine.EventSystems;
 
 namespace KIS {
 
-[PersistentFieldsFile("KIS/settings.cfg", "")]
+[PersistentFieldsFile("KIS/settings.cfg", "KISConfig")]
 public class KISAddonPickup : MonoBehaviour {
   /// <summary>A helper class to handle mouse clicks in the editor.</summary>
   private class EditorClickListener : MonoBehaviour, IBeginDragHandler,
@@ -107,7 +107,7 @@ public class KISAddonPickup : MonoBehaviour {
   const string NotSupportedText = "The function is not supported on this part";
   const string CannotAttachText = "Attach function is not supported on this part";
 
-  [PersistentField("KISConfig/Editor/partGrabModifiers")]
+  [PersistentField("Editor/partGrabModifiers")]
   static KeyModifiers editorGrabPartModifiers = KeyModifiers.None;
 
   public static string grabKey = "g";
@@ -122,14 +122,17 @@ public class KISAddonPickup : MonoBehaviour {
   public static KISAddonPickup instance;
   public bool grabActive = false;
   public bool detachActive = false;
+
   private bool grabOk = false;
   private bool detachOk = false;
   private bool jetpackLock = false;
   private bool delayedButtonUp = false;
 
+  /// <summary>A number of parts inthe currently grabbed assembly.</summary>
   public static int grabbedPartsCount;
+  /// <summary>The total mass of the grabbed assembly. Tons.</summary>
   public static float grabbedMass;
-  // Tons.
+  /// <summary>A root part of the currently grabbed assembly.</summary>
   public static Part grabbedPart;
 
   private static Part redockTarget;
@@ -279,7 +282,7 @@ public class KISAddonPickup : MonoBehaviour {
       }
     }
     GameEvents.onVesselChange.Add(new EventData<Vessel>.OnEvent(this.OnVesselChange));
-    ConfigAccessor.ReadFieldsInType(typeof(KISAddonPickup), this /* instance */);
+    ConfigAccessor.ReadFieldsInType(typeof(KISAddonPickup), instance: this);
   }
 
   public void Update() {
