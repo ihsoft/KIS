@@ -1,1 +1,4 @@
 Pre-release changes:
+- [Change] Temporarily set surface attach node as the most preferable for default. It's a workaround until #134 is fixed.
+- [Fix] #131: Kerbals can't pull items from Inventories.
+- [Fix] #133: Concrete block doesn't attach.
