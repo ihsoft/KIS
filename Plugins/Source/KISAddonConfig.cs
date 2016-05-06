@@ -77,7 +77,7 @@ class KISAddonConfig : MonoBehaviour {
 
   void UpdateEvaPrefab(AvailablePart avPart, ConfigNode nodeSettings) {
     var prefab = avPart.partPrefab;
-    // Adding module to EVA may cause an NPE excetption but work module update will still work.
+    // Adding module to EVA may cause an NPE but module update will still work.
     try {
       prefab.AddModule(typeof(ModuleKISInventory).Name);
     } catch (Exception ex) {
