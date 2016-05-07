@@ -11,7 +11,7 @@ using UnityEngine.EventSystems;
 
 namespace KIS {
 
-[PersistentFieldsFile("KIS/settings.cfg", "")]
+[PersistentFieldsFile("KIS/settings.cfg", "KISConfig")]
 public class KISAddonPickup : MonoBehaviour {
   /// <summary>A helper class to handle mouse clicks in the editor.</summary>
   private class EditorClickListener : MonoBehaviour, IBeginDragHandler,
@@ -74,6 +74,7 @@ public class KISAddonPickup : MonoBehaviour {
     }
   }
 
+  // Icons paths.
   const string GrabIcon = "KIS/Textures/grab";
   const string GrabOkIcon = "KIS/Textures/grabOk";
   const string ForbiddenIcon = "KIS/Textures/forbidden";
@@ -107,29 +108,40 @@ public class KISAddonPickup : MonoBehaviour {
   const string NotSupportedText = "The function is not supported on this part";
   const string CannotAttachText = "Attach function is not supported on this part";
 
-  [PersistentField("KISConfig/Editor/partGrabModifiers")]
+  [PersistentField("Editor/partGrabModifiers")]
   static KeyModifiers editorGrabPartModifiers = KeyModifiers.None;
 
+  [PersistentField("EvaPickup/grabKey")]
   public static string grabKey = "g";
+
+  [PersistentField("EvaPickup/attachKey")]
   public static string attachKey = "h";
+
+  [PersistentField("EvaPickup/redockKey")]
   public static string redockKey = "y";
+
+  [PersistentField("EvaPickup/draggedIconResolution")]
+  public static int draggedIconResolution = 64;
+
   public static KIS_IconViewer icon;
   public static Part draggedPart;
   public static KIS_Item draggedItem;
   public static int draggedIconSize = 50;
-  public static int draggedIconResolution = 64;
   public static Part movingPart;
   public static KISAddonPickup instance;
   public bool grabActive = false;
   public bool detachActive = false;
+
   private bool grabOk = false;
   private bool detachOk = false;
   private bool jetpackLock = false;
   private bool delayedButtonUp = false;
 
+  /// <summary>A number of parts inthe currently grabbed assembly.</summary>
   public static int grabbedPartsCount;
+  /// <summary>The total mass of the grabbed assembly. Tons.</summary>
   public static float grabbedMass;
-  // Tons.
+  /// <summary>A root part of the currently grabbed assembly.</summary>
   public static Part grabbedPart;
 
   private static Part redockTarget;
@@ -279,7 +291,7 @@ public class KISAddonPickup : MonoBehaviour {
       }
     }
     GameEvents.onVesselChange.Add(new EventData<Vessel>.OnEvent(this.OnVesselChange));
-    ConfigAccessor.ReadFieldsInType(typeof(KISAddonPickup), this /* instance */);
+    ConfigAccessor.ReadFieldsInType(typeof(KISAddonPickup), instance: this);
   }
 
   public void Update() {
@@ -510,7 +522,7 @@ public class KISAddonPickup : MonoBehaviour {
     }
 
     KIS_Shared.SetHierarchySelection(part, true /* isSelected */);
-    if (!CheckCanGrab(part)) {
+    if (!CheckCanGrabRealPart(part)) {
       return;
     }
 
@@ -760,11 +772,11 @@ public class KISAddonPickup : MonoBehaviour {
     return nearestPModule;
   }
 
-  private float GetAllPickupMaxMassInRange(Part p) {
+  private float GetAllPickupMaxMassInRange(Vector3 grabPosition) {
     float maxMass = 0;
     var allPickupModules = FindObjectsOfType(typeof(ModuleKISPickup)) as ModuleKISPickup[];
     foreach (ModuleKISPickup pickupModule in allPickupModules) {
-      float partDist = Vector3.Distance(pickupModule.part.transform.position, p.transform.position);
+      float partDist = Vector3.Distance(pickupModule.part.transform.position, grabPosition);
       if (partDist <= pickupModule.maxDistance) {
         maxMass += pickupModule.grabMaxMass;
       }
@@ -814,13 +826,19 @@ public class KISAddonPickup : MonoBehaviour {
     Drop(item.availablePart.partPrefab, item.inventory.part);
   }
 
+  /// <summary>Handles part drop action.</summary>
+  /// <param name="part">A part to be created on drop.</param>
+  /// <param name="fromPart">A part that was the source of the draggign action. If a world's part is
+  /// grabbed than it will be that part. If <paramref name="part"/> is being dragged from inventory
+  /// then this parameter is an inventory reference.</param>
   public void Drop(Part part, Part fromPart) {
     grabbedPart = part;
     Logger.logInfo("End pickup of {0} from part: {1}", part, fromPart);
     if (!KISAddonPointer.isRunning) {
-      ModuleKISPickup pickupModule = GetActivePickupNearest(fromPart);
+      var pickupModule = GetActivePickupNearest(fromPart);
       int unusedPartsCount;
-      if (pickupModule && CheckMass(part, out unusedPartsCount, reportToConsole: true)) {
+      if (pickupModule && CheckMass(fromPart.transform.position, part,
+                                    out unusedPartsCount, reportToConsole: true)) {
         KISAddonPointer.allowPart = true;
         KISAddonPointer.allowEva = true;
         KISAddonPointer.allowMount = true;
@@ -1096,7 +1114,7 @@ public class KISAddonPickup : MonoBehaviour {
     }
     KIS_Shared.SetHierarchySelection(redockTarget, true /* isSelected */);
 
-    if (!CheckCanGrab(redockTarget) || !CheckCanDetach(redockTarget) ||
+    if (!CheckCanGrabRealPart(redockTarget) || !CheckCanDetach(redockTarget) ||
         !CheckIsAttachable(redockTarget)) {
       return;
     }
@@ -1129,14 +1147,14 @@ public class KISAddonPickup : MonoBehaviour {
     KISAddonCursor.CursorEnable(GrabIcon, ReDockOkStatus, ReDockSelectVesselText);
   }
   
-  /// <summary>
-  /// Checks if the part and its children can be grabbed and reports the errors.
-  /// </summary>
-  /// <remarks>Also, collects <seealso cref="grabbedMass"/> and
-  /// <seealso cref="grabbedPartsCount"/> of the attempted hierarchy.</remarks>
+  /// <summary>Checks if the part and its children can be grabbed and reports the errors.</summary>
+  /// <remarks>It must be an existing part, no prefab allowed.
+  /// <para>Also, collects <seealso cref="grabbedMass"/> and
+  /// <seealso cref="grabbedPartsCount"/> of the attempted hierarchy.</para>
+  /// </remarks>
   /// <param name="part">A hierarchy root being grabbed.</param>
   /// <returns><c>true</c> when the hierarchy can be grabbed.</returns>
-  private bool CheckCanGrab(Part part) {
+  private bool CheckCanGrabRealPart(Part part) {
     // Don't grab kerbals. It's weird, and they don't have attachment nodes anyways.
     if (part.name == "kerbalEVA" || part.name == "kerbalEVAfemale") {
       ReportCheckError(CannotGrabStatus, CannotMoveKerbonautText);
@@ -1148,7 +1166,7 @@ public class KISAddonPickup : MonoBehaviour {
       return false;
     }
     // Check if attached part has acceptable mass and can be detached.
-    return CheckMass(part, out grabbedPartsCount) && CheckCanDetach(part);
+    return CheckMass(part.transform.position, part, out grabbedPartsCount) && CheckCanDetach(part);
   }
 
   /// <summary>Calculates grabbed part/assembly mass and reports if it's too heavy.</summary>
@@ -1159,9 +1177,10 @@ public class KISAddonPickup : MonoBehaviour {
   /// game's "console"). Otherwise, excess of mass only results in changing cursor icon to
   /// <seealso cref="TooHeavyIcon"/>.</param>
   /// <returns><c>true</c> if total mass is within the limits.</returns>
-  private bool CheckMass(Part part, out int grabbedPartsCount, bool reportToConsole = false) {
+  private bool CheckMass(Vector3 grabPosition, Part part, out int grabbedPartsCount,
+                         bool reportToConsole = false) {
     grabbedMass = KIS_Shared.GetAssemblyMass(part, out grabbedPartsCount);
-    float pickupMaxMass = GetAllPickupMaxMassInRange(part);
+    float pickupMaxMass = GetAllPickupMaxMassInRange(grabPosition);
     if (grabbedMass > pickupMaxMass) {
       ReportCheckError(TooHeavyStatus,
                        String.Format(TooHeavyTextFmt, grabbedMass, pickupMaxMass),

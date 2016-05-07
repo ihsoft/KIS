@@ -1,4 +1,5 @@
-﻿using KSPDev.LogUtils;
+﻿using KSPDev.ConfigUtils;
+using KSPDev.LogUtils;
 using System;
 using System.Linq;
 using System.Collections.Generic;
@@ -8,6 +9,7 @@ using UnityEngine;
 
 namespace KIS {
 
+[PersistentFieldsFile("KIS/settings.cfg", "KISConfig")]
 public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifier {
   // Inventory
   public Dictionary<int, KIS_Item> items = new Dictionary<int, KIS_Item>();
@@ -42,20 +44,54 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
   [KSPField(isPersistant = true)]
   public bool helmetEquipped = true;
 
-  public string evaInventoryKey = "tab";
-  public string evaRightHandKey = "x";
-  public string evaHelmetKey = "j";
+  [PersistentField("EvaInventory/inventoryKey")]
+  public static string evaInventoryKey = "tab";
+
+  [PersistentField("EvaInventory/rightHandKey")]
+  public static string evaRightHandKey = "x";
+
+  [PersistentField("EvaInventory/helmetKey")]
+  public static string evaHelmetKey = "j";
       
   // Inventory hotkeys control.
+  [PersistentField("Global/slotHotkeysEnabled")]
   public static bool inventoryKeysEnabled = true;
+
+  [PersistentField("Global/slotHotkey1")]
   public static KeyCode slotHotkey1 = KeyCode.Alpha1;
+
+  [PersistentField("Global/slotHotkey2")]
   public static KeyCode slotHotkey2 = KeyCode.Alpha2;
+
+  [PersistentField("Global/slotHotkey3")]
   public static KeyCode slotHotkey3 = KeyCode.Alpha3;
+
+  [PersistentField("Global/slotHotkey4")]
   public static KeyCode slotHotkey4 = KeyCode.Alpha4;
+
+  [PersistentField("Global/slotHotkey5")]
   public static KeyCode slotHotkey5 = KeyCode.Alpha5;
+
+  [PersistentField("Global/slotHotkey6")]
   public static KeyCode slotHotkey6 = KeyCode.Alpha6;
+
+  [PersistentField("Global/slotHotkey7")]
   public static KeyCode slotHotkey7 = KeyCode.Alpha7;
+
+  [PersistentField("Global/slotHotkey8")]
   public static KeyCode slotHotkey8 = KeyCode.Alpha8;
+
+  [PersistentField("Global/kerbalDefaultMass")]
+  public static float kerbalDefaultMass = 0.094f;
+
+  [PersistentField("Global/itemDebug")]
+  public static bool debugContextMenu = false;
+
+  [PersistentField("Editor/PodInventory/addToAllSeats", isCollection = true)]
+  public static List<String> defaultItemsForAllSeats = new List<string>();
+
+  [PersistentField("Editor/PodInventory/addToTheFirstSeatOnly", isCollection = true)]
+  public static List<String> defaultItemsForTheFirstSeat = new List<string>();
 
   public string openGuiName;
   public float totalVolume = 0;
@@ -70,7 +106,6 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
   public delegate void DelayedActionMethod(KIS_Item item);
   public string kerbalTrait;
   private List<KIS_Item> startEquip = new List<KIS_Item>();
-  public float kerbalDefaultMass = 0.094f;
 
   // GUI
   public bool showGui = false;
@@ -107,8 +142,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
 
   // Debug
   private KIS_Item debugItem;
-  public static bool debugContextMenu = false;
-
+  
   // Messages.  
   const string NoItemEquippedMsg = "Cannot use equipped item because nothing is equipped";
 
@@ -135,16 +169,16 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
       
       // Add default items to the seats of a newly added pod.
       if (podSeat != -1) {
-        if (KISAddonConfig.defaultItemsForAllSeats.Count > 0) {
+        if (defaultItemsForAllSeats.Count > 0) {
           Logger.logInfo(
               "Adding default item(s) into seat's {0} inventory of part {1}: {2}",
-              podSeat, part.name, Logger.C2S(KISAddonConfig.defaultItemsForAllSeats));
-          AddItems(KISAddonConfig.defaultItemsForAllSeats);
+              podSeat, part.name, Logger.C2S(defaultItemsForAllSeats));
+          AddItems(defaultItemsForAllSeats);
         }
-        if (podSeat == 0 && KISAddonConfig.defaultItemsForTheFirstSeat.Count > 0) {
+        if (podSeat == 0 && defaultItemsForTheFirstSeat.Count > 0) {
           Logger.logInfo("Adding default item(s) into the first seat of part {0}: {1}",
-                         part.name, Logger.C2S(KISAddonConfig.defaultItemsForTheFirstSeat));
-          AddItems(KISAddonConfig.defaultItemsForTheFirstSeat);
+                         part.name, Logger.C2S(defaultItemsForTheFirstSeat));
+          AddItems(defaultItemsForTheFirstSeat);
         }
       }
     } else {

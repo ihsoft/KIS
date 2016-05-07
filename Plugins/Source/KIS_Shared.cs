@@ -758,8 +758,9 @@ static public class KIS_Shared {
       }
     }
     // Add a surface node if it's free.
+    // FIXME: Temporarily rollback to the old behavior. See #134.
     if (needSrf && srfNode != null && !srfHasPart) {
-      result.Add(srfNode);
+      result.Insert(0, srfNode);
     }
     return result;
   }
