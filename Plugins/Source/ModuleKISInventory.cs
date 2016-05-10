@@ -93,6 +93,10 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
   [PersistentField("Editor/PodInventory/addToTheFirstSeatOnly", isCollection = true)]
   public static List<String> defaultItemsForTheFirstSeat = new List<string>();
 
+  // UI strings.
+  public const string strMaxVolumeReached =
+      "Max destination volume reached. Part volume is: {0:#.#### L} (+{1:#.#### L})";
+
   public string openGuiName;
   public float totalVolume = 0;
   public int podSeat = -1;
@@ -743,28 +747,24 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
 
   private bool VolumeAvailableFor(Part p) {
     ModuleKISItem mItem = p.GetComponent<ModuleKISItem>();
-    if (mItem) {
-      if (mItem.volumeOverride > 0) {
-        float newTotalVolume = GetContentVolume() + mItem.volumeOverride;
-        if (newTotalVolume > maxVolume) {
-          ScreenMessages.PostScreenMessage(
-              "Max destination volume reached. Part volume is : "
-              + mItem.volumeOverride.ToString("0.00 L") + " (+"
-              + (newTotalVolume - maxVolume).ToString("0.00 L") + ")",
-              5, ScreenMessageStyle.UPPER_CENTER);
-          return false;
-        } else {
-          return true;
-        }
+    if (mItem && mItem.volumeOverride > 0) {
+      float newTotalVolume = GetContentVolume() + mItem.volumeOverride;
+      if (newTotalVolume > maxVolume) {
+        ScreenMessages.PostScreenMessage(
+            string.Format(strMaxVolumeReached, mItem.volumeOverride, (newTotalVolume - maxVolume)),
+            5, ScreenMessageStyle.UPPER_CENTER);
+        return false;
+      } else {
+        return true;
       }
     }
 
     float newTotalVolume2 = GetContentVolume() + KIS_Shared.GetPartVolume(p.partInfo.partPrefab);
     if (newTotalVolume2 > maxVolume) {
       ScreenMessages.PostScreenMessage(
-          "Max destination volume reached. Part volume is : "
-          + KIS_Shared.GetPartVolume(p.partInfo.partPrefab).ToString("0.00 L")
-          + " (+" + (newTotalVolume2 - maxVolume).ToString("0.00 L") + ")",
+          string.Format(strMaxVolumeReached,
+                        KIS_Shared.GetPartVolume(p.partInfo.partPrefab),
+                        (newTotalVolume2 - maxVolume)),
           5, ScreenMessageStyle.UPPER_CENTER);
       return false;
     } else {
@@ -781,9 +781,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
       float newTotalVolume = GetContentVolume() + item.stackVolume;
       if (newTotalVolume > maxVolume) {
         ScreenMessages.PostScreenMessage(
-            "Max destination volume reached. Part volume is : "
-            + item.stackVolume.ToString("0.00 L") + " (+"
-            + (newTotalVolume - maxVolume).ToString("0.00 L") + ")",
+            string.Format(strMaxVolumeReached, item.stackVolume, (newTotalVolume - maxVolume)),
             5, ScreenMessageStyle.UPPER_CENTER);
         return false;
       } else {
