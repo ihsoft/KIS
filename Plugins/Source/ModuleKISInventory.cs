@@ -319,10 +319,9 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
                                 availablePartName);
               item = AddItem(availablePart.partPrefab, qty, slot);
             }
-            if (cn.HasValue("equipped") && item != null) {
-              if (bool.Parse(cn.GetValue("equipped")) && this.invType == InventoryType.Eva) {
-                startEquip.Add(item);
-              }
+            if (cn.HasValue("equipped") && item != null
+                && bool.Parse(cn.GetValue("equipped")) && this.invType == InventoryType.Eva) {
+              startEquip.Add(item);
             }
           } else {
             Logger.logError("Unable to load {0} from inventory", availablePartName);
