@@ -1,1 +1,2 @@
 Pre-release changes:
+- [Fix] #117: Fix duplication of the default items on flight revert.
