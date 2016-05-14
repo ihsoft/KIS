@@ -24,11 +24,14 @@ class EditorDefaultItemsAdder : MonoBehaviour {
   }
 
   /// <summary>Adds default items to the pod's seats.</summary>
-  /// <remarks>Items are only added to an item created in the editor. Thus, reacting on the editor
+  /// <remarks>Items are only added to a part created in the editor. Thus, reacting on the editor
   /// event.</remarks>
   /// <param name="type">Unused.</param>
   /// <param name="p">A target part.</param>
   void OnEditPartCreate(ConstructionEventType type, Part p) {
+    if (type != ConstructionEventType.PartCreated && type != ConstructionEventType.PartCopied) {
+      return;
+    }
     var inventories = p.GetComponents<ModuleKISInventory>();
     foreach (var inventory in inventories) {
       if (inventory.podSeat != -1 && ModuleKISInventory.defaultItemsForAllSeats.Count > 0) {
