@@ -12,7 +12,7 @@ namespace KIS {
 
 /// <summary>An EDITOR event listener to add default items to the pod's seats</summary>
 /// <remarks>Items should only be added when a new pod is created in the editor. Any other cases of
-//// pod creation must be ignored.</remarks>
+/// pod creation must be ignored.</remarks>
 [KSPAddon(KSPAddon.Startup.EditorAny, false /* once */)]
 class EditorDefaultItemsAdder : MonoBehaviour {
   void Awake() {
