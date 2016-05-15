@@ -110,9 +110,8 @@ public class KIS_Item {
                   float quantity = 1) {
     // Get part node
     this.availablePart = availablePart;
-    this.partNode = new ConfigNode();
-    ConfigNode savedPartNode = itemNode.GetNode("PART");
-    savedPartNode.CopyTo(partNode);
+    partNode = new ConfigNode();
+    itemNode.GetNode("PART").CopyTo(partNode);
     // init config
     this.InitConfig(availablePart, inventory, quantity);
     // Get mass
@@ -156,31 +155,32 @@ public class KIS_Item {
                           ModuleKISInventory inventory, float quantity) {
     this.inventory = inventory;
     this.quantity = quantity;
-    this.prefabModule = availablePart.partPrefab.GetComponent<ModuleKISItem>();
-    this.volume = GetVolume();
-    this.cost = GetCost();
+    prefabModule = availablePart.partPrefab.GetComponent<ModuleKISItem>();
+    volume = KIS_Shared.GetPartVolume(availablePart);
+    cost = GetCost();
 
     // Set launchID
-    if (this.partNode.HasValue("launchID")) {
+    if (partNode.HasValue("launchID")) {
       if (int.Parse(this.partNode.GetValue("launchID")) == 0) {
-        this.partNode.SetValue("launchID", this.inventory.part.launchID.ToString(), true);
+        partNode.SetValue("launchID", this.inventory.part.launchID.ToString(), true);
       }
     } else {
-      this.partNode.SetValue("launchID", this.inventory.part.launchID.ToString(), true);
+      partNode.SetValue("launchID", this.inventory.part.launchID.ToString(), true);
     }
 
-    if (this.prefabModule) {
-      if (this.prefabModule.volumeOverride > 0) {
-        this.volume = this.prefabModule.volumeOverride;
+    if (prefabModule) {
+      // FIXME: Drop once volume override is supported in KIS_Shared.
+      if (prefabModule.volumeOverride > 0) {
+        volume = prefabModule.volumeOverride;
       }
-      this.equipable = prefabModule.equipable;
-      this.stackable = prefabModule.stackable;
-      this.equipSlot = prefabModule.equipSlot;
-      this.usableFromEva = prefabModule.usableFromEva;
-      this.usableFromContainer = prefabModule.usableFromContainer;
-      this.usableFromPod = prefabModule.usableFromPod;
-      this.usableFromEditor = prefabModule.usableFromEditor;
-      this.carriable = prefabModule.carriable;
+      equipable = prefabModule.equipable;
+      stackable = prefabModule.stackable;
+      equipSlot = prefabModule.equipSlot;
+      usableFromEva = prefabModule.usableFromEva;
+      usableFromContainer = prefabModule.usableFromContainer;
+      usableFromPod = prefabModule.usableFromPod;
+      usableFromEditor = prefabModule.usableFromEditor;
+      carriable = prefabModule.carriable;
     }
     int nonStackableModule = 0;
     foreach (PartModule pModule in availablePart.partPrefab.Modules) {
@@ -190,15 +190,15 @@ public class KIS_Item {
     }
     if (nonStackableModule == 0 && GetResources().Count == 0) {
       Logger.logInfo(
-          "No non-stackable module and ressource found on the part, set item as stackable");
-      this.stackable = true;
+          "No non-stackable module or a resource found on the part, set the item as stackable");
+      stackable = true;
     }
     if (KISAddonConfig.stackableList.Contains(availablePart.name)
         || availablePart.name.IndexOf('.') != -1
         && KISAddonConfig.stackableList.Contains(availablePart.name.Replace('.', '_'))) {
       Logger.logInfo("Part name present in settings.cfg (node StackableItemOverride),"
                      + " force item as stackable");
-      this.stackable = true;
+      stackable = true;
     }
   }
 
