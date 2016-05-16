@@ -19,22 +19,13 @@ public class KISAddonPickup : MonoBehaviour {
     private EditorPartIcon partIcon;
     private bool dragStarted;
     private const PointerEventData.InputButton PartDragButton = PointerEventData.InputButton.Left;
-    private Part preCreatedPart;
 
     public virtual void OnBeginDrag(PointerEventData eventData) {
       // Start dargging for KIS or delegate event to the editor.
       if (eventData.button == PartDragButton
           && EventChecker.IsModifierCombinationPressed(editorGrabPartModifiers)) {
         dragStarted = true;
-        // Don't trust the parts provided by the editor. They may have uninitialized modules. Always
-        // re-create them from prefab.
-        if (!preCreatedPart) {
-          preCreatedPart = (Part) UnityEngine.Object.Instantiate(partIcon.partInfo.partPrefab);
-          preCreatedPart.gameObject.SetActive(true);
-          preCreatedPart.name = partIcon.partInfo.name;
-          preCreatedPart.InitializeModules();
-        }
-        KISAddonPickup.instance.OnMouseGrabPartClick(preCreatedPart);
+        KISAddonPickup.instance.OnMouseGrabPartClick(partIcon.partInfo.partPrefab);
       } else {
         EditorPartList.Instance.partListScrollRect.OnBeginDrag(eventData);
       }
@@ -64,13 +55,6 @@ public class KISAddonPickup : MonoBehaviour {
     void Start() {
       // Getting components is not a cheap operation so, cache anything we can.
       partIcon = GetComponent<EditorPartIcon>();              
-    }
-    
-    void OnDestroy() {
-      if (preCreatedPart) {
-        UnityEngine.Object.Destroy(preCreatedPart.gameObject);
-        preCreatedPart = null;
-      }
     }
   }
 
