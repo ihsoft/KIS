@@ -529,8 +529,9 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     // Update volume
     totalVolume = GetContentVolume();
     // Update vessel cost in editor
-    if (HighLogic.LoadedSceneIsEditor)
+    if (HighLogic.LoadedSceneIsEditor) {
       GameEvents.onEditorShipModified.Fire(EditorLogic.fetch.ship);
+    }
   }
 
   public void OnDestroy() {
@@ -1518,7 +1519,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
                     MoveItem(KISAddonPickup.draggedItem, this, i);
                   }
                 }
-              } else if (KISAddonPickup.draggedPart != this.part) {
+              } else if (KISAddonPickup.draggedPart != part) {
                 // Picked part from scene
                 if (carryPart) {
                   KIS_Shared.SendKISMessage(
