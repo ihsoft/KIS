@@ -536,11 +536,19 @@ static public class KIS_Shared {
   /// (e.g. Drill-O-Matic) then it will take more space than it could have.</remarks>
   /// <param name="partInfo">A part to get volume for.</param>
   /// <returns>Volume in liters.</returns>
-  /// FIXME: Support volume override.
   public static float GetPartVolume(AvailablePart partInfo) {
     var p = partInfo.partPrefab;
-    var boundsSize = PartGeometryUtil.MergeBounds(p.GetRendererBounds(), p.transform).size;
-    var volume = boundsSize.x * boundsSize.y * boundsSize.z * 1000f;
+    float volume;
+
+    // If there is a KIS item volume then use it but still apply scale tweaks. 
+    var kisItem = p.GetComponent<ModuleKISItem>();
+    if (kisItem && kisItem.volumeOverride > 0) {
+      volume = kisItem.volumeOverride;
+    } else {
+      var boundsSize = PartGeometryUtil.MergeBounds(p.GetRendererBounds(), p.transform).size;
+      volume = boundsSize.x * boundsSize.y * boundsSize.z * 1000f;
+    }
+
     // Apply cube of the scale modifier since volume involves all 3 axis.
     return (float) (volume * Math.Pow(GetPartExternalScaleModifier(partInfo), 3));
   }

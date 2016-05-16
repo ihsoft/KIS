@@ -1,2 +1,3 @@
 Pre-release changes:
 - [Fix] #117: Fix duplication of the default items on flight revert.
+- [Internal] Move TweakScale and volume override support in a single place.

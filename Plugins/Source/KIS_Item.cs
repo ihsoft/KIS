@@ -169,10 +169,6 @@ public class KIS_Item {
     }
 
     if (prefabModule) {
-      // FIXME: Drop once volume override is supported in KIS_Shared.
-      if (prefabModule.volumeOverride > 0) {
-        volume = prefabModule.volumeOverride;
-      }
       equipable = prefabModule.equipable;
       stackable = prefabModule.stackable;
       equipSlot = prefabModule.equipSlot;
