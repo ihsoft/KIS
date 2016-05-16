@@ -1,4 +1,5 @@
-﻿using KSPDev.LogUtils;
+﻿using KSPDev.ConfigUtils;
+using KSPDev.LogUtils;
 using System;
 using System.Collections.Generic;
 using System.Collections;
@@ -247,6 +248,15 @@ static public class KIS_Shared {
   }
 
   public static ConfigNode PartSnapshot(Part part) {
+    if (ReferenceEquals(part, part.partInfo.partPrefab)) {
+      // HACK: Prefab may have fields initialized to "null". Such fields cannot be saved via
+      //   BaseFieldList when making a snapshot. So, go thru the persistent fields of all prefab
+      //   modules and replace nulls with a default value of the type. It's unlikely we break
+      //   something since by design such fields are not assumed to be used until loaded, and it's
+      //   impossible to have "null" value read from a config.
+      CleanupModuleFieldsInPart(part);
+    }
+
     var node = new ConfigNode("PART");
     var snapshot = new ProtoPartSnapshot(part, null);
 
@@ -840,6 +850,35 @@ static public class KIS_Shared {
   /// <param name="args">Arguments for the formattign string.</param>
   public static void ShowRightScreenMessage(String fmt, params object[] args) {
     ShowRightScreenMessageWithTimeout(DefaultMessageTimeout, fmt, args);
+  }
+
+  /// <summary>Walks thru all modules in the part and fixes null persistent fields.</summary>
+  /// <remarks>Used to prevent NREs in methods that persist KSP fields.</remarks>
+  /// <param name="part">A prefab to fix.</param>
+  public static void CleanupModuleFieldsInPart(Part part) {
+    foreach (var module in part.Modules) {
+      CleanupFieldsInModule(module as PartModule);
+    }
+  }
+
+  /// <summary>Fixes null persistent fields in the module.</summary>
+  /// <remarks>Used to prevent NREs in methods that persist KSP fields.</remarks>
+  /// <param name="module">A module to fix.</param>
+  public static void CleanupFieldsInModule(PartModule module) {
+    foreach (var field in module.Fields) {
+      var baseField = field as BaseField;
+      if (baseField.isPersistant && baseField.GetValue(module) == null) {
+        var proto = new StandardOrdinaryTypesProto();
+        var defValue = proto.ParseFromString("", baseField.FieldInfo.FieldType);
+        Logger.logWarning("WORKAROUND. Found null field {0} in module prefab {1},"
+                          + " fixing to default value of type {2}: {3}",
+                          baseField.name,
+                          module.moduleName,
+                          baseField.FieldInfo.FieldType,
+                          defValue);
+        baseField.SetValue(defValue, module);
+      }
+    }
   }
 }
 
