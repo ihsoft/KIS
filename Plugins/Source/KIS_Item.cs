@@ -258,19 +258,6 @@ public class KIS_Item {
     return 1;
   }
 
-  public float GetVolume() {
-    // TweakScale compatibility
-    foreach (ConfigNode node in this.partNode.GetNodes("MODULE")) {
-      if (node.HasValue("name") && node.GetValue("name") == "TweakScale"
-          && node.HasValue("currentScale") && node.HasValue("defaultScale")) {
-        var scale = (float)Math.Pow(double.Parse(node.GetValue("currentScale"))
-                                    / double.Parse(node.GetValue("defaultScale")), 3);
-        return KIS_Shared.GetPartVolume(availablePart.partPrefab) * scale;
-      }
-    }
-    return KIS_Shared.GetPartVolume(availablePart.partPrefab);
-  }
-
   public float GetCost() {
     // TweakScale compatibility
     foreach (ConfigNode node in this.partNode.GetNodes("MODULE")) {
