@@ -1,3 +1,8 @@
 Pre-release changes:
 - [Fix] #117: Fix duplication of the default items on flight revert.
+- [Fix] #140: A part get created on drag in the editor.
 - [Internal] Move TweakScale and volume override support in a single place.
+- [Change] Always calculate part volume from its prefab. It's now consistent but may be not optimal in some cases. E.g. deployable parts that are deployed by default (in the mesh state) will take more space than they used to be. It may result in awkward behavior of containers that were loaded prior to the update.
+- [Internal] Fix null fields in the modules to make part snapshot working fine.
+- [Internal] Simulate awakening of the new KIS modules. It's required to not fail snapshoting.
+ 
