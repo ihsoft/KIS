@@ -523,6 +523,26 @@ static public class KIS_Shared {
     Vector3 boundsSize = PartGeometryUtil.MergeBounds(rendererBounds, partPrefab.transform).size;
     float volume = boundsSize.x * boundsSize.y * boundsSize.z;
     return volume * 1000;
+
+  /// <summary>Returns external part's scale.</summary>
+  /// <remarks>This is a scale applied on the module by the other mods. I.e. it's a "runtime" scale,
+  /// not the one specified in the common part's config.
+  /// <para>The only mod supported till now is <c>TweakScale</c>.</para>
+  /// </remarks>
+  /// <param name="avPart">A part info to check modules for.</param>
+  /// <returns>Multiplier to a model's scale on one axis.</returns>
+  public static float GetPartExternalScaleModifier(AvailablePart avPart) {
+    // TweakScale compatibility.
+    foreach (var node in avPart.partConfig.GetNodes("MODULE")) {
+      if (node.GetValue("name") == "TweakScale") {
+        double defaultScale = 1.0f;
+        ConfigAccessor.GetValueByPath(node, "defaultScale", ref defaultScale);
+        double currentScale = 1.0f;
+        ConfigAccessor.GetValueByPath(node, "currentScale", ref currentScale);
+        return (float) (currentScale / defaultScale);
+      }
+    }
+    return 1.0f;
   }
 
   public static ConfigNode GetBaseConfigNode(PartModule partModule) {
