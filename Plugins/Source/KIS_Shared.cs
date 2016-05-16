@@ -528,10 +528,6 @@ static public class KIS_Shared {
     }
   }
 
-  public static float GetPartVolume(Part partPrefab) {
-    return GetPartVolume(partPrefab.partInfo);
-  }
-  
   /// <summary>Returns part's volume basing on its geometrics.</summary>
   /// <remarks>Geometry of a part depends on the state (e.g. solar panel can be deployed and take
   /// more space). It's not possible (nor practical) for KIS to figure out which state of the part
