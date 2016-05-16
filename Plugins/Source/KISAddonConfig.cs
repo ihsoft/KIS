@@ -42,7 +42,7 @@ class KISAddonConfig : MonoBehaviour {
     UpdateEvaPrefab(PartLoader.getPartInfoByName(MaleKerbalEva), nodeSettings);
     // Female Kerbal.
     UpdateEvaPrefab(PartLoader.getPartInfoByName(FemaleKerbalEva), nodeSettings);
-    
+
     // Set inventory module for every pod with crew capacity.
     Logger.logInfo("Loading pod inventories...");
     foreach (AvailablePart avPart in PartLoader.LoadedPartsList) {
@@ -51,11 +51,12 @@ class KISAddonConfig : MonoBehaviour {
           || !avPart.partPrefab || avPart.partPrefab.CrewCapacity < 1) {
         continue;
       }
+
       Logger.logInfo("Found part with CrewCapacity: {0}", avPart.name);
       for (int i = 0; i < avPart.partPrefab.CrewCapacity; i++) {
         try {
           var moduleInventory =
-              avPart.partPrefab.AddModule("ModuleKISInventory") as ModuleKISInventory;
+            avPart.partPrefab.AddModule(typeof(ModuleKISInventory).Name) as ModuleKISInventory;
           SetInventoryConfig(moduleInventory, nodeSettings);
           moduleInventory.podSeat = i;
           moduleInventory.invType = ModuleKISInventory.InventoryType.Pod;
