@@ -519,10 +519,25 @@ static public class KIS_Shared {
   }
 
   public static float GetPartVolume(Part partPrefab) {
-    Bounds[] rendererBounds = PartGeometryUtil.GetRendererBounds(partPrefab);
-    Vector3 boundsSize = PartGeometryUtil.MergeBounds(rendererBounds, partPrefab.transform).size;
-    float volume = boundsSize.x * boundsSize.y * boundsSize.z;
-    return volume * 1000;
+    return GetPartVolume(partPrefab.partInfo);
+  }
+  
+  /// <summary>Returns part's volume basing on its geometrics.</summary>
+  /// <remarks>Geometry of a part depends on the state (e.g. solar panel can be deployed and take
+  /// more space). It's not possible (nor practical) for KIS to figure out which state of the part
+  /// is the most compact one. So, when calculating part's volume the initial state of the mesh
+  /// renderers in the prefab is considered the right ones. If parts's initial state is deployed
+  /// (e.g. Drill-O-Matic) then it will take more space than it could have.</remarks>
+  /// <param name="partInfo">A part to get volume for.</param>
+  /// <returns>Volume in liters.</returns>
+  /// FIXME: Support volume override.
+  public static float GetPartVolume(AvailablePart partInfo) {
+    var p = partInfo.partPrefab;
+    var boundsSize = PartGeometryUtil.MergeBounds(p.GetRendererBounds(), p.transform).size;
+    var volume = boundsSize.x * boundsSize.y * boundsSize.z * 1000f;
+    // Apply cube of the scale modifier since volume involves all 3 axis.
+    return (float) (volume * Math.Pow(GetPartExternalScaleModifier(partInfo), 3));
+  }
 
   /// <summary>Returns external part's scale.</summary>
   /// <remarks>This is a scale applied on the module by the other mods. I.e. it's a "runtime" scale,
