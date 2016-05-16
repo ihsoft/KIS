@@ -7,6 +7,7 @@ using UnityEngine;
 
 
 using System.Text;
+using System.Reflection;
 
 namespace KIS {
 
@@ -57,6 +58,7 @@ class KISAddonConfig : MonoBehaviour {
         try {
           var moduleInventory =
             avPart.partPrefab.AddModule(typeof(ModuleKISInventory).Name) as ModuleKISInventory;
+          CallAwakeMethod(moduleInventory);
           SetInventoryConfig(moduleInventory, nodeSettings);
           moduleInventory.podSeat = i;
           moduleInventory.invType = ModuleKISInventory.InventoryType.Pod;
@@ -92,6 +94,7 @@ class KISAddonConfig : MonoBehaviour {
 
     // Setup inventory module for eva.
     var evaInventory = prefab.GetComponent<ModuleKISInventory>();
+    CallAwakeMethod(evaInventory);
     if (evaInventory) {
       SetInventoryConfig(evaInventory, nodeSettings);
       evaInventory.invType = ModuleKISInventory.InventoryType.Eva;
@@ -101,10 +104,34 @@ class KISAddonConfig : MonoBehaviour {
     // Load KSP fields for ModuleKISPickup module.
     var nodeEvaPickup = nodeSettings.GetNode("EvaPickup");
     var evaPickup = prefab.GetComponent<ModuleKISPickup>();
+    CallAwakeMethod(evaPickup);
     if (evaPickup && nodeEvaPickup != null) {
       var fields = new BaseFieldList(evaPickup);
       fields.Load(nodeEvaPickup);
       Logger.logInfo("Eva pickup module loaded successfully");
+    }
+  }
+
+  /// <summary>Makes a call to <c>Awake()</c> method of the part module.</summary>
+  /// <remarks>Modules added to prefab via <c>AddModule()</c> call are not get activated as they
+  /// would if activated by the Unity core. As a result some vital fields may be left uninitialized
+  /// which may result in an NRE later when working with the prefab (e.g. making a part snapshot).
+  /// This method finds and invokes method Awakes() via reflect which is normally done by Unity.
+  /// <para>This is a HACK since <c>Awake()</c> method is not supposed to be called by anone one but
+  /// Unity. For now it works fine but one day it may awake the kraken.</para>
+  /// <para>Private method can only be accessed via reflection when requested on the class that
+  /// declares it. I.e. method info must be requested from <c>PartModule</c> and not from a
+  /// descendant.</para>
+  /// </remarks>
+  /// <param name="instance">A module instance.</param>
+  static void CallAwakeMethod(object instance) {
+    var moduleAwakeMethod = typeof(PartModule).GetMethod(
+        "Awake", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+    if (moduleAwakeMethod != null) {
+      moduleAwakeMethod.Invoke(instance, new object[] {});
+    } else {
+      Logger.logError("Cannot found Awake() method on {0}. Skip awakening of the component: {1}",
+                      instance.GetType(), instance);
     }
   }
 }
