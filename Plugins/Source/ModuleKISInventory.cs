@@ -1452,9 +1452,12 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
               draggedItemModule = KISAddonPickup.draggedItem.prefabModule;
             }
 
-            if (draggedItemModule) {
-              if (draggedItemModule.carriable && invType == InventoryType.Eva
-                  && HighLogic.LoadedSceneIsFlight) {
+            if (draggedItemModule && draggedItemModule.carriable) {
+              if (HighLogic.LoadedSceneIsEditor && podSeat != -1) {
+                KIS_Shared.ShowCenterScreenMessage(
+                    "Carriable items cannot be stored in the seat's inventory");
+                storePart = false;
+              } else if (HighLogic.LoadedSceneIsFlight && invType == InventoryType.Eva) {
                 carryPart = true;
                 foreach (KeyValuePair<int, KIS_Item> enumeratedItem in items) {
                   if (enumeratedItem.Value.equipSlot == draggedItemModule.equipSlot
