@@ -254,6 +254,7 @@ public class KIS_Item {
     return 1;
   }
 
+  // TODO(ihsoft): Move to KIS_Shared.
   public float GetCost() {
     // TweakScale compatibility
     foreach (ConfigNode node in this.partNode.GetNodes("MODULE")) {
