@@ -553,16 +553,23 @@ static public class KIS_Shared {
     return (float) (volume * Math.Pow(GetPartExternalScaleModifier(partInfo), 3));
   }
 
-  /// <summary>Returns external part's scale.</summary>
+  /// <summary>Returns external part's scale for a default part configuration.</summary>
+  /// <param name="avPart">A part info to check modules for.</param>
+  /// <returns>Multiplier to a model's scale on one axis.</returns>
+  public static float GetPartExternalScaleModifier(AvailablePart avPart) {
+    return GetPartExternalScaleModifier(avPart.partConfig);
+  }
+
+  /// <summary>Returns external part's scale given a config.</summary>
   /// <remarks>This is a scale applied on the module by the other mods. I.e. it's a "runtime" scale,
   /// not the one specified in the common part's config.
   /// <para>The only mod supported till now is <c>TweakScale</c>.</para>
   /// </remarks>
-  /// <param name="avPart">A part info to check modules for.</param>
+  /// <param name="partNode">A config to get values from.</param>
   /// <returns>Multiplier to a model's scale on one axis.</returns>
-  public static float GetPartExternalScaleModifier(AvailablePart avPart) {
+  public static float GetPartExternalScaleModifier(ConfigNode partNode) {
     // TweakScale compatibility.
-    foreach (var node in avPart.partConfig.GetNodes("MODULE")) {
+    foreach (var node in partNode.GetNodes("MODULE")) {
       if (node.GetValue("name") == "TweakScale") {
         double defaultScale = 1.0f;
         ConfigAccessor.GetValueByPath(node, "defaultScale", ref defaultScale);
