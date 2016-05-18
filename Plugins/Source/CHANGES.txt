@@ -6,3 +6,4 @@ Pre-release changes:
 - [Internal] Fix null fields in the modules to make part snapshot working fine.
 - [Internal] Simulate awakening of the new KIS modules. It's required to not fail snapshoting.
 - [Change] Add a ModuleManager patch to override stock drills volume since in prefab these parts are deployed and take too much space.
+- [Fix] #141: Stop directly modifying inventory part mass.

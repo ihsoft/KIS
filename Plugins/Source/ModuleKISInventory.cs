@@ -512,23 +512,11 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     }
   }
 
+  /// <summary>Refreshes container mass, volume and cost.</summary>
   public void RefreshMassAndVolume() {
-    // Reset mass to default
-    if (invType == InventoryType.Eva) {
-      //partPrefab seem to don't exist on eva
-      //AssetBase.GetPrefab("kerbal") or PartLoader.getPartInfoByName("kerbalEVA").partPrefab.mass;
-      this.part.mass = kerbalDefaultMass;
-    } else {
-      AvailablePart avPart = PartLoader.getPartInfoByName(this.part.partInfo.name);
-      this.part.mass = avPart.partPrefab.mass;
-    }
-    // Update mass
-    foreach (ModuleKISInventory inventory in this.part.GetComponents<ModuleKISInventory>()) {
-      this.part.mass += inventory.GetContentMass();
-    }
-    // Update volume
+    // Update volume.
     totalVolume = GetContentVolume();
-    // Update vessel cost in editor
+    // Update vessel cost in editor.
     if (HighLogic.LoadedSceneIsEditor) {
       GameEvents.onEditorShipModified.Fire(EditorLogic.fetch.ship);
     }
@@ -708,8 +696,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
 
   // IPartMassModifier
   public ModifierChangeWhen GetModuleMassChangeWhen() {
-    // TODO(ihsoft): Figure out what value is right.
-    return ModifierChangeWhen.FIXED;
+    return ModifierChangeWhen.CONSTANTLY;
   }
       
   // IPartMassModifier
