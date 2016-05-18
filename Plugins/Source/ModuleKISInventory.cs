@@ -730,14 +730,8 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     return true;
   }
 
-  private bool VolumeAvailableFor(Part p) {
-    float partVolume;
-    ModuleKISItem mItem = p.GetComponent<ModuleKISItem>();
-    if (mItem && mItem.volumeOverride > 0) {
-      partVolume = mItem.volumeOverride;
-    } else {
-      partVolume = KIS_Shared.GetPartVolume(p.partInfo);
-    }
+  bool VolumeAvailableFor(Part p) {
+    float partVolume = KIS_Shared.GetPartVolume(p.partInfo);
     var newTotalVolume = GetContentVolume() + partVolume;
     if (newTotalVolume > maxVolume) {
       ScreenMessages.PostScreenMessage(
