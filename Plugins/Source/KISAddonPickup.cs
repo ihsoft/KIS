@@ -830,7 +830,7 @@ public class KISAddonPickup : MonoBehaviour {
         KISAddonPointer.allowStack = pickupModule.allowPartStack;
         KISAddonPointer.maxDist = pickupModule.maxDistance;
         if (draggedItem != null) {
-          KISAddonPointer.scale = draggedItem.GetScale();
+          KISAddonPointer.scale = KIS_Shared.GetPartExternalScaleModifier(draggedItem.partNode);
         } else {
           KISAddonPointer.scale = 1;
         }

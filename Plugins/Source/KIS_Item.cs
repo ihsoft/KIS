@@ -242,18 +242,6 @@ public class KIS_Item {
     return sciences;
   }
 
-  public float GetScale() {
-    // TweakScale compatibility
-    foreach (ConfigNode node in this.partNode.GetNodes("MODULE")) {
-      if (node.HasValue("name") && node.GetValue("name") == "TweakScale"
-          && node.HasValue("currentScale") && node.HasValue("defaultScale")) {
-        return float.Parse(node.GetValue("currentScale"))
-            / float.Parse(node.GetValue("defaultScale"));
-      }
-    }
-    return 1;
-  }
-
   // TODO(ihsoft): Move to KIS_Shared.
   public float GetCost() {
     // TweakScale compatibility
