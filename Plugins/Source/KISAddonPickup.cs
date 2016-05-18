@@ -775,16 +775,16 @@ public class KISAddonPickup : MonoBehaviour {
     if (cursorMode == CursorMode.Detach) {
       Logger.logError("Deatch mode is not expected in Pickup()");
     }
-    Pickup(cursorMode == CursorMode.ReDock ? PickupMode.Undock : PickupMode.Move);
+    HandlePickup(cursorMode == CursorMode.ReDock ? PickupMode.Undock : PickupMode.Move);
   }
 
   public void Pickup(KIS_Item item) {
     draggedPart = item.availablePart.partPrefab;
     draggedItem = item;
-    Pickup(PickupMode.GrabFromInventory);
+    HandlePickup(PickupMode.GrabFromInventory);
   }
 
-  private void Pickup(PickupMode newPickupMode) {
+  private void HandlePickup(PickupMode newPickupMode) {
     Logger.logInfo("Start pickup in mode {0} from part: {1}", newPickupMode, draggedPart);
     grabbedPart = null;
     pickupMode = newPickupMode;
@@ -811,7 +811,8 @@ public class KISAddonPickup : MonoBehaviour {
   }
 
   /// <summary>Handles part drop action.</summary>
-  /// <param name="part">A part to be created on drop.</param>
+  /// <param name="part">A part being grabbed. It's either a real part or prefab depending on the
+  /// source of the action.</param>
   /// <param name="fromPart">A part that was the source of the draggign action. If a world's part is
   /// grabbed than it will be that part. If <paramref name="part"/> is being dragged from inventory
   /// then this parameter is an inventory reference.</param>

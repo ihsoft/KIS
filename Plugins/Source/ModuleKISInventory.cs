@@ -1467,9 +1467,9 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
                     }
                     carryPart = false;
                     storePart = false;
-                    ScreenMessages.PostScreenMessage("Another part is already carried on slot <"
-                                                     + draggedItemModule.equipSlot + ">",
-                                                     5, ScreenMessageStyle.UPPER_CENTER);
+                    KIS_Shared.ShowCenterScreenMessage(
+                        "Another part is already carried on slot <{0}>",
+                        draggedItemModule.equipSlot);
                     break;
                   }
                 }
