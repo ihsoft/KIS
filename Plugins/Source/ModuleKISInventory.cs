@@ -94,8 +94,8 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
   public static List<String> defaultItemsForTheFirstSeat = new List<string>();
 
   // UI strings.
-  public const string strMaxVolumeReached =
-      "Max destination volume reached. Part volume is: {0:#.#### L} (+{1:#.#### L})";
+  const string strMaxVolumeReached =
+      "Max destination volume reached. Part volume is: {0:#.####}L (+{1:#.####}L)";
 
   public string openGuiName;
   public float totalVolume = 0;
