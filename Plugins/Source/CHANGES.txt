@@ -8,3 +8,4 @@ Pre-release changes:
 - [Change] Add a ModuleManager patch to override stock drills volume since in prefab these parts are deployed and take too much space.
 - [Fix] #141: Stop directly modifying inventory part mass.
 - [Internal] Use unified code to calcualte part's scale.
+- [Enhancement] #148: Dropped parts get weird names.

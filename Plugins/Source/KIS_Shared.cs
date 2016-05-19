@@ -236,14 +236,30 @@ static public class KIS_Shared {
           
     CleanupExternalLinks(oldVessel);
     CleanupExternalLinks(assemblyRoot.vessel);
+    RenameAssemblyVessel(assemblyRoot);
+  }
 
-    ModuleKISInventory inv = assemblyRoot.GetComponent<ModuleKISInventory>();
-    if (inv) {
-      if (inv.invName != "") {
-        assemblyRoot.vessel.vesselName = inv.part.partInfo.title + " | " + inv.invName;
-      } else {
-        assemblyRoot.vessel.vesselName = inv.part.partInfo.title;
-      }
+  /// <summary>Gives a nicer name to a vessel created during KIS deatch operation.</summary>
+  /// <remarks>When a part is pulled out of inventory or assembly deatched from a vessel it gets a
+  /// standard name saying it's now "debris". When using KIS such parts are not actually debris.
+  /// This method renames vessel depening on the case:
+  /// <list type="">
+  /// <item>Single part vessels are named after the part's title.</item>
+  /// <item>Multiple parts vessels are named after the source vessel name.</item>
+  /// </list>
+  /// Also, vessel's type is reset to <c>VesselType.Unknown</c>.</remarks>
+  /// <param name="part">A part of the vessel to get name and vessel from.</param>
+  public static void RenameAssemblyVessel(Part part) {
+    part.vessel.vesselType = VesselType.Unknown;
+    part.vessel.vesselName = part.partInfo.title;
+    ModuleKISInventory inv = part.GetComponent<ModuleKISInventory>();
+    if (inv && inv.invName.Length > 0) {
+      // Add inventory name suffix if any.
+      part.vessel.vesselName += string.Format(" ({0})", inv.invName);
+    }
+    // For assemblies add number of parts.
+    if (part.vessel.parts.Count > 1) {
+      part.vessel.vesselName += string.Format(" with {0} parts", part.vessel.parts.Count - 1);
     }
   }
 
@@ -397,16 +413,7 @@ static public class KIS_Shared {
       newPart.StartCoroutine(WaitAndCouple(newPart, coupleToPart, srcAttachNodeID,
                                            tgtAttachNode, onPartCoupled));
     } else {
-      newPart.vessel.vesselType = VesselType.Unknown;
-      //name container
-      ModuleKISInventory inv = newPart.GetComponent<ModuleKISInventory>();
-      if (inv) {
-        if (inv.invName != "") {
-          newPart.vessel.vesselName = inv.part.partInfo.title + " | " + inv.invName;
-        } else {
-          newPart.vessel.vesselName = inv.part.partInfo.title;
-        }
-      }
+      RenameAssemblyVessel(newPart);
     }
     return newPart;
   }
