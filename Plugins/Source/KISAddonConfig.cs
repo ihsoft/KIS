@@ -84,12 +84,13 @@ class KISAddonConfig : MonoBehaviour {
     try {
       prefab.AddModule(typeof(ModuleKISInventory).Name);
     } catch (Exception ex) {
-      Logger.logInfo("Ignoring error adding ModuleKISInventory to {0}: {1}", prefab, ex);
+      Logger.logInfo(
+          "NOT A BUG! Ignoring error while adding ModuleKISInventory to {0}: {1}", prefab, ex);
     }
     try {
       prefab.AddModule(typeof(ModuleKISPickup).Name);
     } catch (Exception ex) {
-      Logger.logInfo("Ignoring error adding ModuleKISPickup to {0}: {1}", prefab, ex);
+      Logger.logInfo("NOT A BUG! Ignoring error adding ModuleKISPickup to {0}: {1}", prefab, ex);
     }
 
     // Setup inventory module for eva.
