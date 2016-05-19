@@ -348,8 +348,7 @@ static public class KIS_Shared {
   }
 
   public static Part CreatePart(AvailablePart avPart, Vector3 position, Quaternion rotation,
-                                Part fromPart, Part tgtPart = null, string srcAttachNodeID = null,
-                                AttachNode tgtAttachNode = null) {
+                                Part fromPart) {
     ConfigNode partNode = new ConfigNode();
     PartSnapshot(avPart.partPrefab).CopyTo(partNode);
     return CreatePart(partNode, position, rotation, fromPart);
