@@ -814,8 +814,8 @@ public class KISAddonPickup : MonoBehaviour {
   /// <param name="part">A part being grabbed. It's either a real part or prefab depending on the
   /// source of the action.</param>
   /// <param name="fromPart">A part that was the source of the draggign action. If a world's part is
-  /// grabbed than it will be that part. If <paramref name="part"/> is being dragged from inventory
-  /// then this parameter is an inventory reference.</param>
+  /// grabbed than it will be that part. If part is being dragged from inventory then this parameter
+  /// is an inventory reference.</param>
   public void Drop(Part part, Part fromPart) {
     grabbedPart = part;
     Logger.logInfo("End pickup of {0} from part: {1}", part, fromPart);
@@ -830,11 +830,9 @@ public class KISAddonPickup : MonoBehaviour {
         KISAddonPointer.allowStatic = true;
         KISAddonPointer.allowStack = pickupModule.allowPartStack;
         KISAddonPointer.maxDist = pickupModule.maxDistance;
-        if (draggedItem != null) {
-          KISAddonPointer.scale = KIS_Shared.GetPartExternalScaleModifier(draggedItem.partNode);
-        } else {
-          KISAddonPointer.scale = 1;
-        }
+        KISAddonPointer.scale = draggedItem != null
+            ? KIS_Shared.GetPartExternalScaleModifier(draggedItem.partNode)
+            : 1;
         KISAddonPointer.StartPointer(part, OnPointerAction, OnPointerState, pickupModule.transform);
 
         pointerMode = pickupMode == PickupMode.Undock
