@@ -642,7 +642,7 @@ public class KISAddonPointer : MonoBehaviour {
     if (pointerNodeTransform) {
       pointerNodeTransform.gameObject.DestroyGameObject();
     }
-    pointerNodeTransform = new GameObject("KASPointerPartNode").transform;
+    pointerNodeTransform = new GameObject("KISPointerPartNode").transform;
 
     // Deatch will decouple from the parent so, ask to ignore it when looking for the nodes.
     attachNodes =
@@ -673,10 +673,10 @@ public class KISAddonPointer : MonoBehaviour {
   }
       
   /// <summary>Destroyes object(s) allocated to represent a pointer.</summary>
-  /// <remarks>
-  /// When making pointer for a complex hierarchy a lot of different resources may be
+  /// <remarks>When making pointer for a complex hierarchy a lot of different resources may be
   /// allocated/dropped. Destroying each one of them can be too slow so, cleanup is done in
   /// one call to <c>UnloadUnusedAssets()</c>.
+  /// <para>This method also destroys <see cref="pointerNodeTransform"/>.</para>
   /// </remarks>
   private static void DestroyPointer() {
     if (!pointer) {
