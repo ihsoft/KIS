@@ -593,10 +593,10 @@ public class KISAddonPointer : MonoBehaviour {
 
   /// <summary>Makes a game object to represent currently dragging assembly.</summary>
   /// <remarks>It's a very expensive operation.</remarks>
-  private static void MakePointer() {
+  static void MakePointer() {
     DestroyPointer();
     MakePointerAttachNodes();
-          
+
     var combines = new List<CombineInstance>();
     if (!partToAttach.GetComponentInChildren<MeshFilter>()) {
       CollectMeshesFromPrefab(partToAttach, combines);
@@ -611,7 +611,7 @@ public class KISAddonPointer : MonoBehaviour {
     // larger mesh may have weird representation artifacts on different video cards.
     foreach (var combine in combines) {
       var mesh = new Mesh();
-      mesh.CombineMeshes(new CombineInstance[] { combine });
+      mesh.CombineMeshes(new[] { combine });
       var childObj = new GameObject("KISPointerChildMesh");
 
       var meshRenderer = childObj.AddComponent<MeshRenderer>();
@@ -630,7 +630,7 @@ public class KISAddonPointer : MonoBehaviour {
     }
 
     pointerNodeTransform.parent = pointer.transform;
-    Logger.logInfo("Pointer created");
+    Logger.logInfo("New pointer created");
   }
 
   /// <summary>Sets possible attach nodes in <c>attachNodes</c>.</summary>
@@ -702,8 +702,8 @@ public class KISAddonPointer : MonoBehaviour {
   ///     it's translated into world's coordinates.</param>
   /// <param name="meshCombines">[out] Collected meshes.</param>
   private static void CollectMeshesFromAssembly(Part assembly,
-    Matrix4x4 worldTransform,
-    List<CombineInstance> meshCombines) {
+                                                Matrix4x4 worldTransform,
+                                                ICollection<CombineInstance> meshCombines) {
     // This gives part's mesh(es) and all surface attached children part meshes.
     MeshFilter[] meshFilters = assembly.GetComponentsInChildren<MeshFilter>();
     Logger.logInfo("Found {0} children meshes in: {1}", meshFilters.Count(), assembly);
@@ -725,7 +725,8 @@ public class KISAddonPointer : MonoBehaviour {
   /// <summary>Creates and returns meshes from a prefab.</summary>
   /// <param name="prefabPart">A part to make meshes for.</param>
   /// <param name="meshCombines">[out] Collected meshes.</param>
-  private static void CollectMeshesFromPrefab(Part prefabPart, List<CombineInstance> meshCombines) {
+  private static void CollectMeshesFromPrefab(Part prefabPart,
+                                              ICollection<CombineInstance> meshCombines) {
     var model = prefabPart.FindModelTransform("model").gameObject;
     var meshModel = Instantiate(model, Vector3.zero, Quaternion.identity) as GameObject;
     var meshFilters = meshModel.GetComponentsInChildren<MeshFilter>();
