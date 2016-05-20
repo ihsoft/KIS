@@ -331,7 +331,7 @@ public class KISAddonPointer : MonoBehaviour {
     }
     foreach (AttachNode an in hoverPart.attachNodes) {
       if (an.icon) {
-        Destroy(an.icon);
+        an.icon.DestroyGameObject();
       }
     }
     SendPointerState(pointerTarget, PointerState.OnMouseExitPart, hoverPart, null);
@@ -639,8 +639,8 @@ public class KISAddonPointer : MonoBehaviour {
   /// </exception>
   private static void MakePointerAttachNodes() {
     // Make node transformations.
-    if (pointerNodeTransform) { 
-      Destroy(pointerNodeTransform);
+    if (pointerNodeTransform) {
+      pointerNodeTransform.gameObject.DestroyGameObject();
     }
     pointerNodeTransform = new GameObject("KASPointerPartNode").transform;
 
@@ -682,9 +682,9 @@ public class KISAddonPointer : MonoBehaviour {
     if (!pointer) {
       return;  // Nothing to do.
     }
-    Destroy(pointer);
+    pointer.DestroyGameObject();
     pointer = null;
-    Destroy(pointerNodeTransform);
+    pointerNodeTransform.gameObject.DestroyGameObject();
     pointerNodeTransform = null;
     allModelMr.Clear();
 
