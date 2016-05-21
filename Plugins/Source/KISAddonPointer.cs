@@ -705,7 +705,7 @@ public class KISAddonPointer : MonoBehaviour {
                                                 Matrix4x4 worldTransform,
                                                 ICollection<CombineInstance> meshCombines) {
     // This gives part's mesh(es) and all surface attached children part meshes.
-    MeshFilter[] meshFilters = assembly.GetComponentsInChildren<MeshFilter>();
+    MeshFilter[] meshFilters = assembly.FindModelComponents<MeshFilter>();
     Logger.logInfo("Found {0} children meshes in: {1}", meshFilters.Count(), assembly);
     foreach (var meshFilter in meshFilters) {
       var combine = new CombineInstance();
