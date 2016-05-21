@@ -619,7 +619,7 @@ public class KISAddonPointer : MonoBehaviour {
       childObj.transform.parent = pointer.transform;
     }
 
-    allModelMr = new List<MeshRenderer>(pointer.GetComponentsInChildren<MeshRenderer>());
+    allModelMr = pointer.GetComponentsInChildren<MeshRenderer>().ToList();
     foreach (var mr in allModelMr) {
       mr.material = new Material(Shader.Find("Transparent/Diffuse"));
     }
@@ -692,7 +692,7 @@ public class KISAddonPointer : MonoBehaviour {
   /// <remarks>
   /// Returns shared meshes with the right transformations. No new objects are created.
   /// </remarks>
-  /// <param name="assembly">Assembly to collect meshes from.</param>
+  /// <param name="assembly">An assembly to collect meshes from.</param>
   /// <param name="meshCombines">[out] Collected meshes.</param>
   /// <param name="worldTransform">A world transformation matrix to apply to every mesh after
   ///     it's translated into world's coordinates. If <c>null</c> then coordinates will be
