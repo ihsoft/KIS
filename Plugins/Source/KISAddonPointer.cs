@@ -595,45 +595,8 @@ public class KISAddonPointer : MonoBehaviour {
   /// <remarks>It's a very expensive operation.</remarks>
   static void MakePointer() {
     DestroyPointer();
-    MakePointerAttachNodes();
 
-    var combines = new List<CombineInstance>();
-    CollectMeshesFromAssembly(partToAttach, combines);
-
-    pointer = new GameObject("KISPointer");
-
-    // Create one filter per mesh in the hierarhcy. Simple combining all meshes into one
-    // larger mesh may have weird representation artifacts on different video cards.
-    foreach (var combine in combines) {
-      var mesh = new Mesh();
-      mesh.CombineMeshes(new[] { combine });
-      var childObj = new GameObject("KISPointerChildMesh");
-
-      var meshRenderer = childObj.AddComponent<MeshRenderer>();
-      meshRenderer.shadowCastingMode = ShadowCastingMode.Off;
-      meshRenderer.receiveShadows = false;
-
-      var filter = childObj.AddComponent<MeshFilter>();
-      filter.sharedMesh = mesh;
-              
-      childObj.transform.parent = pointer.transform;
-    }
-
-    allModelMr = pointer.GetComponentsInChildren<MeshRenderer>().ToList();
-    foreach (var mr in allModelMr) {
-      mr.material = new Material(Shader.Find("Transparent/Diffuse"));
-    }
-
-    pointerNodeTransform.parent = pointer.transform;
-    Logger.logInfo("New pointer created");
-  }
-
-  /// <summary>Sets possible attach nodes in <c>attachNodes</c>.</summary>
-  /// <exception cref="InvalidOperationException">
-  /// If part has no valid attachment nodes.
-  /// </exception>
-  private static void MakePointerAttachNodes() {
-    // Make node transformations.
+    // Make pointer node transformations.
     if (pointerNodeTransform) {
       pointerNodeTransform.gameObject.DestroyGameObject();
     }
@@ -654,6 +617,35 @@ public class KISAddonPointer : MonoBehaviour {
     attachNodeIndex = 0;  // Expect that first node is the best default.
 
     UpdatePointerAttachNode();
+
+    // Make pointer renderer.
+    var combines = new List<CombineInstance>();
+    CollectMeshesFromAssembly(partToAttach, combines);
+
+    // Create one filter per mesh in the hierarhcy. Simple combining all meshes into one
+    // larger mesh may have weird representation artifacts on different video cards.
+    pointer = new GameObject("KISPointer");
+    foreach (var combine in combines) {
+      var mesh = new Mesh();
+      mesh.CombineMeshes(new[] { combine });
+      var childObj = new GameObject("KISPointerChildMesh");
+
+      var meshRenderer = childObj.AddComponent<MeshRenderer>();
+      meshRenderer.shadowCastingMode = ShadowCastingMode.Off;
+      meshRenderer.receiveShadows = false;
+
+      var filter = childObj.AddComponent<MeshFilter>();
+      filter.sharedMesh = mesh;
+
+      childObj.transform.parent = pointer.transform;
+    }
+    allModelMr = pointer.GetComponentsInChildren<MeshRenderer>().ToList();
+    foreach (var mr in allModelMr) {
+      mr.material = new Material(Shader.Find("Transparent/Diffuse"));
+    }
+    pointerNodeTransform.parent = pointer.transform;
+
+    Logger.logInfo("New pointer created");
   }
 
   /// <summary>Sets pointer origin to the current attachment node</summary>
