@@ -705,14 +705,29 @@ public class KISAddonPointer : MonoBehaviour {
 
     // This gives part's mesh(es) and all surface attached children part meshes.
     MeshFilter[] meshFilters = assembly.FindModelComponents<MeshFilter>();
-    Logger.logInfo("Found {0} children meshes in: {1}", meshFilters.Count(), assembly);
-    foreach (var meshFilter in meshFilters) {
-      var combine = new CombineInstance();
-      combine.mesh = meshFilter.sharedMesh;
-      combine.transform = worldTransform * meshFilter.transform.localToWorldMatrix;
-      meshCombines.Add(combine);
+    if (meshFilters.Length > 0) {
+      Logger.logInfo("Found {0} children meshes in: {1}", meshFilters.Length, assembly);
+      foreach (var meshFilter in meshFilters) {
+        var combine = new CombineInstance();
+        combine.mesh = meshFilter.sharedMesh;
+        combine.transform = rootWorldTransform * meshFilter.transform.localToWorldMatrix;
+        meshCombines.Add(combine);
+      }
     }
 
+    // Skinned meshes are only availabe via the renderers.
+    var skinnedMeshRenderers = assembly.FindModelComponents<SkinnedMeshRenderer>();
+    if (skinnedMeshRenderers.Length > 0) {
+      Logger.logInfo("Found {0} skinned meshes in: {1}", skinnedMeshRenderers.Length, assembly);
+      foreach (var skinnedMeshRenderer in skinnedMeshRenderers) {
+        var combine = new CombineInstance();
+        combine.mesh = new Mesh();
+        skinnedMeshRenderer.BakeMesh(combine.mesh);
+        combine.transform = rootWorldTransform * skinnedMeshRenderer.transform.localToWorldMatrix;
+        meshCombines.Add(combine);
+      }
+    }
+    
     // Go thru the stacked children parts. They don't have local transformation.
     foreach (Part child in assembly.children) {
       if (child.transform.position.Equals(child.transform.localPosition)) {
