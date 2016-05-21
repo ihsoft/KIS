@@ -598,10 +598,7 @@ public class KISAddonPointer : MonoBehaviour {
     MakePointerAttachNodes();
 
     var combines = new List<CombineInstance>();
-    var worldTransforMatrix = partToAttach == partToAttach.partInfo.partPrefab
-        ? Matrix4x4.identity
-        : partToAttach.transform.localToWorldMatrix.inverse;
-    CollectMeshesFromAssembly(partToAttach, worldTransforMatrix, combines);
+    CollectMeshesFromAssembly(partToAttach, combines);
 
     pointer = new GameObject("KISPointer");
 
@@ -696,12 +693,16 @@ public class KISAddonPointer : MonoBehaviour {
   /// Returns shared meshes with the right transformations. No new objects are created.
   /// </remarks>
   /// <param name="assembly">Assembly to collect meshes from.</param>
-  /// <param name="worldTransform">A world transformation matrix to apply to every mesh after
-  ///     it's translated into world's coordinates.</param>
   /// <param name="meshCombines">[out] Collected meshes.</param>
+  /// <param name="worldTransform">A world transformation matrix to apply to every mesh after
+  ///     it's translated into world's coordinates. If <c>null</c> then coordinates will be
+  ///     calculated relative to the root part of the assembly.</param>
   private static void CollectMeshesFromAssembly(Part assembly,
-                                                Matrix4x4 worldTransform,
-                                                ICollection<CombineInstance> meshCombines) {
+                                                ICollection<CombineInstance> meshCombines,
+                                                Matrix4x4? worldTransform = null) {
+    // Always use world transformation from the root.
+    var rootWorldTransform = worldTransform ?? assembly.transform.localToWorldMatrix.inverse;
+
     // This gives part's mesh(es) and all surface attached children part meshes.
     MeshFilter[] meshFilters = assembly.FindModelComponents<MeshFilter>();
     Logger.logInfo("Found {0} children meshes in: {1}", meshFilters.Count(), assembly);
@@ -715,7 +716,7 @@ public class KISAddonPointer : MonoBehaviour {
     // Go thru the stacked children parts. They don't have local transformation.
     foreach (Part child in assembly.children) {
       if (child.transform.position.Equals(child.transform.localPosition)) {
-        CollectMeshesFromAssembly(child, worldTransform, meshCombines);
+        CollectMeshesFromAssembly(child, meshCombines, worldTransform: rootWorldTransform);
       }
     }
   }
