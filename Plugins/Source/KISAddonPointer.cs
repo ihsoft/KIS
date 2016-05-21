@@ -577,9 +577,6 @@ public class KISAddonPointer : MonoBehaviour {
   /// <param name="isVisible">New state.</param>
   /// <exception cref="InvalidOperationException">If pointer doesn't exist.</exception>
   private static void SetPointerVisible(bool isVisible) {
-    if (!pointer) {
-      throw new InvalidOperationException("Pointer doesn't exist");
-    }
     foreach (var mr in pointer.GetComponentsInChildren<MeshRenderer>()) {
       if (mr.enabled == isVisible
           && mr.material.renderQueue == KIS_Shared.HighlighedPartRenderQueue) {
