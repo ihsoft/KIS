@@ -598,12 +598,10 @@ public class KISAddonPointer : MonoBehaviour {
     MakePointerAttachNodes();
 
     var combines = new List<CombineInstance>();
-    if (!partToAttach.GetComponentInChildren<MeshFilter>()) {
-      CollectMeshesFromPrefab(partToAttach, combines);
-    } else {
-      CollectMeshesFromAssembly(
-          partToAttach, partToAttach.transform.localToWorldMatrix.inverse, combines);
-    }
+    var worldTransforMatrix = partToAttach == partToAttach.partInfo.partPrefab
+        ? Matrix4x4.identity
+        : partToAttach.transform.localToWorldMatrix.inverse;
+    CollectMeshesFromAssembly(partToAttach, worldTransforMatrix, combines);
 
     pointer = new GameObject("KISPointer");
 
@@ -720,24 +718,6 @@ public class KISAddonPointer : MonoBehaviour {
         CollectMeshesFromAssembly(child, worldTransform, meshCombines);
       }
     }
-  }
-
-  /// <summary>Creates and returns meshes from a prefab.</summary>
-  /// <param name="prefabPart">A part to make meshes for.</param>
-  /// <param name="meshCombines">[out] Collected meshes.</param>
-  private static void CollectMeshesFromPrefab(Part prefabPart,
-                                              ICollection<CombineInstance> meshCombines) {
-    var model = prefabPart.FindModelTransform("model").gameObject;
-    var meshModel = Instantiate(model, Vector3.zero, Quaternion.identity) as GameObject;
-    var meshFilters = meshModel.GetComponentsInChildren<MeshFilter>();
-    Logger.logInfo("Created {0} meshes from prefab: {1}", meshFilters.Count(), prefabPart);
-    foreach (var meshFilter in meshFilters) {
-      var combine = new CombineInstance();
-      combine.mesh = meshFilter.mesh;  // Get a copy. 
-      combine.transform = meshFilter.transform.localToWorldMatrix;
-      meshCombines.Add(combine);
-    }
-    DestroyImmediate(meshModel);  // Don't allow it showing in the scene.
   }
 }
 
