@@ -151,8 +151,7 @@ public class KIS_Item {
     }
   }
 
-  private void InitConfig(AvailablePart availablePart,
-                          ModuleKISInventory inventory, float quantity) {
+  void InitConfig(AvailablePart availablePart, ModuleKISInventory inventory, float quantity) {
     this.inventory = inventory;
     this.quantity = quantity;
     prefabModule = availablePart.partPrefab.GetComponent<ModuleKISItem>();
