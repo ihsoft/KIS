@@ -33,4 +33,4 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyVersion("1.2.9")]
 [assembly: AssemblyInformationalVersion("1.2.9 for KSP 1.1")]
 [assembly: KSPAssembly("KIS", 1, 2)]
-[assembly: KSPAssemblyDependency("KSPDev_Utils", 0, 10)]
+[assembly: KSPAssemblyDependency("KSPDev_Utils", 0, 12)]
