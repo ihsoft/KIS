@@ -12,7 +12,7 @@ using System.Reflection;
 namespace KIS {
 
 [KSPAddon(KSPAddon.Startup.SpaceCentre, true)]
-[PersistentFieldsFile("KIS/settings.cfg", "KISConfig")]
+[PersistentFieldsDatabase("KIS/settings/KISConfig")]
 class KISAddonConfig : MonoBehaviour {
   [PersistentField("StackableItemOverride/partName", isCollection = true)]
   public static List<string> stackableList = new List<string>();

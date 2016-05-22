@@ -11,7 +11,7 @@ using UnityEngine.EventSystems;
 
 namespace KIS {
 
-[PersistentFieldsFile("KIS/settings.cfg", "KISConfig")]
+[PersistentFieldsDatabase("KIS/settings/KISConfig")]
 public class KISAddonPickup : MonoBehaviour {
   /// <summary>A helper class to handle mouse clicks in the editor.</summary>
   private class EditorClickListener : MonoBehaviour, IBeginDragHandler,

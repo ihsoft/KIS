@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace KIS {
 
-[PersistentFieldsFile("KIS/settings.cfg", "KISConfig")]
+[PersistentFieldsDatabase("KIS/settings/KISConfig")]
 public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifier {
   // Inventory
   public Dictionary<int, KIS_Item> items = new Dictionary<int, KIS_Item>();
