@@ -1,13 +1,10 @@
 ﻿using KSPDev.ConfigUtils;
 using KSPDev.LogUtils;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System;
-using UnityEngine;
-
-
-using System.Text;
 using System.Reflection;
+using UnityEngine;
 
 namespace KIS {
 
