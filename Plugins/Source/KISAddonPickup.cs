@@ -1320,12 +1320,18 @@ public class KISAddonPickup : MonoBehaviour {
   
 // Create an instance for managing inventory in the editor.
 [KSPAddon(KSPAddon.Startup.EditorAny, false /*once*/)]
-internal class KISAddonPickupInEditor : KISAddonPickup {
+sealed class KISAddonPickupInEditor : MonoBehaviour {
+  void Awake() {
+    gameObject.AddComponent<KISAddonPickup>();
+  }
 }
 
 // Create an instance for accessing inventory in EVA.
 [KSPAddon(KSPAddon.Startup.Flight, false /*once*/)]
-internal class KISAddonPickupInFlight : KISAddonPickup {
+sealed class KISAddonPickupInFlight : MonoBehaviour {
+  void Awake() {
+    gameObject.AddComponent<KISAddonPickup>();
+  }
 }
 
 }  // namespace
