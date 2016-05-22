@@ -1,4 +1,6 @@
 Pre-release changes:
+For proper part's volume calculation Module Manager is required. Though, without it the mod will still work.
+
 - [Fix] #117: Fix duplication of the default items on flight revert.
 - [Fix] #140: A part get created on drag in the editor.
 - [Internal] Move TweakScale and volume override support in a single place.
