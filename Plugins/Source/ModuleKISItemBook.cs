@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace KIS {
 
-public class ModuleKISItemBook: ModuleKISItem {
+public sealed class ModuleKISItemBook: ModuleKISItem {
   [KSPField]
   public int pageWidth = 800;
   [KSPField]
