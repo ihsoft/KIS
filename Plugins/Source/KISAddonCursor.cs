@@ -6,7 +6,7 @@ using UnityEngine;
 namespace KIS {
 
 [KSPAddon(KSPAddon.Startup.EveryScene, false)]
-public class KISAddonCursor : MonoBehaviour {
+sealed class KISAddonCursor : MonoBehaviour {
   private static bool cursorShow = false;
   private static bool partDetectionActive = false;
       

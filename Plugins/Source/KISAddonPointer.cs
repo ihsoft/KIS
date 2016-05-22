@@ -8,7 +8,7 @@ using UnityEngine.Rendering;
 namespace KIS {
 
 [KSPAddon(KSPAddon.Startup.Flight, false)]
-public class KISAddonPointer : MonoBehaviour {
+sealed class KISAddonPointer : MonoBehaviour {
   public GameObject audioGo = new GameObject();
   public AudioSource audioBipWrong = new AudioSource();
 

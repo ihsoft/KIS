@@ -8,7 +8,7 @@ namespace KIS {
 
 /// <summary>A class to handle editor KIS part's category.</summary>
 [KSPAddon(KSPAddon.Startup.MainMenu, true)]
-public class KISAddonEditorFilter : MonoBehaviour {
+sealed class KISAddonEditorFilter : MonoBehaviour {
   static List<AvailablePart> avPartItems = new List<AvailablePart>();
   const string category = "Filter by Function";
   const string subCategoryTitle = "EVA Items";

@@ -10,7 +10,7 @@ namespace KIS {
 
 [KSPAddon(KSPAddon.Startup.SpaceCentre, true)]
 [PersistentFieldsDatabase("KIS/settings/KISConfig")]
-class KISAddonConfig : MonoBehaviour {
+sealed class KISAddonConfig : MonoBehaviour {
   [PersistentField("StackableItemOverride/partName", isCollection = true)]
   public static List<string> stackableList = new List<string>();
 
