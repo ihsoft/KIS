@@ -13,57 +13,6 @@ public class KIS_LinkedPart : MonoBehaviour {
   public Part part;
 }
 
-[KSPAddon(KSPAddon.Startup.EveryScene, false /*once*/)]
-public class KIS_UISoundPlayer : MonoBehaviour {
-  public static KIS_UISoundPlayer instance;
-
-  // TODO: Read these settings from a config.
-  private static readonly string bipWrongSndPath = "KIS/Sounds/bipwrong";
-  private static readonly string clickSndPath = "KIS/Sounds/click";
-  private static readonly string attachPartSndPath = "KIS/Sounds/attachScrewdriver";
-
-  private readonly GameObject audioGo = new GameObject();
-  private AudioSource audioBipWrong;
-  private AudioSource audioClick;
-  private AudioSource audioAttach;
-
-  /// <summary>Plays a sound indicating a wrong action that was blocked.</summary>
-  public void PlayBipWrong() {
-    audioBipWrong.Play();
-  }
-
-  /// <summary>Plays a sound indicating an action was accepted.</summary>
-  public void PlayClick() {
-    audioClick.Play();
-  }
-
-  /// <summary>Plays a sound indicating a part was attached using a tool.</summary>
-  public void PlayToolAttach() {
-    audioAttach.Play();
-  }
-
-  void Awake() {
-    Logger.logInfo("Loading UI sounds for KIS...");
-    InitSound(bipWrongSndPath, out audioBipWrong);
-    InitSound(clickSndPath, out audioClick);
-    InitSound(attachPartSndPath, out audioAttach);
-    instance = this;
-  }
-      
-  private void InitSound(string clipPath, out AudioSource source) {
-    Logger.logInfo("Loading clip: {0}", clipPath);
-    source = audioGo.AddComponent<AudioSource>();
-    source.volume = GameSettings.UI_VOLUME;
-    source.spatialBlend = 0;  //set as 2D audiosource
-
-    if (GameDatabase.Instance.ExistsAudioClip(clipPath)) {
-      source.clip = GameDatabase.Instance.GetAudioClip(clipPath);
-    } else {
-      Logger.logError("Cannot locate clip: {0}", clipPath);
-    }
-  }
-}
-
 /// <summary>Constants for standard attach node ids.</summary>
 public static class AttachNodeId {
   /// <summary>Stack node "bottom".</summary>
