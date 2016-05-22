@@ -80,6 +80,7 @@ STRUCTURE = collections.OrderedDict({
     '/Plugins/KSPDev_Utils.dll',
     '/Plugins/KSPDev_Utils_License.md',
   ],
+  '/GameData/KIS/Patches' : '/Patches',
 })
 
 VERSION = None
