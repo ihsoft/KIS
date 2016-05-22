@@ -9,3 +9,7 @@ Pre-release changes:
 - [Fix] #141: Stop directly modifying inventory part mass.
 - [Internal] Use unified code to calcualte part's scale.
 - [Enhancement] #148: Dropped parts get weird names.
+- [Fix] #147: Some parts don't give usable drag models from prefab.
+- [Fix] #145: Carriable items show as "carried" in the inventory.
+- [Fix] #142: Settings are always read from file.
+- [Fix] #137: Volume of Drill-O-Matic calculated incorrectly.
