@@ -21,7 +21,7 @@ public static class AttachNodeId {
   public const string Top = "top";
 }
 
-static public class KIS_Shared {
+public static class KIS_Shared {
   // TODO: Read it from the config.
   private const float DefaultMessageTimeout = 5f; // Seconds.
 

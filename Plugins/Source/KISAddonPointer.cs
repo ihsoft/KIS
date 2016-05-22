@@ -11,7 +11,6 @@ namespace KIS {
 public class KISAddonPointer : MonoBehaviour {
   public GameObject audioGo = new GameObject();
   public AudioSource audioBipWrong = new AudioSource();
-  public static GameObject soundGo;
 
   // Pointer parameters
   public static bool allowPart = false;
