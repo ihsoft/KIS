@@ -691,7 +691,7 @@ sealed class KISAddonPointer : MonoBehaviour {
     // Always use world transformation from the root.
     var rootWorldTransform = worldTransform ?? assembly.transform.localToWorldMatrix.inverse;
 
-    // This gives part's mesh(es) and all surface attached children part meshes.
+    // Get all meshes from the part's model.
     MeshFilter[] meshFilters = assembly.FindModelComponents<MeshFilter>();
     if (meshFilters.Length > 0) {
       Logger.logInfo("Found {0} children meshes in: {1}", meshFilters.Length, assembly);
@@ -703,7 +703,8 @@ sealed class KISAddonPointer : MonoBehaviour {
       }
     }
 
-    // Skinned meshes are only availabe via the renderers.
+    // Skinned meshes are baked on every frame before rendering. Bake them to get current mesh
+    // state.
     var skinnedMeshRenderers = assembly.FindModelComponents<SkinnedMeshRenderer>();
     if (skinnedMeshRenderers.Length > 0) {
       Logger.logInfo("Found {0} skinned meshes in: {1}", skinnedMeshRenderers.Length, assembly);
@@ -715,12 +716,10 @@ sealed class KISAddonPointer : MonoBehaviour {
         meshCombines.Add(combine);
       }
     }
-    
-    // Go thru the stacked children parts. They don't have local transformation.
+
+    // Collect meshes from the children parts.
     foreach (Part child in assembly.children) {
-      if (child.transform.position.Equals(child.transform.localPosition)) {
-        CollectMeshesFromAssembly(child, meshCombines, worldTransform: rootWorldTransform);
-      }
+      CollectMeshesFromAssembly(child, meshCombines, worldTransform: rootWorldTransform);
     }
   }
 }
