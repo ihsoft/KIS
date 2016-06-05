@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Collections;
 using System.ComponentModel;
 using System.Linq;
+using System.Reflection;
 using UnityEngine;
 
 namespace KIS {
@@ -831,6 +832,12 @@ public static class KIS_Shared {
   /// <remarks>Used to prevent NREs in methods that persist KSP fields.</remarks>
   /// <param name="module">A module to fix.</param>
   public static void CleanupFieldsInModule(PartModule module) {
+    // Ensure the module is awaken. Otherwise, any access to base fields list will result in NRE. 
+    if (string.IsNullOrEmpty(module.moduleName)) {
+      Logger.logWarning("WORKAROUND. Module {0} on part prefab {1} is now awaken. Call Awake on it",
+                        module.GetType(), module.part.name);
+      AwakePartModule(module);
+    }
     foreach (var field in module.Fields) {
       var baseField = field as BaseField;
       if (baseField.isPersistant && baseField.GetValue(module) == null) {
@@ -844,6 +851,29 @@ public static class KIS_Shared {
                           defValue);
         baseField.SetValue(defValue, module);
       }
+    }
+  }
+
+  /// <summary>Makes a call to <c>Awake()</c> method of the part module.</summary>
+  /// <remarks>Modules added to prefab via <c>AddModule()</c> call are not get activated as they
+  /// would if activated by the Unity core. As a result some vital fields may be left uninitialized
+  /// which may result in an NRE later when working with the prefab (e.g. making a part snapshot).
+  /// This method finds and invokes method Awake() via reflect which is normally done by Unity.
+  /// <para>This is a HACK since <c>Awake()</c> method is not supposed to be called by anyone but
+  /// Unity. For now it works fine but one day it may awake the kraken.</para>
+  /// <para>Private method can only be accessed via reflection when requested on the class that
+  /// declares it. I.e. method info must be requested from <c>PartModule</c> type instead of the
+  /// argument's type.</para>
+  /// </remarks>
+  /// <param name="module">Module instance to awake.</param>
+  public static void AwakePartModule(PartModule module) {
+    var moduleAwakeMethod = typeof(PartModule).GetMethod(
+        "Awake", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+    if (moduleAwakeMethod != null) {
+      moduleAwakeMethod.Invoke(module, new object[] {});
+    } else {
+      Logger.logError("Cannot find Awake() method on {0}. Skip awakening of the component: {1}",
+                      module.GetType(), module);
     }
   }
 }
