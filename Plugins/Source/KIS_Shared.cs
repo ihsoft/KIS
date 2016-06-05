@@ -835,7 +835,7 @@ public static class KIS_Shared {
     // Ensure the module is awaken. Otherwise, any access to base fields list will result in NRE. 
     if (string.IsNullOrEmpty(module.moduleName)) {
       Logger.logWarning("WORKAROUND. Module {0} on part prefab {1} is now awaken. Call Awake on it",
-                        module.GetType(), module.part.name);
+                        module.GetType(), module.part);
       AwakePartModule(module);
     }
     foreach (var field in module.Fields) {
