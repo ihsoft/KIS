@@ -11,7 +11,8 @@
         "manual": "https://github.com/KospY/KIS/raw/master/User%20Guide.pdf"
     },
     "suggests": [
-        { "name": "KAS" }
+        { "name": "KAS" },
+        { "name": "EasyVesselSwitch" }
     ],
     "recommends": [
         {
