@@ -181,10 +181,8 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
 
     if (HighLogic.LoadedSceneIsEditor) {
       InputLockManager.RemoveControlLock("KISInventoryLock");
-      guiMainWindowPos = defaultEditorPos;
-    } else {
-      guiMainWindowPos = defaultFlightPos;
     }
+    guiMainWindowPos = defaultFlightPos;
 
     Animation[] anim = this.part.FindModelAnimators(openAnimName);
     if (anim.Length > 0) {
@@ -199,7 +197,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     GameEvents.onPartActionUIDismiss.Add(new EventData<Part>.OnEvent(this.OnPartActionUIDismiss));
           
     if (invType == InventoryType.Eva) {
-      List<ProtoCrewMember> protoCrewMembers = this.vessel.GetVesselCrew();
+      List<ProtoCrewMember> protoCrewMembers = vessel.GetVesselCrew();
       kerbalTrait = protoCrewMembers[0].experienceTrait.Title;
     }
     sndFx.audio = part.gameObject.AddComponent<AudioSource>();
@@ -210,7 +208,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     sndFx.audio.maxDistance = 10;
     sndFx.audio.loop = false;
     sndFx.audio.playOnAwake = false;
-    foreach (KIS_Item item in startEquip) {
+    foreach (var item in startEquip) {
       Logger.logInfo("equip {0}", item.availablePart.name);
       item.Equip();
     }
@@ -395,8 +393,8 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
           ModuleKISInventory destInventory = fromToAction.to.GetComponent<ModuleKISInventory>();
           Logger.logInfo("Items transfer | source {0} ({1})", part.name, podSeat);
           Logger.logInfo("Items transfer | destination: {0}", destInventory.part.name);
-          MoveItems(this.items, destInventory);
-          this.RefreshMassAndVolume();
+          MoveItems(items, destInventory);
+          RefreshMassAndVolume();
           destInventory.RefreshMassAndVolume();
         }
       } else {
@@ -929,7 +927,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     // Set title
     string title = this.part.partInfo.title;
     if (invType == InventoryType.Pod) {
-      title = this.part.partInfo.title + " | Seat " + podSeat;
+      title = part.partInfo.title + " | Seat " + podSeat;
       if (!HighLogic.LoadedSceneIsEditor) {
         ProtoCrewMember crewAtPodSeat = this.part.protoModuleCrew.Find(x => x.seatIdx == podSeat);
         if (crewAtPodSeat != null) {

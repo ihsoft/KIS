@@ -217,10 +217,10 @@ public class KIS_Item {
   }
 
   public List<ResourceInfo> GetResources() {
-    List<ResourceInfo> resources = new List<ResourceInfo>();
+    var resources = new List<ResourceInfo>();
     foreach (ConfigNode node in this.partNode.GetNodes("RESOURCE")) {
       if (node.HasValue("name") && node.HasValue("amount") && node.HasValue("maxAmount")) {
-        ResourceInfo rInfo = new ResourceInfo();
+        var rInfo = new ResourceInfo();
         rInfo.resourceName = node.GetValue("name");
         rInfo.amount = double.Parse(node.GetValue("amount"));
         rInfo.maxAmount = double.Parse(node.GetValue("maxAmount"));
@@ -231,10 +231,10 @@ public class KIS_Item {
   }
 
   public List<ScienceData> GetSciences() {
-    List<ScienceData> sciences = new List<ScienceData>();
+    var sciences = new List<ScienceData>();
     foreach (ConfigNode module in this.partNode.GetNodes("MODULE")) {
       foreach (ConfigNode experiment in module.GetNodes("ScienceData")) {
-        ScienceData scienceData = new ScienceData(experiment);
+        var scienceData = new ScienceData(experiment);
         sciences.Add(scienceData);
       }
     }
@@ -293,8 +293,9 @@ public class KIS_Item {
   }
 
   public void GUIUpdate() {
-    if (prefabModule)
+    if (prefabModule) {
       prefabModule.OnItemGUI(this);
+    }
   }
 
   public void PlaySound(string sndPath, bool loop = false) {
@@ -312,11 +313,10 @@ public class KIS_Item {
                         newVolume - inventory.maxVolume),
           5f);
       return false;
-    } else {
-      quantity += qty;
-      inventory.RefreshMassAndVolume();
-      return true;
     }
+    quantity += qty;
+    inventory.RefreshMassAndVolume();
+    return true;
   }
 
   public bool StackRemove(float qty = 1) {
@@ -326,11 +326,10 @@ public class KIS_Item {
     if (quantity - qty <= 0) {
       Delete();
       return false;
-    } else {
-      quantity -= qty;
-      inventory.RefreshMassAndVolume();
-      return true;
     }
+    quantity -= qty;
+    inventory.RefreshMassAndVolume();
+    return true;
   }
 
   public void Delete() {
@@ -385,7 +384,8 @@ public class KIS_Item {
       }
       if (!skillFound) {
         ScreenMessages.PostScreenMessage(
-            "This item can only be used by a kerbal with the skill : " + prefabModule.equipSkill,
+            string.Format("This item can only be used by a kerbal with the skill : {0}",
+                          prefabModule.equipSkill),
             5f, ScreenMessageStyle.UPPER_CENTER);
         PlaySound(KIS_Shared.bipWrongSndPath);
         return;
@@ -398,8 +398,9 @@ public class KIS_Item {
       if (equippedItem != null) {
         if (equippedItem.carriable) {
           ScreenMessages.PostScreenMessage(
-              "Cannot equip item, slot <" + equipSlot + "> already used for carrying "
-              + equippedItem.availablePart.title, 5f, ScreenMessageStyle.UPPER_CENTER);
+              string.Format("Cannot equip item, slot <{0}> already used for carrying {1}",
+                            equipSlot, equippedItem.availablePart.title),
+              5f, ScreenMessageStyle.UPPER_CENTER);
           PlaySound(KIS_Shared.bipWrongSndPath);
           return;
         }
