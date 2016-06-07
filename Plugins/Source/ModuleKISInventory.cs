@@ -181,6 +181,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
 
     if (HighLogic.LoadedSceneIsEditor) {
       InputLockManager.RemoveControlLock("KISInventoryLock");
+      GameEvents.onTooltipDestroyRequested.Add(OnTooltipDestroyRequestedEvent);
     }
     guiMainWindowPos = defaultFlightPos;
 
@@ -541,6 +542,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
         new EventData<Part>.OnEvent(this.OnPartActionUIDismiss));
     if (HighLogic.LoadedSceneIsEditor) {
       InputLockManager.RemoveControlLock("KISInventoryLock");
+      GameEvents.onTooltipDestroyRequested.Remove(OnTooltipDestroyRequestedEvent);
     }
   }
 
@@ -1555,6 +1557,11 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
         }
       }
     }
+  }
+
+  /// <summary>Hides all UI elements.</summary>
+  void OnTooltipDestroyRequestedEvent() {
+    showGui = false;
   }
 }
   
