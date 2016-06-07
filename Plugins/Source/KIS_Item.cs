@@ -410,7 +410,7 @@ public class KIS_Item {
 
     if (equipMode == EquipMode.Model) {
       GameObject modelGo = availablePart.partPrefab.FindModelTransform("model").gameObject;
-      equippedGameObj = Mesh.Instantiate(modelGo) as GameObject;
+      equippedGameObj = UnityEngine.Object.Instantiate(modelGo);
       foreach (Collider col in equippedGameObj.GetComponentsInChildren<Collider>()) {
         UnityEngine.Object.DestroyImmediate(col);
       }
