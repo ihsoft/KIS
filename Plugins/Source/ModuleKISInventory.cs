@@ -166,6 +166,18 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     if (state == StartState.None) {
       return;
     }
+    if ((state & StartState.Editor) == 0) {
+      // Clean pod's inventory if the seat is unoccupied.
+      if (invType == InventoryType.Pod && podSeat != -1) {
+        var crewAtPodSeat = part.protoModuleCrew.Find(x => x.seatIdx == podSeat);
+        if (crewAtPodSeat == null && items.Count > 0) {
+          Logger.logInfo("Clear unoccupied seat inventory: pod={0}, seat={1}, count={2}, mass={3}",
+                         part, podSeat, items.Count, GetContentMass());
+          items.Clear();
+          RefreshMassAndVolume();
+        }
+      }
+    }
 
     if (HighLogic.LoadedSceneIsEditor) {
       InputLockManager.RemoveControlLock("KISInventoryLock");
