@@ -998,8 +998,8 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     }
   }
 
-  private void GuiMain(int windowID) {
-    GUIStyle guiStyleTitle = new GUIStyle(GUI.skin.label);
+  void GuiMain(int windowID) {
+    var guiStyleTitle = new GUIStyle(GUI.skin.label);
     guiStyleTitle.normal.textColor = Color.yellow;
     guiStyleTitle.fontStyle = FontStyle.Bold;
     guiStyleTitle.fontSize = 13;
@@ -1008,8 +1008,8 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     GUILayout.BeginHorizontal();
 
     GUILayout.BeginVertical();
-    int width = 160;
-    GUILayout.Box("", GUILayout.Width(width), GUILayout.Height(100));
+    const int Width = 160;
+    GUILayout.Box("", GUILayout.Width(Width), GUILayout.Height(100));
     Rect textureRect = GUILayoutUtility.GetLastRect();
     GUI.DrawTexture(textureRect, icon.texture, ScaleMode.ScaleToFit);
 
@@ -1025,21 +1025,21 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
         GUILayout.EndHorizontal();
       } else {
         if (GUILayout.Button(new GUIContent("Set name", ""),
-                             GUILayout.Width(width), GUILayout.Height(22))) {
+                             GUILayout.Width(Width), GUILayout.Height(22))) {
           guiSetName = true;
         }
       }
     } else if (invType == InventoryType.Eva) {
       if (helmetEquipped) {
         if (GUILayout.Button(new GUIContent("Remove Helmet", ""),
-                             GUILayout.Width(width), GUILayout.Height(22))) {
+                             GUILayout.Width(Width), GUILayout.Height(22))) {
           if (SetHelmet(false, true)) {
             PlaySound(helmetOffSndPath);
           }
         }
       } else {
         if (GUILayout.Button(new GUIContent("Put On Helmet", ""),
-                             GUILayout.Width(width), GUILayout.Height(22))) {
+                             GUILayout.Width(Width), GUILayout.Height(22))) {
           if (SetHelmet(true)) {
             PlaySound(helmetOnSndPath);
           }
@@ -1053,17 +1053,17 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
       extraSpace += 50;
     }
 
-    StringBuilder sb = new StringBuilder();
+    var sb = new StringBuilder();
     sb.AppendLine("Volume : " + this.totalVolume.ToString("0.00")
                   + "/" + this.maxVolume.ToString("0.00 L"));
     sb.AppendLine("Mass : " + this.part.mass.ToString("0.000"));
     sb.AppendLine("Cost : " + (this.GetContentCost() + part.partInfo.cost) + " √");
     GUILayout.Box(sb.ToString(), boxStyle,
-                  GUILayout.Width(width), GUILayout.Height(45 + extraSpace));
+                  GUILayout.Width(Width), GUILayout.Height(45 + extraSpace));
     bool closeInv = false;
 
     if (GUILayout.Button(new GUIContent("Close", "Close container"),
-                         GUILayout.Width(width), GUILayout.Height(21))) {
+                         GUILayout.Width(Width), GUILayout.Height(21))) {
       closeInv = true;
     }
     GUILayout.EndVertical();
@@ -1160,7 +1160,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
                   GUILayout.Width(450), GUILayout.Height(100));
   }
 
-  private void GuiContextMenu(int windowID) {
+  void GuiContextMenu(int windowID) {
     GUI.FocusWindow(windowID);
     GUI.BringWindowToFront(windowID);
     bool noAction = true;
@@ -1347,9 +1347,9 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
   private void GuiInventory(int windowID) {
     int i = 0;
     KIS_Item mouseOverItem = null;
-    for (int x = 0; x < slotsY; x++) {
+    for (var x = 0; x < slotsY; x++) {
       GUILayout.BeginHorizontal();
-      for (int y = 0; y < slotsX; y++) {
+      for (var y = 0; y < slotsX; y++) {
         GUILayout.Box("", GUILayout.Width(slotSize), GUILayout.Height(slotSize));
         Rect textureRect = GUILayoutUtility.GetLastRect();
 
