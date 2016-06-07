@@ -150,6 +150,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
   // Messages.  
   const string NoItemEquippedMsg = "Cannot use equipped item because nothing is equipped";
 
+  /// <summary>Overridden from PartModule.</summary>
   public override string GetInfo() {
     var sb = new StringBuilder();
     sb.AppendFormat("<b>Max Volume</b>: {0:F2} L", maxVolume);
@@ -161,6 +162,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     return sb.ToString();
   }
 
+  /// <summary>Overridden from PartModule.</summary>
   public override void OnStart(StartState state) {
     base.OnStart(state);
     if (state == StartState.None) {
@@ -220,6 +222,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     }
   }
 
+  /// <summary>Overridden from MonBehavior.</summary>
   void Update() {
     if (showGui) {
       if (HighLogic.LoadedSceneIsFlight) {
@@ -236,6 +239,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     UpdateKey();
   }
 
+  /// <summary>Overridden from MonBehavior.</summary>
   void LateUpdate() {
     foreach (KeyValuePair<int, KIS_Item> item in items) {
       item.Value.Update();
@@ -297,6 +301,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     }
   }
 
+  /// <summary>Overridden from PartModule.</summary>
   public override void OnLoad(ConfigNode node) {
     base.OnLoad(node);
     foreach (ConfigNode cn in node.nodes) {
@@ -329,6 +334,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     }
   }
 
+  /// <summary>Overridden from PartModule.</summary>
   public override void OnSave(ConfigNode node) {
     base.OnSave(node);
     foreach (KeyValuePair<int, KIS_Item> item in items) {
@@ -347,6 +353,11 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     }
   }
 
+  /// <summary>Plays a sound at the inventory's location.</summary>
+  /// <param name="sndPath">Path to the sound clip.</param>
+  /// <param name="loop">Indefinitely repeat sound when <c>true</c>.</param>
+  /// <param name="uiSnd">If <c>true</c> then sound is 2D (i.e. not bound to the inventory 3D
+  /// position).</param>
   public void PlaySound(string sndPath, bool loop = false, bool uiSnd = true) {
     if (GameDatabase.Instance.ExistsAudioClip(sndPath)) {
       sndFx.audio.clip = GameDatabase.Instance.GetAudioClip(sndPath);
@@ -367,6 +378,8 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     sndFx.audio.Play();
   }
 
+  /// <summary>Helper method to get all inventories on the part with open UI.</summary>
+  /// <returns>List of inventories.</returns>
   public static List<ModuleKISInventory> GetAllOpenInventories() {
     var openInventories = new List<ModuleKISInventory>();
     var allInventory = FindObjectsOfType(typeof(ModuleKISInventory)) as ModuleKISInventory[];
@@ -824,6 +837,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
       }
       icon = new KIS_IconViewer(this.part, selfIconResolution);
 
+      // TODO(ihsoft): Don't limit to one open inventory. Add till bootom is reached.
       if (GetAllOpenInventories().Count == 1
           && guiMainWindowPos.x == defaultFlightPos.x && guiMainWindowPos.y == defaultFlightPos.y) {
         guiMainWindowPos.y += 250;
