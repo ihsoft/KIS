@@ -321,11 +321,10 @@ sealed class KISAddonPickup : MonoBehaviour {
       if (draggedPart && (Input.GetMouseButtonUp(0) || delayedButtonUp)) {
         // In slow scenes mouse button can be pressed and released in just one frame.
         // As a result UP event may get handled before DOWN handlers which leads to
-        // false action triggering. So, just postpone UP even by one frame when it
+        // false action triggering. So, just postpone UP event by one frame when it
         // happens in the same frame as the DOWN event.
         if (KISAddonCursor.partClickedFrame == Time.frameCount) {
-          Logger.logWarning(
-            "Postponing mouse button up event in frame {0}", Time.frameCount);
+          Logger.logWarning("Postponing mouse button up event in frame {0}", Time.frameCount);
           delayedButtonUp = true;  // Event will be handled in the next frame.
         } else {
           delayedButtonUp = false;
