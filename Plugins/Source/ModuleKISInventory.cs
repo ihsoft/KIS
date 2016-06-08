@@ -398,7 +398,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
   }
 
   void OnCrewTransferred(GameEvents.HostedFromToAction<ProtoCrewMember, Part> fromToAction) {
-    if (fromToAction.from == this.part && invType == InventoryType.Pod) {
+    if (fromToAction.from == part && invType == InventoryType.Pod) {
       if (fromToAction.to.vessel.isEVA) {
         // pod to eva
         ProtoCrewMember crewAtPodSeat =
@@ -466,7 +466,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     }
   }
 
-  private int GetFirstFreeSeatIdx(Part p) {
+  int GetFirstFreeSeatIdx(Part p) {
     for (int i = 0; i <= (p.protoModuleCrew.Count + 1); i++) {
       ProtoCrewMember pcm = p.protoModuleCrew.Find(x => x.seatIdx == i);
       if (pcm == null) {
@@ -477,9 +477,9 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     return -1;
   }
 
-  private IEnumerator WaitAndTransferItems(Dictionary<int, KIS_Item> transferedItems,
-                                           ProtoCrewMember protoCrew,
-                                           ModuleKISInventory srcInventory = null) {
+  IEnumerator WaitAndTransferItems(Dictionary<int, KIS_Item> transferedItems,
+                                   ProtoCrewMember protoCrew,
+                                   ModuleKISInventory srcInventory = null) {
     yield return new WaitForFixedUpdate();
     ProtoCrewMember crewAtPodSeat = this.part.protoModuleCrew.Find(x => x.seatIdx == podSeat);
     if (crewAtPodSeat == protoCrew) {
@@ -492,8 +492,8 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     }
   }
 
-  private void OnPartActionUICreate(Part p) {
-    if (this.part != p || PartActionUICreated) {
+  void OnPartActionUICreate(Part p) {
+    if (part != p || PartActionUICreated) {
       return;
     }
     // Update context menu
@@ -522,7 +522,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
       }
     }
     if (HighLogic.LoadedSceneIsFlight) {
-      ModuleKISPickup mPickup = KISAddonPickup.instance.GetActivePickupNearest(this.part);
+      ModuleKISPickup mPickup = KISAddonPickup.instance.GetActivePickupNearest(part);
       if (mPickup) {
         Events["ShowInventory"].unfocusedRange = mPickup.maxDistance;
       }
@@ -530,8 +530,8 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     PartActionUICreated = true;
   }
 
-  private void OnPartActionUIDismiss(Part p) {
-    if (this.part == p) {
+  void OnPartActionUIDismiss(Part p) {
+    if (part == p) {
       PartActionUICreated = false;
     }
   }
@@ -560,7 +560,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     }
   }
 
-  private void slotKeyPress(KeyCode kc, int slot, int delay = 1) {
+  void slotKeyPress(KeyCode kc, int slot, int delay = 1) {
     if (kc == KeyCode.None || !inventoryKeysEnabled) {
       return;
     }
@@ -733,7 +733,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
   /// <summary>Checks if part has a child, and reports the problem.</summary>
   /// <param name="p">A part to check.</param>
   /// <returns><c>true</c> if it's OK to put the part into the inventory.</returns>
-  private bool VerifyIsNotAssembly(Part p) {
+  bool VerifyIsNotAssembly(Part p) {
     if (!HighLogic.LoadedSceneIsEditor && KISAddonPickup.grabbedPartsCount > 1) {
       KIS_Shared.ShowCenterScreenMessage(
           "Cannot put a part with children into the inventory. There are {0} part(s) attached",
@@ -755,7 +755,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     return true;
   }
 
-  private bool VolumeAvailableFor(KIS_Item item) {
+  bool VolumeAvailableFor(KIS_Item item) {
     RefreshMassAndVolume();
     if (KISAddonPickup.draggedItem.inventory == this) {
       return true;
@@ -777,8 +777,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     StartCoroutine(WaitAndDoAction(actionMethod, item, delay));
   }
 
-  private IEnumerator WaitAndDoAction(DelayedActionMethod actionMethod,
-                                      KIS_Item item, float delay) {
+  IEnumerator WaitAndDoAction(DelayedActionMethod actionMethod, KIS_Item item, float delay) {
     yield return new WaitForSeconds(delay);
     actionMethod(item);
   }
@@ -887,7 +886,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     }
 
     //Disable flares and light
-    var lights = new List<Light>(this.part.GetComponentsInChildren<Light>(true) as Light[]);
+    var lights = new List<Light>(part.GetComponentsInChildren<Light>(true) as Light[]);
     foreach (var light in lights) {
       if (light.name == "headlamp") {
         light.enabled = active;
@@ -899,7 +898,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     return true;
   }
 
-  private void GUIStyles() {
+  void GUIStyles() {
     GUI.skin = HighLogic.Skin;
     GUI.skin.button.alignment = TextAnchor.MiddleCenter;
 
@@ -930,7 +929,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     buttonStyle.alignment = TextAnchor.MiddleCenter;
   }
 
-  private void OnGUI() {
+  void OnGUI() {
     if (!showGui) {
       return;
     }
@@ -974,7 +973,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
       }
     }
     if (contextItem != null) {
-      Rect contextRelativeRect = new Rect(
+      var contextRelativeRect = new Rect(
           guiMainWindowPos.x + contextRect.x + (contextRect.width / 2),
           guiMainWindowPos.y + contextRect.y + (contextRect.height / 2),
           80, 10);
@@ -1100,7 +1099,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     }
   }
 
-  private void GuiTooltip(int windowID) {
+  void GuiTooltip(int windowID) {
     if (tooltipItem == null) {
       return;
     }
@@ -1313,7 +1312,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     }
   }
 
-  private void GuiDebugItem(int windowID) {
+  void GuiDebugItem(int windowID) {
     if (debugItem != null) {
       KIS_Shared.EditField("moveSndPath", ref debugItem.prefabModule.moveSndPath);
       KIS_Shared.EditField("shortcutKeyAction(drop,equip,custom)",
