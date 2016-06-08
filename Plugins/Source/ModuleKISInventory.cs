@@ -841,7 +841,8 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
 
       // TODO(ihsoft): Don't limit to one open inventory. Add till bootom is reached.
       if (GetAllOpenInventories().Count == 1
-          && guiMainWindowPos.x == defaultFlightPos.x && guiMainWindowPos.y == defaultFlightPos.y) {
+          && Mathf.Approximately(guiMainWindowPos.x, defaultFlightPos.x)
+          && Mathf.Approximately(guiMainWindowPos.y, defaultFlightPos.y)) {
         guiMainWindowPos.y += 250;
       }
       if (openAnim) {
