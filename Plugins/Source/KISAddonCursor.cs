@@ -39,6 +39,7 @@ sealed class KISAddonCursor : MonoBehaviour {
 
   public static void AbortPartDetection() {
     StartPartDetection(null, null, null, null);
+    partDetectionActive = false;
   }
 
   public static void StartPartDetection(OnMousePartAction onMousePartClick,
