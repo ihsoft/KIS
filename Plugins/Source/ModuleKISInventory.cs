@@ -372,7 +372,8 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     } else {
       Logger.logError("Sound not found in the game database !");
       ScreenMessages.PostScreenMessage(
-          "Sound file : " + sndPath + " has not been found, please check installation path !",
+          string.Format(
+              "Sound file : {0} has not been found, please check installation path !", sndPath),
           10, ScreenMessageStyle.UPPER_CENTER);
     }
     sndFx.audio.Play();
