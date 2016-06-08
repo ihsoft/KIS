@@ -530,7 +530,7 @@ sealed class KISAddonPickup : MonoBehaviour {
         Pickup(part);
       }
     } else if (HighLogic.LoadedSceneIsEditor) {
-      if (ModuleKISInventory.GetAllOpenInventories().Any()) {
+      if (ModuleKISInventory.GetAllOpenInventories().Count > 0) {
         Pickup(part);
       }
     }
