@@ -777,11 +777,29 @@ public static class KIS_Shared {
   }
 
   /// <summary>Walks thru all modules in the part and fixes null persistent fields.</summary>
-  /// <remarks>Used to prevent NREs in methods that persist KSP fields.</remarks>
-  /// <param name="part">A prefab to fix.</param>
+  /// <remarks>Used to prevent NREs in methods that persist KSP fields.
+  /// <para>Bad modules that cannot be fixed will be dropped which may make the part to be not
+  /// behaving as expected. It's guaranteed that <i>stock</i> modules that need fixing will be
+  /// fixed successfully. So, failures are only expected on the modules from the third-parties mods.
+  /// </para></remarks>
+  /// <param name="part">Prefab to fix.</param>
   public static void CleanupModuleFieldsInPart(Part part) {
-    foreach (var module in part.Modules) {
-      CleanupFieldsInModule(module as PartModule);
+    var badModules = new List<PartModule>();
+    foreach (var moduleObj in part.Modules) {
+      var module = moduleObj as PartModule;
+      try {
+        CleanupFieldsInModule(module);
+      } catch {
+        //badModules.Add(module);
+      }
+    }
+    // Cleanup modules that block KIS. It's a bad thing to do but not working KIS is worse.
+    foreach (var moduleToDrop in badModules) {
+      Logger.logError(
+          "Module on part prefab {0} is setup improperly: name={1}, type={2}. Drop it!",
+          part, moduleToDrop.moduleName, moduleToDrop.GetType());
+      part.Modules.Remove(moduleToDrop);
+      UnityEngine.Object.DestroyImmediate(moduleToDrop);
     }
   }
 
@@ -789,12 +807,16 @@ public static class KIS_Shared {
   /// <remarks>Used to prevent NREs in methods that persist KSP fields.</remarks>
   /// <param name="module">A module to fix.</param>
   public static void CleanupFieldsInModule(PartModule module) {
-    // Ensure the module is awaken. Otherwise, any access to base fields list will result in NRE. 
-    if (string.IsNullOrEmpty(module.moduleName)) {
-      Logger.logWarning("WORKAROUND. Module {0} on part prefab {1} is now awaken. Call Awake on it",
-                        module.GetType(), module.part);
-      AwakePartModule(module);
-    }
+    // Ensure the module is awaken. Otherwise, any access to base fields list will result in NRE.
+    // HACK: Accessing Fields property of the non-awaken module triggers a NRE. If it happens then
+    // do explicit awakening of the *base* module class.
+//    try {
+//      var unused = module.Fields.GetEnumerator();
+//    } catch {
+//      Logger.logWarning("WORKAROUND. Module {0} on part prefab {1} is not awaken. Call Awake on it",
+//                        module.GetType(), module.part);
+//      AwakePartModule(module);
+//    }
     foreach (var field in module.Fields) {
       var baseField = field as BaseField;
       if (baseField.isPersistant && baseField.GetValue(module) == null) {
