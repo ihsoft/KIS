@@ -790,7 +790,7 @@ sealed class KISAddonPickup : MonoBehaviour {
     pickupMode = newPickupMode;
     cursorMode = CursorMode.Nothing;
     icon = new KIS_IconViewer(draggedPart, draggedIconResolution);
-    KISAddonCursor.StartPartDetection();
+    KISAddonCursor.AbortPartDetection();
     grabActive = false;
     KISAddonCursor.CursorDisable();
     if (HighLogic.LoadedSceneIsFlight) {

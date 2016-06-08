@@ -37,7 +37,7 @@ sealed class KISAddonCursor : MonoBehaviour {
     fontSize = HintFontSize
   };
 
-  public static void StartPartDetection() {
+  public static void AbortPartDetection() {
     StartPartDetection(null, null, null, null);
   }
 
