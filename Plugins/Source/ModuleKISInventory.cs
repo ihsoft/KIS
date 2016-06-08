@@ -870,8 +870,8 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
       if (FlightGlobals.getStaticPressure() < KISAddonConfig.breathableAtmoPressure) {
         helmetEquipped = true;
         ScreenMessages.PostScreenMessage(
-            "Cannot remove helmet, pressure is less than " + KISAddonConfig.breathableAtmoPressure
-            + " ! (Current : " + FlightGlobals.getStaticPressure() + ")",
+            string.Format("Cannot remove helmet, pressure is less than {0} ! (Current : {1})",
+                          KISAddonConfig.breathableAtmoPressure, FlightGlobals.getStaticPressure()),
             5, ScreenMessageStyle.UPPER_CENTER);
         return false;
       }
