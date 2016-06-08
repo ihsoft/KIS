@@ -222,7 +222,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     }
   }
 
-  /// <summary>Overridden from MonBehavior.</summary>
+  /// <summary>Overridden from MonoBehavior.</summary>
   void Update() {
     if (showGui) {
       if (HighLogic.LoadedSceneIsFlight) {
@@ -239,7 +239,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     UpdateKey();
   }
 
-  /// <summary>Overridden from MonBehavior.</summary>
+  /// <summary>Overridden from MonoBehavior.</summary>
   void LateUpdate() {
     foreach (KeyValuePair<int, KIS_Item> item in items) {
       item.Value.Update();
@@ -546,6 +546,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     }
   }
 
+  /// <summary>Overridden from MonoBehavior.</summary>
   public void OnDestroy() {
     GameEvents.onCrewTransferred.Remove(new EventData<GameEvents.HostedFromToAction<ProtoCrewMember,
                                         Part>>.OnEvent(this.OnCrewTransferred));
@@ -708,23 +709,23 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     return contentCost;
   }
 
-  // IPartCostModifier
+  /// <summary>Overridden from IPartCostModifier.</summary>
   public ModifierChangeWhen GetModuleCostChangeWhen() {
     // TODO(ihsoft): Figure out what value is right.
     return ModifierChangeWhen.FIXED;
   }
 
-  // IPartCostModifier
+  /// <summary>Overridden from IPartCostModifier.</summary>
   public float GetModuleCost(float defaultCost, ModifierStagingSituation sit) {
     return GetContentCost();
   }
 
-  // IPartMassModifier
+  /// <summary>Overridden from IPartMassModifier.</summary>
   public ModifierChangeWhen GetModuleMassChangeWhen() {
     return ModifierChangeWhen.CONSTANTLY;
   }
       
-  // IPartMassModifier
+  /// <summary>Overridden from IPartMassModifier.</summary>
   public float GetModuleMass(float defaultMass, ModifierStagingSituation sit) {
     return GetContentMass();
   }
@@ -771,6 +772,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     }
   }
 
+  // TODO(ihsoft): Move out of base inventory module.
   public void DelayedAction(DelayedActionMethod actionMethod, KIS_Item item, float delay) {
     StartCoroutine(WaitAndDoAction(actionMethod, item, delay));
   }
