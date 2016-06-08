@@ -146,10 +146,10 @@ sealed class KISAddonCursor : MonoBehaviour {
     if (cursorShow) {
       // Display action icon.
       GUI.DrawTexture(
-        new Rect(Event.current.mousePosition.x - ActionIconSize / 2,
-          Event.current.mousePosition.y - ActionIconSize / 2,
-          ActionIconSize, ActionIconSize),
-        cursorTexture, ScaleMode.ScaleToFit);
+          new Rect(Event.current.mousePosition.x - ActionIconSize / 2,
+                  Event.current.mousePosition.y - ActionIconSize / 2,
+                  ActionIconSize, ActionIconSize),
+          cursorTexture, ScaleMode.ScaleToFit);
               
       // Compile the whole hint text.
       var allLines = new List<String>{ cursorText };
