@@ -1,4 +1,5 @@
 ﻿using KSPDev.ConfigUtils;
+using KSPDev.GUIUtils;
 using KSPDev.LogUtils;
 using System;
 using System.Linq;
@@ -276,7 +277,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
         rightHandItem.Use(KIS_Item.UseFrom.KeyDown);
       } else {
         KIS_UISoundPlayer.instance.PlayBipWrong();
-        KIS_Shared.ShowRightScreenMessage(NoItemEquippedMsg);
+        ScreenMessaging.ShowInfoScreenMessage(NoItemEquippedMsg);
       }
     }
 
@@ -371,10 +372,8 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
       }
     } else {
       Logger.logError("Sound not found in the game database !");
-      ScreenMessages.PostScreenMessage(
-          string.Format(
-              "Sound file : {0} has not been found, please check installation path !", sndPath),
-          10, ScreenMessageStyle.UPPER_CENTER);
+      ScreenMessaging.ShowPriorityScreenMessageWithTimeout(
+          10, "Sound file : {0} has not been found, please check installation path !", sndPath);
     }
     sndFx.audio.Play();
   }
@@ -736,7 +735,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
   /// <returns><c>true</c> if it's OK to put the part into the inventory.</returns>
   bool VerifyIsNotAssembly(Part p) {
     if (!HighLogic.LoadedSceneIsEditor && KISAddonPickup.grabbedPartsCount > 1) {
-      KIS_Shared.ShowCenterScreenMessage(
+      ScreenMessaging.ShowPriorityScreenMessage(
           "Cannot put a part with children into the inventory. There are {0} part(s) attached",
           KISAddonPickup.grabbedPartsCount - 1);
       return false;
@@ -748,9 +747,8 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     float partVolume = KIS_Shared.GetPartVolume(p.partInfo);
     var newTotalVolume = GetContentVolume() + partVolume;
     if (newTotalVolume > maxVolume) {
-      ScreenMessages.PostScreenMessage(
-          string.Format(strMaxVolumeReached, partVolume, newTotalVolume - maxVolume),
-          5, ScreenMessageStyle.UPPER_CENTER);
+      ScreenMessaging.ShowPriorityScreenMessage(
+          strMaxVolumeReached, partVolume, newTotalVolume - maxVolume);
       return false;
     }
     return true;
@@ -763,9 +761,8 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     } else {
       float newTotalVolume = GetContentVolume() + item.stackVolume;
       if (newTotalVolume > maxVolume) {
-        ScreenMessages.PostScreenMessage(
-            string.Format(strMaxVolumeReached, item.stackVolume, (newTotalVolume - maxVolume)),
-            5, ScreenMessageStyle.UPPER_CENTER);
+        ScreenMessaging.ShowPriorityScreenMessage(
+            strMaxVolumeReached, item.stackVolume, (newTotalVolume - maxVolume));
         return false;
       } else {
         return true;
@@ -817,18 +814,18 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
         // the container is dropped.
         // TODO: Find a way to update serialized state and remove this check (#89). 
         if (GetComponent<ModuleKISItemEvaTweaker>() && vessel.isEVA) {
-          ScreenMessages.PostScreenMessage("This storage is not accessible while carried !",
-                                           4, ScreenMessageStyle.UPPER_CENTER);
+          ScreenMessaging.ShowPriorityScreenMessage(
+              "This storage is not accessible while carried !");
           return;
         }
         if (FlightGlobals.ActiveVessel.isEVA && !externalAccess) {
-          ScreenMessages.PostScreenMessage("This storage is not accessible from the outside !",
-                                           4, ScreenMessageStyle.UPPER_CENTER);
+          ScreenMessaging.ShowPriorityScreenMessage(
+              "This storage is not accessible from the outside !");
           return;
         }
         if (!FlightGlobals.ActiveVessel.isEVA && !internalAccess) {
-          ScreenMessages.PostScreenMessage("This storage is not accessible from the inside !",
-                                           4, ScreenMessageStyle.UPPER_CENTER);
+          ScreenMessaging.ShowPriorityScreenMessage(
+              "This storage is not accessible from the inside !");
           return;
         }
       }
@@ -862,17 +859,15 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     if (checkAtmo) {
       if (!this.part.vessel.mainBody.atmosphereContainsOxygen) {
         helmetEquipped = true;
-        ScreenMessages.PostScreenMessage(
-            "Cannot remove helmet, atmosphere does not contain oxygen !",
-            5, ScreenMessageStyle.UPPER_CENTER);
+        ScreenMessaging.ShowPriorityScreenMessage(
+            "Cannot remove helmet, atmosphere does not contain oxygen !");
         return false;
       }
       if (FlightGlobals.getStaticPressure() < KISAddonConfig.breathableAtmoPressure) {
         helmetEquipped = true;
-        ScreenMessages.PostScreenMessage(
-            string.Format("Cannot remove helmet, pressure is less than {0} ! (Current : {1})",
-                          KISAddonConfig.breathableAtmoPressure, FlightGlobals.getStaticPressure()),
-            5, ScreenMessageStyle.UPPER_CENTER);
+        ScreenMessaging.ShowPriorityScreenMessage(
+            "Cannot remove helmet, pressure is less than {0} ! (Current : {1})",
+            KISAddonConfig.breathableAtmoPressure, FlightGlobals.getStaticPressure());
         return false;
       }
     }
@@ -1267,8 +1262,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
             contextItem.quantity -= splitQty;
             AddItem(contextItem.availablePart.partPrefab, splitQty);
           } else {
-            ScreenMessages.PostScreenMessage("Inventory is full, cannot split !",
-                                             5, ScreenMessageStyle.UPPER_CENTER);
+            ScreenMessaging.ShowPriorityScreenMessage("Inventory is full, cannot split !");
           }
           contextItem = null;
         }
@@ -1513,7 +1507,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
 
       if (draggedItemModule && draggedItemModule.carriable) {
         if (HighLogic.LoadedSceneIsEditor && podSeat != -1) {
-          KIS_Shared.ShowCenterScreenMessage(
+          ScreenMessaging.ShowPriorityScreenMessage(
               "Carriable items cannot be stored in the seat's inventory");
           storePart = false;
         } else if (HighLogic.LoadedSceneIsFlight && invType == InventoryType.Eva) {
@@ -1529,9 +1523,8 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
               }
               carryPart = false;
               storePart = false;
-              KIS_Shared.ShowCenterScreenMessage(
-                  "Another part is already carried on slot <{0}>",
-                  draggedItemModule.equipSlot);
+              ScreenMessaging.ShowPriorityScreenMessage(
+                  "Another part is already carried on slot <{0}>", draggedItemModule.equipSlot);
               break;
             }
           }

@@ -78,10 +78,8 @@ public static class KIS_Shared {
       return true;
     } else {
       Logger.logError("Sound not found in the game database !");
-      ScreenMessages.PostScreenMessage(
-          string.Format("Sound file : {0} has not been found, please check your KIS installation !",
-                        sndPath),
-          10, ScreenMessageStyle.UPPER_CENTER);
+      ScreenMessaging.ShowPriorityScreenMessageWithTimeout(
+          10, "Sound file : {0} has not been found, please check your KIS installation !",sndPath);
       return false;
     }
   }
@@ -775,48 +773,6 @@ public static class KIS_Shared {
       result.Insert(0, srfNode);
     }
     return result;
-  }
-      
-  /// <summary>Shows a formatted message with the specified location and timeout.</summary>
-  /// <param name="style">A <c>ScreenMessageStyle</c> specifier.</param>
-  /// <param name="duration">Delay before hiding the message in seconds.</param>
-  /// <param name="fmt"><c>String.Format()</c> formatting string.</param>
-  /// <param name="args">Arguments for the formattign string.</param>
-  public static void ShowScreenMessage(ScreenMessageStyle style, float duration,
-                                       String fmt, params object[] args) {
-    ScreenMessages.PostScreenMessage(String.Format(fmt, args), duration, style);
-  }
-
-  /// <summary>Shows a message in the upper center area with the specified timeout.</summary>
-  /// <param name="duration">Delay before hiding the message in seconds.</param>
-  /// <param name="fmt"><c>String.Format()</c> formatting string.</param>
-  /// <param name="args">Arguments for the formattign string.</param>
-  public static void ShowCenterScreenMessageWithTimeout(float duration, String fmt,
-                                                        params object[] args) {
-    ShowScreenMessage(ScreenMessageStyle.UPPER_CENTER, duration, fmt, args);
-  }
-
-  /// <summary>Shows a message in the upper center area with a default timeout.</summary>
-  /// <param name="fmt"><c>String.Format()</c> formatting string.</param>
-  /// <param name="args">Arguments for the formattign string.</param>
-  public static void ShowCenterScreenMessage(String fmt, params object[] args) {
-    ShowCenterScreenMessageWithTimeout(DefaultMessageTimeout, fmt, args);
-  }
-      
-  /// <summary>Shows a message in the upper right corner with the specified timeout.</summary>
-  /// <param name="duration">Delay before hiding the message in seconds.</param>
-  /// <param name="fmt"><c>String.Format()</c> formatting string.</param>
-  /// <param name="args">Arguments for the formattign string.</param>
-  public static void ShowRightScreenMessageWithTimeout(
-    float duration, String fmt, params object[] args) {
-    ShowScreenMessage(ScreenMessageStyle.UPPER_RIGHT, duration, fmt, args);
-  }
-
-  /// <summary>Shows a message in the upper center area with a default timeout.</summary>
-  /// <param name="fmt"><c>String.Format()</c> formatting string.</param>
-  /// <param name="args">Arguments for the formattign string.</param>
-  public static void ShowRightScreenMessage(String fmt, params object[] args) {
-    ShowRightScreenMessageWithTimeout(DefaultMessageTimeout, fmt, args);
   }
 
   /// <summary>Walks thru all modules in the part and fixes null persistent fields.</summary>

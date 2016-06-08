@@ -1,4 +1,5 @@
 ﻿using KSPDev.LogUtils;
+using KSPDev.GUIUtils;
 using System;
 using System.Linq;
 using System.Collections.Generic;
@@ -308,10 +309,8 @@ public class KIS_Item {
     }
     float newVolume = inventory.totalVolume + (volume * qty);
     if (checkVolume && newVolume > inventory.maxVolume) {
-      ScreenMessages.PostScreenMessage(
-          string.Format("Max destination volume reached (+{0:#.####})",
-                        newVolume - inventory.maxVolume),
-          5f);
+      ScreenMessaging.ShowPriorityScreenMessage("Max destination volume reached (+{0:#.####})",
+                                                newVolume - inventory.maxVolume);
       return false;
     }
     quantity += qty;
@@ -383,10 +382,9 @@ public class KIS_Item {
         }
       }
       if (!skillFound) {
-        ScreenMessages.PostScreenMessage(
-            string.Format("This item can only be used by a kerbal with the skill : {0}",
-                          prefabModule.equipSkill),
-            5f, ScreenMessageStyle.UPPER_CENTER);
+        ScreenMessaging.ShowPriorityScreenMessage(
+            "This item can only be used by a kerbal with the skill : {0}",
+            prefabModule.equipSkill);
         PlaySound(KIS_Shared.bipWrongSndPath);
         return;
       }
@@ -397,10 +395,9 @@ public class KIS_Item {
       KIS_Item equippedItem = inventory.GetEquipedItem(equipSlot);
       if (equippedItem != null) {
         if (equippedItem.carriable) {
-          ScreenMessages.PostScreenMessage(
-              string.Format("Cannot equip item, slot <{0}> already used for carrying {1}",
-                            equipSlot, equippedItem.availablePart.title),
-              5f, ScreenMessageStyle.UPPER_CENTER);
+          ScreenMessaging.ShowPriorityScreenMessage(
+              "Cannot equip item, slot <{0}> already used for carrying {1}",
+              equipSlot, equippedItem.availablePart.title);
           PlaySound(KIS_Shared.bipWrongSndPath);
           return;
         }

@@ -1,4 +1,5 @@
-﻿using KSPDev.LogUtils;
+﻿using KSPDev.GUIUtils;
+using KSPDev.LogUtils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -504,31 +505,31 @@ sealed class KISAddonPointer : MonoBehaviour {
     //On click.
     if (Input.GetMouseButtonDown(0)) {
       if (invalidTarget) {
-        KIS_Shared.ShowRightScreenMessage("Target object is not allowed !");
+        ScreenMessaging.ShowInfoScreenMessage("Target object is not allowed !");
         audioBipWrong.Play();
       } else if (itselfIsInvalid) {
-        KIS_Shared.ShowRightScreenMessage("Cannot attach on itself !");
+        ScreenMessaging.ShowInfoScreenMessage("Cannot attach on itself !");
         audioBipWrong.Play();
       } else if (notAllowedOnMount) {
-        KIS_Shared.ShowRightScreenMessage("This part is not allowed on the mount !");
+        ScreenMessaging.ShowInfoScreenMessage("This part is not allowed on the mount !");
         audioBipWrong.Play();
       } else if (cannotSurfaceAttach) {
-        KIS_Shared.ShowRightScreenMessage("Target part do not allow surface attach !");
+        ScreenMessaging.ShowInfoScreenMessage("Target part do not allow surface attach !");
         audioBipWrong.Play();
       } else if (invalidCurrentNode) {
-        KIS_Shared.ShowRightScreenMessage(
+        ScreenMessaging.ShowInfoScreenMessage(
           "This node cannot be used for surface attach !");
         audioBipWrong.Play();
       } else if (sourceDist > maxDist) {
-        KIS_Shared.ShowRightScreenMessage("Too far from source: {0:F3}m > {1:F3}m",
+        ScreenMessaging.ShowInfoScreenMessage("Too far from source: {0:F3}m > {1:F3}m",
           sourceDist, maxDist);
         audioBipWrong.Play();
       } else if (targetDist > maxDist) {
-        KIS_Shared.ShowRightScreenMessage("Too far from target: {0:F3}m > {1:F3}m",
+        ScreenMessaging.ShowInfoScreenMessage("Too far from target: {0:F3}m > {1:F3}m",
           targetDist, maxDist);
         audioBipWrong.Play();
       } else if (restrictedPart) {
-        KIS_Shared.ShowRightScreenMessage("Cannot attach to part: {0}", hoveredPart);
+        ScreenMessaging.ShowInfoScreenMessage("Cannot attach to part: {0}", hoveredPart);
         audioBipWrong.Play();
       } else {
         SendPointerClick(pointerTarget, pointer.transform.position, pointer.transform.rotation,
@@ -557,7 +558,7 @@ sealed class KISAddonPointer : MonoBehaviour {
           ResetMouseOver();
           SendPointerState(pointerTarget, PointerState.OnChangeAttachNode, null, null);
         } else {
-          KIS_Shared.ShowRightScreenMessage("This part has only one attach node!");
+          ScreenMessaging.ShowInfoScreenMessage("This part has only one attach node!");
           audioBipWrong.Play();
         }
       }

@@ -1310,7 +1310,7 @@ sealed class KISAddonPickup : MonoBehaviour {
                                 bool reportToConsole = false,
                                 string cursorIcon = ForbiddenIcon) {
     if (reportToConsole) {
-      KIS_Shared.ShowRightScreenMessage("{0}: {1}", error, reason);
+      ScreenMessaging.ShowInfoScreenMessage("{0}: {1}", error, reason);
       KIS_UISoundPlayer.instance.PlayBipWrong();
     } else {
       KISAddonCursor.CursorEnable(cursorIcon, error, reason);
