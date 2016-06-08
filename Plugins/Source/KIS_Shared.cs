@@ -790,7 +790,7 @@ public static class KIS_Shared {
       try {
         CleanupFieldsInModule(module);
       } catch {
-        //badModules.Add(module);
+        badModules.Add(module);
       }
     }
     // Cleanup modules that block KIS. It's a bad thing to do but not working KIS is worse.
@@ -810,13 +810,13 @@ public static class KIS_Shared {
     // Ensure the module is awaken. Otherwise, any access to base fields list will result in NRE.
     // HACK: Accessing Fields property of the non-awaken module triggers a NRE. If it happens then
     // do explicit awakening of the *base* module class.
-//    try {
-//      var unused = module.Fields.GetEnumerator();
-//    } catch {
-//      Logger.logWarning("WORKAROUND. Module {0} on part prefab {1} is not awaken. Call Awake on it",
-//                        module.GetType(), module.part);
-//      AwakePartModule(module);
-//    }
+    try {
+      var unused = module.Fields.GetEnumerator();
+    } catch {
+      Logger.logWarning("WORKAROUND. Module {0} on part prefab {1} is not awaken. Call Awake on it",
+                        module.GetType(), module.part);
+      AwakePartModule(module);
+    }
     foreach (var field in module.Fields) {
       var baseField = field as BaseField;
       if (baseField.isPersistant && baseField.GetValue(module) == null) {
