@@ -7,19 +7,19 @@ namespace KIS {
 
 [KSPAddon(KSPAddon.Startup.EveryScene, false)]
 sealed class KISAddonCursor : MonoBehaviour {
+  public static Part hoveredPart = null;
+  public static int partClickedFrame = -1;
+  public delegate void OnMousePartAction(Part part);
+
   static bool cursorShow = false;
   static bool partDetectionActive = false;
-      
   static Texture2D cursorTexture = null;
   static string cursorText;
   static List<string> cursorAdditionalTexts;
-  public static Part hoveredPart = null;
-  public static int partClickedFrame = -1;
   static OnMousePartAction delegateOnMousePartClick;
   static OnMousePartAction delegateOnMouseEnterPart;
   static OnMousePartAction delegateOnMouseHoverPart;
   static OnMousePartAction delegateOnMouseExitPart;
-  public delegate void OnMousePartAction(Part part);
 
   // Cursor hint text settings.
   const int ActionIconSize = 24;
