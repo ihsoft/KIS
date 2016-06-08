@@ -7,28 +7,28 @@ namespace KIS {
 
 [KSPAddon(KSPAddon.Startup.EveryScene, false)]
 sealed class KISAddonCursor : MonoBehaviour {
-  private static bool cursorShow = false;
-  private static bool partDetectionActive = false;
+  static bool cursorShow = false;
+  static bool partDetectionActive = false;
       
-  private static Texture2D cursorTexture = null;
-  private static string cursorText;
-  private static List<string> cursorAdditionalTexts;
+  static Texture2D cursorTexture = null;
+  static string cursorText;
+  static List<string> cursorAdditionalTexts;
   public static Part hoveredPart = null;
   public static int partClickedFrame = -1;
-  private static OnMousePartAction delegateOnMousePartClick;
-  private static OnMousePartAction delegateOnMouseEnterPart;
-  private static OnMousePartAction delegateOnMouseHoverPart;
-  private static OnMousePartAction delegateOnMouseExitPart;
+  static OnMousePartAction delegateOnMousePartClick;
+  static OnMousePartAction delegateOnMouseEnterPart;
+  static OnMousePartAction delegateOnMouseHoverPart;
+  static OnMousePartAction delegateOnMouseExitPart;
   public delegate void OnMousePartAction(Part part);
 
   // Cursor hint text settings.
-  private const int ActionIconSize = 24;
+  const int ActionIconSize = 24;
   // It's quare.
-  private const int HintFontSize = 10;
-  private const int HintTextLeftMargin = 4;
+  const int HintFontSize = 10;
+  const int HintTextLeftMargin = 4;
   // A gap between action icon and the text.
-  private static Color hintBackground = new Color(0.0f, 0.0f, 0.0f, 0.5f);
-  private static GUIStyle hintWindowStyle = new GUIStyle {
+  static Color hintBackground = new Color(0.0f, 0.0f, 0.0f, 0.5f);
+  static GUIStyle hintWindowStyle = new GUIStyle {
     normal = {
       background = CreateTextureFromColour(hintBackground),
       textColor = Color.white
@@ -105,7 +105,7 @@ sealed class KISAddonCursor : MonoBehaviour {
   }
 
   public static void CursorEnable(string texturePath, string text, string text2) {
-    List<String> texts = new List<String>();
+    var texts = new List<String>();
     texts.Add(text2);
     CursorEnable(texturePath, text, texts);
   }
@@ -135,14 +135,14 @@ sealed class KISAddonCursor : MonoBehaviour {
   /// </remarks>
   /// <param name="colour"></param>
   /// <returns></returns>
-  private static Texture2D CreateTextureFromColour(Color colour) {
+  static Texture2D CreateTextureFromColour(Color colour) {
     var texture = new Texture2D(1, 1, TextureFormat.ARGB32, false);
     texture.SetPixel(1, 1, colour);
     texture.Apply();
     return texture;
   }
 
-  private void OnGUI() {
+  void OnGUI() {
     if (cursorShow) {
       // Display action icon.
       GUI.DrawTexture(
