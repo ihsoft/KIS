@@ -805,11 +805,11 @@ public static class KIS_Shared {
 
   /// <summary>Fixes null persistent fields in the module.</summary>
   /// <remarks>Used to prevent NREs in methods that persist KSP fields.</remarks>
-  /// <param name="module">A module to fix.</param>
+  /// <param name="module">Module to fix.</param>
   public static void CleanupFieldsInModule(PartModule module) {
     // Ensure the module is awaken. Otherwise, any access to base fields list will result in NRE.
-    // HACK: Accessing Fields property of the non-awaken module triggers a NRE. If it happens then
-    // do explicit awakening of the *base* module class.
+    // HACK: Accessing Fields property of a non-awaken module triggers NRE. If it happens then do
+    // explicit awakening of the *base* module class.
     try {
       var unused = module.Fields.GetEnumerator();
     } catch {
@@ -837,7 +837,8 @@ public static class KIS_Shared {
   /// <remarks>Modules added to prefab via <c>AddModule()</c> call are not get activated as they
   /// would if activated by the Unity core. As a result some vital fields may be left uninitialized
   /// which may result in an NRE later when working with the prefab (e.g. making a part snapshot).
-  /// This method finds and invokes method <c>Awake</c> via reflect which is normally done by Unity.
+  /// This method finds and invokes method <c>Awake</c> via reflection which is normally done by
+  /// Unity.
   /// <para><b>IMPORTANT!</b> This method cannot awake a module! To make the things right every
   /// class in the hierarchy should get its <c>Awake</c> called. This method only calls <c>Awake</c>
   /// method on <c>PartModule</c> parent class which is not enough to do a complete awakening.
@@ -854,8 +855,8 @@ public static class KIS_Shared {
     if (moduleAwakeMethod != null) {
       moduleAwakeMethod.Invoke(module, new object[] {});
     } else {
-      Logger.logError("Cannot find Awake() method on {0}. Skip awakening of the component: {1}",
-                      module.GetType(), module);
+      Logger.logError("Cannot find Awake() method on {0}. Skip awakening of component: {1}",
+                      module.GetType(), module.GetType());
     }
   }
 }
