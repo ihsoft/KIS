@@ -1,4 +1,1 @@
 Pre-release changes:
-- [Fix] #138: NRE when switching to launch.
-- [Fix] #151: NRE in editor when using Deadly Reenter mod.
-- [Fix] #154: Items in free seats's inventory are not cleared and counted to the vessel mass.
