@@ -193,12 +193,10 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
       openAnim = this.part.FindModelAnimators(openAnimName)[0];
     }
 
-    GameEvents.onCrewTransferred.Add(
-        new EventData<GameEvents.HostedFromToAction<ProtoCrewMember, Part>>
-            .OnEvent(this.OnCrewTransferred));
-    GameEvents.onVesselChange.Add(new EventData<Vessel>.OnEvent(this.OnVesselChange));
-    GameEvents.onPartActionUICreate.Add(new EventData<Part>.OnEvent(this.OnPartActionUICreate));
-    GameEvents.onPartActionUIDismiss.Add(new EventData<Part>.OnEvent(this.OnPartActionUIDismiss));
+    GameEvents.onCrewTransferred.Add(OnCrewTransferred);
+    GameEvents.onVesselChange.Add(OnVesselChange);
+    GameEvents.onPartActionUICreate.Add(OnPartActionUICreate);
+    GameEvents.onPartActionUIDismiss.Add(OnPartActionUIDismiss);
           
     if (invType == InventoryType.Eva) {
       List<ProtoCrewMember> protoCrewMembers = vessel.GetVesselCrew();
@@ -458,7 +456,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
           }
         }
         foreach (KIS_Item item in itemsToDrop) {
-          item.Drop(this.part);
+          item.Drop(part);
         }
         var transferedItems = new Dictionary<int, KIS_Item>(evaInventory.items);
         StartCoroutine(WaitAndTransferItems(transferedItems, fromToAction.host));
@@ -642,7 +640,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     tgtInventory.RefreshMassAndVolume();
   }
 
-  public void MoveItems(Dictionary<int, KIS_Item> srcItems, ModuleKISInventory destInventory) {
+  public static void MoveItems(Dictionary<int, KIS_Item> srcItems, ModuleKISInventory destInventory) {
     destInventory.items.Clear();
     destInventory.items = new Dictionary<int, KIS_Item>(srcItems);
     foreach (KeyValuePair<int, KIS_Item> item in destInventory.items) {
