@@ -35,13 +35,15 @@ _Note_: If you don't want building yourself you can use the DLL from the reposit
 - Check if file `KIS\Plugins\Source\CHANGES.txt` has any "alpha" changes since the last release:
   - Only consider changes of types: Fix, Feature, Enhancement, and Change. Anything else is internal stuff which is not interesting to the outer world.
   - Copy the changes into `changelog.md` and add the release date.
-  - Go thru issues having #XX in the title, and update each releveant [Github issue](https://github.com/KospY/KIS/issues) with the version where it was addressed. Usually it means closing of the issue but there can be exceptions.
+  - Go thru issues having #XX in the title, and update each releveant [Github issue](https://github.com/KospY/KIS/issues) with the version where it was addressed. Usually it means closing of the issue.
   - Drop all changes from `CHANGES.txt`.
+- Update version number in [AssemblyInfo.cs](https://github.com/KospY/KIS/blob/master/Plugins/Source/Properties/AssemblyInfo.cs).
 - Run `Tools\make_release.py -p` having folder `Tools` as current.
 - Given there were no compile errors the new release will live in `Releases` folder.
-- Update [Github repository](https://github.com/KospY/KIS) with the files updated during the release.
-- Upload new package to [Github repository releases](https://github.com/KospY/KIS/releases). Use changes from `changelog.md` as a release description.
-- Upload new package to [Curseforge](http://kerbal.curseforge.com/projects/kerbal-inventory-system-kis/files). Once verified the package will become available for downloading.
+- Upload new package to [Curseforge](http://kerbal.curseforge.com/projects/kerbal-inventory-system-kis/files). Wait till new package is verified.
+- Update [netkan file](https://github.com/KospY/KIS/blob/master/KIS.netkan) with the newly uploaded file.
+- Commit release changes and update remote  [Github repository](https://github.com/KospY/KIS) with the files updated during the release.
+- Make a [Github release](https://github.com/KospY/KIS/releases). Do *not* attach release binary to it. Use changes from `changelog.md` as a release description.
 
 _Note_: You can run `make_release.py` without parameter `-p`. In this case release folder structure will be created in folder `Release` but no archive will be prepared.
 
