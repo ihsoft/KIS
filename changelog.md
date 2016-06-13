@@ -1,4 +1,4 @@
-### 1.2.11 (June 16th, 2016)
+### 1.2.11 (June 10th, 2016)
 - [Fix] #138: NRE when switching to launch.
 - [Fix] #151: NRE in editor when using Deadly Reenter mod.
 - [Fix] #154: Items in free seats's inventory are not cleared and counted to the vessel mass.
