@@ -107,24 +107,24 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     Pod,
     Eva
   }
-  private float keyPressTime = 0f;
+  float keyPressTime = 0f;
   public delegate void DelayedActionMethod(KIS_Item item);
   public string kerbalTrait;
-  private List<KIS_Item> startEquip = new List<KIS_Item>();
+  List<KIS_Item> startEquip = new List<KIS_Item>();
 
   // GUI
   public bool showGui = false;
   GUIStyle lowerRightStyle, upperLeftStyle, upperRightStyle, buttonStyle, boxStyle;
   public Rect guiMainWindowPos;
-  private Rect guiDebugWindowPos = new Rect(0, 50, 500, 300);
-  private KIS_IconViewer icon;
-  private Rect defaultEditorPos = new Rect(Screen.width / 3, 40, 10, 10);
-  private Rect defaultFlightPos = new Rect(0, 50, 10, 10);
-  private Vector2 scrollPositionDbg;
-  private float splitQty = 1;
-  private bool clickThroughLocked = false;
-  private bool guiSetName = false;
-  private bool PartActionUICreated = false;
+  Rect guiDebugWindowPos = new Rect(0, 50, 500, 300);
+  KIS_IconViewer icon;
+  Rect defaultEditorPos = new Rect(Screen.width / 3, 40, 10, 10);
+  Rect defaultFlightPos = new Rect(0, 50, 10, 10);
+  Vector2 scrollPositionDbg;
+  float splitQty = 1;
+  bool clickThroughLocked = false;
+  bool guiSetName = false;
+  bool PartActionUICreated = false;
 
   //Tooltip
   private KIS_Item tooltipItem;
