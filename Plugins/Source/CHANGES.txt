@@ -1,2 +1,2 @@
 Pre-release changes:
-- [Fix] #109: Sandbox mode = no repairskill for non-badass kerbals
+
