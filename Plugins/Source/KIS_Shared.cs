@@ -798,8 +798,7 @@ public static class KIS_Shared {
       Logger.logError(
           "Module on part prefab {0} is setup improperly: name={1}, type={2}. Drop it!",
           part, moduleToDrop.moduleName, moduleToDrop.GetType());
-      part.Modules.Remove(moduleToDrop);
-      UnityEngine.Object.DestroyImmediate(moduleToDrop);
+      part.RemoveModule(moduleToDrop);
     }
   }
 
