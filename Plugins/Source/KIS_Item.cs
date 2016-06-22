@@ -371,8 +371,10 @@ public class KIS_Item {
     }
     Logger.logInfo("Equip item {0}", this.availablePart.name);
 
-    //Check skill if needed
-    if (!String.IsNullOrEmpty(prefabModule.equipSkill)) {
+    // Check skill if needed. Skip the check in sandbox modes.
+    if (HighLogic.CurrentGame.Mode != Game.Modes.SANDBOX
+        && HighLogic.CurrentGame.Mode != Game.Modes.SCIENCE_SANDBOX
+        && !String.IsNullOrEmpty(prefabModule.equipSkill)) {
       bool skillFound = false;
       List<ProtoCrewMember> protoCrewMembers = inventory.vessel.GetVesselCrew();
       foreach (var expEffect in protoCrewMembers[0].experienceTrait.Effects) {
