@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace KIS {
 
-public class ModuleKISItemSoundPlayer : ModuleKISItem {
+public sealed class ModuleKISItemSoundPlayer : ModuleKISItem {
   [KSPField]
   public string sndPath = "KIS/Sounds/guitar";
   [KSPField]

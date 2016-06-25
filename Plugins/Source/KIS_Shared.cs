@@ -1,66 +1,18 @@
-﻿using KSPDev.LogUtils;
+﻿using KSPDev.ConfigUtils;
+using KSPDev.GUIUtils;
+using KSPDev.LogUtils;
 using System;
 using System.Collections.Generic;
 using System.Collections;
 using System.ComponentModel;
 using System.Linq;
+using System.Reflection;
 using UnityEngine;
 
 namespace KIS {
 
 public class KIS_LinkedPart : MonoBehaviour {
   public Part part;
-}
-
-[KSPAddon(KSPAddon.Startup.EveryScene, false /*once*/)]
-public class KIS_UISoundPlayer : MonoBehaviour {
-  public static KIS_UISoundPlayer instance;
-
-  // TODO: Read these settings from a config.
-  private static readonly string bipWrongSndPath = "KIS/Sounds/bipwrong";
-  private static readonly string clickSndPath = "KIS/Sounds/click";
-  private static readonly string attachPartSndPath = "KIS/Sounds/attachScrewdriver";
-
-  private readonly GameObject audioGo = new GameObject();
-  private AudioSource audioBipWrong;
-  private AudioSource audioClick;
-  private AudioSource audioAttach;
-
-  /// <summary>Plays a sound indicating a wrong action that was blocked.</summary>
-  public void PlayBipWrong() {
-    audioBipWrong.Play();
-  }
-
-  /// <summary>Plays a sound indicating an action was accepted.</summary>
-  public void PlayClick() {
-    audioClick.Play();
-  }
-
-  /// <summary>Plays a sound indicating a part was attached using a tool.</summary>
-  public void PlayToolAttach() {
-    audioAttach.Play();
-  }
-
-  void Awake() {
-    Logger.logInfo("Loading UI sounds for KIS...");
-    InitSound(bipWrongSndPath, out audioBipWrong);
-    InitSound(clickSndPath, out audioClick);
-    InitSound(attachPartSndPath, out audioAttach);
-    instance = this;
-  }
-      
-  private void InitSound(string clipPath, out AudioSource source) {
-    Logger.logInfo("Loading clip: {0}", clipPath);
-    source = audioGo.AddComponent<AudioSource>();
-    source.volume = GameSettings.UI_VOLUME;
-    source.spatialBlend = 0;  //set as 2D audiosource
-
-    if (GameDatabase.Instance.ExistsAudioClip(clipPath)) {
-      source.clip = GameDatabase.Instance.GetAudioClip(clipPath);
-    } else {
-      Logger.logError("Cannot locate clip: {0}", clipPath);
-    }
-  }
 }
 
 /// <summary>Constants for standard attach node ids.</summary>
@@ -71,7 +23,7 @@ public static class AttachNodeId {
   public const string Top = "top";
 }
 
-static public class KIS_Shared {
+public static class KIS_Shared {
   // TODO: Read it from the config.
   private const float DefaultMessageTimeout = 5f; // Seconds.
 
@@ -127,10 +79,8 @@ static public class KIS_Shared {
       return true;
     } else {
       Logger.logError("Sound not found in the game database !");
-      ScreenMessages.PostScreenMessage(
-          string.Format("Sound file : {0} has not been found, please check your KIS installation !",
-                        sndPath),
-          10, ScreenMessageStyle.UPPER_CENTER);
+      ScreenMessaging.ShowPriorityScreenMessageWithTimeout(
+          10, "Sound file : {0} has not been found, please check your KIS installation !",sndPath);
       return false;
     }
   }
@@ -235,18 +185,43 @@ static public class KIS_Shared {
           
     CleanupExternalLinks(oldVessel);
     CleanupExternalLinks(assemblyRoot.vessel);
+    RenameAssemblyVessel(assemblyRoot);
+  }
 
-    ModuleKISInventory inv = assemblyRoot.GetComponent<ModuleKISInventory>();
-    if (inv) {
-      if (inv.invName != "") {
-        assemblyRoot.vessel.vesselName = inv.part.partInfo.title + " | " + inv.invName;
-      } else {
-        assemblyRoot.vessel.vesselName = inv.part.partInfo.title;
-      }
+  /// <summary>Gives a nicer name to a vessel created during KIS deatch operation.</summary>
+  /// <remarks>When a part is pulled out of inventory or assembly deatched from a vessel it gets a
+  /// standard name saying it's now "debris". When using KIS such parts are not actually debris.
+  /// This method renames vessel depening on the case:
+  /// <list type="">
+  /// <item>Single part vessels are named after the part's title.</item>
+  /// <item>Multiple parts vessels are named after the source vessel name.</item>
+  /// </list>
+  /// Also, vessel's type is reset to <c>VesselType.Unknown</c>.</remarks>
+  /// <param name="part">A part of the vessel to get name and vessel from.</param>
+  public static void RenameAssemblyVessel(Part part) {
+    part.vessel.vesselType = VesselType.Unknown;
+    part.vessel.vesselName = part.partInfo.title;
+    ModuleKISInventory inv = part.GetComponent<ModuleKISInventory>();
+    if (inv && inv.invName.Length > 0) {
+      // Add inventory name suffix if any.
+      part.vessel.vesselName += string.Format(" ({0})", inv.invName);
+    }
+    // For assemblies add number of parts.
+    if (part.vessel.parts.Count > 1) {
+      part.vessel.vesselName += string.Format(" with {0} parts", part.vessel.parts.Count - 1);
     }
   }
 
   public static ConfigNode PartSnapshot(Part part) {
+    if (ReferenceEquals(part, part.partInfo.partPrefab)) {
+      // HACK: Prefab may have fields initialized to "null". Such fields cannot be saved via
+      //   BaseFieldList when making a snapshot. So, go thru the persistent fields of all prefab
+      //   modules and replace nulls with a default value of the type. It's unlikely we break
+      //   something since by design such fields are not assumed to be used until loaded, and it's
+      //   impossible to have "null" value read from a config.
+      CleanupModuleFieldsInPart(part);
+    }
+
     var node = new ConfigNode("PART");
     var snapshot = new ProtoPartSnapshot(part, null);
 
@@ -322,8 +297,7 @@ static public class KIS_Shared {
   }
 
   public static Part CreatePart(AvailablePart avPart, Vector3 position, Quaternion rotation,
-                                Part fromPart, Part tgtPart = null, string srcAttachNodeID = null,
-                                AttachNode tgtAttachNode = null) {
+                                Part fromPart) {
     ConfigNode partNode = new ConfigNode();
     PartSnapshot(avPart.partPrefab).CopyTo(partNode);
     return CreatePart(partNode, position, rotation, fromPart);
@@ -387,16 +361,7 @@ static public class KIS_Shared {
       newPart.StartCoroutine(WaitAndCouple(newPart, coupleToPart, srcAttachNodeID,
                                            tgtAttachNode, onPartCoupled));
     } else {
-      newPart.vessel.vesselType = VesselType.Unknown;
-      //name container
-      ModuleKISInventory inv = newPart.GetComponent<ModuleKISInventory>();
-      if (inv) {
-        if (inv.invName != "") {
-          newPart.vessel.vesselName = inv.part.partInfo.title + " | " + inv.invName;
-        } else {
-          newPart.vessel.vesselName = inv.part.partInfo.title;
-        }
-      }
+      RenameAssemblyVessel(newPart);
     }
     return newPart;
   }
@@ -518,11 +483,57 @@ static public class KIS_Shared {
     }
   }
 
-  public static float GetPartVolume(Part partPrefab) {
-    Bounds[] rendererBounds = PartGeometryUtil.GetRendererBounds(partPrefab);
-    Vector3 boundsSize = PartGeometryUtil.MergeBounds(rendererBounds, partPrefab.transform).size;
-    float volume = boundsSize.x * boundsSize.y * boundsSize.z;
-    return volume * 1000;
+  /// <summary>Returns part's volume basing on its geometrics.</summary>
+  /// <remarks>Geometry of a part depends on the state (e.g. solar panel can be deployed and take
+  /// more space). It's not possible (nor practical) for KIS to figure out which state of the part
+  /// is the most compact one. So, when calculating part's volume the initial state of the mesh
+  /// renderers in the prefab is considered the right ones. If parts's initial state is deployed
+  /// (e.g. Drill-O-Matic) then it will take more space than it could have.</remarks>
+  /// <param name="partInfo">A part to get volume for.</param>
+  /// <returns>Volume in liters.</returns>
+  public static float GetPartVolume(AvailablePart partInfo) {
+    var p = partInfo.partPrefab;
+    float volume;
+
+    // If there is a KIS item volume then use it but still apply scale tweaks. 
+    var kisItem = p.GetComponent<ModuleKISItem>();
+    if (kisItem && kisItem.volumeOverride > 0) {
+      volume = kisItem.volumeOverride;
+    } else {
+      var boundsSize = PartGeometryUtil.MergeBounds(p.GetRendererBounds(), p.transform).size;
+      volume = boundsSize.x * boundsSize.y * boundsSize.z * 1000f;
+    }
+
+    // Apply cube of the scale modifier since volume involves all 3 axis.
+    return (float) (volume * Math.Pow(GetPartExternalScaleModifier(partInfo), 3));
+  }
+
+  /// <summary>Returns external part's scale for a default part configuration.</summary>
+  /// <param name="avPart">A part info to check modules for.</param>
+  /// <returns>Multiplier to a model's scale on one axis.</returns>
+  public static float GetPartExternalScaleModifier(AvailablePart avPart) {
+    return GetPartExternalScaleModifier(avPart.partConfig);
+  }
+
+  /// <summary>Returns external part's scale given a config.</summary>
+  /// <remarks>This is a scale applied on the module by the other mods. I.e. it's a "runtime" scale,
+  /// not the one specified in the common part's config.
+  /// <para>The only mod supported till now is <c>TweakScale</c>.</para>
+  /// </remarks>
+  /// <param name="partNode">A config to get values from.</param>
+  /// <returns>Multiplier to a model's scale on one axis.</returns>
+  public static float GetPartExternalScaleModifier(ConfigNode partNode) {
+    // TweakScale compatibility.
+    foreach (var node in partNode.GetNodes("MODULE")) {
+      if (node.GetValue("name") == "TweakScale") {
+        double defaultScale = 1.0f;
+        ConfigAccessor.GetValueByPath(node, "defaultScale", ref defaultScale);
+        double currentScale = 1.0f;
+        ConfigAccessor.GetValueByPath(node, "currentScale", ref currentScale);
+        return (float) (currentScale / defaultScale);
+      }
+    }
+    return 1.0f;
   }
 
   public static ConfigNode GetBaseConfigNode(PartModule partModule) {
@@ -764,47 +775,88 @@ static public class KIS_Shared {
     }
     return result;
   }
-      
-  /// <summary>Shows a formatted message with the specified location and timeout.</summary>
-  /// <param name="style">A <c>ScreenMessageStyle</c> specifier.</param>
-  /// <param name="duration">Delay before hiding the message in seconds.</param>
-  /// <param name="fmt"><c>String.Format()</c> formatting string.</param>
-  /// <param name="args">Arguments for the formattign string.</param>
-  public static void ShowScreenMessage(ScreenMessageStyle style, float duration,
-                                       String fmt, params object[] args) {
-    ScreenMessages.PostScreenMessage(String.Format(fmt, args), duration, style);
+
+  /// <summary>Walks thru all modules in the part and fixes null persistent fields.</summary>
+  /// <remarks>Used to prevent NREs in methods that persist KSP fields.
+  /// <para>Bad modules that cannot be fixed will be dropped which may make the part to be not
+  /// behaving as expected. It's guaranteed that <i>stock</i> modules that need fixing will be
+  /// fixed successfully. So, failures are only expected on the modules from the third-parties mods.
+  /// </para></remarks>
+  /// <param name="part">Prefab to fix.</param>
+  public static void CleanupModuleFieldsInPart(Part part) {
+    var badModules = new List<PartModule>();
+    foreach (var moduleObj in part.Modules) {
+      var module = moduleObj as PartModule;
+      try {
+        CleanupFieldsInModule(module);
+      } catch {
+        badModules.Add(module);
+      }
+    }
+    // Cleanup modules that block KIS. It's a bad thing to do but not working KIS is worse.
+    foreach (var moduleToDrop in badModules) {
+      Logger.logError(
+          "Module on part prefab {0} is setup improperly: name={1}, type={2}. Drop it!",
+          part, moduleToDrop.moduleName, moduleToDrop.GetType());
+      part.RemoveModule(moduleToDrop);
+    }
   }
 
-  /// <summary>Shows a message in the upper center area with the specified timeout.</summary>
-  /// <param name="duration">Delay before hiding the message in seconds.</param>
-  /// <param name="fmt"><c>String.Format()</c> formatting string.</param>
-  /// <param name="args">Arguments for the formattign string.</param>
-  public static void ShowCenterScreenMessageWithTimeout(float duration, String fmt,
-                                                        params object[] args) {
-    ShowScreenMessage(ScreenMessageStyle.UPPER_CENTER, duration, fmt, args);
+  /// <summary>Fixes null persistent fields in the module.</summary>
+  /// <remarks>Used to prevent NREs in methods that persist KSP fields.</remarks>
+  /// <param name="module">Module to fix.</param>
+  public static void CleanupFieldsInModule(PartModule module) {
+    // Ensure the module is awaken. Otherwise, any access to base fields list will result in NRE.
+    // HACK: Accessing Fields property of a non-awaken module triggers NRE. If it happens then do
+    // explicit awakening of the *base* module class.
+    try {
+      var unused = module.Fields.GetEnumerator();
+    } catch {
+      Logger.logWarning("WORKAROUND. Module {0} on part prefab {1} is not awaken. Call Awake on it",
+                        module.GetType(), module.part);
+      AwakePartModule(module);
+    }
+    foreach (var field in module.Fields) {
+      var baseField = field as BaseField;
+      if (baseField.isPersistant && baseField.GetValue(module) == null) {
+        var proto = new StandardOrdinaryTypesProto();
+        var defValue = proto.ParseFromString("", baseField.FieldInfo.FieldType);
+        Logger.logWarning("WORKAROUND. Found null field {0} in module prefab {1},"
+                          + " fixing to default value of type {2}: {3}",
+                          baseField.name,
+                          module.moduleName,
+                          baseField.FieldInfo.FieldType,
+                          defValue);
+        baseField.SetValue(defValue, module);
+      }
+    }
   }
 
-  /// <summary>Shows a message in the upper center area with a default timeout.</summary>
-  /// <param name="fmt"><c>String.Format()</c> formatting string.</param>
-  /// <param name="args">Arguments for the formattign string.</param>
-  public static void ShowCenterScreenMessage(String fmt, params object[] args) {
-    ShowCenterScreenMessageWithTimeout(DefaultMessageTimeout, fmt, args);
-  }
-      
-  /// <summary>Shows a message in the upper right corner with the specified timeout.</summary>
-  /// <param name="duration">Delay before hiding the message in seconds.</param>
-  /// <param name="fmt"><c>String.Format()</c> formatting string.</param>
-  /// <param name="args">Arguments for the formattign string.</param>
-  public static void ShowRightScreenMessageWithTimeout(
-    float duration, String fmt, params object[] args) {
-    ShowScreenMessage(ScreenMessageStyle.UPPER_RIGHT, duration, fmt, args);
-  }
-
-  /// <summary>Shows a message in the upper center area with a default timeout.</summary>
-  /// <param name="fmt"><c>String.Format()</c> formatting string.</param>
-  /// <param name="args">Arguments for the formattign string.</param>
-  public static void ShowRightScreenMessage(String fmt, params object[] args) {
-    ShowRightScreenMessageWithTimeout(DefaultMessageTimeout, fmt, args);
+  /// <summary>Makes a call to <c>Awake()</c> method of the part module.</summary>
+  /// <remarks>Modules added to prefab via <c>AddModule()</c> call are not get activated as they
+  /// would if activated by the Unity core. As a result some vital fields may be left uninitialized
+  /// which may result in an NRE later when working with the prefab (e.g. making a part snapshot).
+  /// This method finds and invokes method <c>Awake</c> via reflection which is normally done by
+  /// Unity.
+  /// <para><b>IMPORTANT!</b> This method cannot awake a module! To make the things right every
+  /// class in the hierarchy should get its <c>Awake</c> called. This method only calls <c>Awake</c>
+  /// method on <c>PartModule</c> parent class which is not enough to do a complete awakening.
+  /// </para>
+  /// <para>This is a HACK since <c>Awake()</c> method is not supposed to be called by anyone but
+  /// Unity. For now it works fine but one day it may awake the kraken.</para>
+  /// </remarks>
+  /// <param name="module">Module instance to awake.</param>
+  public static void AwakePartModule(PartModule module) {
+    // Private method can only be accessed via reflection when requested on the class that declares
+    // it. So, don't use type of the argument and specify it explicitly. 
+    var moduleAwakeMethod = typeof(PartModule).GetMethod(
+        "Awake", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+    if (moduleAwakeMethod != null) {
+      moduleAwakeMethod.Invoke(module, new object[] {});
+    } else {
+      Logger.logError("Cannot find Awake() method on {0}. Skip awakening of component: {1}",
+                      module.GetType(), module.GetType());
+    }
   }
 }
 

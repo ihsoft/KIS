@@ -176,18 +176,64 @@
         <member name="F:KSPDev.ConfigUtils.AbstractPersistentFieldsFileAttribute.nodePath">
             <summary>A path to the node which will be the root for the fields in the group.</summary>
             <remarks>By setting different root for every group and/or type you may combine multiple
-            settings in the same config file.</remarks>
+            settings in the same config file. When <see cref="F:KSPDev.ConfigUtils.AbstractPersistentFieldsFileAttribute.configFilePath"/> is empty this value is an
+            absolute path on the game's database.</remarks>
         </member>
         <member name="F:KSPDev.ConfigUtils.AbstractPersistentFieldsFileAttribute.configFilePath">
-            <summary>Relative path to the config file.</summary>
-            <remarks>Absolute name is resolved via <see cref="M:KSPDev.FSUtils.KspPaths.makePluginPath(System.String)"/>.
+            <summary>An optional relative path to the config file.</summary>
+            <remarks>Absolute name is resolved via <see cref="M:KSPDev.FSUtils.KspPaths.makePluginPath(System.String)"/>. If left
+            empty then data is read from the game's database. Note, that database access is read-only.  
             </remarks>
         </member>
         <member name="M:KSPDev.ConfigUtils.AbstractPersistentFieldsFileAttribute.#ctor(System.String,System.String,System.String)">
             <param name="configFilePath">A relative or an absolute path to the file. It's resolved via
-            <see cref="M:KSPDev.FSUtils.KspPaths.makePluginPath(System.String)"/>.</param>
+            <see cref="M:KSPDev.FSUtils.KspPaths.makePluginPath(System.String)"/>. If empty then data is read from database.
+            </param>
             <param name="nodePath">A root for the persistent fields when saving or loading via this
-            annotation.</param>
+            annotation. If empty then root node of the file is used. Cannot be <c>null</c></param>
+            <param name="group">A group of the annotation. When saving or loading persistent fields only
+            the fields of this group will be considered. Must not be <c>null</c>.</param>
+        </member>
+        <member name="T:KSPDev.ConfigUtils.PersistentFieldsDatabaseAttribute">
+            <summary>
+            A simple annotation to associate a persistent group with a game's database key.
+            </summary>
+            <remarks>
+            <para>This annotation is basically a shortcut to <see cref="T:KSPDev.ConfigUtils.PersistentFieldsFileAttribute"/>.
+            You may use the latter with an empty config file path if you find it more convinient.</para>
+            <para>Each <c>.cfg</c> file in the mod's folders is scanned and indexed by the game on start. The
+            data is stored in the database where it can be accessed from the game. The access is read-only,
+            any changes to the node returned from the database won't affect the database state.</para>
+            <para>Config file in the database is indentified by a key which is made of three major parts:
+            <list type="">
+            <item>A file path relative to <c>GameData</c>.</item>
+            <item>The config filename without extension.</item>
+            <item>Node path inside the file starting from the root. I.e. the root node should have name as
+            well.</item>
+            </list>
+            </para>
+            <para>E.g. key <c>KIS/settings/KISConfig/Global</c> addresses a node <c>KISConfig/Global</c> in file
+            stored at <c>GameData/KIS/settings.cfg</c>.
+            </para>
+            <para>Special case is subfolders <c>PluginData</c>, they are ignored during database scan. Put
+            there configs that can change during the gameplay. Remember, that even a tiny change in the
+            config will trigger database re-compilation on the next start which may significantly impact
+            game loading time.</para>
+            <para>Database is actively used by
+            <see href="https://github.com/sarbian/ModuleManager">ModuleManager</see> (a.k.a. MM). Be wise
+            when choosing if fields should be read from a file or from the database. Module manager
+            patches are only applied on the database, they don't affect the config files. E.g. part configs
+            are frequently updated by the patches but never updated from the gameplay so, reading them via
+            database is the best choice. Various mod's settings, on the other hand, can change during the
+            game but will unlikely be a target for a MM patch, put them into <c>PluginData</c> folder and
+            read/write via file methods.</para>
+            </remarks>
+            <seealso cref="T:KSPDev.ConfigUtils.PersistentFieldsFileAttribute"/>
+            <seealso cref="M:KSPDev.ConfigUtils.ConfigAccessor.ReadFieldsInType(System.Type,System.Object,System.String)"/>
+            <seealso cref="M:KSPDev.ConfigUtils.ConfigAccessor.WriteFieldsFromType(System.Type,System.Object,System.String)"/>
+        </member>
+        <member name="M:KSPDev.ConfigUtils.PersistentFieldsDatabaseAttribute.#ctor(System.String,System.String)">
+            <param name="nodePath">An absolute path to the node in the game's database.</param>
             <param name="group">A group of the annotation. When saving or loading persistent fields only
             the fields of this group will be considered. Must not be <c>null</c>.</param>
         </member>
@@ -376,13 +422,28 @@
         </member>
         <member name="T:KSPDev.ConfigUtils.ConfigAccessor">
             <summary>A service class that simplifies accessing configuration files.</summary>
-            <remarks>This class allows direct value reading as well as managing  </remarks>
+            <remarks>This class provides a lot of useful methods to deal with values in game's configuration
+            files. There are low level methods that deal with nodes and values, and there are high level
+            methods that use metadata from the annotated fields.</remarks>
             <seealso cref="T:KSPDev.ConfigUtils.PersistentFieldAttribute"/>
+            <seealso cref="T:KSPDev.ConfigUtils.PersistentFieldsFileAttribute"/>
+            <seealso cref="T:KSPDev.ConfigUtils.PersistentFieldsDatabaseAttribute"/>
         </member>
-        <member name="M:KSPDev.ConfigUtils.ConfigAccessor.ReadFieldsFromFile(System.String,System.Type,System.Object,System.String)">
+        <member name="M:KSPDev.ConfigUtils.ConfigAccessor.ReadFieldsFromFile(System.String,System.Type,System.Object,System.String,System.String)">
             <summary>Reads values of the annotated persistent fields from a config file.</summary>
             <param name="filePath">A relative or an absolute path to the file. It's resolved via
             <see cref="M:KSPDev.FSUtils.KspPaths.makePluginPath(System.String)"/>.</param>
+            <param name="type">A type to load fields for.</param>
+            <param name="instance">An instance of type <paramref name="type"/>. If it's <c>null</c> then
+            only static fields will be loaded.</param>
+            <param name="nodePath">An optional path in the file. All type's field will be read relative
+            to this part.</param>
+            <param name="group">A group tag (see <see cref="T:KSPDev.ConfigUtils.AbstractPersistentFieldAttribute"/>).</param>
+            <seealso cref="T:KSPDev.ConfigUtils.PersistentFieldAttribute"/>
+        </member>
+        <member name="M:KSPDev.ConfigUtils.ConfigAccessor.ReadFieldsFromDatabase(System.String,System.Type,System.Object,System.String)">
+            <summary>Reads values of the annotated persistent fields from a config file.</summary>
+            <param name="nodePath">An absolute path in the database. No leading "/".</param>
             <param name="type">A type to load fields for.</param>
             <param name="instance">An instance of type <paramref name="type"/>. If it's <c>null</c> then
             only static fields will be loaded.</param>
@@ -410,20 +471,21 @@
             loaded.</param>
             <seealso cref="T:KSPDev.ConfigUtils.PersistentFieldAttribute"/>
             <seealso cref="T:KSPDev.ConfigUtils.PersistentFieldsFileAttribute"/>
+            <seealso cref="T:KSPDev.ConfigUtils.PersistentFieldsDatabaseAttribute"/>
         </member>
-        <member name="M:KSPDev.ConfigUtils.ConfigAccessor.WriteFieldsIntoFile(System.String,System.Type,System.Object,System.String[],System.Boolean,System.String)">
+        <member name="M:KSPDev.ConfigUtils.ConfigAccessor.WriteFieldsIntoFile(System.String,System.Type,System.Object,System.String,System.Boolean,System.String)">
             <summary>Writes values of the annotated persistent fields into a file.</summary>
             <remarks>All persitent values are <b>added</b> into the file provided. I.e. if node had
             already had a value being persited then it either overwritten (ordinary fields) or extended
             (collection fields).</remarks>
             <param name="filePath">A relative or an absolute path to the file. It's resolved via
             <see cref="M:KSPDev.FSUtils.KspPaths.makePluginPath(System.String)"/>.</param>
-            <param name="rootNodePathKeys">A path to the node in the file where the daata should be
+            <param name="rootNodePath">A path to the node in the file where the data should be
             written. If the node already exsist it will be deleted.</param>
             <param name="type">A type to write fields for.</param>
             <param name="instance">An instance of type <paramref name="type"/>. If it's <c>null</c> then
             only static fields will be written.</param>
-            <paramref name="rootNodePathKeys"/> node will be updated in that file. Otherwise, a new file
+            <paramref name="rootNodePath"/> node will be updated in that file. Otherwise, a new file
             <param name="mergeMode">If <c>true</c> and the file already exists then only
             will be created.</param>
             <param name="group">A group tag (see <see cref="T:KSPDev.ConfigUtils.AbstractPersistentFieldAttribute"/>).</param>
@@ -446,7 +508,10 @@
             Writes persistent fields into the config files specified by the class annotation.
             </summary>
             <remarks>Method updates the config file(s) by preserving top level nodes that are not
-            specified as targets for the requested group.</remarks>
+            specified as targets for the requested group.
+            <para>Note, that fields cannot be writtent into database. Such annotations will be skipped
+            during the save.</para>
+            </remarks>
             <param name="type">A type to write fields for.</param>
             <param name="instance">An instance of type <paramref name="type"/>. If it's <c>null</c> then
             only static fields will be written.</param>
@@ -897,7 +962,7 @@
         <member name="T:KSPDev.FSUtils.KspPaths">
             <summary>A helper class to deal with plugins file structure.</summary>
         </member>
-        <member name="F:KSPDev.FSUtils.KspPaths.PluginsRootFolder">
+        <member name="F:KSPDev.FSUtils.KspPaths.pluginsRootFolder">
             <summary>Standard plug-ins folder.</summary>
         </member>
         <member name="M:KSPDev.FSUtils.KspPaths.makePluginPath(System.String)">
@@ -909,6 +974,414 @@
         </member>
         <member name="P:KSPDev.FSUtils.KspPaths.pluginsRoot">
             <summary>Returns full path to the plugins root folder.</summary>
+        </member>
+        <member name="T:KSPDev.GUIUtils.ScreenMessaging">
+            <summary>Helper class to present global UI messages.</summary>
+            <remarks>The actual representation of the different priority messages depends on the KSP
+            version. As a rule of thumb use the following reasons when deciding how to show a message:
+            <list>
+            <item>Important messages should be show as "priority". It's assumed that UI layout is build so
+                what that such messages won't be missed.</item>
+            <item>Messages that only give status update and can be safely ignored by the player should be
+                reported as "info". They will show up in UI but not necessarily bring user's attention.
+                </item>
+            </list>
+            </remarks>
+            <example>
+            <code>
+            class MyMod : MonoBehavior {
+              void Update() {
+                if (Input.GetKeyDown("1")) {
+                  ScreenMessaging.ShowPriorityScreenMessage("Key pressed in frame #{0}", Time.frameCount);
+                }
+              }
+            }
+            </code>
+            </example>
+        </member>
+        <member name="M:KSPDev.GUIUtils.ScreenMessaging.ShowScreenMessage(ScreenMessageStyle,System.Single,System.String,System.Object[])">
+            <summary>Shows a formatted message with the specified location and timeout.</summary>
+            <param name="style">A <c>ScreenMessageStyle</c> specifier.</param>
+            <param name="duration">Delay before hiding the message in seconds.</param>
+            <param name="fmt"><c>string.Format()</c> formatting string.</param>
+            <param name="args">Arguments for the formattign string.</param>
+        </member>
+        <member name="M:KSPDev.GUIUtils.ScreenMessaging.ShowPriorityScreenMessageWithTimeout(System.Single,System.String,System.Object[])">
+            <summary>Shows an important message with the specified timeout.</summary>
+            <remarks>It's no defined how exactly the message is shown. The only thing required is that
+            player won't miss it.</remarks>
+            <param name="duration">Delay before hiding the message in seconds.</param>
+            <param name="fmt">A formatting string.</param>
+            <param name="args">Arguments for the formatting string.</param>
+        </member>
+        <member name="M:KSPDev.GUIUtils.ScreenMessaging.ShowPriorityScreenMessage(System.String,System.Object[])">
+            <summary>Shows an important message with a default timeout.</summary>
+            <remarks>It's no defined how exactly the message is shown. The only thing required is that
+            player won't miss it.</remarks>
+            <param name="fmt">A formatting string.</param>
+            <param name="args">Arguments for the formatting string.</param>
+        </member>
+        <member name="M:KSPDev.GUIUtils.ScreenMessaging.ShowInfoScreenMessageWithTimeout(System.Single,System.String,System.Object[])">
+            <summary>Shows an info message with the specified timeout.</summary>
+            <remarks>It's no defined how exactly the message is shown.</remarks>
+            <param name="duration">Delay before hiding the message in seconds.</param>
+            <param name="fmt"><c>string.Format()</c> formatting string.</param>
+            <param name="args">Arguments for the formattign string.</param>
+        </member>
+        <member name="M:KSPDev.GUIUtils.ScreenMessaging.ShowInfoScreenMessage(System.String,System.Object[])">
+            <summary>Shows an info message with a default timeout.</summary>
+            <remarks>It's no defined how exactly the message is shown.</remarks>
+            <param name="fmt"><c>string.Format()</c> formatting string.</param>
+            <param name="args">Arguments for the formattign string.</param>
+        </member>
+        <member name="T:KSPDev.GUIUtils.HintOverlay">
+             <summary>A wrapper class to present simple overlay window with text.</summary>
+             <remarks>
+             <para>Overlay windows doesn't have border or title. Main purpose of such windows is "hints".
+             I.e. short lived piece of information presented for the current context. The hint won't be shown
+             in UI until explicitly requsted via call to a <c>ShowAt*</c> method.</para>
+             <para>Keep in mind that this window contains graphics objects that will be destroyed on scene
+             re-loading. I.e. it must be re-created on every scene change.</para>
+             </remarks>
+             <example>
+             In a common case initialization of the hint window is done on the game object awakening, and
+             it's either shown or hidden in <c>OnGUI</c> method.
+             <code>
+             class MyMod : MonoBehavior {
+               HintOverlay hint;
+            
+               void Awake() {
+                 hint = new HintOverlay(12, 3, Color.white, new Color(0f, 0f, 0f, 0.5f));
+               }
+            
+               void OnGUI() {
+                 hint.text = string.Format("Current frame is: {0}", Time.frameCount);
+                 hint.ShowAtCursor();
+               }
+             }
+             </code>
+             <para>In the example above text of the hint is set on every frame update since frame count is updated
+             this frequently. Though, if your data is updated less frequently you may save some performance
+             by updating text in the methods different from <c>OnGUI</c>.</para>
+             </example>
+        </member>
+        <member name="F:KSPDev.GUIUtils.HintOverlay.BackgroundTextureSize">
+            <summary>Size of the sample texture that fills hint window backgroud.</summary>
+            <remarks>Small values may impact rendering performance. Large values will increase memory
+            footpring. Choose it wise.</remarks>
+        </member>
+        <member name="F:KSPDev.GUIUtils.HintOverlay.RightSideMousePadding">
+            <summary>Padding when showing hint on the right side of the mouse cursor.</summary>
+        </member>
+        <member name="F:KSPDev.GUIUtils.HintOverlay.LeftSideMousePadding">
+            <summary>Padding when showing hint on the left side of the mouse cursor.</summary>
+        </member>
+        <member name="F:KSPDev.GUIUtils.HintOverlay.textSize">
+            <summary>Precalculated UI text size for the currently assigned text.</summary>
+        </member>
+        <member name="F:KSPDev.GUIUtils.HintOverlay.hintWindowStyle">
+            <summary>Precalculated style for the hint overlay window.</summary>
+        </member>
+        <member name="M:KSPDev.GUIUtils.HintOverlay.#ctor(System.Int32,System.Int32,UnityEngine.Color,UnityEngine.Color)">
+            <summary>Constructs an overaly.</summary>
+            <param name="fontSize">A size of the text font in the hint.</param>
+            <param name="padding">A padding between the text and the window boundaries.</param>
+            <param name="textColor">A color of the hint text.</param>
+            <param name="backgroundColor">A color of the hint backtround. If alpha component is different
+            from <c>1.0</c> then background will be semi-transparent.</param>
+        </member>
+        <member name="M:KSPDev.GUIUtils.HintOverlay.ShowAtCursor">
+            <summary>Shows hint text at the current mouse pointer.</summary>
+            <remarks>When possible the window is shown on the right side of the cursor. Though, if part of
+            the window goes out of the screen then it will be shown on the left side. If bottom boundary
+            of the window hits bottom boundary of the screen then hint is aligned vertically so what the
+            full content is visible. </remarks>
+        </member>
+        <member name="M:KSPDev.GUIUtils.HintOverlay.ShowAtPosition(System.Single,System.Single)">
+            <summary>Shows hint at the absolute screen position.</summary>
+            <remarks>If hint content goes out of the screen it's clipped.</remarks>
+            <param name="x">X position is screen coordinates.</param>
+            <param name="y">Y position is screen coordinates.</param>
+        </member>
+        <member name="M:KSPDev.GUIUtils.HintOverlay.CreateSampleTextureFromColor(UnityEngine.Color)">
+            <summary>Creates a clear color texture to fill background with.</summary>
+            <param name="color">A background color.</param>
+            <returns>Texture of a default size.</returns>
+        </member>
+        <member name="P:KSPDev.GUIUtils.HintOverlay.text">
+            <summary>The hint overlay text.</summary>
+            <remarks>Linefeed symbols are correctly handled. Use them to make multiline content. Setting
+            text is an expensive operation since it results in window size recalculation. Don't update it
+            more frequently than the underlaying data does.</remarks>
+        </member>
+        <member name="T:KSPDev.GUIUtils.Message">
+             <summary>A class to wrap a simple UI string.</summary>
+             <remarks>
+             <para>Messages of this type don't have parameters and can be just casted to a string.</para> 
+             <para>
+             In the future it may support localization but for now it's only a convinience wrapper.
+             </para>
+             </remarks>
+             <example>
+             Instead of presenting hardcoded strings on UI move them all into a special section, and assign
+             to fields of type <c>Message</c>. Don't declare them <c>readonly</c> since it will block future
+             localization.
+             <code><![CDATA[
+             class MyMod : MonoBehavior {
+               Message MyMessage = "This is a message without parameters";
+            
+               void Awake() {
+                 Logger.logInfo("Localized: {0}", MyMessage);
+               }
+             }
+             ]]></code>
+             <para>Note, that it's OK to name such members as constants in spite of they are not constants by
+             the C# language semantics. I.e. instead of <c>myMessage</c> you spell <c>MyMessage</c> to
+             highlight the fact it won't (and must not) change from the code.</para>  
+             </example>
+        </member>
+        <member name="M:KSPDev.GUIUtils.Message.#ctor(System.String)">
+            <summary>Creates a message.</summary>
+            <param name="messageString">A message string.</param>
+        </member>
+        <member name="M:KSPDev.GUIUtils.Message.op_Implicit(System.String)~KSPDev.GUIUtils.Message">
+            <summary>Allows casting string to message.</summary>
+            <remarks>Instead of creating new insatnce for every string just do the cast as it was a
+            regular literal constant.</remarks>
+            <param name="messageString">A string value to assign.</param>
+            <returns>Message instance.</returns>
+        </member>
+        <member name="M:KSPDev.GUIUtils.Message.op_Implicit(KSPDev.GUIUtils.Message)~System.String">
+            <summary>Allows casting messages to string.</summary>
+            <param name="msg">A message to cast.</param>
+            <returns>Message value.</returns>
+        </member>
+        <member name="T:KSPDev.GUIUtils.Message`1">
+             <summary>A class to wrap a UI string with one parameter.</summary>
+             <typeparam name="T1">Type of the first substitute argument in the string.</typeparam>
+             <remarks>
+             <para>Define parameter type via generic argument. When string needs to be presented use
+             <see cref="M:KSPDev.GUIUtils.Message`1.Format(`0)"/> to make the parameter substitute.</para>
+             <para>
+             In the future it may support localization but for now it's only a convinience wrapper.
+             </para>
+             </remarks>
+             <example>
+             Instead of presenting hardcoded strings on UI move them all into a special section, and assign
+             to fields of type <c>Message</c>. Don't declare them <c>readonly</c> since it will block future
+             localization.
+             <code><![CDATA[
+             class MyMod : MonoBehavior {
+               Message<string> MyMessage = "Param: {0}";
+            
+               void Awake() {
+                 Logger.logInfo("Localized: {0}", MyMessage.Format("Blah!"));
+               }
+             }
+             ]]></code>
+             <para>Note, that it's OK to name such members as constants in spite of they are not constants by
+             the C# language semantics. I.e. instead of <c>myMessage</c> you spell <c>MyMessage</c> to
+             highlight the fact it won't (and must not) change from the code.</para>  
+             </example>
+        </member>
+        <member name="M:KSPDev.GUIUtils.Message`1.#ctor(System.String)">
+            <summary>Creates a message.</summary>
+            <param name="fmtString">A message format string.</param>
+        </member>
+        <member name="M:KSPDev.GUIUtils.Message`1.Format(`0)">
+            <summary>Formats message string with the provided arguments.</summary>
+            <param name="arg1">An argument to substitute.</param>
+            <returns>Complete message string.</returns>
+        </member>
+        <member name="M:KSPDev.GUIUtils.Message`1.op_Implicit(System.String)~KSPDev.GUIUtils.Message{`0}">
+            <summary>Allows casting strings to message.</summary>
+            <param name="fmtString">A string value to assign.</param>
+            <returns>Message instance.</returns>
+        </member>
+        <member name="T:KSPDev.GUIUtils.Message`2">
+             <summary>A class to wrap a UI string with two parameters.</summary>
+             <typeparam name="T1">Type of the first substitute argument in the string.</typeparam>
+             <typeparam name="T2">Type of the second substitute argument in the string.</typeparam>
+             <remarks>
+             <para>Define parameter types via generic argument. When string needs to be presented use
+             <see cref="M:KSPDev.GUIUtils.Message`2.Format(`0,`1)"/> to make parameters substitute.</para>
+             <para>
+             In the future it may support localization but for now it's only a convinience wrapper.
+             </para>
+             </remarks>
+             <example>
+             Instead of presenting hardcoded strings on UI move them all into a special section, and assign
+             to fields of type <c>Message</c>. Don't declare them <c>readonly</c> since it will block future
+             localization.
+             <code><![CDATA[
+             class MyMod : MonoBehavior {
+               Message<string, int> MyMessage = "Params: {0}, {1}";
+            
+               void Awake() {
+                 Logger.logInfo("Localized: {0}", MyMessage.Format("Blah!", 123));
+               }
+             }
+             ]]></code>
+             <para>Note, that it's OK to name such members as constants in spite of they are not constants by
+             the C# language semantics. I.e. instead of <c>myMessage</c> you spell <c>MyMessage</c> to
+             highlight the fact it won't (and must not) change from the code.</para>  
+             </example>
+        </member>
+        <member name="M:KSPDev.GUIUtils.Message`2.#ctor(System.String)">
+            <summary>Creates a message.</summary>
+            <param name="fmtString">A message format string.</param>
+        </member>
+        <member name="M:KSPDev.GUIUtils.Message`2.Format(`0,`1)">
+            <summary>Formats message string with the provided arguments.</summary>
+            <param name="arg1">An argument to substitute.</param>
+            <param name="arg2">An argument to substitute.</param>
+            <returns>Complete message string.</returns>
+        </member>
+        <member name="M:KSPDev.GUIUtils.Message`2.op_Implicit(System.String)~KSPDev.GUIUtils.Message{`0,`1}">
+            <summary>Allows casting strings to message.</summary>
+            <param name="fmtString">A string value to assign.</param>
+            <returns>Message instance.</returns>
+        </member>
+        <member name="T:KSPDev.GUIUtils.Message`3">
+             <summary>A class to wrap a UI string with three parameters.</summary>
+             <typeparam name="T1">Type of the first substitute argument in the string.</typeparam>
+             <typeparam name="T2">Type of the second substitute argument in the string.</typeparam>
+             <typeparam name="T3">Type of the third substitute argument in the string.</typeparam>
+             <remarks>
+             <para>Define parameter types via generic argument. When string needs to be presented use
+             <see cref="M:KSPDev.GUIUtils.Message`3.Format(`0,`1,`2)"/> to make parameters substitute.</para>
+             <para>
+             In the future it may support localization but for now it's only a convinience wrapper.
+             </para>
+             </remarks>
+             <example>
+             Instead of presenting hardcoded strings on UI move them all into a special section, and assign
+             to fields of type <c>Message</c>.
+             <code><![CDATA[
+             class MyMod : MonoBehavior {
+               Message<string, int, float> MyMessage = "Params: {0}, {1}, {2}";
+            
+               void Awake() {
+                 Logger.logInfo("Localized: {0}", MyMessage.Format("Blah!", 123, 321f));
+               }
+             }
+             ]]></code>
+             <para>Note, that it's OK to name such members as constants in spite of they are not constants by
+             the C# language semantics. I.e. instead of <c>myMessage</c> you spell <c>MyMessage</c> to
+             highlight the fact it won't (and must not) change from the code.</para>  
+             </example>
+        </member>
+        <member name="M:KSPDev.GUIUtils.Message`3.#ctor(System.String)">
+            <summary>Creates a message.</summary>
+            <param name="fmtString">A message format string.</param>
+        </member>
+        <member name="M:KSPDev.GUIUtils.Message`3.Format(`0,`1,`2)">
+            <summary>Formats message string with the provided arguments.</summary>
+            <param name="arg1">An argument to substitute.</param>
+            <param name="arg2">An argument to substitute.</param>
+            <param name="arg3">An argument to substitute.</param>
+            <returns>Complete message string.</returns>
+        </member>
+        <member name="M:KSPDev.GUIUtils.Message`3.op_Implicit(System.String)~KSPDev.GUIUtils.Message{`0,`1,`2}">
+            <summary>Allows casting strings to message.</summary>
+            <param name="fmtString">A string value to assign.</param>
+            <returns>Message instance.</returns>
+        </member>
+        <member name="T:KSPDev.GUIUtils.Message`4">
+             <summary>A class to wrap a UI string with four parameters.</summary>
+             <typeparam name="T1">Type of the first substitute argument in the string.</typeparam>
+             <typeparam name="T2">Type of the second substitute argument in the string.</typeparam>
+             <typeparam name="T3">Type of the third substitute argument in the string.</typeparam>
+             <typeparam name="T4">Type of the fourth substitute argument in the string.</typeparam>
+             <remarks>
+             <para>Define parameter types via generic argument. When string needs to be presented use
+             <see cref="M:KSPDev.GUIUtils.Message`4.Format(`0,`1,`2,`3)"/> to make parameters substitute.</para>
+             <para>
+             In the future it may support localization but for now it's only a convinience wrapper.
+             </para>
+             </remarks>
+             <example>
+             Instead of presenting hardcoded strings on UI move them all into a special section, and assign
+             to fields of type <c>Message</c>.
+             <code><![CDATA[
+             class MyMod : MonoBehavior {
+               Message<string, int, float, int> MyMessage = "Params: {0}, {1}, {2}, {3}";
+            
+               void Awake() {
+                 Logger.logInfo("Localized: {0}", MyMessage.Format("Blah!", 123, 321f, 456));
+               }
+             }
+             ]]></code>
+             <para>Note, that it's OK to name such members as constants in spite of they are not constants by
+             the C# language semantics. I.e. instead of <c>myMessage</c> you spell <c>MyMessage</c> to
+             highlight the fact it won't (and must not) change from the code.</para>  
+             </example>
+        </member>
+        <member name="M:KSPDev.GUIUtils.Message`4.#ctor(System.String)">
+            <summary>Creates a message.</summary>
+            <param name="fmtString">A message format string.</param>
+        </member>
+        <member name="M:KSPDev.GUIUtils.Message`4.Format(`0,`1,`2,`3)">
+            <summary>Formats message string with the provided arguments.</summary>
+            <param name="arg1">An argument to substitute.</param>
+            <param name="arg2">An argument to substitute.</param>
+            <param name="arg3">An argument to substitute.</param>
+            <param name="arg4">An argument to substitute.</param>
+            <returns>Complete message string.</returns>
+        </member>
+        <member name="M:KSPDev.GUIUtils.Message`4.op_Implicit(System.String)~KSPDev.GUIUtils.Message{`0,`1,`2,`3}">
+            <summary>Allows casting strings to message.</summary>
+            <param name="fmtString">A string value to assign.</param>
+            <returns>Message instance.</returns>
+        </member>
+        <member name="T:KSPDev.GUIUtils.Message`5">
+             <summary>A class to wrap a UI string with five parameters.</summary>
+             <typeparam name="T1">Type of the first substitute argument in the string.</typeparam>
+             <typeparam name="T2">Type of the second substitute argument in the string.</typeparam>
+             <typeparam name="T3">Type of the third substitute argument in the string.</typeparam>
+             <typeparam name="T4">Type of the fourth substitute argument in the string.</typeparam>
+             <typeparam name="T5">Type of the fifth substitute argument in the string.</typeparam>
+             <remarks>
+             <para>Define parameter types via generic argument. When string needs to be presented use
+             <see cref="M:KSPDev.GUIUtils.Message`5.Format(`0,`1,`2,`3,`4)"/> to make parameters substitute.</para>
+             <para>
+             In the future it may support localization but for now it's only a convinience wrapper.
+             </para>
+             </remarks>
+             <example>
+             Instead of presenting hardcoded strings on UI move them all into a special section, and assign
+             to fields of type <c>Message</c>.
+             <code><![CDATA[
+             class MyMod : MonoBehavior {
+               Message<string, int, float, int, float> MyMessage = "Params: {0}, {1}, {2}, {3}, {4}";
+            
+               void Awake() {
+                 Logger.logInfo("Localized: {0}", MyMessage.Format("Blah!", 123, 321f, 456, 456f));
+               }
+             }
+             ]]></code>
+             <para>Note, that it's OK to name such members as constants in spite of they are not constants by
+             the C# language semantics. I.e. instead of <c>myMessage</c> you spell <c>MyMessage</c> to
+             highlight the fact it won't (and must not) change from the code.</para>  
+             </example>
+        </member>
+        <member name="M:KSPDev.GUIUtils.Message`5.#ctor(System.String)">
+            <summary>Creates a message.</summary>
+            <param name="fmtString">A message format string.</param>
+        </member>
+        <member name="M:KSPDev.GUIUtils.Message`5.Format(`0,`1,`2,`3,`4)">
+            <summary>Formats message string with the provided arguments.</summary>
+            <param name="arg1">An argument to substitute.</param>
+            <param name="arg2">An argument to substitute.</param>
+            <param name="arg3">An argument to substitute.</param>
+            <param name="arg4">An argument to substitute.</param>
+            <param name="arg5">An argument to substitute.</param>
+            <returns>Complete message string.</returns>
+        </member>
+        <member name="M:KSPDev.GUIUtils.Message`5.op_Implicit(System.String)~KSPDev.GUIUtils.Message{`0,`1,`2,`3,`4}">
+            <summary>Allows casting strings to message.</summary>
+            <param name="fmtString">A string value to assign.</param>
+            <returns>Message instance.</returns>
         </member>
         <member name="T:KSPDev.GUIUtils.KeyModifiers">
             <summary>Flags to specify key modifiers combination.</summary>
@@ -1039,6 +1512,7 @@
             <param name="predicate">A predicate to use to extract string representation of an item. If
             <c>null</c> then standard <c>ToString()</c> is used.</param>
             <returns>Human readable form of the collection.</returns>
+            <typeparam name="TSource">Collection's item type.</typeparam>
         </member>
     </members>
 </doc>

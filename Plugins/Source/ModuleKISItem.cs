@@ -77,7 +77,7 @@ public class ModuleKISItem : PartModule {
   [KSPField(isPersistant = true)]
   public bool staticAttached = false;
 
-  private FixedJoint fixedJoint;
+  FixedJoint staticAttachJoint;
 
   public virtual void OnItemUse(KIS_Item item, KIS_Item.UseFrom useFrom) {
   }
@@ -117,6 +117,7 @@ public class ModuleKISItem : PartModule {
     }
     string action = baseEventData.GetString("action");
     Part tgtPart = (Part)baseEventData.Get("targetPart");
+    //FIXME: use enum values 
     if (action == KIS_Shared.MessageAction.Store.ToString()
         || action == KIS_Shared.MessageAction.DropEnd.ToString()
         || action == KIS_Shared.MessageAction.AttachStart.ToString()) {
@@ -148,12 +149,12 @@ public class ModuleKISItem : PartModule {
     part.vessel.Landed = true;
 
     Logger.logInfo("Create fixed joint attached to the world");
-    if (fixedJoint) {
-      Destroy(fixedJoint);
+    if (staticAttachJoint) {
+      Destroy(staticAttachJoint);
     }
-    fixedJoint = part.gameObject.AddComponent<FixedJoint>();
-    fixedJoint.breakForce = staticAttachBreakForce;
-    fixedJoint.breakTorque = staticAttachBreakForce;
+    staticAttachJoint = part.gameObject.AddComponent<FixedJoint>();
+    staticAttachJoint.breakForce = staticAttachBreakForce;
+    staticAttachJoint.breakTorque = staticAttachBreakForce;
   }
 
   // Resets item state when joint is broken.
@@ -170,10 +171,10 @@ public class ModuleKISItem : PartModule {
   public void GroundDetach() {
     if (staticAttached) {
       Logger.logInfo("Removing static rigidbody and fixed joint on: {0}", this.part.partInfo.title);
-      if (fixedJoint) {
-        Destroy(fixedJoint);
+      if (staticAttachJoint) {
+        Destroy(staticAttachJoint);
       }
-      fixedJoint = null;
+      staticAttachJoint = null;
       staticAttached = false;
     }
   }

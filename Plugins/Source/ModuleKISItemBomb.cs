@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace KIS {
 
-public class ModuleKISItemBomb : ModuleKISItem {
+public sealed class ModuleKISItemBomb : ModuleKISItem {
   [KSPField]
   public float delay = 5f;
   [KSPField]

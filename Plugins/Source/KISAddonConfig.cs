@@ -1,18 +1,16 @@
 ﻿using KSPDev.ConfigUtils;
 using KSPDev.LogUtils;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System;
+using System.Reflection;
 using UnityEngine;
-
-
-using System.Text;
 
 namespace KIS {
 
 [KSPAddon(KSPAddon.Startup.SpaceCentre, true)]
-[PersistentFieldsFile("KIS/settings.cfg", "KISConfig")]
-class KISAddonConfig : MonoBehaviour {
+[PersistentFieldsDatabase("KIS/settings/KISConfig")]
+sealed class KISAddonConfig : MonoBehaviour {
   [PersistentField("StackableItemOverride/partName", isCollection = true)]
   public static List<string> stackableList = new List<string>();
 
@@ -42,7 +40,7 @@ class KISAddonConfig : MonoBehaviour {
     UpdateEvaPrefab(PartLoader.getPartInfoByName(MaleKerbalEva), nodeSettings);
     // Female Kerbal.
     UpdateEvaPrefab(PartLoader.getPartInfoByName(FemaleKerbalEva), nodeSettings);
-    
+
     // Set inventory module for every pod with crew capacity.
     Logger.logInfo("Loading pod inventories...");
     foreach (AvailablePart avPart in PartLoader.LoadedPartsList) {
@@ -51,11 +49,13 @@ class KISAddonConfig : MonoBehaviour {
           || !avPart.partPrefab || avPart.partPrefab.CrewCapacity < 1) {
         continue;
       }
+
       Logger.logInfo("Found part with CrewCapacity: {0}", avPart.name);
       for (int i = 0; i < avPart.partPrefab.CrewCapacity; i++) {
         try {
           var moduleInventory =
-              avPart.partPrefab.AddModule("ModuleKISInventory") as ModuleKISInventory;
+            avPart.partPrefab.AddModule(typeof(ModuleKISInventory).Name) as ModuleKISInventory;
+          KIS_Shared.AwakePartModule(moduleInventory);
           SetInventoryConfig(moduleInventory, nodeSettings);
           moduleInventory.podSeat = i;
           moduleInventory.invType = ModuleKISInventory.InventoryType.Pod;
@@ -81,16 +81,18 @@ class KISAddonConfig : MonoBehaviour {
     try {
       prefab.AddModule(typeof(ModuleKISInventory).Name);
     } catch (Exception ex) {
-      Logger.logInfo("Ignoring error adding ModuleKISInventory to {0}: {1}", prefab, ex);
+      Logger.logInfo(
+          "NOT A BUG! Ignoring error while adding ModuleKISInventory to {0}: {1}", prefab, ex);
     }
     try {
       prefab.AddModule(typeof(ModuleKISPickup).Name);
     } catch (Exception ex) {
-      Logger.logInfo("Ignoring error adding ModuleKISPickup to {0}: {1}", prefab, ex);
+      Logger.logInfo("NOT A BUG! Ignoring error adding ModuleKISPickup to {0}: {1}", prefab, ex);
     }
 
     // Setup inventory module for eva.
     var evaInventory = prefab.GetComponent<ModuleKISInventory>();
+    KIS_Shared.AwakePartModule(evaInventory);
     if (evaInventory) {
       SetInventoryConfig(evaInventory, nodeSettings);
       evaInventory.invType = ModuleKISInventory.InventoryType.Eva;
@@ -100,6 +102,7 @@ class KISAddonConfig : MonoBehaviour {
     // Load KSP fields for ModuleKISPickup module.
     var nodeEvaPickup = nodeSettings.GetNode("EvaPickup");
     var evaPickup = prefab.GetComponent<ModuleKISPickup>();
+    KIS_Shared.AwakePartModule(evaPickup);
     if (evaPickup && nodeEvaPickup != null) {
       var fields = new BaseFieldList(evaPickup);
       fields.Load(nodeEvaPickup);

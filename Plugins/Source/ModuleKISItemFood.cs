@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace KIS {
 
-public class ModuleKISItemFood : ModuleKISItem {
+public sealed class ModuleKISItemFood : ModuleKISItem {
   [KSPField]
   public string eatSndPath = "KIS/Sounds/foodEat";
   [KSPField]

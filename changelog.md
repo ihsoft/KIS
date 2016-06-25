@@ -1,3 +1,26 @@
+### 1.2.12 (June 21st, 2016)
+- [Fix] #109: Sandbox mode = no repairskill for non-badass kerbals.
+- [Fix] #161: KSP 1.1.3: Missing method exception.
+
+### 1.2.11 (June 10th, 2016)
+- [Fix] #138: NRE when switching to launch.
+- [Fix] #151: NRE in editor when using Deadly Reenter mod.
+- [Fix] #154: Items in free seats's inventory are not cleared and counted to the vessel mass.
+
+### 1.2.10 (23 May 2016)
+For proper part's volume calculation Module Manager is required. Though, without it the mod will still work.
+
+- [Fix] #117: Fix duplication of the default items on flight revert.
+- [Fix] #140: A part get created on drag in the editor.
+- [Change] Always calculate part volume from its prefab. It's now consistent but may be not optimal in some cases. E.g. deployable parts that are deployed by default (in the mesh state) will take more space than they used to be. It may result in awkward behavior of containers that were loaded prior to the update.
+- [Change] Add a ModuleManager patch to override stock drills volume since in prefab these parts are deployed and take too much space.
+- [Fix] #141: Stop directly modifying inventory part mass.
+- [Enhancement] #148: Dropped parts get weird names.
+- [Fix] #147: Some parts don't give usable drag models from prefab.
+- [Fix] #145: Carriable items show as "carried" in the inventory.
+- [Fix] #142: Settings are always read from file.
+- [Fix] #137: Volume of Drill-O-Matic calculated incorrectly.
+
 ### 1.2.9 (3 May 2016)
 - [Change] Temporarily set surface attach node as the most preferable for default. It's a workaround until #134 is fixed.
 - [Fix] #131: Kerbals can't pull items from Inventories.

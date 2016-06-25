@@ -6,29 +6,29 @@ using UnityEngine;
 namespace KIS {
 
 [KSPAddon(KSPAddon.Startup.EveryScene, false)]
-public class KISAddonCursor : MonoBehaviour {
-  private static bool cursorShow = false;
-  private static bool partDetectionActive = false;
-      
-  private static Texture2D cursorTexture = null;
-  private static string cursorText;
-  private static List<string> cursorAdditionalTexts;
+sealed class KISAddonCursor : MonoBehaviour {
   public static Part hoveredPart = null;
   public static int partClickedFrame = -1;
-  private static OnMousePartAction delegateOnMousePartClick;
-  private static OnMousePartAction delegateOnMouseEnterPart;
-  private static OnMousePartAction delegateOnMouseHoverPart;
-  private static OnMousePartAction delegateOnMouseExitPart;
   public delegate void OnMousePartAction(Part part);
 
+  static bool cursorShow = false;
+  static bool partDetectionActive = false;
+  static Texture2D cursorTexture = null;
+  static string cursorText;
+  static List<string> cursorAdditionalTexts;
+  static OnMousePartAction delegateOnMousePartClick;
+  static OnMousePartAction delegateOnMouseEnterPart;
+  static OnMousePartAction delegateOnMouseHoverPart;
+  static OnMousePartAction delegateOnMouseExitPart;
+
   // Cursor hint text settings.
-  private const int ActionIconSize = 24;
+  const int ActionIconSize = 24;
   // It's quare.
-  private const int HintFontSize = 10;
-  private const int HintTextLeftMargin = 4;
+  const int HintFontSize = 10;
+  const int HintTextLeftMargin = 4;
   // A gap between action icon and the text.
-  private static Color hintBackground = new Color(0.0f, 0.0f, 0.0f, 0.5f);
-  private static GUIStyle hintWindowStyle = new GUIStyle {
+  static Color hintBackground = new Color(0.0f, 0.0f, 0.0f, 0.5f);
+  static GUIStyle hintWindowStyle = new GUIStyle {
     normal = {
       background = CreateTextureFromColour(hintBackground),
       textColor = Color.white
@@ -37,8 +37,9 @@ public class KISAddonCursor : MonoBehaviour {
     fontSize = HintFontSize
   };
 
-  public static void StartPartDetection() {
+  public static void AbortPartDetection() {
     StartPartDetection(null, null, null, null);
+    partDetectionActive = false;
   }
 
   public static void StartPartDetection(OnMousePartAction onMousePartClick,
@@ -63,7 +64,32 @@ public class KISAddonCursor : MonoBehaviour {
     hoveredPart = null;
   }
 
-  public void Update() {
+  public static void CursorEnable(string texturePath, string text, string text2) {
+    var texts = new List<String>();
+    texts.Add(text2);
+    CursorEnable(texturePath, text, texts);
+  }
+
+  public static void CursorEnable(string texturePath, string text,
+                                  List<string> additionalTexts = null) {
+    cursorShow = true;
+    Cursor.visible = false;
+    cursorTexture = GameDatabase.Instance.GetTexture(texturePath, false);
+    cursorText = text;
+    cursorAdditionalTexts = additionalTexts;
+  }
+      
+  public static void CursorDefault() {
+    cursorShow = false;
+    Cursor.visible = true;
+  }
+
+  public static void CursorDisable() {
+    cursorShow = false;
+    Cursor.visible = false;
+  }
+
+  void Update() {
     if (partDetectionActive) {
       Part part = Mouse.HoveredPart;
 
@@ -96,60 +122,21 @@ public class KISAddonCursor : MonoBehaviour {
 
     if (HighLogic.LoadedSceneIsEditor && Input.GetMouseButtonDown(0)) {
       if (InputLockManager.IsUnlocked(ControlTypes.EDITOR_PAD_PICK_PLACE)) {
-        Part part = Mouse.HoveredPart;
-        if (part && delegateOnMousePartClick != null) {
-          delegateOnMousePartClick(part);
+        if (Mouse.HoveredPart != null && delegateOnMousePartClick != null) {
+          delegateOnMousePartClick(Mouse.HoveredPart);
         }
       }
     }
   }
 
-  public static void CursorEnable(string texturePath, string text, string text2) {
-    List<String> texts = new List<String>();
-    texts.Add(text2);
-    CursorEnable(texturePath, text, texts);
-  }
-
-  public static void CursorEnable(string texturePath, string text,
-                                  List<string> additionalTexts = null) {
-    cursorShow = true;
-    Cursor.visible = false;
-    cursorTexture = GameDatabase.Instance.GetTexture(texturePath, false);
-    cursorText = text;
-    cursorAdditionalTexts = additionalTexts;
-  }
-      
-  public static void CursorDefault() {
-    cursorShow = false;
-    Cursor.visible = true;
-  }
-
-  public static void CursorDisable() {
-    cursorShow = false;
-    Cursor.visible = false;
-  }
-
-  /// <summary>Makes a texture with the requested background color.</summary>
-  /// <remarks>
-  /// Borrowed from <see href="https://github.com/CYBUTEK/KerbalEngineer">KER Redux</see>
-  /// </remarks>
-  /// <param name="colour"></param>
-  /// <returns></returns>
-  private static Texture2D CreateTextureFromColour(Color colour) {
-    var texture = new Texture2D(1, 1, TextureFormat.ARGB32, false);
-    texture.SetPixel(1, 1, colour);
-    texture.Apply();
-    return texture;
-  }
-
-  private void OnGUI() {
+  void OnGUI() {
     if (cursorShow) {
       // Display action icon.
       GUI.DrawTexture(
-        new Rect(Event.current.mousePosition.x - ActionIconSize / 2,
-          Event.current.mousePosition.y - ActionIconSize / 2,
-          ActionIconSize, ActionIconSize),
-        cursorTexture, ScaleMode.ScaleToFit);
+          new Rect(Event.current.mousePosition.x - ActionIconSize / 2,
+                  Event.current.mousePosition.y - ActionIconSize / 2,
+                  ActionIconSize, ActionIconSize),
+          cursorTexture, ScaleMode.ScaleToFit);
               
       // Compile the whole hint text.
       var allLines = new List<String>{ cursorText };
@@ -167,6 +154,19 @@ public class KISAddonCursor : MonoBehaviour {
 
       GUI.Label(hintLabelRect, hintText, hintWindowStyle);
     }
+  }
+
+  /// <summary>Makes a texture with the requested background color.</summary>
+  /// <remarks>
+  /// Borrowed from <see href="https://github.com/CYBUTEK/KerbalEngineer">KER Redux</see>
+  /// </remarks>
+  /// <param name="colour"></param>
+  /// <returns></returns>
+  static Texture2D CreateTextureFromColour(Color colour) {
+    var texture = new Texture2D(1, 1, TextureFormat.ARGB32, false);
+    texture.SetPixel(1, 1, colour);
+    texture.Apply();
+    return texture;
   }
 }
 

@@ -1,4 +1,5 @@
-﻿using KSPDev.LogUtils;
+﻿using KSPDev.GUIUtils;
+using KSPDev.LogUtils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,10 +9,9 @@ using UnityEngine.Rendering;
 namespace KIS {
 
 [KSPAddon(KSPAddon.Startup.Flight, false)]
-public class KISAddonPointer : MonoBehaviour {
+sealed class KISAddonPointer : MonoBehaviour {
   public GameObject audioGo = new GameObject();
   public AudioSource audioBipWrong = new AudioSource();
-  public static GameObject soundGo;
 
   // Pointer parameters
   public static bool allowPart = false;
@@ -331,7 +331,7 @@ public class KISAddonPointer : MonoBehaviour {
     }
     foreach (AttachNode an in hoverPart.attachNodes) {
       if (an.icon) {
-        Destroy(an.icon);
+        an.icon.DestroyGameObject();
       }
     }
     SendPointerState(pointerTarget, PointerState.OnMouseExitPart, hoverPart, null);
@@ -505,31 +505,31 @@ public class KISAddonPointer : MonoBehaviour {
     //On click.
     if (Input.GetMouseButtonDown(0)) {
       if (invalidTarget) {
-        KIS_Shared.ShowRightScreenMessage("Target object is not allowed !");
+        ScreenMessaging.ShowInfoScreenMessage("Target object is not allowed !");
         audioBipWrong.Play();
       } else if (itselfIsInvalid) {
-        KIS_Shared.ShowRightScreenMessage("Cannot attach on itself !");
+        ScreenMessaging.ShowInfoScreenMessage("Cannot attach on itself !");
         audioBipWrong.Play();
       } else if (notAllowedOnMount) {
-        KIS_Shared.ShowRightScreenMessage("This part is not allowed on the mount !");
+        ScreenMessaging.ShowInfoScreenMessage("This part is not allowed on the mount !");
         audioBipWrong.Play();
       } else if (cannotSurfaceAttach) {
-        KIS_Shared.ShowRightScreenMessage("Target part do not allow surface attach !");
+        ScreenMessaging.ShowInfoScreenMessage("Target part do not allow surface attach !");
         audioBipWrong.Play();
       } else if (invalidCurrentNode) {
-        KIS_Shared.ShowRightScreenMessage(
+        ScreenMessaging.ShowInfoScreenMessage(
           "This node cannot be used for surface attach !");
         audioBipWrong.Play();
       } else if (sourceDist > maxDist) {
-        KIS_Shared.ShowRightScreenMessage("Too far from source: {0:F3}m > {1:F3}m",
+        ScreenMessaging.ShowInfoScreenMessage("Too far from source: {0:F3}m > {1:F3}m",
           sourceDist, maxDist);
         audioBipWrong.Play();
       } else if (targetDist > maxDist) {
-        KIS_Shared.ShowRightScreenMessage("Too far from target: {0:F3}m > {1:F3}m",
+        ScreenMessaging.ShowInfoScreenMessage("Too far from target: {0:F3}m > {1:F3}m",
           targetDist, maxDist);
         audioBipWrong.Play();
       } else if (restrictedPart) {
-        KIS_Shared.ShowRightScreenMessage("Cannot attach to part: {0}", hoveredPart);
+        ScreenMessaging.ShowInfoScreenMessage("Cannot attach to part: {0}", hoveredPart);
         audioBipWrong.Play();
       } else {
         SendPointerClick(pointerTarget, pointer.transform.position, pointer.transform.rotation,
@@ -558,7 +558,7 @@ public class KISAddonPointer : MonoBehaviour {
           ResetMouseOver();
           SendPointerState(pointerTarget, PointerState.OnChangeAttachNode, null, null);
         } else {
-          KIS_Shared.ShowRightScreenMessage("This part has only one attach node!");
+          ScreenMessaging.ShowInfoScreenMessage("This part has only one attach node!");
           audioBipWrong.Play();
         }
       }
@@ -577,9 +577,6 @@ public class KISAddonPointer : MonoBehaviour {
   /// <param name="isVisible">New state.</param>
   /// <exception cref="InvalidOperationException">If pointer doesn't exist.</exception>
   private static void SetPointerVisible(bool isVisible) {
-    if (!pointer) {
-      throw new InvalidOperationException("Pointer doesn't exist");
-    }
     foreach (var mr in pointer.GetComponentsInChildren<MeshRenderer>()) {
       if (mr.enabled == isVisible
           && mr.material.renderQueue == KIS_Shared.HighlighedPartRenderQueue) {
@@ -593,56 +590,14 @@ public class KISAddonPointer : MonoBehaviour {
 
   /// <summary>Makes a game object to represent currently dragging assembly.</summary>
   /// <remarks>It's a very expensive operation.</remarks>
-  private static void MakePointer() {
+  static void MakePointer() {
     DestroyPointer();
-    MakePointerAttachNodes();
-          
-    var combines = new List<CombineInstance>();
-    if (!partToAttach.GetComponentInChildren<MeshFilter>()) {
-      CollectMeshesFromPrefab(partToAttach, combines);
-    } else {
-      CollectMeshesFromAssembly(
-          partToAttach, partToAttach.transform.localToWorldMatrix.inverse, combines);
+
+    // Make pointer node transformations.
+    if (pointerNodeTransform) {
+      pointerNodeTransform.gameObject.DestroyGameObject();
     }
-
-    pointer = new GameObject("KISPointer");
-
-    // Create one filter per mesh in the hierarhcy. Simple combining all meshes into one
-    // larger mesh may have weird representation artifacts on different video cards.
-    foreach (var combine in combines) {
-      var mesh = new Mesh();
-      mesh.CombineMeshes(new CombineInstance[] { combine });
-      var childObj = new GameObject("KISPointerChildMesh");
-
-      var meshRenderer = childObj.AddComponent<MeshRenderer>();
-      meshRenderer.shadowCastingMode = ShadowCastingMode.Off;
-      meshRenderer.receiveShadows = false;
-
-      var filter = childObj.AddComponent<MeshFilter>();
-      filter.sharedMesh = mesh;
-              
-      childObj.transform.parent = pointer.transform;
-    }
-
-    allModelMr = new List<MeshRenderer>(pointer.GetComponentsInChildren<MeshRenderer>());
-    foreach (var mr in allModelMr) {
-      mr.material = new Material(Shader.Find("Transparent/Diffuse"));
-    }
-
-    pointerNodeTransform.parent = pointer.transform;
-    Logger.logInfo("Pointer created");
-  }
-
-  /// <summary>Sets possible attach nodes in <c>attachNodes</c>.</summary>
-  /// <exception cref="InvalidOperationException">
-  /// If part has no valid attachment nodes.
-  /// </exception>
-  private static void MakePointerAttachNodes() {
-    // Make node transformations.
-    if (pointerNodeTransform) { 
-      Destroy(pointerNodeTransform);
-    }
-    pointerNodeTransform = new GameObject("KASPointerPartNode").transform;
+    pointerNodeTransform = new GameObject("KISPointerPartNode").transform;
 
     // Deatch will decouple from the parent so, ask to ignore it when looking for the nodes.
     attachNodes =
@@ -659,6 +614,35 @@ public class KISAddonPointer : MonoBehaviour {
     attachNodeIndex = 0;  // Expect that first node is the best default.
 
     UpdatePointerAttachNode();
+
+    // Make pointer renderer.
+    var combines = new List<CombineInstance>();
+    CollectMeshesFromAssembly(partToAttach, combines);
+
+    // Create one filter per mesh in the hierarhcy. Simple combining all meshes into one
+    // larger mesh may have weird representation artifacts on different video cards.
+    pointer = new GameObject("KISPointer");
+    foreach (var combine in combines) {
+      var mesh = new Mesh();
+      mesh.CombineMeshes(new[] { combine });
+      var childObj = new GameObject("KISPointerChildMesh");
+
+      var meshRenderer = childObj.AddComponent<MeshRenderer>();
+      meshRenderer.shadowCastingMode = ShadowCastingMode.Off;
+      meshRenderer.receiveShadows = false;
+
+      var filter = childObj.AddComponent<MeshFilter>();
+      filter.sharedMesh = mesh;
+
+      childObj.transform.parent = pointer.transform;
+    }
+    allModelMr = pointer.GetComponentsInChildren<MeshRenderer>().ToList();
+    foreach (var mr in allModelMr) {
+      mr.material = new Material(Shader.Find("Transparent/Diffuse"));
+    }
+    pointerNodeTransform.parent = pointer.transform;
+
+    Logger.logInfo("New pointer created");
   }
 
   /// <summary>Sets pointer origin to the current attachment node</summary>
@@ -673,18 +657,18 @@ public class KISAddonPointer : MonoBehaviour {
   }
       
   /// <summary>Destroyes object(s) allocated to represent a pointer.</summary>
-  /// <remarks>
-  /// When making pointer for a complex hierarchy a lot of different resources may be
+  /// <remarks>When making pointer for a complex hierarchy a lot of different resources may be
   /// allocated/dropped. Destroying each one of them can be too slow so, cleanup is done in
   /// one call to <c>UnloadUnusedAssets()</c>.
+  /// <para>This method also destroys <see cref="pointerNodeTransform"/>.</para>
   /// </remarks>
   private static void DestroyPointer() {
     if (!pointer) {
       return;  // Nothing to do.
     }
-    Destroy(pointer);
+    pointer.DestroyGameObject();
     pointer = null;
-    Destroy(pointerNodeTransform);
+    pointerNodeTransform.gameObject.DestroyGameObject();
     pointerNodeTransform = null;
     allModelMr.Clear();
 
@@ -697,46 +681,47 @@ public class KISAddonPointer : MonoBehaviour {
   /// <remarks>
   /// Returns shared meshes with the right transformations. No new objects are created.
   /// </remarks>
-  /// <param name="assembly">Assembly to collect meshes from.</param>
-  /// <param name="worldTransform">A world transformation matrix to apply to every mesh after
-  ///     it's translated into world's coordinates.</param>
+  /// <param name="assembly">An assembly to collect meshes from.</param>
   /// <param name="meshCombines">[out] Collected meshes.</param>
+  /// <param name="worldTransform">A world transformation matrix to apply to every mesh after
+  ///     it's translated into world's coordinates. If <c>null</c> then coordinates will be
+  ///     calculated relative to the root part of the assembly.</param>
   private static void CollectMeshesFromAssembly(Part assembly,
-    Matrix4x4 worldTransform,
-    List<CombineInstance> meshCombines) {
-    // This gives part's mesh(es) and all surface attached children part meshes.
-    MeshFilter[] meshFilters = assembly.GetComponentsInChildren<MeshFilter>();
-    Logger.logInfo("Found {0} children meshes in: {1}", meshFilters.Count(), assembly);
-    foreach (var meshFilter in meshFilters) {
-      var combine = new CombineInstance();
-      combine.mesh = meshFilter.sharedMesh;
-      combine.transform = worldTransform * meshFilter.transform.localToWorldMatrix;
-      meshCombines.Add(combine);
-    }
+                                                ICollection<CombineInstance> meshCombines,
+                                                Matrix4x4? worldTransform = null) {
+    // Always use world transformation from the root.
+    var rootWorldTransform = worldTransform ?? assembly.transform.localToWorldMatrix.inverse;
 
-    // Go thru the stacked children parts. They don't have local transformation.
-    foreach (Part child in assembly.children) {
-      if (child.transform.position.Equals(child.transform.localPosition)) {
-        CollectMeshesFromAssembly(child, worldTransform, meshCombines);
+    // Get all meshes from the part's model.
+    MeshFilter[] meshFilters = assembly.FindModelComponents<MeshFilter>();
+    if (meshFilters.Length > 0) {
+      Logger.logInfo("Found {0} children meshes in: {1}", meshFilters.Length, assembly);
+      foreach (var meshFilter in meshFilters) {
+        var combine = new CombineInstance();
+        combine.mesh = meshFilter.sharedMesh;
+        combine.transform = rootWorldTransform * meshFilter.transform.localToWorldMatrix;
+        meshCombines.Add(combine);
       }
     }
-  }
 
-  /// <summary>Creates and returns meshes from a prefab.</summary>
-  /// <param name="prefabPart">A part to make meshes for.</param>
-  /// <param name="meshCombines">[out] Collected meshes.</param>
-  private static void CollectMeshesFromPrefab(Part prefabPart, List<CombineInstance> meshCombines) {
-    var model = prefabPart.FindModelTransform("model").gameObject;
-    var meshModel = Instantiate(model, Vector3.zero, Quaternion.identity) as GameObject;
-    var meshFilters = meshModel.GetComponentsInChildren<MeshFilter>();
-    Logger.logInfo("Created {0} meshes from prefab: {1}", meshFilters.Count(), prefabPart);
-    foreach (var meshFilter in meshFilters) {
-      var combine = new CombineInstance();
-      combine.mesh = meshFilter.mesh;  // Get a copy. 
-      combine.transform = meshFilter.transform.localToWorldMatrix;
-      meshCombines.Add(combine);
+    // Skinned meshes are baked on every frame before rendering. Bake them to get current mesh
+    // state.
+    var skinnedMeshRenderers = assembly.FindModelComponents<SkinnedMeshRenderer>();
+    if (skinnedMeshRenderers.Length > 0) {
+      Logger.logInfo("Found {0} skinned meshes in: {1}", skinnedMeshRenderers.Length, assembly);
+      foreach (var skinnedMeshRenderer in skinnedMeshRenderers) {
+        var combine = new CombineInstance();
+        combine.mesh = new Mesh();
+        skinnedMeshRenderer.BakeMesh(combine.mesh);
+        combine.transform = rootWorldTransform * skinnedMeshRenderer.transform.localToWorldMatrix;
+        meshCombines.Add(combine);
+      }
     }
-    DestroyImmediate(meshModel);  // Don't allow it showing in the scene.
+
+    // Collect meshes from the children parts.
+    foreach (Part child in assembly.children) {
+      CollectMeshesFromAssembly(child, meshCombines, worldTransform: rootWorldTransform);
+    }
   }
 }
 

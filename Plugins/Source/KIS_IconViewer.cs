@@ -5,16 +5,17 @@ using UnityEngine;
 namespace KIS {
 
 public class KIS_IconViewer {
-  private float iconPosY = 0;
-  private int mask = 22;
-  private float lightIntensity = 0.4f;
-  private float zoom = 0.75f;
+  float iconPosY = 0;
+  int mask = 22;
+  float lightIntensity = 0.4f;
+  float zoom = 0.75f;
 
-  private Camera cam;
-  private static Light iconLight;
-  private static int camStaticIndex = 0;
-  private static int iconCount = 0;
-  private int camIndex;
+  Camera cam;
+  static Light iconLight;
+  static int camStaticIndex = 0;
+  static int iconCount = 0;
+  int camIndex;
+
   public GameObject iconPrefab;
   public Texture texture;
 
@@ -95,9 +96,10 @@ public class KIS_IconViewer {
   }
 
   ~KIS_IconViewer() {
-    UnityEngine.Object.Destroy(cam.gameObject);
-    if (iconPrefab)
-      UnityEngine.Object.Destroy(iconPrefab);
+    cam.gameObject.DestroyGameObject();
+    if (iconPrefab) {
+      iconPrefab.DestroyGameObject();
+    }
     this.iconPrefab = null;
     this.texture = null;
     iconCount -= 1;

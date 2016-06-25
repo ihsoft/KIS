@@ -50,12 +50,16 @@
     <Reference Include="System.Core" />
     <Reference Include="UnityEngine">
       <HintPath>Q:\KSP_Data\Managed\UnityEngine.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.UI">
       <HintPath>Q:\KSP_Data\Managed\UnityEngine.UI.dll</HintPath>
+      <Private>False</Private>
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="EditorDefaultItemsAdder.cs" />
+    <Compile Include="KIS_UISoundPlayer.cs" />
     <Compile Include="KspLayers.cs" />
     <Compile Include="KISAddonCursor.cs" />
     <Compile Include="ModuleKISItemEvaPropellant.cs" />

@@ -11,30 +11,21 @@ using UnityEngine.EventSystems;
 
 namespace KIS {
 
-[PersistentFieldsFile("KIS/settings.cfg", "KISConfig")]
-public class KISAddonPickup : MonoBehaviour {
+[PersistentFieldsDatabase("KIS/settings/KISConfig")]
+sealed class KISAddonPickup : MonoBehaviour {
   /// <summary>A helper class to handle mouse clicks in the editor.</summary>
   private class EditorClickListener : MonoBehaviour, IBeginDragHandler,
                                       IDragHandler, IEndDragHandler {
     private EditorPartIcon partIcon;
     private bool dragStarted;
     private const PointerEventData.InputButton PartDragButton = PointerEventData.InputButton.Left;
-    private Part preCreatedPart;
 
     public virtual void OnBeginDrag(PointerEventData eventData) {
       // Start dargging for KIS or delegate event to the editor.
       if (eventData.button == PartDragButton
           && EventChecker.IsModifierCombinationPressed(editorGrabPartModifiers)) {
         dragStarted = true;
-        // Don't trust the parts provided by the editor. They may have uninitialized modules. Always
-        // re-create them from prefab.
-        if (!preCreatedPart) {
-          preCreatedPart = (Part) UnityEngine.Object.Instantiate(partIcon.partInfo.partPrefab);
-          preCreatedPart.gameObject.SetActive(true);
-          preCreatedPart.name = partIcon.partInfo.name;
-          preCreatedPart.InitializeModules();
-        }
-        KISAddonPickup.instance.OnMouseGrabPartClick(preCreatedPart);
+        KISAddonPickup.instance.OnMouseGrabPartClick(partIcon.partInfo.partPrefab);
       } else {
         EditorPartList.Instance.partListScrollRect.OnBeginDrag(eventData);
       }
@@ -64,13 +55,6 @@ public class KISAddonPickup : MonoBehaviour {
     void Start() {
       // Getting components is not a cheap operation so, cache anything we can.
       partIcon = GetComponent<EditorPartIcon>();              
-    }
-    
-    void OnDestroy() {
-      if (preCreatedPart) {
-        UnityEngine.Object.Destroy(preCreatedPart.gameObject);
-        preCreatedPart = null;
-      }
     }
   }
 
@@ -337,11 +321,10 @@ public class KISAddonPickup : MonoBehaviour {
       if (draggedPart && (Input.GetMouseButtonUp(0) || delayedButtonUp)) {
         // In slow scenes mouse button can be pressed and released in just one frame.
         // As a result UP event may get handled before DOWN handlers which leads to
-        // false action triggering. So, just postpone UP even by one frame when it
+        // false action triggering. So, just postpone UP event by one frame when it
         // happens in the same frame as the DOWN event.
         if (KISAddonCursor.partClickedFrame == Time.frameCount) {
-          Logger.logWarning(
-            "Postponing mouse button up event in frame {0}", Time.frameCount);
+          Logger.logWarning("Postponing mouse button up event in frame {0}", Time.frameCount);
           delayedButtonUp = true;  // Event will be handled in the next frame.
         } else {
           delayedButtonUp = false;
@@ -546,7 +529,7 @@ public class KISAddonPickup : MonoBehaviour {
         Pickup(part);
       }
     } else if (HighLogic.LoadedSceneIsEditor) {
-      if (ModuleKISInventory.GetAllOpenInventories().Any()) {
+      if (ModuleKISInventory.GetAllOpenInventories().Count > 0) {
         Pickup(part);
       }
     }
@@ -791,22 +774,22 @@ public class KISAddonPickup : MonoBehaviour {
     if (cursorMode == CursorMode.Detach) {
       Logger.logError("Deatch mode is not expected in Pickup()");
     }
-    Pickup(cursorMode == CursorMode.ReDock ? PickupMode.Undock : PickupMode.Move);
+    HandlePickup(cursorMode == CursorMode.ReDock ? PickupMode.Undock : PickupMode.Move);
   }
 
   public void Pickup(KIS_Item item) {
     draggedPart = item.availablePart.partPrefab;
     draggedItem = item;
-    Pickup(PickupMode.GrabFromInventory);
+    HandlePickup(PickupMode.GrabFromInventory);
   }
 
-  private void Pickup(PickupMode newPickupMode) {
+  private void HandlePickup(PickupMode newPickupMode) {
     Logger.logInfo("Start pickup in mode {0} from part: {1}", newPickupMode, draggedPart);
     grabbedPart = null;
     pickupMode = newPickupMode;
     cursorMode = CursorMode.Nothing;
     icon = new KIS_IconViewer(draggedPart, draggedIconResolution);
-    KISAddonCursor.StartPartDetection();
+    KISAddonCursor.AbortPartDetection();
     grabActive = false;
     KISAddonCursor.CursorDisable();
     if (HighLogic.LoadedSceneIsFlight) {
@@ -827,10 +810,11 @@ public class KISAddonPickup : MonoBehaviour {
   }
 
   /// <summary>Handles part drop action.</summary>
-  /// <param name="part">A part to be created on drop.</param>
+  /// <param name="part">A part being grabbed. It's either a real part or prefab depending on the
+  /// source of the action.</param>
   /// <param name="fromPart">A part that was the source of the draggign action. If a world's part is
-  /// grabbed than it will be that part. If <paramref name="part"/> is being dragged from inventory
-  /// then this parameter is an inventory reference.</param>
+  /// grabbed than it will be that part. If part is being dragged from inventory then this parameter
+  /// is an inventory reference.</param>
   public void Drop(Part part, Part fromPart) {
     grabbedPart = part;
     Logger.logInfo("End pickup of {0} from part: {1}", part, fromPart);
@@ -845,11 +829,9 @@ public class KISAddonPickup : MonoBehaviour {
         KISAddonPointer.allowStatic = true;
         KISAddonPointer.allowStack = pickupModule.allowPartStack;
         KISAddonPointer.maxDist = pickupModule.maxDistance;
-        if (draggedItem != null) {
-          KISAddonPointer.scale = draggedItem.GetScale();
-        } else {
-          KISAddonPointer.scale = 1;
-        }
+        KISAddonPointer.scale = draggedItem != null
+            ? KIS_Shared.GetPartExternalScaleModifier(draggedItem.partNode)
+            : 1;
         KISAddonPointer.StartPointer(part, OnPointerAction, OnPointerState, pickupModule.transform);
 
         pointerMode = pickupMode == PickupMode.Undock
@@ -1327,7 +1309,7 @@ public class KISAddonPickup : MonoBehaviour {
                                 bool reportToConsole = false,
                                 string cursorIcon = ForbiddenIcon) {
     if (reportToConsole) {
-      KIS_Shared.ShowRightScreenMessage("{0}: {1}", error, reason);
+      ScreenMessaging.ShowInfoScreenMessage("{0}: {1}", error, reason);
       KIS_UISoundPlayer.instance.PlayBipWrong();
     } else {
       KISAddonCursor.CursorEnable(cursorIcon, error, reason);
@@ -1337,12 +1319,18 @@ public class KISAddonPickup : MonoBehaviour {
   
 // Create an instance for managing inventory in the editor.
 [KSPAddon(KSPAddon.Startup.EditorAny, false /*once*/)]
-internal class KISAddonPickupInEditor : KISAddonPickup {
+sealed class KISAddonPickupInEditor : MonoBehaviour {
+  void Awake() {
+    gameObject.AddComponent<KISAddonPickup>();
+  }
 }
 
 // Create an instance for accessing inventory in EVA.
 [KSPAddon(KSPAddon.Startup.Flight, false /*once*/)]
-internal class KISAddonPickupInFlight : KISAddonPickup {
+sealed class KISAddonPickupInFlight : MonoBehaviour {
+  void Awake() {
+    gameObject.AddComponent<KISAddonPickup>();
+  }
 }
 
 }  // namespace

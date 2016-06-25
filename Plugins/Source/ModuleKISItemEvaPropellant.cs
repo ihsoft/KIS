@@ -1,4 +1,5 @@
-﻿using System;
+﻿using KSPDev.GUIUtils;
+using System;
 using System.Linq;
 
 namespace KIS {
@@ -13,7 +14,7 @@ public class ModuleKISItemEvaPropellant : ModuleKISItem {
     if (useFrom != KIS_Item.UseFrom.KeyUp) {
       if (item.inventory.invType == ModuleKISInventory.InventoryType.Pod) {
         // Refuel item
-        ScreenMessages.PostScreenMessage("Fuel tank refueled", 5, ScreenMessageStyle.UPPER_CENTER);
+        ScreenMessaging.ShowPriorityScreenMessage("Fuel tank refueled");
         foreach (KIS_Item.ResourceInfo itemRessource in item.GetResources()) {
           if (itemRessource.resourceName == EvaPropellantResource) {
             item.SetResource(EvaPropellantResource, itemRessource.maxAmount);
@@ -29,8 +30,7 @@ public class ModuleKISItemEvaPropellant : ModuleKISItem {
             if (evaRessource) {
               double amountToFill = evaRessource.maxAmount - evaRessource.amount;
               if (itemRessource.amount > amountToFill) {
-                ScreenMessages.PostScreenMessage(
-                    "EVA pack refueled", 5, ScreenMessageStyle.UPPER_CENTER);
+                ScreenMessaging.ShowPriorityScreenMessage("EVA pack refueled");
                 evaRessource.amount = evaRessource.maxAmount;
                 item.SetResource(EvaPropellantResource, (itemRessource.amount - amountToFill));
                 if (item.equippedPart) {  
@@ -43,12 +43,11 @@ public class ModuleKISItemEvaPropellant : ModuleKISItem {
                 item.inventory.PlaySound(refuelSndPath, false, false);
               } else {
                 if (itemRessource.amount == 0) {
-                  ScreenMessages.PostScreenMessage("Fuel tank is empty ! Cannot refuel EVA pack",
-                                                   5, ScreenMessageStyle.UPPER_CENTER);
+                  ScreenMessaging.ShowPriorityScreenMessage(
+                      "Fuel tank is empty ! Cannot refuel EVA pack");
                 } else {
-                  ScreenMessages.PostScreenMessage(
-                      "Available propellant is not enough to refuel, EVA pack partially refueled",
-                      5, ScreenMessageStyle.UPPER_CENTER);
+                  ScreenMessaging.ShowPriorityScreenMessage(
+                      "Available propellant is not enough to refuel, EVA pack partially refueled");
                 }
                 evaRessource.amount += itemRessource.amount;
                 item.SetResource("EVA Propellant", 0);

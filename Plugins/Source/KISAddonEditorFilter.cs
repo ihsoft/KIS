@@ -6,14 +6,13 @@ using UnityEngine;
 
 namespace KIS {
 
+/// <summary>A class to handle editor KIS part's category.</summary>
 [KSPAddon(KSPAddon.Startup.MainMenu, true)]
-public class KISAddonEditorFilter : MonoBehaviour {
-  private static List<AvailablePart> avPartItems = new List<AvailablePart>();
-  internal string category = "Filter by Function";
-  internal string subCategoryTitle = "EVA Items";
-  internal string defaultTitle = "KIS";
-  internal string iconName = "R&D_node_icon_evatech";
-  internal bool filter = true;
+sealed class KISAddonEditorFilter : MonoBehaviour {
+  static List<AvailablePart> avPartItems = new List<AvailablePart>();
+  const string category = "Filter by Function";
+  const string subCategoryTitle = "EVA Items";
+  const string iconName = "R&D_node_icon_evatech";
 
   void Awake() {
     GameEvents.onGUIEditorToolbarReady.Add(SubCategories);
@@ -30,11 +29,11 @@ public class KISAddonEditorFilter : MonoBehaviour {
     }
   }
 
-  private bool EditorItemsFilter(AvailablePart avPart) {
+  bool EditorItemsFilter(AvailablePart avPart) {
     return avPartItems.Contains(avPart);
   }
 
-  private void SubCategories() {
+  void SubCategories() {
     RUI.Icons.Selectable.Icon icon = PartCategorizer.Instance.iconLoader.GetIcon(iconName);
     PartCategorizer.Category Filter =
         PartCategorizer.Instance.filters.Find(f => f.button.categoryName == category);

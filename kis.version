@@ -10,12 +10,17 @@
         "MINOR": 1, 
         "PATCH": 2
     }, 
+    "KSP_VERSION_MAX": {
+        "MAJOR": 1, 
+        "MINOR": 1, 
+        "PATCH": 99
+    }, 
     "NAME": "Kerbal Inventory System", 
     "URL": "https://raw.githubusercontent.com/KospY/KIS/master/kis.version", 
     "VERSION": {
         "BUILD": 0, 
         "MAJOR": 1, 
         "MINOR": 2, 
-        "PATCH": 9
+        "PATCH": 12
     }
 }

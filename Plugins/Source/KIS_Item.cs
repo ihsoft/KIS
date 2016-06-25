@@ -1,4 +1,5 @@
 ﻿using KSPDev.LogUtils;
+using KSPDev.GUIUtils;
 using System;
 using System.Linq;
 using System.Collections.Generic;
@@ -110,9 +111,8 @@ public class KIS_Item {
                   float quantity = 1) {
     // Get part node
     this.availablePart = availablePart;
-    this.partNode = new ConfigNode();
-    ConfigNode savedPartNode = itemNode.GetNode("PART");
-    savedPartNode.CopyTo(partNode);
+    partNode = new ConfigNode();
+    itemNode.GetNode("PART").CopyTo(partNode);
     // init config
     this.InitConfig(availablePart, inventory, quantity);
     // Get mass
@@ -152,35 +152,31 @@ public class KIS_Item {
     }
   }
 
-  private void InitConfig(AvailablePart availablePart,
-                          ModuleKISInventory inventory, float quantity) {
+  void InitConfig(AvailablePart availablePart, ModuleKISInventory inventory, float quantity) {
     this.inventory = inventory;
     this.quantity = quantity;
-    this.prefabModule = availablePart.partPrefab.GetComponent<ModuleKISItem>();
-    this.volume = GetVolume();
-    this.cost = GetCost();
+    prefabModule = availablePart.partPrefab.GetComponent<ModuleKISItem>();
+    volume = KIS_Shared.GetPartVolume(availablePart);
+    cost = GetCost();
 
     // Set launchID
-    if (this.partNode.HasValue("launchID")) {
+    if (partNode.HasValue("launchID")) {
       if (int.Parse(this.partNode.GetValue("launchID")) == 0) {
-        this.partNode.SetValue("launchID", this.inventory.part.launchID.ToString(), true);
+        partNode.SetValue("launchID", this.inventory.part.launchID.ToString(), true);
       }
     } else {
-      this.partNode.SetValue("launchID", this.inventory.part.launchID.ToString(), true);
+      partNode.SetValue("launchID", this.inventory.part.launchID.ToString(), true);
     }
 
-    if (this.prefabModule) {
-      if (this.prefabModule.volumeOverride > 0) {
-        this.volume = this.prefabModule.volumeOverride;
-      }
-      this.equipable = prefabModule.equipable;
-      this.stackable = prefabModule.stackable;
-      this.equipSlot = prefabModule.equipSlot;
-      this.usableFromEva = prefabModule.usableFromEva;
-      this.usableFromContainer = prefabModule.usableFromContainer;
-      this.usableFromPod = prefabModule.usableFromPod;
-      this.usableFromEditor = prefabModule.usableFromEditor;
-      this.carriable = prefabModule.carriable;
+    if (prefabModule) {
+      equipable = prefabModule.equipable;
+      stackable = prefabModule.stackable;
+      equipSlot = prefabModule.equipSlot;
+      usableFromEva = prefabModule.usableFromEva;
+      usableFromContainer = prefabModule.usableFromContainer;
+      usableFromPod = prefabModule.usableFromPod;
+      usableFromEditor = prefabModule.usableFromEditor;
+      carriable = prefabModule.carriable;
     }
     int nonStackableModule = 0;
     foreach (PartModule pModule in availablePart.partPrefab.Modules) {
@@ -190,15 +186,15 @@ public class KIS_Item {
     }
     if (nonStackableModule == 0 && GetResources().Count == 0) {
       Logger.logInfo(
-          "No non-stackable module and ressource found on the part, set item as stackable");
-      this.stackable = true;
+          "No non-stackable module or a resource found on the part, set the item as stackable");
+      stackable = true;
     }
     if (KISAddonConfig.stackableList.Contains(availablePart.name)
         || availablePart.name.IndexOf('.') != -1
         && KISAddonConfig.stackableList.Contains(availablePart.name.Replace('.', '_'))) {
       Logger.logInfo("Part name present in settings.cfg (node StackableItemOverride),"
                      + " force item as stackable");
-      this.stackable = true;
+      stackable = true;
     }
   }
 
@@ -222,10 +218,10 @@ public class KIS_Item {
   }
 
   public List<ResourceInfo> GetResources() {
-    List<ResourceInfo> resources = new List<ResourceInfo>();
+    var resources = new List<ResourceInfo>();
     foreach (ConfigNode node in this.partNode.GetNodes("RESOURCE")) {
       if (node.HasValue("name") && node.HasValue("amount") && node.HasValue("maxAmount")) {
-        ResourceInfo rInfo = new ResourceInfo();
+        var rInfo = new ResourceInfo();
         rInfo.resourceName = node.GetValue("name");
         rInfo.amount = double.Parse(node.GetValue("amount"));
         rInfo.maxAmount = double.Parse(node.GetValue("maxAmount"));
@@ -236,41 +232,17 @@ public class KIS_Item {
   }
 
   public List<ScienceData> GetSciences() {
-    List<ScienceData> sciences = new List<ScienceData>();
+    var sciences = new List<ScienceData>();
     foreach (ConfigNode module in this.partNode.GetNodes("MODULE")) {
       foreach (ConfigNode experiment in module.GetNodes("ScienceData")) {
-        ScienceData scienceData = new ScienceData(experiment);
+        var scienceData = new ScienceData(experiment);
         sciences.Add(scienceData);
       }
     }
     return sciences;
   }
 
-  public float GetScale() {
-    // TweakScale compatibility
-    foreach (ConfigNode node in this.partNode.GetNodes("MODULE")) {
-      if (node.HasValue("name") && node.GetValue("name") == "TweakScale"
-          && node.HasValue("currentScale") && node.HasValue("defaultScale")) {
-        return float.Parse(node.GetValue("currentScale"))
-            / float.Parse(node.GetValue("defaultScale"));
-      }
-    }
-    return 1;
-  }
-
-  public float GetVolume() {
-    // TweakScale compatibility
-    foreach (ConfigNode node in this.partNode.GetNodes("MODULE")) {
-      if (node.HasValue("name") && node.GetValue("name") == "TweakScale"
-          && node.HasValue("currentScale") && node.HasValue("defaultScale")) {
-        var scale = (float)Math.Pow(double.Parse(node.GetValue("currentScale"))
-                                    / double.Parse(node.GetValue("defaultScale")), 3);
-        return KIS_Shared.GetPartVolume(availablePart.partPrefab) * scale;
-      }
-    }
-    return KIS_Shared.GetPartVolume(availablePart.partPrefab);
-  }
-
+  // TODO(ihsoft): Move to KIS_Shared.
   public float GetCost() {
     // TweakScale compatibility
     foreach (ConfigNode node in this.partNode.GetNodes("MODULE")) {
@@ -322,8 +294,9 @@ public class KIS_Item {
   }
 
   public void GUIUpdate() {
-    if (prefabModule)
+    if (prefabModule) {
       prefabModule.OnItemGUI(this);
+    }
   }
 
   public void PlaySound(string sndPath, bool loop = false) {
@@ -336,16 +309,13 @@ public class KIS_Item {
     }
     float newVolume = inventory.totalVolume + (volume * qty);
     if (checkVolume && newVolume > inventory.maxVolume) {
-      ScreenMessages.PostScreenMessage(
-          string.Format("Max destination volume reached (+{0:#.####})",
-                        newVolume - inventory.maxVolume),
-          5f);
+      ScreenMessaging.ShowPriorityScreenMessage("Max destination volume reached (+{0:#.####})",
+                                                newVolume - inventory.maxVolume);
       return false;
-    } else {
-      quantity += qty;
-      inventory.RefreshMassAndVolume();
-      return true;
     }
+    quantity += qty;
+    inventory.RefreshMassAndVolume();
+    return true;
   }
 
   public bool StackRemove(float qty = 1) {
@@ -355,11 +325,10 @@ public class KIS_Item {
     if (quantity - qty <= 0) {
       Delete();
       return false;
-    } else {
-      quantity -= qty;
-      inventory.RefreshMassAndVolume();
-      return true;
     }
+    quantity -= qty;
+    inventory.RefreshMassAndVolume();
+    return true;
   }
 
   public void Delete() {
@@ -402,8 +371,10 @@ public class KIS_Item {
     }
     Logger.logInfo("Equip item {0}", this.availablePart.name);
 
-    //Check skill if needed
-    if (!String.IsNullOrEmpty(prefabModule.equipSkill)) {
+    // Check skill if needed. Skip the check in sandbox modes.
+    if (HighLogic.CurrentGame.Mode != Game.Modes.SANDBOX
+        && HighLogic.CurrentGame.Mode != Game.Modes.SCIENCE_SANDBOX
+        && !String.IsNullOrEmpty(prefabModule.equipSkill)) {
       bool skillFound = false;
       List<ProtoCrewMember> protoCrewMembers = inventory.vessel.GetVesselCrew();
       foreach (var expEffect in protoCrewMembers[0].experienceTrait.Effects) {
@@ -413,9 +384,9 @@ public class KIS_Item {
         }
       }
       if (!skillFound) {
-        ScreenMessages.PostScreenMessage(
-            "This item can only be used by a kerbal with the skill : " + prefabModule.equipSkill,
-            5f, ScreenMessageStyle.UPPER_CENTER);
+        ScreenMessaging.ShowPriorityScreenMessage(
+            "This item can only be used by a kerbal with the skill : {0}",
+            prefabModule.equipSkill);
         PlaySound(KIS_Shared.bipWrongSndPath);
         return;
       }
@@ -426,9 +397,9 @@ public class KIS_Item {
       KIS_Item equippedItem = inventory.GetEquipedItem(equipSlot);
       if (equippedItem != null) {
         if (equippedItem.carriable) {
-          ScreenMessages.PostScreenMessage(
-              "Cannot equip item, slot <" + equipSlot + "> already used for carrying "
-              + equippedItem.availablePart.title, 5f, ScreenMessageStyle.UPPER_CENTER);
+          ScreenMessaging.ShowPriorityScreenMessage(
+              "Cannot equip item, slot <{0}> already used for carrying {1}",
+              equipSlot, equippedItem.availablePart.title);
           PlaySound(KIS_Shared.bipWrongSndPath);
           return;
         }
@@ -438,7 +409,7 @@ public class KIS_Item {
 
     if (equipMode == EquipMode.Model) {
       GameObject modelGo = availablePart.partPrefab.FindModelTransform("model").gameObject;
-      equippedGameObj = Mesh.Instantiate(modelGo) as GameObject;
+      equippedGameObj = UnityEngine.Object.Instantiate(modelGo);
       foreach (Collider col in equippedGameObj.GetComponentsInChildren<Collider>()) {
         UnityEngine.Object.DestroyImmediate(col);
       }

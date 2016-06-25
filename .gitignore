@@ -117,3 +117,4 @@ Plugins/MiniAVC.xml
 *.sdsettings
 *.csproj
 *.local
+KIS_v*.zip
