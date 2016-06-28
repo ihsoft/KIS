@@ -9,6 +9,11 @@
         "MINOR": 1, 
         "PATCH": 99
     }, 
+    "KSP_VERSION_MIN": {
+        "MAJOR": 1, 
+        "MINOR": 1, 
+        "PATCH": 3
+    }, 
     "NAME": "KIS", 
     "URL": "https://raw.githubusercontent.com/KospY/KIS/master/kis.version", 
     "VERSION": {
