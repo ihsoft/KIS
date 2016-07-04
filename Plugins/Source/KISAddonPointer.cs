@@ -517,16 +517,15 @@ sealed class KISAddonPointer : MonoBehaviour {
         ScreenMessaging.ShowInfoScreenMessage("Target part do not allow surface attach !");
         audioBipWrong.Play();
       } else if (invalidCurrentNode) {
-        ScreenMessaging.ShowInfoScreenMessage(
-          "This node cannot be used for surface attach !");
+        ScreenMessaging.ShowInfoScreenMessage("This node cannot be used for surface attach !");
         audioBipWrong.Play();
       } else if (sourceDist > maxDist) {
         ScreenMessaging.ShowInfoScreenMessage("Too far from source: {0:F3}m > {1:F3}m",
-          sourceDist, maxDist);
+                                              sourceDist, maxDist);
         audioBipWrong.Play();
       } else if (targetDist > maxDist) {
         ScreenMessaging.ShowInfoScreenMessage("Too far from target: {0:F3}m > {1:F3}m",
-          targetDist, maxDist);
+                                              targetDist, maxDist);
         audioBipWrong.Play();
       } else if (restrictedPart) {
         ScreenMessaging.ShowInfoScreenMessage("Cannot attach to part: {0}", hoveredPart);

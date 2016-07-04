@@ -122,7 +122,7 @@ public static class KIS_Shared {
   }
 
   /// <summary>Recursive implementation of <c>GetAssemblyMass</c>.</summary>
-  private static float Internal_GetAssemblyMass(Part rootPart, ref int childrenCount) {
+  static float Internal_GetAssemblyMass(Part rootPart, ref int childrenCount) {
     float totalMass = rootPart.mass + rootPart.GetResourceMass();
     ++childrenCount;
     foreach (Part child in rootPart.children) {
@@ -366,10 +366,10 @@ public static class KIS_Shared {
     return newPart;
   }
 
-  private static IEnumerator WaitAndCouple(Part newPart, Part tgtPart = null,
-                                           string srcAttachNodeID = null,
-                                           AttachNode tgtAttachNode = null,
-                                           OnPartCoupled onPartCoupled = null) {
+  static IEnumerator WaitAndCouple(Part newPart, Part tgtPart = null,
+                                   string srcAttachNodeID = null,
+                                   AttachNode tgtAttachNode = null,
+                                   OnPartCoupled onPartCoupled = null) {
     // Get relative position & rotation
     Vector3 toPartLocalPos = Vector3.zero;
     Quaternion toPartLocalRot = Quaternion.identity;

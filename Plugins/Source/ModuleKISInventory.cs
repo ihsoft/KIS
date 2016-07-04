@@ -545,7 +545,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
   }
 
   /// <summary>Overridden from MonoBehavior.</summary>
-  public void OnDestroy() {
+  void OnDestroy() {
     GameEvents.onCrewTransferred.Remove(new EventData<GameEvents.HostedFromToAction<ProtoCrewMember,
                                         Part>>.OnEvent(this.OnCrewTransferred));
     GameEvents.onVesselChange.Remove(new EventData<Vessel>.OnEvent(this.OnVesselChange));
