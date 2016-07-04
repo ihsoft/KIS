@@ -156,9 +156,9 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     var sb = new StringBuilder();
     sb.AppendFormat("<b>Max Volume</b>: {0:F2} L", maxVolume);
     sb.AppendLine();
-    sb.AppendFormat("<b>Internal access </b>", internalAccess);
+    sb.AppendFormat("<b>Internal access</b>: {0}", internalAccess ? "ALLOWED" : "DISALLOWED");
     sb.AppendLine();
-    sb.AppendFormat("<b>External access </b>", externalAccess);
+    sb.AppendFormat("<b>External access</b>: {0}", externalAccess ? "ALLOWED" : "DISALLOWED");
     sb.AppendLine();
     return sb.ToString();
   }

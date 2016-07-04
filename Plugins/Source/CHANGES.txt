@@ -1,2 +1,2 @@
 Pre-release changes:
-
+- [Fix] #166: Internal/external info is shown incorrectly.
