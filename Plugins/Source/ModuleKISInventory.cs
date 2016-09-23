@@ -8,6 +8,8 @@ using System.Collections;
 using System.Text;
 using UnityEngine;
 
+using Logger = KSPDev.LogUtils.Logger;
+
 namespace KIS {
 
 [PersistentFieldsDatabase("KIS/settings/KISConfig")]

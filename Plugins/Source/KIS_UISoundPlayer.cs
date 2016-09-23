@@ -8,6 +8,8 @@ using System;
 using System.Linq;
 using UnityEngine;
 
+using Logger = KSPDev.LogUtils.Logger;
+
 [KSPAddon(KSPAddon.Startup.EveryScene, false /*once*/)]
 sealed class KIS_UISoundPlayer : MonoBehaviour {
   public static KIS_UISoundPlayer instance;

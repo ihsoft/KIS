@@ -9,6 +9,8 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
+using Logger = KSPDev.LogUtils.Logger;
+
 namespace KIS {
 
 [PersistentFieldsDatabase("KIS/settings/KISConfig")]

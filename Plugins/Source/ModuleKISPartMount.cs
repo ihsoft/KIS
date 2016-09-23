@@ -4,6 +4,8 @@ using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
 
+using Logger = KSPDev.LogUtils.Logger;
+
 namespace KIS {
 
 public class ModuleKISPartMount : PartModule {

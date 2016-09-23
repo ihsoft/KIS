@@ -6,6 +6,8 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.Rendering;
 
+using Logger = KSPDev.LogUtils.Logger;
+
 namespace KIS {
 
 [KSPAddon(KSPAddon.Startup.Flight, false)]
