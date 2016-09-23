@@ -326,7 +326,7 @@ public static class KIS_Shared {
     snapshot.inStageIndex = -1;
     snapshot.attachMode = (int)AttachModes.SRF_ATTACH;
     snapshot.attached = true;
-    snapshot.connected = true;
+    //snapshot.connected = true;
     snapshot.flagURL = fromPart.flagURL;
 
     Part newPart = snapshot.Load(fromPart.vessel, false);
