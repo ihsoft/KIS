@@ -34,9 +34,8 @@ public class ModuleKISItemEvaPropellant : ModuleKISItem {
                 evaRessource.amount = evaRessource.maxAmount;
                 item.SetResource(EvaPropellantResource, (itemRessource.amount - amountToFill));
                 if (item.equippedPart) {  
-                  PartResource equippedTankRessource = item.equippedPart.Resources.list.Find(
-                      p => p.resourceName == EvaPropellantResource);
-                  if (equippedTankRessource) {
+                  PartResource equippedTankRessource = item.equippedPart.Resources.Get(EvaPropellantResource);
+                  if (equippedTankRessource != null) {
                     equippedTankRessource.amount = (itemRessource.amount - amountToFill);
                   }
                 }
