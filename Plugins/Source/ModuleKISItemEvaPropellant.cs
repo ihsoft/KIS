@@ -27,7 +27,7 @@ public class ModuleKISItemEvaPropellant : ModuleKISItem {
         foreach (KIS_Item.ResourceInfo itemRessource in item.GetResources()) {
           if (itemRessource.resourceName == EvaPropellantResource) {
             PartResource evaRessource = item.inventory.part.GetComponent<PartResource>();
-            if (evaRessource) {
+            if (evaRessource != null) {
               double amountToFill = evaRessource.maxAmount - evaRessource.amount;
               if (itemRessource.amount > amountToFill) {
                 ScreenMessaging.ShowPriorityScreenMessage("EVA pack refueled");
