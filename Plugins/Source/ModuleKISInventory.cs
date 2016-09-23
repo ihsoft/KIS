@@ -1158,7 +1158,8 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     if (sciences.Count > 0) {
       foreach (ScienceData scienceData in sciences) {
         text2.AppendLine(scienceData.title + " (Data=" + scienceData.dataAmount.ToString("0.00")
-                         + ",Value=" + scienceData.transmitValue.ToString("0.00") + ")");
+                         //+ ",Value=" + scienceData.TransmitValue.ToString("0.00") + ")");
+                         + ",Value=" + (scienceData.baseTransmitValue * scienceData.transmitBonus).ToString("0.00") + ")");
       }
     } else {
       text2.AppendLine("Part has no science data");
