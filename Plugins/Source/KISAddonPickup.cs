@@ -109,7 +109,7 @@ sealed class KISAddonPickup : MonoBehaviour {
   [PersistentField("EvaPickup/draggedIconResolution")]
   public static int draggedIconResolution = 64;
 
-  public static KIS_IconViewer icon;
+  public static KIS_IconViewer icon = null;
   public static Part draggedPart;
   public static KIS_Item draggedItem;
   public static int draggedIconSize = 50;
@@ -470,7 +470,7 @@ sealed class KISAddonPickup : MonoBehaviour {
           }
         }
       }
-      icon = null;
+      DisableIcon();
       draggedPart = null;
     }
     KISAddonCursor.StopPartDetection();
@@ -790,7 +790,7 @@ sealed class KISAddonPickup : MonoBehaviour {
     grabbedPart = null;
     pickupMode = newPickupMode;
     cursorMode = CursorMode.Nothing;
-    icon = new KIS_IconViewer(draggedPart, draggedIconResolution);
+    EnableIcon(draggedPart, draggedIconResolution);
     KISAddonCursor.AbortPartDetection();
     grabActive = false;
     KISAddonCursor.CursorDisable();
@@ -873,8 +873,24 @@ sealed class KISAddonPickup : MonoBehaviour {
 
   private IEnumerator WaitAndStopDrag() {
     yield return new WaitForFixedUpdate();
-    icon = null;
+    DisableIcon();
     draggedPart = null;
+  }
+
+  // Sets icon, ensuring any old icon is Disposed
+  private void EnableIcon(Part part, int resolution)
+  {
+    DisableIcon();
+    icon = new KIS_IconViewer(part, resolution);
+  }
+
+  // Clears icon, ensuring it is Disposed
+  private void DisableIcon()
+  {
+    if (icon != null) {
+        icon.Dispose();
+        icon = null;
+    }
   }
 
   private void OnPointerState(KISAddonPointer.PointerTarget pTarget,

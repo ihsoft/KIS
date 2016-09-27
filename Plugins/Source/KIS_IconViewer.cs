@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace KIS {
 
-public class KIS_IconViewer {
+public class KIS_IconViewer : IDisposable {
   float iconPosY = 0;
   int mask = 22;
   float lightIntensity = 0.4f;
@@ -96,10 +96,22 @@ public class KIS_IconViewer {
   }
 
   ~KIS_IconViewer() {
-    cam.gameObject.DestroyGameObject();
+    if (cam) {
+        Dispose();
+    }
+  }
+
+  // The Dispose() method MUST be called instead of garbage-collecting icon instances
+  // because we can only access the cam.gameObject member from the main thread.
+  public void Dispose()
+  {
+    if (cam) {
+        cam.gameObject.DestroyGameObject();
+    }
     if (iconPrefab) {
       iconPrefab.DestroyGameObject();
     }
+    this.cam = null;
     this.iconPrefab = null;
     this.texture = null;
     iconCount -= 1;

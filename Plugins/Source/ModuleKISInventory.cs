@@ -119,7 +119,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
   GUIStyle lowerRightStyle, upperLeftStyle, upperRightStyle, buttonStyle, boxStyle;
   public Rect guiMainWindowPos;
   Rect guiDebugWindowPos = new Rect(0, 50, 500, 300);
-  KIS_IconViewer icon;
+  KIS_IconViewer icon = null;
   Rect defaultEditorPos = new Rect(Screen.width / 3, 40, 10, 10);
   Rect defaultFlightPos = new Rect(0, 50, 10, 10);
   Vector2 scrollPositionDbg;
@@ -792,7 +792,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
         openAnim[openAnimName].speed = -openAnimSpeed;
         openAnim.Play(openAnimName);
       }
-      icon = null;
+      DisableIcon();
       showGui = false;
       if (HighLogic.LoadedSceneIsEditor) {
         PlaySound(closeSndPath);
@@ -834,7 +834,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
       foreach (KeyValuePair<int, KIS_Item> item in items) {
         item.Value.EnableIcon(itemIconResolution);
       }
-      icon = new KIS_IconViewer(this.part, selfIconResolution);
+      EnableIcon();
 
       // TODO(ihsoft): Don't limit to one open inventory. Add till bootom is reached.
       if (GetAllOpenInventories().Count == 1
@@ -1569,6 +1569,23 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
       }
     }
   }
+
+  // Sets icon, ensuring any old icon is Disposed
+  private void EnableIcon()
+  {
+    DisableIcon();
+    icon = new KIS_IconViewer(part, selfIconResolution);
+  }
+
+  // Clears icon, ensuring it is Disposed
+  private void DisableIcon()
+  {
+    if (icon != null) {
+        icon.Dispose();
+        icon = null;
+    }
+  }
+
 
   /// <summary>Hides all UI elements.</summary>
   void OnTooltipDestroyRequestedEvent() {

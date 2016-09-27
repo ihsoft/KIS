@@ -12,8 +12,8 @@ namespace KIS {
 
 [KSPAddon(KSPAddon.Startup.Flight, false)]
 sealed class KISAddonPointer : MonoBehaviour {
-  public GameObject audioGo = new GameObject();
-  public AudioSource audioBipWrong = new AudioSource();
+  public GameObject audioGo = null;
+  public AudioSource audioBipWrong = null; //new AudioSource();
 
   // Pointer parameters
   public static bool allowPart = false;
@@ -143,7 +143,9 @@ sealed class KISAddonPointer : MonoBehaviour {
     get { return running; }
   }
 
+  // Called once when script is loaded; use to initialize variables and state
   void Awake() {
+    audioGo = new GameObject();
     audioBipWrong = audioGo.AddComponent<AudioSource>();
     audioBipWrong.volume = GameSettings.UI_VOLUME;
     audioBipWrong.spatialBlend = 0;  //set as 2D audiosource

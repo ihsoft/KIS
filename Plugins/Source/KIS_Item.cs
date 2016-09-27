@@ -13,7 +13,7 @@ public class KIS_Item {
   public ConfigNode partNode;
   public AvailablePart availablePart;
   public float quantity;
-  public KIS_IconViewer icon;
+  public KIS_IconViewer icon = null;
   public bool stackable = false;
   public string equipSlot;
   public bool usableFromEva = false;
@@ -272,10 +272,14 @@ public class KIS_Item {
   }
 
   public void EnableIcon(int resolution) {
+    if (icon != null) {
+        DisableIcon();
+    }
     icon = new KIS_IconViewer(availablePart.partPrefab, resolution);
   }
 
   public void DisableIcon() {
+    icon.Dispose();
     icon = null;
   }
 
