@@ -697,9 +697,9 @@ sealed class KISAddonPointer : MonoBehaviour {
     var rootWorldTransform = worldTransform ?? assembly.transform.localToWorldMatrix.inverse;
 
     // Get all meshes from the part's model.
-    MeshFilter[] meshFilters = assembly.FindModelComponents<MeshFilter>();
-    if (meshFilters.Length > 0) {
-      Logger.logInfo("Found {0} children meshes in: {1}", meshFilters.Length, assembly);
+    var meshFilters = assembly.FindModelComponents<MeshFilter>();
+    if (meshFilters.Count > 0) {
+      Logger.logInfo("Found {0} children meshes in: {1}", meshFilters.Count, assembly);
       foreach (var meshFilter in meshFilters) {
         var combine = new CombineInstance();
         combine.mesh = meshFilter.sharedMesh;
@@ -711,8 +711,8 @@ sealed class KISAddonPointer : MonoBehaviour {
     // Skinned meshes are baked on every frame before rendering. Bake them to get current mesh
     // state.
     var skinnedMeshRenderers = assembly.FindModelComponents<SkinnedMeshRenderer>();
-    if (skinnedMeshRenderers.Length > 0) {
-      Logger.logInfo("Found {0} skinned meshes in: {1}", skinnedMeshRenderers.Length, assembly);
+    if (skinnedMeshRenderers.Count > 0) {
+      Logger.logInfo("Found {0} skinned meshes in: {1}", skinnedMeshRenderers.Count, assembly);
       foreach (var skinnedMeshRenderer in skinnedMeshRenderers) {
         var combine = new CombineInstance();
         combine.mesh = new Mesh();
