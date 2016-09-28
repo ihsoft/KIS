@@ -878,18 +878,16 @@ sealed class KISAddonPickup : MonoBehaviour {
   }
 
   // Sets icon, ensuring any old icon is Disposed
-  private void EnableIcon(Part part, int resolution)
-  {
+  private void EnableIcon(Part part, int resolution) {
     DisableIcon();
     icon = new KIS_IconViewer(part, resolution);
   }
 
   // Clears icon, ensuring it is Disposed
-  private void DisableIcon()
-  {
+  private void DisableIcon() {
     if (icon != null) {
-        icon.Dispose();
-        icon = null;
+      icon.Dispose();
+      icon = null;
     }
   }
 

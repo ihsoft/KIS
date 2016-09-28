@@ -13,7 +13,7 @@ namespace KIS {
 [KSPAddon(KSPAddon.Startup.Flight, false)]
 sealed class KISAddonPointer : MonoBehaviour {
   public GameObject audioGo = null;
-  public AudioSource audioBipWrong = null; //new AudioSource();
+  public AudioSource audioBipWrong = null;
 
   // Pointer parameters
   public static bool allowPart = false;

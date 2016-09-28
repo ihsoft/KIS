@@ -1571,18 +1571,16 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
   }
 
   // Sets icon, ensuring any old icon is Disposed
-  private void EnableIcon()
-  {
+  private void EnableIcon() {
     DisableIcon();
     icon = new KIS_IconViewer(part, selfIconResolution);
   }
 
   // Clears icon, ensuring it is Disposed
-  private void DisableIcon()
-  {
+  private void DisableIcon() {
     if (icon != null) {
-        icon.Dispose();
-        icon = null;
+      icon.Dispose();
+      icon = null;
     }
   }
 

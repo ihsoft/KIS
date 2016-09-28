@@ -272,15 +272,15 @@ public class KIS_Item {
   }
 
   public void EnableIcon(int resolution) {
-    if (icon != null) {
-        DisableIcon();
-    }
+    DisableIcon();
     icon = new KIS_IconViewer(availablePart.partPrefab, resolution);
   }
 
   public void DisableIcon() {
-    icon.Dispose();
-    icon = null;
+    if (icon != null) {
+      icon.Dispose();
+      icon = null;
+    }
   }
 
   public void Update() {
