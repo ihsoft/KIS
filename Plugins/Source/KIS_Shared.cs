@@ -9,6 +9,8 @@ using System.Linq;
 using System.Reflection;
 using UnityEngine;
 
+using Logger = KSPDev.LogUtils.Logger;
+
 namespace KIS {
 
 public class KIS_LinkedPart : MonoBehaviour {
@@ -146,12 +148,12 @@ public static class KIS_Shared {
     // In this case decouple() will only clear the surface node leaving the stack one
     // refering the parent. This misconfiguration will badly affect all further KIS
     // operations on the part. Do a cleanup job here to workaround this bug.
-    var orphanNode = assemblyRoot.findAttachNodeByPart(formerParent);
+    var orphanNode = assemblyRoot.FindAttachNodeByPart(formerParent);
     if (orphanNode != null) {
       Logger.logWarning("KSP BUG: Cleanup orphan node {0} in the assembly", orphanNode.id);
       orphanNode.attachedPart = null;
       // Also, check that parent is properly cleaned up.
-      var parentOrphanNode = formerParent.findAttachNodeByPart(assemblyRoot);
+      var parentOrphanNode = formerParent.FindAttachNodeByPart(assemblyRoot);
       if (parentOrphanNode != null) {
         Logger.logWarning("KSP BUG: Cleanup orphan node {0} in the parent", parentOrphanNode.id);
         parentOrphanNode.attachedPart = null;
@@ -299,7 +301,7 @@ public static class KIS_Shared {
     snapshot.inStageIndex = -1;
     snapshot.attachMode = (int)AttachModes.SRF_ATTACH;
     snapshot.attached = true;
-    snapshot.connected = true;
+    //snapshot.connected = true;
     snapshot.flagURL = fromPart.flagURL;
 
     Part newPart = snapshot.Load(fromPart.vessel, false);
@@ -404,7 +406,7 @@ public static class KIS_Shared {
         srcPart.attachMode = AttachModes.SRF_ATTACH;
         srcPart.srfAttachNode.attachedPart = tgtPart;
       } else {
-        AttachNode srcAttachNode = srcPart.findAttachNode(srcAttachNodeID);
+        AttachNode srcAttachNode = srcPart.FindAttachNode(srcAttachNodeID);
         if (srcAttachNode != null) {
           Logger.logInfo("Attach type : {0} | ID : {1}",
                          srcPart.srfAttachNode.nodeType, srcAttachNode.id);

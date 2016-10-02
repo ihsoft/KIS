@@ -1,4 +1,4 @@
-﻿﻿// Kerbal Ineventory System (KIS)
+﻿// Kerbal Ineventory System (KIS)
 // Mod author: KospY (http://forum.kerbalspaceprogram.com/index.php?/profile/33868-kospy/)
 // Module author: igor.zavoychinskiy@gmail.com 
 // License: https://github.com/KospY/KIS/blob/master/LICENSE.md 
@@ -7,6 +7,8 @@ using KSPDev.LogUtils;
 using System;
 using System.Linq;
 using UnityEngine;
+
+using Logger = KSPDev.LogUtils.Logger;
 
 [KSPAddon(KSPAddon.Startup.EveryScene, false /*once*/)]
 sealed class KIS_UISoundPlayer : MonoBehaviour {
@@ -17,7 +19,7 @@ sealed class KIS_UISoundPlayer : MonoBehaviour {
   static readonly string clickSndPath = "KIS/Sounds/click";
   static readonly string attachPartSndPath = "KIS/Sounds/attachScrewdriver";
 
-  readonly GameObject audioGo = new GameObject();
+  GameObject audioGo;
   AudioSource audioBipWrong;
   AudioSource audioClick;
   AudioSource audioAttach;
@@ -38,13 +40,14 @@ sealed class KIS_UISoundPlayer : MonoBehaviour {
   }
 
   void Awake() {
+    audioGo = new GameObject();
     Logger.logInfo("Loading UI sounds for KIS...");
     InitSound(bipWrongSndPath, out audioBipWrong);
     InitSound(clickSndPath, out audioClick);
     InitSound(attachPartSndPath, out audioAttach);
     instance = this;
   }
-      
+
   void InitSound(string clipPath, out AudioSource source) {
     Logger.logInfo("Loading clip: {0}", clipPath);
     source = audioGo.AddComponent<AudioSource>();

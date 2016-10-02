@@ -28,14 +28,7 @@ sealed class KISAddonCursor : MonoBehaviour {
   const int HintTextLeftMargin = 4;
   // A gap between action icon and the text.
   static Color hintBackground = new Color(0.0f, 0.0f, 0.0f, 0.5f);
-  static GUIStyle hintWindowStyle = new GUIStyle {
-    normal = {
-      background = CreateTextureFromColour(hintBackground),
-      textColor = Color.white
-    },
-    padding = new RectOffset(3, 3, 3, 3),
-    fontSize = HintFontSize
-  };
+  static GUIStyle hintWindowStyle = null;
 
   public static void AbortPartDetection() {
     StartPartDetection(null, null, null, null);
@@ -87,6 +80,17 @@ sealed class KISAddonCursor : MonoBehaviour {
   public static void CursorDisable() {
     cursorShow = false;
     Cursor.visible = false;
+  }
+
+  void Awake() {
+    hintWindowStyle = new GUIStyle {
+        normal = {
+            background = CreateTextureFromColour(hintBackground),
+            textColor = Color.white
+        },
+        padding = new RectOffset(3, 3, 3, 3),
+        fontSize = HintFontSize
+    };
   }
 
   void Update() {

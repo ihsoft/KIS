@@ -8,6 +8,8 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
+using Logger = KSPDev.LogUtils.Logger;
+
 namespace KIS {
 
 /// <summary>An EDITOR event listener to add default items to the pod's seats</summary>

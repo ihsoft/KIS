@@ -6,12 +6,14 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.Rendering;
 
+using Logger = KSPDev.LogUtils.Logger;
+
 namespace KIS {
 
 [KSPAddon(KSPAddon.Startup.Flight, false)]
 sealed class KISAddonPointer : MonoBehaviour {
-  public GameObject audioGo = new GameObject();
-  public AudioSource audioBipWrong = new AudioSource();
+  public GameObject audioGo = null;
+  public AudioSource audioBipWrong = null;
 
   // Pointer parameters
   public static bool allowPart = false;
@@ -141,7 +143,9 @@ sealed class KISAddonPointer : MonoBehaviour {
     get { return running; }
   }
 
+  // Called once when script is loaded; use to initialize variables and state
   void Awake() {
+    audioGo = new GameObject();
     audioBipWrong = audioGo.AddComponent<AudioSource>();
     audioBipWrong.volume = GameSettings.UI_VOLUME;
     audioBipWrong.spatialBlend = 0;  //set as 2D audiosource
@@ -692,9 +696,9 @@ sealed class KISAddonPointer : MonoBehaviour {
     var rootWorldTransform = worldTransform ?? assembly.transform.localToWorldMatrix.inverse;
 
     // Get all meshes from the part's model.
-    MeshFilter[] meshFilters = assembly.FindModelComponents<MeshFilter>();
-    if (meshFilters.Length > 0) {
-      Logger.logInfo("Found {0} children meshes in: {1}", meshFilters.Length, assembly);
+    var meshFilters = assembly.FindModelComponents<MeshFilter>();
+    if (meshFilters.Count > 0) {
+      Logger.logInfo("Found {0} children meshes in: {1}", meshFilters.Count, assembly);
       foreach (var meshFilter in meshFilters) {
         var combine = new CombineInstance();
         combine.mesh = meshFilter.sharedMesh;
@@ -706,8 +710,8 @@ sealed class KISAddonPointer : MonoBehaviour {
     // Skinned meshes are baked on every frame before rendering. Bake them to get current mesh
     // state.
     var skinnedMeshRenderers = assembly.FindModelComponents<SkinnedMeshRenderer>();
-    if (skinnedMeshRenderers.Length > 0) {
-      Logger.logInfo("Found {0} skinned meshes in: {1}", skinnedMeshRenderers.Length, assembly);
+    if (skinnedMeshRenderers.Count > 0) {
+      Logger.logInfo("Found {0} skinned meshes in: {1}", skinnedMeshRenderers.Count, assembly);
       foreach (var skinnedMeshRenderer in skinnedMeshRenderers) {
         var combine = new CombineInstance();
         combine.mesh = new Mesh();

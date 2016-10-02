@@ -4,6 +4,8 @@ using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
 
+using Logger = KSPDev.LogUtils.Logger;
+
 namespace KIS {
 
 public class ModuleKISPartMount : PartModule {
@@ -61,7 +63,7 @@ public class ModuleKISPartMount : PartModule {
     foreach (ConfigNode mountNode in node.GetNodes("MOUNT")) {
       if (mountNode.HasValue("attachNode") && mountNode.HasValue("allowedPartName")) {
         string attachNodeName = mountNode.GetValue("attachNode");
-        AttachNode an = this.part.findAttachNode(attachNodeName);
+        AttachNode an = this.part.FindAttachNode(attachNodeName);
         if (an == null) {
           Logger.logError("GetMountNodes - Node : {0} not found !", attachNodeName);
           continue;

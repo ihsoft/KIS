@@ -5,13 +5,15 @@ using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
 
+using Logger = KSPDev.LogUtils.Logger;
+
 namespace KIS {
 
 public class KIS_Item {
   public ConfigNode partNode;
   public AvailablePart availablePart;
   public float quantity;
-  public KIS_IconViewer icon;
+  public KIS_IconViewer icon = null;
   public bool stackable = false;
   public string equipSlot;
   public bool usableFromEva = false;
@@ -270,11 +272,15 @@ public class KIS_Item {
   }
 
   public void EnableIcon(int resolution) {
+    DisableIcon();
     icon = new KIS_IconViewer(availablePart.partPrefab, resolution);
   }
 
   public void DisableIcon() {
-    icon = null;
+    if (icon != null) {
+      icon.Dispose();
+      icon = null;
+    }
   }
 
   public void Update() {
