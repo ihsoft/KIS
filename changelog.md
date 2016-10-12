@@ -1,3 +1,6 @@
+### 1.3.0 (October 12th, 2016)
+- [Enhancement] KSP 1.2 support
+
 ### 1.2.12 (June 21st, 2016)
 - [Fix] #109: Sandbox mode = no repairskill for non-badass kerbals.
 - [Fix] #161: KSP 1.1.3: Missing method exception.
