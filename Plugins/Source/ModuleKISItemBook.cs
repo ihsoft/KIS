@@ -1,10 +1,7 @@
-﻿using KSPDev.LogUtils;
-using System;
+﻿using System;
 using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
-
-using Logger = KSPDev.LogUtils.Logger;
 
 namespace KIS {
 
@@ -41,7 +38,7 @@ public sealed class ModuleKISItemBook: ModuleKISItem {
       showPage = true;
       item.inventory.PlaySound(bookOpenSndPath, false, true);
     } else {
-      Logger.logError("The book has no pages configured");
+      Debug.LogError("The book has no pages configured");
     }      
   }
 

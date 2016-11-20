@@ -1,10 +1,7 @@
 ﻿using System.Collections;
-using KSPDev.LogUtils;
 using System;
 using System.Linq;
 using UnityEngine;
-
-using Logger = KSPDev.LogUtils.Logger;
 
 namespace KIS {
 
@@ -108,7 +105,7 @@ public class ModuleKISItem : PartModule {
       return;
     }
     if (staticAttached) {
-      Logger.logInfo("Re-attach static object (OnPartUnpack)");
+      Debug.Log("Re-attach static object (OnPartUnpack)");
       GroundAttach();
     }
   }
@@ -150,7 +147,7 @@ public class ModuleKISItem : PartModule {
     }
     part.vessel.Landed = true;
 
-    Logger.logInfo("Create fixed joint attached to the world");
+    Debug.Log("Create fixed joint attached to the world");
     if (staticAttachJoint) {
       Destroy(staticAttachJoint);
     }
@@ -163,16 +160,17 @@ public class ModuleKISItem : PartModule {
   // A callback from MonoBehaviour.
   void OnJointBreak(float breakForce) {
     if (staticAttached) {
-      Logger.logWarning("A static joint has just been broken! Force: {0}", breakForce);
+      Debug.LogWarningFormat("A static joint has just been broken! Force: {0}", breakForce);
     } else {
-      Logger.logWarning("A fixed joint has just been broken! Force: {0}", breakForce);
+      Debug.LogWarningFormat("A fixed joint has just been broken! Force: {0}", breakForce);
     }
     GroundDetach();
   }
 
   public void GroundDetach() {
     if (staticAttached) {
-      Logger.logInfo("Removing static rigidbody and fixed joint on: {0}", this.part.partInfo.title);
+      Debug.LogFormat(
+          "Removing static rigidbody and fixed joint on: {0}", this.part.partInfo.title);
       if (staticAttachJoint) {
         Destroy(staticAttachJoint);
       }

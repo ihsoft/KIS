@@ -1,10 +1,7 @@
-﻿using KSPDev.LogUtils;
-using System;
+﻿using System;
 using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
-
-using Logger = KSPDev.LogUtils.Logger;
 
 namespace KIS {
 
@@ -65,7 +62,7 @@ public class ModuleKISPartMount : PartModule {
         string attachNodeName = mountNode.GetValue("attachNode");
         AttachNode an = this.part.FindAttachNode(attachNodeName);
         if (an == null) {
-          Logger.logError("GetMountNodes - Node : {0} not found !", attachNodeName);
+          Debug.LogErrorFormat("GetMountNodes - Node : {0} not found !", attachNodeName);
           continue;
         }
 

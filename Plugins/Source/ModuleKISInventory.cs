@@ -1,14 +1,11 @@
 ﻿using KSPDev.ConfigUtils;
 using KSPDev.GUIUtils;
-using KSPDev.LogUtils;
 using System;
 using System.Linq;
 using System.Collections.Generic;
 using System.Collections;
 using System.Text;
 using UnityEngine;
-
-using Logger = KSPDev.LogUtils.Logger;
 
 namespace KIS {
 
@@ -176,8 +173,8 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
       if (invType == InventoryType.Pod && podSeat != -1) {
         var crewAtPodSeat = part.protoModuleCrew.Find(x => x.seatIdx == podSeat);
         if (crewAtPodSeat == null && items.Count > 0) {
-          Logger.logInfo("Clear unoccupied seat inventory: pod={0}, seat={1}, count={2}, mass={3}",
-                         part, podSeat, items.Count, GetContentMass());
+          Debug.LogFormat("Clear unoccupied seat inventory: pod={0}, seat={1}, count={2}, mass={3}",
+                          part, podSeat, items.Count, GetContentMass());
           items.Clear();
           RefreshMassAndVolume();
         }
@@ -213,7 +210,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     sndFx.audio.loop = false;
     sndFx.audio.playOnAwake = false;
     foreach (var item in startEquip) {
-      Logger.logInfo("equip {0}", item.availablePart.name);
+      Debug.LogFormat("equip {0}", item.availablePart.name);
       item.Equip();
     }
     RefreshMassAndVolume();
@@ -317,8 +314,8 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
             if (cn.HasNode("PART")) {
               item = AddItem(availablePart, cn, qty, slot);
             } else {
-              Logger.logWarning("No part node found on item {0}, creating new one from prefab",
-                                availablePartName);
+              Debug.LogWarningFormat("No part node found on item {0}, creating new one from prefab",
+                                     availablePartName);
               item = AddItem(availablePart.partPrefab, qty, slot);
             }
             if (cn.HasValue("equipped") && item != null
@@ -326,10 +323,10 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
               startEquip.Add(item);
             }
           } else {
-            Logger.logError("Unable to load {0} from inventory", availablePartName);
+            Debug.LogErrorFormat("Unable to load {0} from inventory", availablePartName);
           }
         } else {
-          Logger.logError("Unable to load an item from inventory");
+          Debug.LogError("Unable to load an item from inventory");
         }
       }
     }
@@ -371,7 +368,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
         sndFx.audio.spatialBlend = 1;  //set as 3D audiosource
       }
     } else {
-      Logger.logError("Sound not found in the game database !");
+      Debug.LogError("Sound not found in the game database !");
       ScreenMessaging.ShowPriorityScreenMessageWithTimeout(
           10, "Sound file : {0} has not been found, please check installation path !", sndPath);
     }
@@ -405,8 +402,8 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
             fromToAction.from.protoModuleCrew.Find(x => x.seatIdx == podSeat);
         if (items.Count > 0 && crewAtPodSeat == null) {
           ModuleKISInventory destInventory = fromToAction.to.GetComponent<ModuleKISInventory>();
-          Logger.logInfo("Items transfer | source {0} ({1})", part.name, podSeat);
-          Logger.logInfo("Items transfer | destination: {0}", destInventory.part.name);
+          Debug.LogFormat("Items transfer | source {0} ({1})", part.name, podSeat);
+          Debug.LogFormat("Items transfer | destination: {0}", destInventory.part.name);
           MoveItems(items, destInventory);
           RefreshMassAndVolume();
           destInventory.RefreshMassAndVolume();
@@ -416,15 +413,15 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
 
         // Workaround to set a seat index on pod without internal (because KSP don't do it for an unknow reason)
         if (fromToAction.host.seatIdx == -1) {
-          Logger.logWarning("protoCrew seatIdx is set to -1 ! (no internal ?)");
+          Debug.LogWarning("protoCrew seatIdx is set to -1 ! (no internal ?)");
           fromToAction.host.seatIdx = GetFirstFreeSeatIdx(fromToAction.to);
-          Logger.logInfo("Setting seat to: {0}", fromToAction.host.seatIdx);
+          Debug.LogFormat("Setting seat to: {0}", fromToAction.host.seatIdx);
         }
 
         ProtoCrewMember crewAtPodSeat =
             fromToAction.from.protoModuleCrew.Find(x => x.seatIdx == podSeat);
         if (items.Count > 0 && crewAtPodSeat == null) {
-          Logger.logInfo("Items transfer | source: {0} ({1})", part.name, podSeat);
+          Debug.LogFormat("Items transfer | source: {0} ({1})", part.name, podSeat);
           // Find target seat and schedule a coroutine.
           var destInventory = fromToAction.to.GetComponents<ModuleKISInventory>().ToList()
               .Find(x => x.podSeat == fromToAction.host.seatIdx);
@@ -439,16 +436,16 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
 
         // Workaround to set a seat index on pod without internal (because KSP don't do it for an unknow reason)
         if (fromToAction.host.seatIdx == -1) {
-          Logger.logWarning("protoCrew seatIdx has been set to -1 ! (no internal ?)");
+          Debug.LogWarning("protoCrew seatIdx has been set to -1 ! (no internal ?)");
           fromToAction.host.seatIdx = GetFirstFreeSeatIdx(fromToAction.to);
-          Logger.logInfo("Setting seat to: {0}", fromToAction.host.seatIdx);
+          Debug.LogFormat("Setting seat to: {0}", fromToAction.host.seatIdx);
           if (fromToAction.host.seatIdx == -1) {
-            Logger.logError("A seat must be available!");
+            Debug.LogError("A seat must be available!");
           }
         }
 
         ModuleKISInventory evaInventory = fromToAction.from.GetComponent<ModuleKISInventory>();
-        Logger.logInfo("Item transfer | source {0}", fromToAction.host.name);
+        Debug.LogFormat("Item transfer | source {0}", fromToAction.host.name);
         List<KIS_Item> itemsToDrop = new List<KIS_Item>();
         foreach (KeyValuePair<int, KIS_Item> item in evaInventory.items) {
           if (item.Value.carriable) {
@@ -473,7 +470,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
         return i;
       }
     }
-    Logger.logError("Cannot find a free seat in: {0}", p.name);
+    Debug.LogErrorFormat("Cannot find a free seat in: {0}", p.name);
     return -1;
   }
 
@@ -484,7 +481,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     ProtoCrewMember crewAtPodSeat = this.part.protoModuleCrew.Find(x => x.seatIdx == podSeat);
     if (crewAtPodSeat == protoCrew) {
       MoveItems(transferedItems, this);
-      Logger.logInfo("Item transfer | destination: {0} ({1})", part.name, podSeat);
+      Debug.LogFormat("Item transfer | destination: {0} ({1})", part.name, podSeat);
       this.RefreshMassAndVolume();
       if (srcInventory) {
         srcInventory.RefreshMassAndVolume();
@@ -596,7 +593,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     if (slot < 0 || slot > maxSlot) {
       slot = GetFreeSlot();
       if (slot == -1) {
-        Logger.logError("AddItem error : No free slot available for {0}", availablePart.title);
+        Debug.LogErrorFormat("AddItem error : No free slot available for {0}", availablePart.title);
         return null;
       }
     }
@@ -618,7 +615,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     if (slot < 0 || slot > maxSlot) {
       slot = GetFreeSlot();
       if (slot == -1) {
-        Logger.logError("AddItem error : No free slot available for {0}", part.partInfo.title);
+        Debug.LogErrorFormat("AddItem error : No free slot available for {0}", part.partInfo.title);
         return null;
       }
     }

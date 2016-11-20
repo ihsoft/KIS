@@ -8,8 +8,6 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-using Logger = KSPDev.LogUtils.Logger;
-
 namespace KIS {
 
 /// <summary>An EDITOR event listener to add default items to the pod's seats</summary>
@@ -37,14 +35,15 @@ class EditorDefaultItemsAdder : MonoBehaviour {
     var inventories = p.GetComponents<ModuleKISInventory>();
     foreach (var inventory in inventories) {
       if (inventory.podSeat != -1 && ModuleKISInventory.defaultItemsForAllSeats.Count > 0) {
-        Logger.logInfo(
+        Debug.LogFormat(
             "Adding default item(s) into seat's {0} inventory of part {1}: {2}",
-            inventory.podSeat, p.name, Logger.C2S(ModuleKISInventory.defaultItemsForAllSeats));
+            inventory.podSeat, p.name,
+            DbgFormatter.C2S(ModuleKISInventory.defaultItemsForAllSeats));
         AddItems(inventory, ModuleKISInventory.defaultItemsForAllSeats);
       }
       if (inventory.podSeat == 0 && ModuleKISInventory.defaultItemsForTheFirstSeat.Count > 0) {
-        Logger.logInfo("Adding default item(s) into the first seat of part {0}: {1}",
-                       p.name, Logger.C2S(ModuleKISInventory.defaultItemsForTheFirstSeat));
+        Debug.LogFormat("Adding default item(s) into the first seat of part {0}: {1}",
+                        p.name, DbgFormatter.C2S(ModuleKISInventory.defaultItemsForTheFirstSeat));
         AddItems(inventory, ModuleKISInventory.defaultItemsForTheFirstSeat);
       }
     }
@@ -59,7 +58,7 @@ class EditorDefaultItemsAdder : MonoBehaviour {
       if (defPart != null) {
         inventory.AddItem(defPart.partPrefab);
       } else {
-        Logger.logError("Cannot make item {0} specified as a default for the pod seat",
+        Debug.LogFormat("Cannot make item {0} specified as a default for the pod seat",
                         defItemName);
       }
     }

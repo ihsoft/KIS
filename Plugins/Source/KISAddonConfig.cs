@@ -1,12 +1,9 @@
 ﻿using KSPDev.ConfigUtils;
-using KSPDev.LogUtils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
-
-using Logger = KSPDev.LogUtils.Logger;
 
 namespace KIS {
 
@@ -31,10 +28,10 @@ sealed class KISAddonConfig : MonoBehaviour {
     ConfigAccessor.ReadFieldsInType(typeof(ModuleKISInventory), instance: null);
 
     // Set inventory module for every eva kerbal
-    Logger.logInfo("Set KIS config...");
+    Debug.Log("Set KIS config...");
     ConfigNode nodeSettings = GameDatabase.Instance.GetConfigNode("KIS/settings/KISConfig");
     if (nodeSettings == null) {
-      Logger.logError("KIS settings.cfg not found or invalid !");
+      Debug.LogError("KIS settings.cfg not found or invalid !");
       return;
     }
 
@@ -44,7 +41,7 @@ sealed class KISAddonConfig : MonoBehaviour {
     UpdateEvaPrefab(PartLoader.getPartInfoByName(FemaleKerbalEva), nodeSettings);
 
     // Set inventory module for every pod with crew capacity.
-    Logger.logInfo("Loading pod inventories...");
+    Debug.Log("Loading pod inventories...");
     foreach (AvailablePart avPart in PartLoader.LoadedPartsList) {
       if (avPart.name == MaleKerbalEva || avPart.name == FemaleKerbalEva
           || avPart.name == RdKerbalEva
@@ -52,7 +49,7 @@ sealed class KISAddonConfig : MonoBehaviour {
         continue;
       }
 
-      Logger.logInfo("Found part with CrewCapacity: {0}", avPart.name);
+      Debug.LogFormat("Found part with CrewCapacity: {0}", avPart.name);
       for (int i = 0; i < avPart.partPrefab.CrewCapacity; i++) {
         try {
           var moduleInventory =
@@ -61,9 +58,9 @@ sealed class KISAddonConfig : MonoBehaviour {
           SetInventoryConfig(moduleInventory, nodeSettings);
           moduleInventory.podSeat = i;
           moduleInventory.invType = ModuleKISInventory.InventoryType.Pod;
-          Logger.logInfo("Pod inventory module(s) for seat {0} loaded successfully", i);
+          Debug.LogFormat("Pod inventory module(s) for seat {0} loaded successfully", i);
         } catch {
-          Logger.logError("Pod inventory module(s) for seat {0} can't be loaded!", i);
+          Debug.LogErrorFormat("Pod inventory module(s) for seat {0} can't be loaded!", i);
         }
       }
     }
@@ -83,13 +80,13 @@ sealed class KISAddonConfig : MonoBehaviour {
     try {
       prefab.AddModule(typeof(ModuleKISInventory).Name);
     } catch (Exception ex) {
-      Logger.logInfo(
+      Debug.LogFormat(
           "NOT A BUG! Ignoring error while adding ModuleKISInventory to {0}: {1}", prefab, ex);
     }
     try {
       prefab.AddModule(typeof(ModuleKISPickup).Name);
     } catch (Exception ex) {
-      Logger.logInfo("NOT A BUG! Ignoring error adding ModuleKISPickup to {0}: {1}", prefab, ex);
+      Debug.LogFormat("NOT A BUG! Ignoring error adding ModuleKISPickup to {0}: {1}", prefab, ex);
     }
 
     // Setup inventory module for eva.
@@ -98,7 +95,7 @@ sealed class KISAddonConfig : MonoBehaviour {
     if (evaInventory) {
       SetInventoryConfig(evaInventory, nodeSettings);
       evaInventory.invType = ModuleKISInventory.InventoryType.Eva;
-      Logger.logInfo("Eva inventory module loaded successfully");
+      Debug.Log("Eva inventory module loaded successfully");
     }
 
     // Load KSP fields for ModuleKISPickup module.
@@ -108,7 +105,7 @@ sealed class KISAddonConfig : MonoBehaviour {
     if (evaPickup && nodeEvaPickup != null) {
       var fields = new BaseFieldList(evaPickup);
       fields.Load(nodeEvaPickup);
-      Logger.logInfo("Eva pickup module loaded successfully");
+      Debug.Log("Eva pickup module loaded successfully");
     }
   }
 }

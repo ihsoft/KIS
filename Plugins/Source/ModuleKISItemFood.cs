@@ -1,6 +1,6 @@
-﻿using KSPDev.LogUtils;
-using System;
+﻿using System;
 using System.Linq;
+using UnityEngine;
 
 namespace KIS {
 
@@ -17,7 +17,7 @@ public sealed class ModuleKISItemFood : ModuleKISItem {
       eatCount++;
 
       if (eatCount > 3) {
-        Logger.logInfo("Burp incoming...");
+        Debug.Log("Burp incoming...");
         System.Random rnd = new System.Random();
         int delay = rnd.Next(1, 5);
         item.inventory.DelayedAction(Burp, item, delay);

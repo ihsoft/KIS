@@ -1,14 +1,11 @@
 ﻿using KSPDev.ConfigUtils;
 using KSPDev.GUIUtils;
-using KSPDev.LogUtils;
 using System;
 using System.Collections.Generic;
 using System.Collections;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
-
-using Logger = KSPDev.LogUtils.Logger;
 
 namespace KIS {
 
@@ -79,7 +76,7 @@ public static class KIS_Shared {
       group.audio.clip = GameDatabase.Instance.GetAudioClip(sndPath);
       return true;
     } else {
-      Logger.logError("Sound not found in the game database !");
+      Debug.LogError("Sound not found in the game database !");
       ScreenMessaging.ShowPriorityScreenMessageWithTimeout(
           10, "Sound file : {0} has not been found, please check your KIS installation !",sndPath);
       return false;
@@ -119,12 +116,12 @@ public static class KIS_Shared {
   // TODO: Handle KAS and other popular plugins connectors.         
   public static void CleanupExternalLinks(Vessel vessel) {
     var parts = vessel.parts.FindAll(p => p is CompoundPart);
-    Logger.logInfo("Check {0} compound part(s) in vessel: {1}", parts.Count(), vessel);
+    Debug.LogFormat("Check {0} compound part(s) in vessel: {1}", parts.Count(), vessel);
     foreach (var part in parts) {
       var compoundPart = part as CompoundPart;
       if (compoundPart.target && compoundPart.target.vessel != vessel) {
-        Logger.logInfo("Destroy compound part '{0}' which links '{1}' to '{2}'",
-                       compoundPart, compoundPart.parent, compoundPart.target);
+        Debug.LogFormat("Destroy compound part '{0}' which links '{1}' to '{2}'",
+                        compoundPart, compoundPart.parent, compoundPart.target);
         compoundPart.Die();
       }
     }
@@ -149,12 +146,13 @@ public static class KIS_Shared {
     // operations on the part. Do a cleanup job here to workaround this bug.
     var orphanNode = assemblyRoot.FindAttachNodeByPart(formerParent);
     if (orphanNode != null) {
-      Logger.logWarning("KSP BUG: Cleanup orphan node {0} in the assembly", orphanNode.id);
+      Debug.LogWarningFormat("KSP BUG: Cleanup orphan node {0} in the assembly", orphanNode.id);
       orphanNode.attachedPart = null;
       // Also, check that parent is properly cleaned up.
       var parentOrphanNode = formerParent.FindAttachNodeByPart(assemblyRoot);
       if (parentOrphanNode != null) {
-        Logger.logWarning("KSP BUG: Cleanup orphan node {0} in the parent", parentOrphanNode.id);
+        Debug.LogWarningFormat(
+            "KSP BUG: Cleanup orphan node {0} in the parent", parentOrphanNode.id);
         parentOrphanNode.attachedPart = null;
       }
     }
@@ -366,7 +364,7 @@ public static class KIS_Shared {
 
     // Wait part to initialize            
     while (!newPart.started && newPart.State != PartStates.DEAD) {
-      Logger.logInfo("CreatePart - Waiting initialization of the part...");
+      Debug.Log("CreatePart - Waiting initialization of the part...");
       if (tgtPart) {
         // Part stay in position 
         if (tgtAttachNode == null) {
@@ -387,7 +385,7 @@ public static class KIS_Shared {
       newPart.transform.position = tgtAttachNode.nodeTransform.TransformPoint(toPartLocalPos);
       newPart.transform.rotation = tgtAttachNode.nodeTransform.rotation * toPartLocalRot;
     }
-    Logger.logInfo("CreatePart - Coupling part...");
+    Debug.Log("CreatePart - Coupling part...");
     CouplePart(newPart, tgtPart, srcAttachNodeID, tgtAttachNode);
 
     if (onPartCoupled != null) {
@@ -400,28 +398,28 @@ public static class KIS_Shared {
     // Node links
     if (srcAttachNodeID != null) {
       if (srcAttachNodeID == "srfAttach") {
-        Logger.logInfo("Attach type: {0} | ID : {1}",
-                       srcPart.srfAttachNode.nodeType, srcPart.srfAttachNode.id);
+        Debug.LogFormat("Attach type: {0} | ID : {1}",
+                        srcPart.srfAttachNode.nodeType, srcPart.srfAttachNode.id);
         srcPart.attachMode = AttachModes.SRF_ATTACH;
         srcPart.srfAttachNode.attachedPart = tgtPart;
       } else {
         AttachNode srcAttachNode = srcPart.FindAttachNode(srcAttachNodeID);
         if (srcAttachNode != null) {
-          Logger.logInfo("Attach type : {0} | ID : {1}",
-                         srcPart.srfAttachNode.nodeType, srcAttachNode.id);
+          Debug.LogFormat("Attach type : {0} | ID : {1}",
+                          srcPart.srfAttachNode.nodeType, srcAttachNode.id);
           srcPart.attachMode = AttachModes.STACK;
           srcAttachNode.attachedPart = tgtPart;
           if (tgtAttachNode != null) {
             tgtAttachNode.attachedPart = srcPart;
           } else {
-            Logger.logWarning("Target node is null");
+            Debug.LogWarning("Target node is null");
           }
         } else {
-          Logger.logError("Source attach node not found !");
+          Debug.LogError("Source attach node not found !");
         }
       }
     } else {
-      Logger.logWarning("Missing source attach node !");
+      Debug.LogWarning("Missing source attach node !");
     }
 
     srcPart.Couple(tgtPart);
@@ -771,7 +769,7 @@ public static class KIS_Shared {
     }
     // Cleanup modules that block KIS. It's a bad thing to do but not working KIS is worse.
     foreach (var moduleToDrop in badModules) {
-      Logger.logError(
+      Debug.LogErrorFormat(
           "Module on part prefab {0} is setup improperly: name={1}, type={2}. Drop it!",
           part, moduleToDrop.moduleName, moduleToDrop.GetType());
       part.RemoveModule(moduleToDrop);
@@ -788,8 +786,9 @@ public static class KIS_Shared {
     try {
       var unused = module.Fields.GetEnumerator();
     } catch {
-      Logger.logWarning("WORKAROUND. Module {0} on part prefab {1} is not awaken. Call Awake on it",
-                        module.GetType(), module.part);
+      Debug.LogWarningFormat(
+          "WORKAROUND. Module {0} on part prefab {1} is not awaken. Call Awake on it",
+          module.GetType(), module.part);
       AwakePartModule(module);
     }
     foreach (var field in module.Fields) {
@@ -797,12 +796,10 @@ public static class KIS_Shared {
       if (baseField.isPersistant && baseField.GetValue(module) == null) {
         var proto = new StandardOrdinaryTypesProto();
         var defValue = proto.ParseFromString("", baseField.FieldInfo.FieldType);
-        Logger.logWarning("WORKAROUND. Found null field {0} in module prefab {1},"
-                          + " fixing to default value of type {2}: {3}",
-                          baseField.name,
-                          module.moduleName,
-                          baseField.FieldInfo.FieldType,
-                          defValue);
+        Debug.LogWarningFormat(
+            "WORKAROUND. Found null field {0} in module prefab {1},"
+            + " fixing to default value of type {2}: {3}",
+            baseField.name, module.moduleName, baseField.FieldInfo.FieldType, defValue);
         baseField.SetValue(defValue, module);
       }
     }
@@ -830,8 +827,8 @@ public static class KIS_Shared {
     if (moduleAwakeMethod != null) {
       moduleAwakeMethod.Invoke(module, new object[] {});
     } else {
-      Logger.logError("Cannot find Awake() method on {0}. Skip awakening of component: {1}",
-                      module.GetType(), module.GetType());
+      Debug.LogErrorFormat("Cannot find Awake() method on {0}. Skip awakening of component: {1}",
+                           module.GetType(), module.GetType());
     }
   }
 }

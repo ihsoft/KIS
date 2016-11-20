@@ -1,11 +1,8 @@
-﻿using KSPDev.LogUtils;
-using KSPDev.GUIUtils;
+﻿using KSPDev.GUIUtils;
 using System;
 using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
-
-using Logger = KSPDev.LogUtils.Logger;
 
 namespace KIS {
 
@@ -187,15 +184,15 @@ public class KIS_Item {
       }
     }
     if (nonStackableModule == 0 && GetResources().Count == 0) {
-      Logger.logInfo(
+      Debug.Log(
           "No non-stackable module or a resource found on the part, set the item as stackable");
       stackable = true;
     }
     if (KISAddonConfig.stackableList.Contains(availablePart.name)
         || availablePart.name.IndexOf('.') != -1
         && KISAddonConfig.stackableList.Contains(availablePart.name.Replace('.', '_'))) {
-      Logger.logInfo("Part name present in settings.cfg (node StackableItemOverride),"
-                     + " force item as stackable");
+      Debug.Log("Part name present in settings.cfg (node StackableItemOverride),"
+                + " force item as stackable");
       stackable = true;
     }
   }
@@ -212,7 +209,7 @@ public class KIS_Item {
       node.AddValue("inventoryName", inventoryName);
     }
     if (equipped && (equipMode == EquipMode.Part || equipMode == EquipMode.Physic)) {
-      Logger.logInfo("Update config node of equipped part: {0}", this.availablePart.title);
+      Debug.LogFormat("Update config node of equipped part: {0}", this.availablePart.title);
       partNode.ClearData();
       KIS_Shared.PartSnapshot(equippedPart).CopyTo(partNode);
     }
@@ -375,7 +372,7 @@ public class KIS_Item {
     if (!prefabModule || !inventory.vessel.isEVA) {
       return;
     }
-    Logger.logInfo("Equip item {0}", this.availablePart.name);
+    Debug.LogFormat("Equip item {0}", this.availablePart.name);
 
     // Check skill if needed. Skip the check in sandbox modes.
     if (HighLogic.CurrentGame.Mode != Game.Modes.SANDBOX
@@ -435,7 +432,7 @@ public class KIS_Item {
       }
 
       if (!evaTransform) {
-        Logger.logError("evaTransform not found ! ");
+        Debug.LogError("evaTransform not found ! ");
         UnityEngine.Object.Destroy(equippedGameObj);
         return;
       }
@@ -457,14 +454,14 @@ public class KIS_Item {
       }
 
       if (!evaTransform) {
-        Logger.logError("evaTransform not found ! ");
+        Debug.LogError("evaTransform not found ! ");
         return;
       }
 
       Part alreadyEquippedPart =
           this.inventory.part.vessel.Parts.Find(p => p.partInfo.name == this.availablePart.name);
       if (alreadyEquippedPart) {
-        Logger.logInfo("Part: {0} already found on eva", availablePart.name);
+        Debug.LogFormat("Part: {0} already found on eva", availablePart.name);
         equippedPart = alreadyEquippedPart;
         OnEquippedPartCoupled(equippedPart);
       } else {
@@ -498,7 +495,7 @@ public class KIS_Item {
       }
     }
     if (equipMode == EquipMode.Part || equipMode == EquipMode.Physic) {
-      Logger.logInfo("Update config node of equipped part: {0}", availablePart.title);
+      Debug.LogFormat("Update config node of equipped part: {0}", availablePart.title);
       partNode.ClearData();
       KIS_Shared.PartSnapshot(equippedPart).CopyTo(partNode);
       equippedPart.Die();
@@ -554,7 +551,7 @@ public class KIS_Item {
   }
 
   public void Drop(Part fromPart = null) {
-    Logger.logInfo("Drop item");
+    Debug.Log("Drop item");
     if (fromPart == null) {
       fromPart = inventory.part;
     }

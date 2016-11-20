@@ -1,6 +1,5 @@
 using KSP.UI.Screens;
 using KSPDev.ConfigUtils;
-using KSPDev.LogUtils;
 using KSPDev.GUIUtils;
 using System;
 using System.Collections.Generic;
@@ -8,8 +7,6 @@ using System.Collections;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.EventSystems;
-
-using Logger = KSPDev.LogUtils.Logger;
 
 namespace KIS {
 
@@ -259,7 +256,7 @@ sealed class KISAddonPickup : MonoBehaviour {
         KISAddonPointer.colorOk = XKCDColors.Teal;
         KISAddonPointer.allowedAttachmentParts = GetAllowedDockPorts();
       }
-      Logger.logInfo("Set pointer mode to: {0}", value);
+      Debug.LogFormat("Set pointer mode to: {0}", value);
       this._pointerMode = value;
     }
   }
@@ -272,7 +269,7 @@ sealed class KISAddonPickup : MonoBehaviour {
         if (iconPrefab.GetComponent<EditorClickListener>() == null) {
           EditorPartList.Instance.partPrefab.gameObject.AddComponent<EditorClickListener>();
         } else {
-          Logger.logWarning("Skip adding click listener because it exists");
+          Debug.LogWarning("Skip adding click listener because it exists");
         }
       }
     }
@@ -326,7 +323,7 @@ sealed class KISAddonPickup : MonoBehaviour {
         // false action triggering. So, just postpone UP event by one frame when it
         // happens in the same frame as the DOWN event.
         if (KISAddonCursor.partClickedFrame == Time.frameCount) {
-          Logger.logWarning("Postponing mouse button up event in frame {0}", Time.frameCount);
+          Debug.LogWarningFormat("Postponing mouse button up event in frame {0}", Time.frameCount);
           delayedButtonUp = true;  // Event will be handled in the next frame.
         } else {
           delayedButtonUp = false;
@@ -439,7 +436,7 @@ sealed class KISAddonPickup : MonoBehaviour {
       if (kEva && jetpackLock) {
         kEva.JetpackDeployed = true;
         jetpackLock = false;
-        Logger.logInfo("Jetpack mouse input re-enabled");
+        Debug.Log("Jetpack mouse input re-enabled");
       }
     }
     if (hoverInventoryGui()) {
@@ -673,8 +670,8 @@ sealed class KISAddonPickup : MonoBehaviour {
     // Get actor's pickup module. Not having one is very suspicious but not a blocker. 
     var pickupModule = FlightGlobals.ActiveVessel.GetComponent<ModuleKISPickup>();
     if (!pickupModule) {
-      Logger.logError("Unexpected actor executed KIS action via UI: {0}",
-                      FlightGlobals.ActiveVessel);
+      Debug.LogErrorFormat(
+          "Unexpected actor executed KIS action via UI: {0}", FlightGlobals.ActiveVessel);
     }
 
     // Deatch part and play detach sound if one available.
@@ -774,7 +771,7 @@ sealed class KISAddonPickup : MonoBehaviour {
     draggedPart = part;
     draggedItem = null;
     if (cursorMode == CursorMode.Detach) {
-      Logger.logError("Deatch mode is not expected in Pickup()");
+      Debug.Log("Deatch mode is not expected in Pickup()");
     }
     HandlePickup(cursorMode == CursorMode.ReDock ? PickupMode.Undock : PickupMode.Move);
   }
@@ -786,7 +783,7 @@ sealed class KISAddonPickup : MonoBehaviour {
   }
 
   private void HandlePickup(PickupMode newPickupMode) {
-    Logger.logInfo("Start pickup in mode {0} from part: {1}", newPickupMode, draggedPart);
+    Debug.LogFormat("Start pickup in mode {0} from part: {1}", newPickupMode, draggedPart);
     grabbedPart = null;
     pickupMode = newPickupMode;
     cursorMode = CursorMode.Nothing;
@@ -801,7 +798,7 @@ sealed class KISAddonPickup : MonoBehaviour {
       if (kEva && kEva.JetpackDeployed) {
         kEva.JetpackDeployed = false;
         jetpackLock = true;
-        Logger.logInfo("Jetpack mouse input disabled");
+        Debug.Log("Jetpack mouse input disabled");
       }
     }
   }
@@ -819,7 +816,7 @@ sealed class KISAddonPickup : MonoBehaviour {
   /// is an inventory reference.</param>
   public void Drop(Part part, Part fromPart) {
     grabbedPart = part;
-    Logger.logInfo("End pickup of {0} from part: {1}", part, fromPart);
+    Debug.LogFormat("End pickup of {0} from part: {1}", part, fromPart);
     if (!KISAddonPointer.isRunning) {
       var pickupModule = GetActivePickupNearest(fromPart);
       int unusedPartsCount;
@@ -952,7 +949,7 @@ sealed class KISAddonPickup : MonoBehaviour {
   }
 
   private void MoveDrop(Part tgtPart, Vector3 pos, Quaternion rot) {
-    Logger.logInfo("Move part");
+    Debug.Log("Move part");
     ModuleKISPickup modulePickup = GetActivePickupNearest(pos);
     if (modulePickup) {
       if (movingPart.parent) {
@@ -980,7 +977,7 @@ sealed class KISAddonPickup : MonoBehaviour {
   }
 
   private Part CreateDrop(Part tgtPart, Vector3 pos, Quaternion rot) {
-    Logger.logInfo("Create & drop part");
+    Debug.Log("Create & drop part");
     ModuleKISPickup modulePickup = GetActivePickupNearest(pos);
     draggedItem.StackRemove(1);
     Part newPart =
@@ -999,7 +996,7 @@ sealed class KISAddonPickup : MonoBehaviour {
 
   private void MoveAttach(Part tgtPart, Vector3 pos, Quaternion rot, string srcAttachNodeID = null,
                           AttachNode tgtAttachNode = null) {
-    Logger.logInfo("Move part & attach");
+    Debug.Log("Move part & attach");
     KIS_Shared.SendKISMessage(movingPart, KIS_Shared.MessageAction.AttachStart,
                               KISAddonPointer.GetCurrentAttachNode(), tgtPart, tgtAttachNode);
     KIS_Shared.DecoupleAssembly(movingPart);
@@ -1022,7 +1019,7 @@ sealed class KISAddonPickup : MonoBehaviour {
 
   private Part CreateAttach(Part tgtPart, Vector3 pos, Quaternion rot,
                             string srcAttachNodeID = null, AttachNode tgtAttachNode = null) {
-    Logger.logInfo("Create part & attach");
+    Debug.Log("Create part & attach");
     Part newPart;
     draggedItem.StackRemove(1);
     bool useExternalPartAttach = false;
@@ -1058,7 +1055,7 @@ sealed class KISAddonPickup : MonoBehaviour {
     var pickupModules =
         FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleKISPickup>();
     if (pickupModules.Count > 0) {
-      Logger.logInfo("Enable re-dock mode");
+      Debug.Log("Enable re-dock mode");
       KISAddonCursor.StartPartDetection(OnMouseRedockPartClick, OnMouseRedockEnterPart,
                                         null, OnMouseRedockExitPart);
       cursorMode = CursorMode.ReDock;
@@ -1068,7 +1065,7 @@ sealed class KISAddonPickup : MonoBehaviour {
   /// <summary>Disables re-docking mode.</summary>
   private void DisableRedockingMode() {
     if (cursorMode == CursorMode.ReDock) {
-      Logger.logInfo("Disable re-dock mode");
+      Debug.Log("Disable re-dock mode");
       if (redockTarget) {
         KIS_Shared.SetHierarchySelection(redockTarget, false /* isSelected */);
       }
@@ -1168,6 +1165,7 @@ sealed class KISAddonPickup : MonoBehaviour {
   }
 
   /// <summary>Calculates grabbed part/assembly mass and reports if it's too heavy.</summary>
+  /// <param name="grabPosition">Position to search pick up modules around.</param>
   /// <param name="part">A part or assembly root to check mass for.</param>
   /// <param name="grabbedPartsCount">A return parameter to give number of parts in the assembly.
   /// </param>
@@ -1216,7 +1214,7 @@ sealed class KISAddonPickup : MonoBehaviour {
         if (item.allowPartAttach == ModuleKISItem.ItemAttachMode.Disabled) {
           // Part restricts attachments and detachments.
           //FIXME: Findout what part cannot be detached. And why.
-          Logger.logError("Unknown item being detached: {0}", item);
+          Debug.LogErrorFormat("Unknown item being detached: {0}", item);
           ReportCheckError("Can't detach", "(This part can't be detached)");
           return false;
         }
@@ -1307,7 +1305,7 @@ sealed class KISAddonPickup : MonoBehaviour {
         result.Add(port);
       }
     }
-    Logger.logInfo("Found {0} allowed docking ports", result.Count());
+    Debug.LogFormat("Found {0} allowed docking ports", result.Count());
     return result;
   }
 
