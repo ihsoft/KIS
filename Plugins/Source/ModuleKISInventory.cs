@@ -273,7 +273,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
       if (rightHandItem != null) {
         rightHandItem.Use(KIS_Item.UseFrom.KeyDown);
       } else {
-        KIS_UISoundPlayer.instance.PlayBipWrong();
+        UISounds.PlayBipWrong();
         ScreenMessaging.ShowInfoScreenMessage(NoItemEquippedMsg);
       }
     }

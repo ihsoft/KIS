@@ -384,7 +384,7 @@ sealed class KISAddonPickup : MonoBehaviour {
         && KISAddonPointer.pointerTarget != KISAddonPointer.PointerTarget.PartMount
         && pointerMode == KISAddonPickup.PointerMode.Drop) {
       if (CheckIsAttachable(grabbedPart, reportToConsole: true)) {
-        KIS_UISoundPlayer.instance.PlayClick();
+        UISounds.PlayClick();
         pointerMode = KISAddonPickup.PointerMode.Attach;
       }
     }
@@ -404,7 +404,7 @@ sealed class KISAddonPickup : MonoBehaviour {
     }
     // Cancelling "attach moving part" mode.
     if (KISAddonPointer.isRunning && pointerMode == PointerMode.Attach) {
-      KIS_UISoundPlayer.instance.PlayClick();
+      UISounds.PlayClick();
       pointerMode = KISAddonPickup.PointerMode.Drop;
     }
   }
@@ -939,7 +939,7 @@ sealed class KISAddonPickup : MonoBehaviour {
         } else {
           CreateAttach(tgtPart, pos, rot, srcAttachNodeID, tgtAttachNode);
         }
-        KIS_UISoundPlayer.instance.PlayToolAttach();
+        UISounds.PlayToolAttach();
       }
     }
     draggedItem = null;
@@ -1324,7 +1324,7 @@ sealed class KISAddonPickup : MonoBehaviour {
                                 string cursorIcon = ForbiddenIcon) {
     if (reportToConsole) {
       ScreenMessaging.ShowInfoScreenMessage("{0}: {1}", error, reason);
-      KIS_UISoundPlayer.instance.PlayBipWrong();
+      UISounds.PlayBipWrong();
     } else {
       KISAddonCursor.CursorEnable(cursorIcon, error, reason);
     }
