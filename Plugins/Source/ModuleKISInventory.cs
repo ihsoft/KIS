@@ -223,7 +223,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     }
   }
 
-  /// <summary>Overridden from MonoBehavior.</summary>
+  /// <summary>Overridden from MonoBehaviour.</summary>
   void Update() {
     if (showGui) {
       if (HighLogic.LoadedSceneIsFlight) {
@@ -240,7 +240,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     UpdateKey();
   }
 
-  /// <summary>Overridden from MonoBehavior.</summary>
+  /// <summary>Overridden from MonoBehaviour.</summary>
   void LateUpdate() {
     foreach (KeyValuePair<int, KIS_Item> item in items) {
       item.Value.Update();
@@ -546,7 +546,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     }
   }
 
-  /// <summary>Overridden from MonoBehavior.</summary>
+  /// <summary>Overridden from MonoBehaviour.</summary>
   void OnDestroy() {
     GameEvents.onCrewTransferred.Remove(new EventData<GameEvents.HostedFromToAction<ProtoCrewMember,
                                         Part>>.OnEvent(this.OnCrewTransferred));
