@@ -281,26 +281,26 @@ sealed class KISAddonPickup : MonoBehaviour {
     // Check if action key is pressed for an EVA kerbal. 
     if (HighLogic.LoadedSceneIsFlight && FlightGlobals.ActiveVessel.isEVA) {
       // Check if attach/detach key is pressed
-      if (Input.GetKeyDown(attachKey.ToLower())) {
+      if (KIS_Shared.IsKeyDown(attachKey)) {
         EnableAttachMode();
       }
-      if (Input.GetKeyUp(attachKey.ToLower())) {
+      if (KIS_Shared.IsKeyUp(attachKey)) {
         DisableAttachMode();
       }
 
       // Check if grab key is pressed.
-      if (Input.GetKeyDown(grabKey.ToLower())) {
+      if (KIS_Shared.IsKeyDown(grabKey)) {
         EnableGrabMode();
       }
-      if (Input.GetKeyUp(grabKey.ToLower())) {
+      if (KIS_Shared.IsKeyUp(grabKey)) {
         DisableGrabMode();
       }
 
       // Check if re-docking key is pressed.
-      if (Input.GetKeyDown(redockKey.ToLower())) {
+      if (KIS_Shared.IsKeyDown(redockKey)) {
         EnableRedockingMode();
       }
-      if (Input.GetKeyUp(redockKey.ToLower())) {
+      if (KIS_Shared.IsKeyUp(redockKey)) {
         DisableRedockingMode();
       }
     }

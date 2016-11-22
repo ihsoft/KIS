@@ -252,7 +252,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     }
 
     // Open inventory on keypress
-    if (Input.GetKeyDown(evaInventoryKey.ToLower())) {
+    if (KIS_Shared.IsKeyDown(evaInventoryKey)) {
       ShowInventory();
     }
     // Use slot when not in drag mode.
@@ -268,7 +268,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     }
 
     // Use right hand tool
-    if (Input.GetKeyDown(evaRightHandKey)) {
+    if (KIS_Shared.IsKeyDown(evaRightHandKey)) {
       KIS_Item rightHandItem = GetEquipedItem("rightHand");
       if (rightHandItem != null) {
         rightHandItem.Use(KIS_Item.UseFrom.KeyDown);
@@ -278,7 +278,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
       }
     }
 
-    if (Input.GetKeyUp(evaRightHandKey)) {
+    if (KIS_Shared.IsKeyUp(evaRightHandKey)) {
       KIS_Item rightHandItem = GetEquipedItem("rightHand");
       if (rightHandItem != null) {
         rightHandItem.Use(KIS_Item.UseFrom.KeyUp);
@@ -286,7 +286,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     }
 
     // Put/remove helmet
-    if (Input.GetKeyDown(evaHelmetKey)) {
+    if (KIS_Shared.IsKeyDown(evaHelmetKey)) {
       if (helmetEquipped) {
         if (SetHelmet(false, true)) {
           PlaySound(helmetOffSndPath);
@@ -564,10 +564,10 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
 
     // TODO: Add a check for shift keys to not trigger use action on combinations with
     // Shift, Ctrl, and Alt.
-    if (Input.GetKeyDown(kc)) {
+    if (KIS_Shared.IsKeyDown(kc)) {
       keyPressTime = Time.time;
     }
-    if (Input.GetKey(kc)) {
+    if (InputLockManager.IsUnlocked(ControlTypes.UI) && Input.GetKey(kc)) {
       if (Time.time - keyPressTime >= delay) {
         if (items.ContainsKey(slot)) {
           items[slot].Use(KIS_Item.UseFrom.InventoryShortcut);
@@ -575,8 +575,8 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
         keyPressTime = Mathf.Infinity;
       }
     }
-    if (Input.GetKeyUp(kc)) {
-      if (keyPressTime != Mathf.Infinity && items.ContainsKey(slot)) {
+    if (KIS_Shared.IsKeyUp(kc)) {
+      if (!float.IsInfinity(keyPressTime) && items.ContainsKey(slot)) {
         items[slot].ShortcutKeyPress();
       }
       keyPressTime = 0;

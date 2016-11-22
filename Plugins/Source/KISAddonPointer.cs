@@ -422,10 +422,10 @@ sealed class KISAddonPointer : MonoBehaviour {
     // Move above
     if (allowOffset) {
       if (pointerTarget != PointerTarget.PartMount) {
-        if (Input.GetKeyDown(offsetUpKey) && aboveDistance < maxOffsetDist) {
+        if (KIS_Shared.IsKeyDown(offsetUpKey) && aboveDistance < maxOffsetDist) {
           aboveDistance += aboveOffsetStep;
         }
-        if (Input.GetKeyDown(offsetDownKey) && aboveDistance > -maxOffsetDist) {
+        if (KIS_Shared.IsKeyDown(offsetDownKey) && aboveDistance > -maxOffsetDist) {
           aboveDistance -= aboveOffsetStep;
         }
         if (GameSettings.Editor_resetRotation.GetKeyDown()) {
@@ -541,8 +541,7 @@ sealed class KISAddonPointer : MonoBehaviour {
   /// <summary>Handles keyboard input.</summary>
   private void UpdateKey() {
     if (isRunning) {
-      if (Input.GetKeyDown(KeyCode.Escape)
-          || Input.GetKeyDown(KeyCode.Return)) {
+      if (KIS_Shared.IsKeyDown(KeyCode.Escape) || KIS_Shared.IsKeyDown(KeyCode.Return)) {
         Debug.Log("Cancel key pressed, stop eva attach mode");
         StopPointer();
         SendPointerClick(PointerTarget.Nothing, Vector3.zero, Quaternion.identity, null, null);

@@ -831,6 +831,38 @@ public static class KIS_Shared {
                            module.GetType(), module.GetType());
     }
   }
+
+  /// <summary>
+  /// Returns <c>true</c> if key was pressed during the current frame. Respects UI locks set by the
+  /// game.
+  /// </summary>
+  public static bool IsKeyDown(string key) {
+    return InputLockManager.IsUnlocked(ControlTypes.UI) && Input.GetKeyDown(key.ToLower());
+  }
+
+  /// <summary>
+  /// Returns <c>true</c> if key was pressed during the current frame. Respects UI locks set by the
+  /// game.
+  /// </summary>
+  public static bool IsKeyDown(KeyCode keyCode) {
+    return InputLockManager.IsUnlocked(ControlTypes.UI) && Input.GetKeyDown(keyCode);
+  }
+
+  /// <summary>
+  /// Returns <c>true</c> if key was release during the current frame. Respects UI locks set by the
+  /// game.
+  /// </summary>
+  public static bool IsKeyUp(string key) {
+    return InputLockManager.IsUnlocked(ControlTypes.UI) && Input.GetKeyUp(key.ToLower());
+  }
+
+  /// <summary>
+  /// Returns <c>true</c> if key was release during the current frame. Respects UI locks set by the
+  /// game.
+  /// </summary>
+  public static bool IsKeyUp(KeyCode keyCode) {
+    return InputLockManager.IsUnlocked(ControlTypes.UI) && Input.GetKeyUp(keyCode);
+  }
 }
 
 }  // namespace
