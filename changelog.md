@@ -1,5 +1,7 @@
 ### 1.3.1-pre
 - [Change] Stop using KSPDev obsolete logging methods.
+- [Fix #175] EVA cnaister stopped working.
+- [Fix #129] On initial load KIS_UISoundPlayer throws errors.
 
 ### 1.3.0 (October 12th, 2016)
 - [Enhancement] KSP 1.2 support
