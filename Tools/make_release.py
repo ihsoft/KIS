@@ -5,6 +5,7 @@
 # A very simple script to produce a .ZIP archive with the product distribution.
 
 import getopt
+import glob
 import json
 import logging
 import os
@@ -72,6 +73,7 @@ STRUCTURE = collections.OrderedDict({
     '/settings.cfg',
   ],
   '/GameData/KIS/Parts' : '/Parts',
+  '-/GameData/KIS/Parts' : '/fun_*',
   '/GameData/KIS/Sounds' : '/Sounds',
   '/GameData/KIS/Textures' : '/Textures',
   '/GameData/KIS/Plugins' : [
@@ -125,9 +127,23 @@ def CleanupReleaseFolder():
 # Creates whole release structure and copies the required files.
 def MakeFoldersStructure():
   print 'Make release folders structure...'
-  folders = sorted(STRUCTURE.keys())
+  folders = sorted(STRUCTURE.keys(), key=lambda x: x[0] != '-' and x or x[1:] + 'Z')
   # Make.
   for folder in folders:
+    if folder.startswith('-'):
+      # Drop files/directories.
+      del_path = DEST + folder[1:] + STRUCTURE[folder]
+      print 'Drop targets by pattern: %s' % del_path
+      for file_name in glob.glob(del_path):
+        if os.path.isfile(file_name):
+          print 'Dropping file "%s"' % file_name
+          os.unlink(file_name)
+        else:
+          print 'Dropping directory "%s"' % file_name
+          shutil.rmtree(file_name, True)
+      continue
+
+    # Copy files.
     dest_path = DEST + folder 
     sources = STRUCTURE[folder]
     if not isinstance(sources, list):
@@ -136,7 +152,7 @@ def MakeFoldersStructure():
       shutil.copytree(src_path, dest_path)
     else:
       print 'Making folder "%s"' % dest_path
-      os.mkdir(DEST + folder)
+      os.mkdir(dest_path)
       for file_path in STRUCTURE[folder]:
         source_path = SRC + file_path
         if file_path.endswith('/*'):
