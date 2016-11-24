@@ -780,6 +780,14 @@ public static class KIS_Shared {
   /// <remarks>Used to prevent NREs in methods that persist KSP fields.</remarks>
   /// <param name="module">Module to fix.</param>
   public static void CleanupFieldsInModule(PartModule module) {
+    // HACK: Fix uninitialized fields in science lab module.
+    var scienceModule = module as ModuleScienceLab;
+    if (scienceModule != null) {
+      scienceModule.ExperimentData = new List<string>();
+      Debug.LogWarningFormat(
+          "WORKAROUND. Fix null field in ModuleScienceLab module on part prefab {0}", module.part);
+    }
+    
     // Ensure the module is awaken. Otherwise, any access to base fields list will result in NRE.
     // HACK: Accessing Fields property of a non-awaken module triggers NRE. If it happens then do
     // explicit awakening of the *base* module class.
