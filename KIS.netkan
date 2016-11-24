@@ -10,6 +10,9 @@
         "bugtracker": "https://github.com/KospY/KIS/issues",
         "manual": "https://github.com/KospY/KIS/raw/master/User%20Guide.pdf"
     },
+    "depends"         : [
+        { "name": "CommunityResourcePack" }
+    ],
     "suggests": [
         { "name": "KAS" },
         { "name": "EasyVesselSwitch" }
