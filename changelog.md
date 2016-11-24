@@ -5,6 +5,7 @@
 - [Fix #176] Use new categories to sort KIS parts. (PARTIAL)
 - [Fix #152] Inventory reacts to flag writing.
 - [Fix #157] MKS/OKS: NRE when adding MK-V Comm-Lab part.
+- [Fix #135] NRE detaching and reattaching part with FAR.
 
 ### 1.3.0 (October 12th, 2016)
 - [Enhancement] KSP 1.2 support

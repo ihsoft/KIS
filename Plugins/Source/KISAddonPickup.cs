@@ -994,27 +994,56 @@ sealed class KISAddonPickup : MonoBehaviour {
     return newPart;
   }
 
-  private void MoveAttach(Part tgtPart, Vector3 pos, Quaternion rot, string srcAttachNodeID = null,
-                          AttachNode tgtAttachNode = null) {
+  void MoveAttach(Part tgtPart, Vector3 pos, Quaternion rot, string srcAttachNodeID = null,
+                  AttachNode tgtAttachNode = null) {
     Debug.Log("Move part & attach");
-    KIS_Shared.SendKISMessage(movingPart, KIS_Shared.MessageAction.AttachStart,
-                              KISAddonPointer.GetCurrentAttachNode(), tgtPart, tgtAttachNode);
-    KIS_Shared.DecoupleAssembly(movingPart);
-    movingPart.vessel.SetPosition(pos);
-    movingPart.vessel.SetRotation(rot);
-          
-    ModuleKISItem moduleItem = movingPart.GetComponent<ModuleKISItem>();
-    bool useExternalPartAttach = false;
-    useExternalPartAttach = moduleItem && moduleItem.useExternalPartAttach;
-    if (tgtPart && !useExternalPartAttach) {
-      KIS_Shared.CouplePart(movingPart, tgtPart, srcAttachNodeID, tgtAttachNode);
-    }
-    KIS_Shared.SendKISMessage(movingPart, KIS_Shared.MessageAction.AttachEnd,
-                              KISAddonPointer.GetCurrentAttachNode(), tgtPart, tgtAttachNode);
+    // When moving assembly form one parent to another new vessel is temporarily created. Some mods
+    // may want to react on the accompanying events, so a fixed update delay may be introduced.    
+    StartCoroutine(WaitAndMovePart(tgtPart, pos, rot, movingPart, srcAttachNodeID, tgtAttachNode));
     KISAddonPointer.StopPointer();
     movingPart = null;
     draggedItem = null;
     draggedPart = null;
+  }
+
+  /// <summary>
+  /// Determines if part can be moved without physics update between detach and attach actions. If
+  /// it cannot then a fixed update delay is added between the actions.
+  /// </summary>
+  static IEnumerator WaitAndMovePart(Part targetPart, Vector3 pos, Quaternion rot, Part childPart,
+                                     string srcAttachNodeID, AttachNode targetAttachNode) {
+    KIS_Shared.SendKISMessage(childPart, KIS_Shared.MessageAction.AttachStart,
+                              KISAddonPointer.GetCurrentAttachNode(), targetPart, targetAttachNode);
+
+    // Decouple from the former parent.
+    var parentPart = childPart.parent;
+    KIS_Shared.DecoupleAssembly(childPart);
+    childPart.vessel.SetPosition(pos);
+    childPart.vessel.SetRotation(rot);
+
+    // Find out if couplin with a new parent is needed.
+    var moduleItem = childPart.GetComponent<ModuleKISItem>();
+    var useExternalPartAttach = moduleItem != null && moduleItem.useExternalPartAttach;
+    if (targetPart == null || moduleItem != null && moduleItem.useExternalPartAttach) {
+      // Skip coupling logic.
+      KIS_Shared.SendKISMessage(childPart, KIS_Shared.MessageAction.AttachEnd,
+                                KISAddonPointer.GetCurrentAttachNode(), targetPart, targetAttachNode);
+      yield break;
+    }
+
+    if (parentPart != null) {
+      // Adhere the moving assembly to fix the position, and wait for one fixed frame.
+      var fixedJoint = parentPart.gameObject.AddComponent<FixedJoint>();
+      fixedJoint.connectedBody = childPart.Rigidbody;
+      yield return new WaitForFixedUpdate();
+      UnityEngine.Object.DestroyImmediate(fixedJoint);
+    }
+
+    // Do actual coupling.
+    Debug.LogFormat("MoveAttach: Actually attach moving part {0}", childPart);
+    KIS_Shared.CouplePart(childPart, targetPart, srcAttachNodeID, targetAttachNode);
+    KIS_Shared.SendKISMessage(childPart, KIS_Shared.MessageAction.AttachEnd,
+                              KISAddonPointer.GetCurrentAttachNode(), targetPart, targetAttachNode);
   }
 
   private Part CreateAttach(Part tgtPart, Vector3 pos, Quaternion rot,
