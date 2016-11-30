@@ -34,17 +34,17 @@ class EditorDefaultItemsAdder : MonoBehaviour {
     }
     var inventories = p.GetComponents<ModuleKISInventory>();
     foreach (var inventory in inventories) {
+      if (inventory.podSeat == 0 && ModuleKISInventory.defaultItemsForTheFirstSeat.Count > 0) {
+        Debug.LogFormat("Adding default item(s) into the first seat of part {0}: {1}",
+                        p.name, DbgFormatter.C2S(ModuleKISInventory.defaultItemsForTheFirstSeat));
+        AddItems(inventory, ModuleKISInventory.defaultItemsForTheFirstSeat);
+      }
       if (inventory.podSeat != -1 && ModuleKISInventory.defaultItemsForAllSeats.Count > 0) {
         Debug.LogFormat(
             "Adding default item(s) into seat's {0} inventory of part {1}: {2}",
             inventory.podSeat, p.name,
             DbgFormatter.C2S(ModuleKISInventory.defaultItemsForAllSeats));
         AddItems(inventory, ModuleKISInventory.defaultItemsForAllSeats);
-      }
-      if (inventory.podSeat == 0 && ModuleKISInventory.defaultItemsForTheFirstSeat.Count > 0) {
-        Debug.LogFormat("Adding default item(s) into the first seat of part {0}: {1}",
-                        p.name, DbgFormatter.C2S(ModuleKISInventory.defaultItemsForTheFirstSeat));
-        AddItems(inventory, ModuleKISInventory.defaultItemsForTheFirstSeat);
       }
     }
   }

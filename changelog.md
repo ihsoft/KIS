@@ -1,3 +1,6 @@
+### 1.3.2 (pre-release)
+- [Enhancement] Add default items for the first seat into a lesser slots.
+
 ### 1.3.1 (November 11th, 2016)
 - [Change] Stop using KSPDev obsolete logging methods.
 - [Fix #175] EVA cnaister stopped working.
