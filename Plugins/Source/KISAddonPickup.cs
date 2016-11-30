@@ -805,23 +805,28 @@ sealed class KISAddonPickup : MonoBehaviour {
 
   public void Drop(KIS_Item item) {
     draggedItem = item;
-    Drop(item.availablePart.partPrefab, item.inventory.part);
+    Drop(item.inventory.part, item.availablePart.partPrefab, item: item);
   }
 
   /// <summary>Handles part drop action.</summary>
-  /// <param name="part">A part being grabbed. It's either a real part or prefab depending on the
-  /// source of the action.</param>
   /// <param name="fromPart">A part that was the source of the draggign action. If a world's part is
   /// grabbed than it will be that part. If part is being dragged from inventory then this parameter
   /// is an inventory reference.</param>
-  public void Drop(Part part, Part fromPart) {
+  /// <param name="part">
+  /// Part being grabbed. It's always a real part. Mutial exclusive with <paramref name="item"/>.
+  /// </param>
+  /// <param name="item">Item being dragged. Mutial exclusive with <paramref name="part"/>.</param>
+  void Drop(Part fromPart, Part part, KIS_Item item = null) {
     grabbedPart = part;
     Debug.LogFormat("End pickup of {0} from part: {1}", part, fromPart);
     if (!KISAddonPointer.isRunning) {
       var pickupModule = GetActivePickupNearest(fromPart);
+      var grabPosition = fromPart.transform.position;
       int unusedPartsCount;
-      if (pickupModule && CheckMass(fromPart.transform.position, part,
-                                    out unusedPartsCount, reportToConsole: true)) {
+      if (pickupModule
+          && (item == null && CheckMass(grabPosition, part, out unusedPartsCount,
+                                        reportToConsole: true)
+              || item != null && CheckItemMass(grabPosition, item, reportToConsole: true))) {
         KISAddonPointer.allowPart = true;
         KISAddonPointer.allowEva = true;
         KISAddonPointer.allowMount = true;
@@ -1205,6 +1210,27 @@ sealed class KISAddonPickup : MonoBehaviour {
   private bool CheckMass(Vector3 grabPosition, Part part, out int grabbedPartsCount,
                          bool reportToConsole = false) {
     grabbedMass = KIS_Shared.GetAssemblyMass(part, out grabbedPartsCount);
+    float pickupMaxMass = GetAllPickupMaxMassInRange(grabPosition);
+    if (grabbedMass > pickupMaxMass) {
+      ReportCheckError(TooHeavyStatus,
+                       String.Format(TooHeavyTextFmt, grabbedMass, pickupMaxMass),
+                       cursorIcon: TooHeavyIcon,
+                       reportToConsole: reportToConsole);
+      return false;
+    }
+    return true;
+  }
+
+  /// <summary>Calculates grabbed part/assembly mass and reports if it's too heavy.</summary>
+  /// <param name="grabPosition">Position to search pick up modules around.</param>
+  /// <param name="item">Inventory item to check mass for.</param>
+  /// <param name="reportToConsole">
+  /// If <c>true</c> then error is only reported on the screen (it's a game's "console"). Otherwise,
+  /// excess of mass only results in changing cursor icon to <seealso cref="TooHeavyIcon"/>.
+  /// </param>
+  /// <returns><c>true</c> if total mass is within the limits.</returns>
+  private bool CheckItemMass(Vector3 grabPosition, KIS_Item item, bool reportToConsole = false) {
+    grabbedMass = item.totalMass;
     float pickupMaxMass = GetAllPickupMaxMassInRange(grabPosition);
     if (grabbedMass > pickupMaxMass) {
       ReportCheckError(TooHeavyStatus,
