@@ -11,16 +11,12 @@
         "manual": "https://github.com/KospY/KIS/raw/master/User%20Guide.pdf"
     },
     "depends"         : [
-        { "name": "CommunityCategoryKit" }
+        { "name": "CommunityCategoryKit" },
+        { "name": "ModuleManager" }
     ],
     "suggests": [
         { "name": "KAS" },
         { "name": "EasyVesselSwitch" }
-    ],
-    "recommends": [
-        {
-            "name": "ModuleManager"
-        }
     ],
     "license"         : "restricted",
     "author"          : [ "KospY", "Winn75", "IgorZ" ],
