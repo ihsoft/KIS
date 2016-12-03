@@ -3,9 +3,9 @@
 - [Fix #178] Full mass used for empty parts for purpose of removing from containers.
 - [Fix #179] Put all KIS items into a real KSP categories.
 
-### 1.3.1 (November 11th, 2016)
+### 1.3.1 (November 23rd, 2016)
 - [Change] Stop using KSPDev obsolete logging methods.
-- [Fix #175] EVA cnaister stopped working.
+- [Fix #175] EVA canister stopped working.
 - [Fix #129] On initial load KIS_UISoundPlayer throws errors.
 - [Fix #176] Use new KSP 1.2 categories to sort KIS parts.
 - [Fix #152] Inventory reacts to flag writing.
