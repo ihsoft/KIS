@@ -63,7 +63,6 @@
     <Compile Include="ModuleKISItemEvaTweaker.cs" />
     <Compile Include="ModuleKISPickup.cs" />
     <Compile Include="ModuleKISItemSoundPlayer.cs" />
-    <Compile Include="KISAddonEditorFilter.cs" />
     <Compile Include="KISAddonPickup.cs" />
     <Compile Include="KISAddonPointer.cs" />
     <Compile Include="KISAddonConfig.cs" />
