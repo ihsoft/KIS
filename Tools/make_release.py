@@ -1,9 +1,12 @@
 # Public domain license.
 # Author: igor.zavoychinskiy@gmail.com
-# Version: 1.1
+# Version: 1.5 (Dec 3nd, 2016)
 
 # A very simple script to produce a .ZIP archive with the product distribution.
 
+#from distutils.dir_util import mkpath
+#import distutils.dir_util
+from distutils import dir_util
 import getopt
 import glob
 import json
@@ -17,19 +20,22 @@ import sys
 import time
 import collections
 
-ZIP_BINARY = 'L:/Program Files/7-Zip/7z.exe'
-PACKAGE_TITLE = 'Kerbal Inventory System'
+# ADJUST BEFORE RUN!
+# Set it to the local system path.
+SHELL_ZIP_BINARY = 'L:/Program Files/7-Zip/7z.exe'
+
+# An executable which will be called to build the project's binaraies in release mode.
+SHELL_COMPILE_BINARY_SCRIPT = 'make_binary.cmd'
+
+# For information only.
+PACKAGE_TITLE = 'Kerbal Attachment System'
 
 # SRC configs.
 SRC = '..'
 # Extract version number from here. See ExtractVersion() method.
-#SRC_VERSIONS_FILE = SRC + '/kis.version'
 SRC_VERSIONS_FILE = SRC + '/Plugins/Source/Properties/AssemblyInfo.cs'
-# An executable which will be called to build the project's binaraies in release mode.
-SRC_COMPILE_BINARY_SCRIPT = 'make_binary.cmd'
 # Path to the release's binary. If it doesn't exist then no release.
-SRC_COMPILED_BINARY = '/Plugins/Source/bin/Release/KIS.dll'
-
+SRC_COMPILED_BINARY = SRC + '/Plugins/Source/bin/Release/KIS.dll'
 
 # DEST configs.
 # A path where releaae structure will be constructed.
@@ -41,35 +47,38 @@ DEST_RELEASES = '..'
 DEST_RELEASE_NAME_FMT = 'KIS_v%d.%d.%d'
 # A file name format for releases with build field other than zero.
 DEST_RELEASE_NAME_WITH_BUILD_FMT = 'KIS_v%d.%d.%d_build%d'
-# The name of the destintation binary.
-DEST_VERSIONED_BINARY = '/KIS.dll'
-
 
 # Sources to be updated post release (see UpdateVersionInSources).
 # All paths must be full.
 SRC_REPOSITORY_VERSION_FILE = SRC + '/kis.version'
-SRC_PLUGIN_VERSION_FILE = SRC + '/Plugins/KIS.version'
-SRC_PLUGIN_DLL_FILE_COPY = (
-    SRC + SRC_COMPILED_BINARY, SRC + '/Plugins/KIS.dll')
 
+# Targets to be updated post release (see UpdateVersionInDestinations).
+# First item of the tuple sets souirce, and  teh second item sets the target.
+# Both paths are counted as full OS paths (i.e. either absolute or relative).
+POST_BUILD_COPY = [
+    (SRC_REPOSITORY_VERSION_FILE, DEST + '/GameData/KIS/Plugins/KIS.version'),
+    (SRC_REPOSITORY_VERSION_FILE, SRC + '/Plugins/KIS.version'),
+]
 
-# Destinations to be updated post release (see UpdateVersionInDestinations).
-# All paths must be full.
-DEST_PLUGIN_VERSION_COPY = (
-    SRC_PLUGIN_VERSION_FILE, DEST + '/GameData/KIS/Plugins/KIS.version')
-
-
-# Keys are paths in DEST, values are paths/patterns in SRC.
-# When value is a string then the entire source follder is copied.
-# Destination folder is not created recursively so, if you need to copy a file
-# into "a/b/c" folder then you need three keys: "a", "a/b", and 'a/b/c".
+# Key is a path in DEST. The path *must* start from "/". The root in this case
+# is DEST. There is no way to setup real root.
+# Value is a path in SRC. It's either a string or a list of patterns:
+# - If value is a plain string then then it's path to a single file or
+#   directory.
+#   If path designates a folder then the entire tree will be copied.
+# - If value is a list then each item:
+#   - If does *not* end with "/*" then it's a path to a file.
+#   - If *does* end with "/*" then it's a folder name. Only files in the
+#     folder are copied, not the whole tree.
+#   - If starts from "-" then it's a request to *drop* files in DEST folder
+#     (the key). Value after "-" is a regular OS path pattern.
 STRUCTURE = collections.OrderedDict({
-  '/': [
+  '/GameData' : [
+    '/Binaries/ModuleManager.2.7.5.dll',
+  ],
+  '/GameData/KIS' : [
     '/LICENSE.md',
     '/User Guide.pdf',
-  ],
-  '/GameData' : [],  # This will make the parent folder created.
-  '/GameData/KIS' : [
     '/settings.cfg',
   ],
   '/GameData/KIS/Parts' : '/Parts',
@@ -105,15 +114,15 @@ def CopyByRegex(src_dir, dst_dir, pattern):
 # Makes the binary.
 def CompileBinary():
   if not SRC_COMPILED_BINARY is None:
-    binary_path = SRC + SRC_COMPILED_BINARY
+    binary_path = SRC_COMPILED_BINARY
     if os.path.exists(binary_path):
       os.unlink(binary_path)
   print 'Compiling the sources in PROD mode...'
-  code = subprocess.call([SRC_COMPILE_BINARY_SCRIPT])
+  code = subprocess.call([SHELL_COMPILE_BINARY_SCRIPT])
 
   if (code != 0
       or not SRC_COMPILED_BINARY is None
-      and not os.path.exists(SRC + SRC_COMPILED_BINARY)):
+      and not os.path.exists(SRC_COMPILED_BINARY)):
     print 'ERROR: Compilation failed.'
     exit(code)
 
@@ -145,14 +154,14 @@ def MakeFoldersStructure():
 
     # Copy files.
     dest_path = DEST + folder 
+    dir_util.mkpath(dest_path)
     sources = STRUCTURE[folder]
     if not isinstance(sources, list):
       src_path = SRC + sources
       print 'Copying folder "%s" into "%s"' % (src_path, dest_path)
-      shutil.copytree(src_path, dest_path)
+      dir_util.copy_tree(src_path, dest_path)
     else:
       print 'Making folder "%s"' % dest_path
-      os.mkdir(dest_path)
       for file_path in STRUCTURE[folder]:
         source_path = SRC + file_path
         if file_path.endswith('/*'):
@@ -172,7 +181,7 @@ def ExtractVersion():
     if line.lstrip().startswith('//'):
       continue
     # Expect: [assembly: AssemblyVersion("X.Y.Z")]
-    matches = re.match(r'\[assembly: AssemblyVersion\("(\d+)\.(\d+)\.(\d+)(.(\d+))?"\)\]', line)
+    matches = re.match(r'\[assembly: AssemblyVersion.*\("(\d+)\.(\d+)\.(\d+)(.(\d+))?"\)\]', line)
     if matches:
       VERSION = (int(matches.group(1)),  # MAJOR
                  int(matches.group(2)),  # MINOR
@@ -181,27 +190,22 @@ def ExtractVersion():
       break
       
   if VERSION is None:
-    print 'ERROR: Cannot extract version.'
+    print 'ERROR: Cannot extract version from: %s' % SRC_VERSIONS_FILE
     exit(-1)
   print 'Releasing version: v%d.%d.%d build %d' % VERSION
 
 
 # Updates the destination files with the version info.
 def UpdateVersionInDestinations():
-  print 'Copy plugin version file "%s" into "%s"' % (
-      DEST_PLUGIN_VERSION_COPY[0], DEST_PLUGIN_VERSION_COPY[1])
-  shutil.copy(DEST_PLUGIN_VERSION_COPY[0], DEST_PLUGIN_VERSION_COPY[1])
+  for source, target in POST_BUILD_COPY:
+    print 'Copying "%s" into "%s"...' % (source, target)
+    shutil.copy(source, target)
 
 
 # Updates the source files with the version info.
 def UpdateVersionInSources():
   print 'Update repository version file:', SRC_REPOSITORY_VERSION_FILE
   UpdateVersionInJsonFile_(SRC_REPOSITORY_VERSION_FILE)
-  print 'Update plugin version file:', SRC_PLUGIN_VERSION_FILE
-  UpdateVersionInJsonFile_(SRC_PLUGIN_VERSION_FILE)
-  print 'Copy new DLL "%s" into repository location "%s"' % (
-      SRC_PLUGIN_DLL_FILE_COPY)
-  shutil.copy(SRC_PLUGIN_DLL_FILE_COPY[0], SRC_PLUGIN_DLL_FILE_COPY[1])
 
 
 def UpdateVersionInJsonFile_(name):
@@ -243,7 +247,7 @@ def MakePackage():
 
   print 'Making %s package...' % PACKAGE_TITLE
   code = subprocess.call([
-      ZIP_BINARY,
+      SHELL_ZIP_BINARY,
       'a',
       package_file_name,
       DEST + '/*'])
@@ -256,9 +260,9 @@ def main(argv):
   global MAKE_PACKAGE, OVERWRITE_PACKAGE, VERSION
 
   try:
-    opts, _ = getopt.getopt(argv[1:], 'dpo', )
+    opts, _ = getopt.getopt(argv[1:], 'po', )
   except getopt.GetoptError:
-    print 'make_release.py [-d]'
+    print 'make_release.py [-po]'
     exit(2)
   opts = dict(opts)
   MAKE_PACKAGE = '-p' in opts
