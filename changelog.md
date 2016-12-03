@@ -1,6 +1,7 @@
 ### 1.3.2 (pre-release)
 - [Enhancement] Add default items for the first seat into a lesser slots.
 - [Fix #178] Full mass used for empty parts for purpose of removing from containers.
+- [Fix #179] Put all KIS items into a real KSP categories.
 
 ### 1.3.1 (November 11th, 2016)
 - [Change] Stop using KSPDev obsolete logging methods.
