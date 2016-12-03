@@ -58,6 +58,7 @@ SRC_REPOSITORY_VERSION_FILE = SRC + '/kis.version'
 POST_BUILD_COPY = [
     (SRC_REPOSITORY_VERSION_FILE, DEST + '/GameData/KIS/Plugins/KIS.version'),
     (SRC_REPOSITORY_VERSION_FILE, SRC + '/Plugins/KIS.version'),
+    (SRC_COMPILED_BINARY, SRC + '/Plugins/KIS.dll'),
 ]
 
 # Key is a path in DEST. The path *must* start from "/". The root in this case
