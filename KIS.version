@@ -1,6 +1,6 @@
 {
     "CHANGE_LOG_URL": "https://raw.githubusercontent.com/KospY/KIS/master/CHANGELOG.md", 
-    "DOWNLOAD": "http://forum.kerbalspaceprogram.com/threads/113111", 
+    "DOWNLOAD": "http://forum.kerbalspaceprogram.com/index.php?/topic/149848-12-kerbal-inventory-system-kis-v131/", 
     "GITHUB": {
         "REPOSITORY": "KIS", 
         "USERNAME": "KospY"
@@ -25,7 +25,7 @@
     "VERSION": {
         "BUILD": 0, 
         "MAJOR": 1, 
-        "MINOR": 3, 
-        "PATCH": 1
+        "MINOR": 4, 
+        "PATCH": 0
     }
 }
