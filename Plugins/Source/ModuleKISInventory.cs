@@ -422,8 +422,8 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
 
         ModuleKISInventory evaInventory = fromToAction.from.GetComponent<ModuleKISInventory>();
         Debug.LogFormat("Item transfer | source {0}", fromToAction.host.name);
-        List<KIS_Item> itemsToDrop = new List<KIS_Item>();
-        foreach (KeyValuePair<int, KIS_Item> item in evaInventory.items) {
+        var itemsToDrop = new List<KIS_Item>();
+        foreach (var item in evaInventory.items) {
           if (item.Value.carriable) {
             itemsToDrop.Add(item.Value);
           } else if (item.Value.equipped) {
