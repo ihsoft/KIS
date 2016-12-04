@@ -383,6 +383,14 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
           MoveItems(items, destInventory);
           RefreshMassAndVolume();
           destInventory.RefreshMassAndVolume();
+
+          // Re-equip items on the EVA kerbal.
+          foreach (var item in destInventory.items.Values) {
+            if (item.equipped) {
+              Debug.LogFormat("Re-equip item: {0}", item.availablePart.title);
+              item.Equip();
+            }
+          }
         }
       } else {
         // pod to pod
@@ -428,6 +436,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
             itemsToDrop.Add(item.Value);
           } else if (item.Value.equipped) {
             item.Value.Unequip();
+            item.Value.equipped = true;  // Mark state for the further re-equip.
           }
         }
         foreach (KIS_Item item in itemsToDrop) {
