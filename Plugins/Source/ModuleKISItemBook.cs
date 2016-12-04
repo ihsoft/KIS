@@ -1,4 +1,5 @@
-﻿using System;
+﻿using KSPDev.GUIUtils;
+using System;
 using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
@@ -36,7 +37,7 @@ public sealed class ModuleKISItemBook: ModuleKISItem {
       pageTotal = pageList.Count;
       pageTexture = GameDatabase.Instance.GetTexture(pageList[0], false);
       showPage = true;
-      item.inventory.PlaySound(bookOpenSndPath, false, true);
+      UISoundPlayer.instance.Play(bookOpenSndPath);
     } else {
       Debug.LogError("The book has no pages configured");
     }      
@@ -60,7 +61,7 @@ public sealed class ModuleKISItemBook: ModuleKISItem {
       if ((pageIndex - 1) >= 0) {
         pageIndex = pageIndex - 1;
         pageTexture = GameDatabase.Instance.GetTexture(pageList[pageIndex], false);
-        currentItem.inventory.PlaySound(bookPageSndPath, false, true);
+        UISoundPlayer.instance.Play(bookPageSndPath);
       }
     }
     GUILayout.Label("Page " + (pageIndex + 1) + " / " + pageTotal);
@@ -68,14 +69,14 @@ public sealed class ModuleKISItemBook: ModuleKISItem {
       if ((pageIndex + 1) < pageList.Count) {
         pageIndex = pageIndex + 1;
         pageTexture = GameDatabase.Instance.GetTexture(pageList[pageIndex], false);
-        currentItem.inventory.PlaySound(bookPageSndPath, false, true);
+        UISoundPlayer.instance.Play(bookPageSndPath);
       }
     }
     GUILayout.EndHorizontal();
 
     if (GUILayout.Button("Close")) {
       showPage = false;
-      currentItem.inventory.PlaySound(bookCloseSndPath, false, true);
+      UISoundPlayer.instance.Play(bookCloseSndPath);
     }
     GUI.DragWindow();
   }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using KSPDev.GUIUtils;
+using System;
 using System.Linq;
 using UnityEngine;
 
@@ -23,12 +24,12 @@ public sealed class ModuleKISItemFood : ModuleKISItem {
         item.inventory.DelayedAction(Burp, item, delay);
         eatCount = 0;
       }
-      item.inventory.PlaySound(eatSndPath, false, false);
+      UISoundPlayer.instance.Play(eatSndPath);
     }
   }
 
   private void Burp(KIS_Item item) {
-    item.inventory.PlaySound(burpSndPath, false, false);
+    UISoundPlayer.instance.Play(burpSndPath);
   }
 }
 

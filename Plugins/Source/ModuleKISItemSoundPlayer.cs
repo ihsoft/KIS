@@ -1,4 +1,5 @@
-﻿using System;
+﻿using KSPDev.GUIUtils;
+using System;
 using System.Linq;
 using UnityEngine;
 
@@ -35,7 +36,7 @@ public sealed class ModuleKISItemSoundPlayer : ModuleKISItem {
       if (item.inventory.sndFx.audio.isPlaying) {
         item.inventory.sndFx.audio.Stop();
       } else {
-        item.inventory.PlaySound(sndPath, false, false);
+        UISoundPlayer.instance.Play(sndPath);
       }
     }
   }

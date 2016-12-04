@@ -607,9 +607,9 @@ public class KIS_Item {
       Unequip();
     }
     if (prefabModule) {
-      PlaySound(prefabModule.moveSndPath);
+      UISoundPlayer.instance.Play(prefabModule.moveSndPath);
     } else {
-      PlaySound(inventory.defaultMoveSndPath);
+      UISoundPlayer.instance.Play(inventory.defaultMoveSndPath);
     }
   }
 

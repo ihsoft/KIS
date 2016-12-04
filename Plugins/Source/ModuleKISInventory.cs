@@ -289,11 +289,11 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     if (KIS_Shared.IsKeyDown(evaHelmetKey)) {
       if (helmetEquipped) {
         if (SetHelmet(false, true)) {
-          PlaySound(helmetOffSndPath);
+          UISoundPlayer.instance.Play(helmetOffSndPath);
         }
       } else {
         if (SetHelmet(true)) {
-          PlaySound(helmetOnSndPath);
+          UISoundPlayer.instance.Play(helmetOnSndPath);
         }
       }
     }
@@ -792,9 +792,9 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
       DisableIcon();
       showGui = false;
       if (HighLogic.LoadedSceneIsEditor) {
-        PlaySound(closeSndPath);
+        UISoundPlayer.instance.Play(closeSndPath);
       } else {
-        PlaySound(closeSndPath, false, false);
+        UISoundPlayer.instance.Play(closeSndPath);
       }
       clickThroughLocked = false;
       if (HighLogic.LoadedSceneIsFlight) {
@@ -845,9 +845,9 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
       }
       showGui = true;
       if (HighLogic.LoadedSceneIsEditor) {
-        PlaySound(openSndPath);
+        UISoundPlayer.instance.Play(openSndPath);
       } else {
-        PlaySound(openSndPath, false, false);
+        UISoundPlayer.instance.Play(openSndPath);
       }
     }
   }
@@ -1045,14 +1045,14 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
         if (GUILayout.Button(new GUIContent("Remove Helmet", ""),
                              GUILayout.Width(Width), GUILayout.Height(22))) {
           if (SetHelmet(false, true)) {
-            PlaySound(helmetOffSndPath);
+            UISoundPlayer.instance.Play(helmetOffSndPath);
           }
         }
       } else {
         if (GUILayout.Button(new GUIContent("Put On Helmet", ""),
                              GUILayout.Width(Width), GUILayout.Height(22))) {
           if (SetHelmet(true)) {
-            PlaySound(helmetOnSndPath);
+            UISoundPlayer.instance.Play(helmetOnSndPath);
           }
         }
       }
