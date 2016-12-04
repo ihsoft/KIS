@@ -3,6 +3,8 @@
 - [Fix #178] Full mass used for empty parts for purpose of removing from containers.
 - [Fix #179] Put all KIS items into a real KSP categories.
 - [Fix #180] Persist equipped state in EVA inventories.
+- [Change] ModuleManager is now required mod.
+- [Change] CommunityCategoryKit is now required mod.
 
 ### 1.3.1 (November 23rd, 2016)
 - [Change] Stop using KSPDev obsolete logging methods.
