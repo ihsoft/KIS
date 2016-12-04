@@ -33,9 +33,9 @@ PACKAGE_TITLE = 'Kerbal Attachment System'
 # SRC configs.
 SRC = '..'
 # Extract version number from here. See ExtractVersion() method.
-SRC_VERSIONS_FILE = SRC + '/Plugins/Source/Properties/AssemblyInfo.cs'
+SRC_VERSIONS_FILE = SRC + '/Source/Properties/AssemblyInfo.cs'
 # Path to the release's binary. If it doesn't exist then no release.
-SRC_COMPILED_BINARY = SRC + '/Plugins/Source/bin/Release/KIS.dll'
+SRC_COMPILED_BINARY = SRC + '/Source/bin/Release/KIS.dll'
 
 # DEST configs.
 # A path where releaae structure will be constructed.
@@ -89,7 +89,7 @@ STRUCTURE = collections.OrderedDict({
     '/Binaries/MiniAVC.dll',
     '/Binaries/KSPDev_Utils.dll',
     '/Binaries/KSPDev_Utils_License.md',
-    '/Plugins/Source/bin/Release/KIS.dll',
+    '/Source/bin/Release/KIS.dll',
   ],
   '/GameData/KIS/Patches' : '/Patches',
 })
