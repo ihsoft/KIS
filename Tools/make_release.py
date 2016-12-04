@@ -50,7 +50,7 @@ DEST_RELEASE_NAME_WITH_BUILD_FMT = 'KIS_v%d.%d.%d_build%d'
 
 # Sources to be updated post release (see UpdateVersionInSources).
 # All paths must be full.
-SRC_REPOSITORY_VERSION_FILE = SRC + '/kis.version'
+SRC_REPOSITORY_VERSION_FILE = SRC + '/KIS.version'
 
 # Targets to be updated post release (see UpdateVersionInDestinations).
 # First item of the tuple sets souirce, and  teh second item sets the target.
