@@ -77,6 +77,7 @@ STRUCTURE = collections.OrderedDict({
   '/GameData' : [
     '/Binaries/ModuleManager.2.7.5.dll',
   ],
+  '/GameData/CommunityCategoryKit' : '/Binaries/CommunityCategoryKit',
   '/GameData/KIS' : [
     '/LICENSE.md',
     '/User Guide.pdf',
