@@ -43,6 +43,17 @@ public class KIS_Item {
     Part,
     Physic
   }
+
+  /// <summary>Specifies source of an action.</summary>
+  public enum ActorType {
+    /// <summary>Action is triggered as a result of some code logic.</summary>
+    API,
+    /// <summary>Player has triggered action via GUI.</summary>
+    Player,
+    /// <summary>Physics effect have trigegred the action.</summary>
+    Physics,
+  }
+
   public float resourceMass = 0;
   public float contentMass = 0;
   public float contentCost = 0;
@@ -351,9 +362,9 @@ public class KIS_Item {
     }
     if (shortcutAction == ActionType.Equip) {
       if (equipped) {
-        Unequip();
+        Unequip(ActorType.Player);
       } else {
-        Equip();
+        Equip(ActorType.Player);
       }
     }
     if (shortcutAction == ActionType.Custom && prefabModule) {
@@ -367,7 +378,7 @@ public class KIS_Item {
     }
   }
 
-  public void Equip() {
+  public void Equip(ActorType actorType = ActorType.API) {
     // Only equip EVA kerbals.
     if (!prefabModule || !inventory.vessel.isEVA) {
       return;
@@ -387,10 +398,12 @@ public class KIS_Item {
         }
       }
       if (!skillFound) {
-        ScreenMessaging.ShowPriorityScreenMessage(
-            "This item can only be used by a kerbal with the skill : {0}",
-            prefabModule.equipSkill);
-        PlaySound(KIS_Shared.bipWrongSndPath);
+        if (actorType == ActorType.Player) {
+          ScreenMessaging.ShowPriorityScreenMessage(
+              "This item can only be used by a kerbal with the skill : {0}",
+              prefabModule.equipSkill);
+          UISounds.PlayBipWrong();
+        }
         return;
       }
     }
@@ -400,11 +413,13 @@ public class KIS_Item {
       KIS_Item equippedItem = inventory.GetEquipedItem(equipSlot);
       if (equippedItem != null) {
         if (equippedItem.carriable) {
-          ScreenMessaging.ShowPriorityScreenMessage(
-              "Cannot equip item, slot <{0}> already used for carrying {1}",
-              equipSlot, equippedItem.availablePart.title);
-          PlaySound(KIS_Shared.bipWrongSndPath);
-          return;
+          if (actorType == ActorType.Player) {
+            ScreenMessaging.ShowPriorityScreenMessage(
+                "Cannot equip item, slot <{0}> already used for carrying {1}",
+                equipSlot, equippedItem.availablePart.title);
+            UISounds.PlayBipWrong();
+            return;
+          }
         }
         equippedItem.Unequip();
       }
@@ -479,12 +494,14 @@ public class KIS_Item {
     if (prefabModule.equipRemoveHelmet) {
       inventory.SetHelmet(false);
     }
-    PlaySound(prefabModule.moveSndPath);
+    if (actorType == ActorType.Player) {
+      UISoundPlayer.instance.Play(prefabModule.moveSndPath);
+    }
     equipped = true;
     prefabModule.OnEquip(this);
   }
 
-  public void Unequip() {
+  public void Unequip(ActorType actorType = ActorType.API) {
     if (!prefabModule) {
       return;
     }
@@ -504,7 +521,9 @@ public class KIS_Item {
     equippedPart = null;
     equippedGameObj = null;
     equipped = false;
-    PlaySound(prefabModule.moveSndPath);
+    if (actorType == ActorType.Player) {
+      UISoundPlayer.instance.Play(prefabModule.moveSndPath);
+    }
     prefabModule.OnUnEquip(this);
   }
 
