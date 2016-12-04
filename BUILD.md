@@ -30,11 +30,9 @@ Version number consists of three numbers - X.Y.Z:
 - Review file `Tools\make_binary.cmd` and ensure the path to `MSBuild` is right.
 - Review file `Tools\make_release.py` and ensure `ZIP_BINARY` points to a ZIP compatible command line executable.
 - Verify that file `KIS\Source\Properties\AssemblyInfo.cs` has correct version number. This will be the release number!
-- Check if file `KIS\Source\CHANGES.txt` has any "alpha" changes since the last release:
-  - Only consider changes of types: Fix, Feature, Enhancement, and Change. Anything else is internal stuff which is not interesting to the outer world.
-  - Copy the changes into `changelog.md` and add the release date.
-  - Go thru issues having #XX in the title, and update each releveant [Github issue](https://github.com/KospY/KIS/issues) with the version where it was addressed. Usually it means closing of the issue.
-  - Drop all changes from `CHANGES.txt`.
+- Go thru `KIS\CHANGELOG.md`:
+  - Ensure all Github tracked issues are reflected via "[Fix #NNN] <description>" records.
+  - Ensure all implemented echancements and/or changes are reflected via "[Enhancement]" or "[Change]" tags.
 - Update version number in [AssemblyInfo.cs](https://github.com/KospY/KIS/blob/master/Plugins/Source/Properties/AssemblyInfo.cs).
 - Run `Tools\make_release.py -p` having folder `Tools` as current.
 - Given there were no compile errors the new release will live in `Releases` folder and a release archive is created in the project's root.
