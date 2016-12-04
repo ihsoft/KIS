@@ -1159,12 +1159,12 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
         noAction = false;
         if (contextItem.equipped) {
           if (GUILayout.Button("Unequip")) {
-            contextItem.Unequip();
+            contextItem.Unequip(KIS_Item.ActorType.Player);
             contextItem = null;
           }
         } else {
           if (GUILayout.Button("Equip")) {
-            contextItem.Equip();
+            contextItem.Equip(KIS_Item.ActorType.Player);
             contextItem = null;
           }
         }
