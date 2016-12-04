@@ -21,7 +21,7 @@
         "PATCH": 0
     }, 
     "NAME": "Kerbal Inventory System", 
-    "URL": "https://raw.githubusercontent.com/KospY/KIS/master/kis.version", 
+    "URL": "https://raw.githubusercontent.com/KospY/KIS/master/KIS.version", 
     "VERSION": {
         "BUILD": 0, 
         "MAJOR": 1, 
