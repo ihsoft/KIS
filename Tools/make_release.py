@@ -56,7 +56,6 @@ SRC_REPOSITORY_VERSION_FILE = SRC + '/KIS.version'
 # First item of the tuple sets source, and the second item sets the target.
 # Both paths are OS paths (i.e. either absolute or relative).
 POST_BUILD_COPY = [
-    (SRC_REPOSITORY_VERSION_FILE, DEST + '/GameData/KIS/Plugins/KIS.version'),
 ]
 
 # Key is a path in DEST. The path *must* start from "/". The root in this case
@@ -86,6 +85,7 @@ STRUCTURE = collections.OrderedDict({
   '/GameData/KIS/Sounds' : '/Sounds',
   '/GameData/KIS/Textures' : '/Textures',
   '/GameData/KIS/Plugins' : [
+    '/KIS.version',
     '/Binaries/MiniAVC.dll',
     '/Binaries/KSPDev_Utils.dll',
     '/Binaries/KSPDev_Utils_License.md',
