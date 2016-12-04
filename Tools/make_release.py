@@ -88,10 +88,10 @@ STRUCTURE = collections.OrderedDict({
   '/GameData/KIS/Sounds' : '/Sounds',
   '/GameData/KIS/Textures' : '/Textures',
   '/GameData/KIS/Plugins' : [
-    '/Plugins/MiniAVC.dll',
+    '/Binaries/MiniAVC.dll',
+    '/Binaries/KSPDev_Utils.dll',
+    '/Binaries/KSPDev_Utils_License.md',
     '/Plugins/Source/bin/Release/KIS.dll',
-    '/Plugins/KSPDev_Utils.dll',
-    '/Plugins/KSPDev_Utils_License.md',
   ],
   '/GameData/KIS/Patches' : '/Patches',
 })
