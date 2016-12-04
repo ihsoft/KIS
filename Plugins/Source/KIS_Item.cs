@@ -313,10 +313,6 @@ public class KIS_Item {
     }
   }
 
-  public void PlaySound(string sndPath, bool loop = false) {
-    inventory.PlaySound(sndPath, loop);
-  }
-
   public bool StackAdd(float qty, bool checkVolume = true) {
     if (qty <= 0) {
       return false;
@@ -585,14 +581,6 @@ public class KIS_Item {
     }
     KIS_Shared.CreatePart(partNode, pos, rot, fromPart);
     StackRemove(1);
-  }
-
-  public void EquipToogle() {
-    if (equipped) {
-      Unequip();
-    } else {
-      Equip();
-    }
   }
 
   public void ReEquip() {

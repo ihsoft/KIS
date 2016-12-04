@@ -351,30 +351,6 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     }
   }
 
-  /// <summary>Plays a sound at the inventory's location.</summary>
-  /// <param name="sndPath">Path to the sound clip.</param>
-  /// <param name="loop">Indefinitely repeat sound when <c>true</c>.</param>
-  /// <param name="uiSnd">If <c>true</c> then sound is 2D (i.e. not bound to the inventory 3D
-  /// position).</param>
-  public void PlaySound(string sndPath, bool loop = false, bool uiSnd = true) {
-    if (GameDatabase.Instance.ExistsAudioClip(sndPath)) {
-      sndFx.audio.clip = GameDatabase.Instance.GetAudioClip(sndPath);
-      sndFx.audio.loop = loop;
-      if (uiSnd) {
-        sndFx.audio.volume = GameSettings.UI_VOLUME;
-        sndFx.audio.spatialBlend = 0;  //set as 2D audiosource
-      } else {
-        sndFx.audio.volume = GameSettings.SHIP_VOLUME;
-        sndFx.audio.spatialBlend = 1;  //set as 3D audiosource
-      }
-    } else {
-      Debug.LogError("Sound not found in the game database !");
-      ScreenMessaging.ShowPriorityScreenMessageWithTimeout(
-          10, "Sound file : {0} has not been found, please check installation path !", sndPath);
-    }
-    sndFx.audio.Play();
-  }
-
   /// <summary>Helper method to get all inventories on the part with open UI.</summary>
   /// <returns>List of inventories.</returns>
   public static List<ModuleKISInventory> GetAllOpenInventories() {
