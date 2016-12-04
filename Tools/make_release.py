@@ -1,12 +1,9 @@
 # Public domain license.
 # Author: igor.zavoychinskiy@gmail.com
-# Version: 1.5 (Dec 3nd, 2016)
+# Version: 1.6 (Dec 4nd, 2016)
 
 # A very simple script to produce a .ZIP archive with the product distribution.
 
-#from distutils.dir_util import mkpath
-#import distutils.dir_util
-from distutils import dir_util
 import getopt
 import glob
 import json
@@ -19,6 +16,9 @@ import subprocess
 import sys
 import time
 import collections
+
+from distutils import dir_util
+
 
 # ADJUST BEFORE RUN!
 # Set it to the local system path.
@@ -52,9 +52,9 @@ DEST_RELEASE_NAME_WITH_BUILD_FMT = 'KIS_v%d.%d.%d_build%d'
 # All paths must be full.
 SRC_REPOSITORY_VERSION_FILE = SRC + '/KIS.version'
 
-# Targets to be updated post release (see UpdateVersionInDestinations).
-# First item of the tuple sets souirce, and  teh second item sets the target.
-# Both paths are counted as full OS paths (i.e. either absolute or relative).
+# Targets to be updated post release (see PostBuildCopy).
+# First item of the tuple sets source, and the second item sets the target.
+# Both paths are OS paths (i.e. either absolute or relative).
 POST_BUILD_COPY = [
     (SRC_REPOSITORY_VERSION_FILE, DEST + '/GameData/KIS/Plugins/KIS.version'),
 ]
@@ -70,7 +70,7 @@ POST_BUILD_COPY = [
 #   - If *does* end with "/*" then it's a folder name. Only files in the
 #     folder are copied, not the whole tree.
 #   - If starts from "-" then it's a request to *drop* files in DEST folder
-#     (the key). Value after "-" is a regular OS path pattern.
+#     (the key). Value is a regular OS path pattern.
 STRUCTURE = collections.OrderedDict({
   '/GameData' : [
     '/Binaries/ModuleManager.2.7.5.dll',
@@ -196,7 +196,7 @@ def ExtractVersion():
 
 
 # Updates the destination files with the version info.
-def UpdateVersionInDestinations():
+def PostBuildCopy():
   for source, target in POST_BUILD_COPY:
     print 'Copying "%s" into "%s"...' % (source, target)
     shutil.copy(source, target)
@@ -271,9 +271,9 @@ def main(argv):
   ExtractVersion()
   CompileBinary()
   CleanupReleaseFolder()
-  MakeFoldersStructure()
   UpdateVersionInSources()
-  UpdateVersionInDestinations()
+  MakeFoldersStructure()
+  PostBuildCopy()
   MakePackage()
   print 'SUCCESS!'
 
