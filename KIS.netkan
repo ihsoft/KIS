@@ -6,9 +6,9 @@
     "abstract"        : "KIS introduces new gameplay mechanics by adding a brand new inventory system and EVA usables items as tools. You want to build a rover on Duna from scratch? Now you can...",
     "resources": {
         "homepage": "http://forum.kerbalspaceprogram.com/threads/113111",
-        "repository": "https://github.com/KospY/KIS",
-        "bugtracker": "https://github.com/KospY/KIS/issues",
-        "manual": "https://github.com/KospY/KIS/raw/master/User%20Guide.pdf"
+        "repository": "https://github.com/ihsoft/KIS",
+        "bugtracker": "https://github.com/ihsoft/KIS/issues",
+        "manual": "https://github.com/ihsoft/KIS/raw/master/User%20Guide.pdf"
     },
     "depends"         : [
         { "name": "CommunityCategoryKit" },
