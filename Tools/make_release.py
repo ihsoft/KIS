@@ -81,7 +81,6 @@ STRUCTURE = collections.OrderedDict({
     '/settings.cfg',
   ],
   '/GameData/KIS/Parts' : '/Parts',
-  '-/GameData/KIS/Parts' : '/fun_*',
   '/GameData/KIS/Sounds' : '/Sounds',
   '/GameData/KIS/Textures' : '/Textures',
   '/GameData/KIS/Plugins' : [
