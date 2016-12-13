@@ -60,8 +60,6 @@ public class ModuleKISItem : PartModule {
   [KSPField]
   public bool carriable = false;
   [KSPField]
-  public bool editorItemsCategory = true;
-  [KSPField]
   public ItemAttachMode allowPartAttach = ItemAttachMode.AllowedWithKisTool;
   [KSPField]
   public ItemAttachMode allowStaticAttach = ItemAttachMode.Disabled;
