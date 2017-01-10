@@ -1,3 +1,8 @@
+### 1.4.1 (pre-release)
+- [Enhancement #191] Add bottom attachment node to container mount.
+- [Enhancement #192] Disallow ILC-18k on container mount.
+- [Enhancement #193] Add quadrant attachment nodes to stock 2x2 panel.
+
 ### 1.4.0 (December 4rd, 2016)
 - [Enhancement] Add default items for the first seat into a lesser slots.
 - [Fix #178] Full mass used for empty parts for purpose of removing from containers.
