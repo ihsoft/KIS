@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace KIS {
 
-public class KIS_Item {
+public sealed class KIS_Item {
   public ConfigNode partNode;
   public AvailablePart availablePart;
   public float quantity;
@@ -379,7 +379,7 @@ public class KIS_Item {
     if (!prefabModule || !inventory.vessel.isEVA) {
       return;
     }
-    Debug.LogFormat("Equip item {0}", this.availablePart.name);
+    Debug.LogFormat("Equip item {0}", availablePart.name);
 
     // Check skill if needed. Skip the check in sandbox modes.
     if (HighLogic.CurrentGame.Mode != Game.Modes.SANDBOX

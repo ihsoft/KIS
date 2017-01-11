@@ -409,7 +409,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
           // Find target seat and schedule a coroutine.
           var destInventory = fromToAction.to.GetComponents<ModuleKISInventory>().ToList()
               .Find(x => x.podSeat == fromToAction.host.seatIdx);
-          StartCoroutine(destInventory.WaitAndTransferItems(this.items, fromToAction.host, this));
+          StartCoroutine(destInventory.WaitAndTransferItems(items, fromToAction.host, this));
         }
       }
     }
@@ -449,8 +449,8 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
   }
 
   int GetFirstFreeSeatIdx(Part p) {
-    for (int i = 0; i <= (p.protoModuleCrew.Count + 1); i++) {
-      ProtoCrewMember pcm = p.protoModuleCrew.Find(x => x.seatIdx == i);
+    for (var i = 0; i < p.protoModuleCrew.Count; i++) {
+      var pcm = p.protoModuleCrew.Find(x => x.seatIdx == i);
       if (pcm == null) {
         return i;
       }
@@ -463,11 +463,11 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
                                    ProtoCrewMember protoCrew,
                                    ModuleKISInventory srcInventory = null) {
     yield return new WaitForFixedUpdate();
-    ProtoCrewMember crewAtPodSeat = this.part.protoModuleCrew.Find(x => x.seatIdx == podSeat);
+    var crewAtPodSeat = part.protoModuleCrew.Find(x => x.seatIdx == podSeat);
     if (crewAtPodSeat == protoCrew) {
       MoveItems(transferedItems, this);
-      Debug.LogFormat("Item transfer | destination: {0} ({1})", part.name, podSeat);
-      this.RefreshMassAndVolume();
+      Debug.LogFormat("Item transfer | destination: {0} (seatIdx={1})", part.name, podSeat);
+      RefreshMassAndVolume();
       if (srcInventory) {
         srcInventory.RefreshMassAndVolume();
       }
