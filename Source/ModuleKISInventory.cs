@@ -437,7 +437,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
               item.Value.equipped = true;  // Mark state for the further re-equip.
             }
           }
-          foreach (KIS_Item item in itemsToDrop) {
+          foreach (var item in itemsToDrop) {
             item.Drop(part);
           }
           var transferedItems = new Dictionary<int, KIS_Item>(evaInventory.items);
