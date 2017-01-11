@@ -404,18 +404,16 @@ public sealed class KIS_Item {
       }
     }
 
-    // Check if already carried
+    // Check if slot is already occupied.
     if (equipSlot != null) {
       KIS_Item equippedItem = inventory.GetEquipedItem(equipSlot);
       if (equippedItem != null) {
-        if (equippedItem.carriable) {
-          if (actorType == ActorType.Player) {
-            ScreenMessaging.ShowPriorityScreenMessage(
-                "Cannot equip item, slot <{0}> already used for carrying {1}",
-                equipSlot, equippedItem.availablePart.title);
-            UISounds.PlayBipWrong();
-            return;
-          }
+        if (equippedItem.carriable && actorType == ActorType.Player) {
+          ScreenMessaging.ShowPriorityScreenMessage(
+              "Cannot equip item, slot <{0}> already used for carrying {1}",
+              equipSlot, equippedItem.availablePart.title);
+          UISounds.PlayBipWrong();
+          return;
         }
         equippedItem.Unequip();
       }
