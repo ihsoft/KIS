@@ -532,12 +532,10 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
 
   /// <summary>Overridden from MonoBehaviour.</summary>
   void OnDestroy() {
-    GameEvents.onCrewTransferred.Remove(new EventData<GameEvents.HostedFromToAction<ProtoCrewMember,
-                                        Part>>.OnEvent(this.OnCrewTransferred));
-    GameEvents.onVesselChange.Remove(new EventData<Vessel>.OnEvent(this.OnVesselChange));
-    GameEvents.onPartActionUICreate.Remove(new EventData<Part>.OnEvent(this.OnPartActionUICreate));
-    GameEvents.onPartActionUIDismiss.Remove(
-        new EventData<Part>.OnEvent(this.OnPartActionUIDismiss));
+    GameEvents.onCrewTransferred.Remove(OnCrewTransferred);
+    GameEvents.onVesselChange.Remove(OnVesselChange);
+    GameEvents.onPartActionUICreate.Remove(OnPartActionUICreate);
+    GameEvents.onPartActionUIDismiss.Remove(OnPartActionUIDismiss);
     if (HighLogic.LoadedSceneIsEditor) {
       InputLockManager.RemoveControlLock("KISInventoryLock");
       GameEvents.onTooltipDestroyRequested.Remove(OnTooltipDestroyRequestedEvent);
@@ -633,7 +631,6 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
       item.Value.inventory = destInventory;
     }
     srcItems.Clear();
-    srcItems = null;
   }
 
   public void DeleteItem(int slot) {
