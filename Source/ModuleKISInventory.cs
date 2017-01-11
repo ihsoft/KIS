@@ -302,25 +302,27 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
   /// <summary>Overridden from PartModule.</summary>
   public override void OnLoad(ConfigNode node) {
     base.OnLoad(node);
-    foreach (ConfigNode cn in node.nodes) {
-      if (cn.name == "ITEM") {
-        if (cn.HasValue("partName") && cn.HasValue("slot") && cn.HasValue("quantity")) {
-          string availablePartName = cn.GetValue("partName");
+    foreach (ConfigNode itemNode in node.nodes) {
+      if (itemNode.name == "ITEM") {
+        if (itemNode.HasValue("partName") && itemNode.HasValue("slot") && itemNode.HasValue("quantity")) {
+          string availablePartName = itemNode.GetValue("partName");
           AvailablePart availablePart = PartLoader.getPartInfoByName(availablePartName);
           if (availablePart != null) {
-            int slot = int.Parse(cn.GetValue("slot"));
-            int qty = int.Parse(cn.GetValue("quantity"));
+            int slot = int.Parse(itemNode.GetValue("slot"));
+            int qty = int.Parse(itemNode.GetValue("quantity"));
             KIS_Item item = null;
-            if (cn.HasNode("PART")) {
-              item = AddItem(availablePart, cn, qty, slot);
+            if (itemNode.HasNode("PART")) {
+              item = AddItem(availablePart, itemNode, qty, slot);
             } else {
               Debug.LogWarningFormat("No part node found on item {0}, creating new one from prefab",
                                      availablePartName);
               item = AddItem(availablePart.partPrefab, qty, slot);
             }
-            if (cn.HasValue("equipped") && item != null
-                && bool.Parse(cn.GetValue("equipped")) && this.invType == InventoryType.Eva) {
-              startEquip.Add(item);
+            if (item != null) {
+              ConfigAccessor.GetValueByPath(itemNode, "equipped", ref item.equipped);
+              if (item.equipped && invType == InventoryType.Eva) {
+                startEquip.Add(item);
+              }
             }
           } else {
             Debug.LogErrorFormat("Unable to load {0} from inventory", availablePartName);
