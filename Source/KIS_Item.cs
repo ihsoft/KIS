@@ -470,7 +470,7 @@ public class KIS_Item {
       }
 
       Part alreadyEquippedPart =
-          this.inventory.part.vessel.Parts.Find(p => p.partInfo.name == this.availablePart.name);
+          inventory.part.vessel.Parts.Find(p => p.partInfo.name == availablePart.name);
       if (alreadyEquippedPart) {
         Debug.LogFormat("Part: {0} already found on eva", availablePart.name);
         equippedPart = alreadyEquippedPart;
