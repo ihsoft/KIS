@@ -373,6 +373,16 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
   }
 
   void OnCrewTransferred(GameEvents.HostedFromToAction<ProtoCrewMember, Part> fromToAction) {
+    // Ensure target pod will accept the inventory.
+    if (!fromToAction.to.vessel.isEVA) {
+      // Assing pod seat if not yet done.
+      if (fromToAction.host.seatIdx == -1) {  
+        fromToAction.host.seatIdx = GetFirstFreeSeatIdx(fromToAction.to);
+        Debug.LogFormat("Assign {0} to seat {1} in {2}",
+                        fromToAction.host.name, fromToAction.host.seatIdx, fromToAction.to.name);
+      }
+    }
+
     if (fromToAction.from == part && invType == InventoryType.Pod) {
       if (fromToAction.to.vessel.isEVA) {
         // pod to eva
@@ -396,14 +406,6 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
         }
       } else {
         // pod to pod
-
-        // Workaround to set a seat index on pod without internal (because KSP don't do it for an unknow reason)
-        if (fromToAction.host.seatIdx == -1) {
-          Debug.LogWarning("protoCrew seatIdx is set to -1 ! (no internal ?)");
-          fromToAction.host.seatIdx = GetFirstFreeSeatIdx(fromToAction.to);
-          Debug.LogFormat("Setting seat to: {0}", fromToAction.host.seatIdx);
-        }
-
         ProtoCrewMember crewAtPodSeat =
             fromToAction.from.protoModuleCrew.Find(x => x.seatIdx == podSeat);
         if (items.Count > 0 && crewAtPodSeat == null) {
@@ -416,36 +418,29 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
       }
     }
 
-    if (fromToAction.to == this.part && invType == InventoryType.Pod) {
-      if (fromToAction.from.vessel.isEVA) {
-        // eva to pod
-
-        // Workaround to set a seat index on pod without internal (because KSP don't do it for an unknow reason)
-        if (fromToAction.host.seatIdx == -1) {
-          Debug.LogWarning("protoCrew seatIdx has been set to -1 ! (no internal ?)");
-          fromToAction.host.seatIdx = GetFirstFreeSeatIdx(fromToAction.to);
-          Debug.LogFormat("Setting seat to: {0}", fromToAction.host.seatIdx);
-          if (fromToAction.host.seatIdx == -1) {
-            Debug.LogError("A seat must be available!");
+    if (fromToAction.to == part && invType == InventoryType.Pod) {
+      // eva to pod
+      // Only process transfer for the inventory in the target seat. This event will trigger for
+      // all inventory modules on the part.
+      if (fromToAction.from.vessel.isEVA && fromToAction.host.seatIdx == podSeat) {
+        if (fromToAction.host.seatIdx == podSeat) {
+          var evaInventory = fromToAction.from.GetComponent<ModuleKISInventory>();
+          Debug.LogFormat("Item transfer | source {0}", fromToAction.host.name);
+          var itemsToDrop = new List<KIS_Item>();
+          foreach (var item in evaInventory.items) {
+            if (item.Value.carriable) {
+              itemsToDrop.Add(item.Value);
+            } else if (item.Value.equipped) {
+              item.Value.Unequip();
+              item.Value.equipped = true;  // Mark state for the further re-equip.
+            }
           }
-        }
-
-        ModuleKISInventory evaInventory = fromToAction.from.GetComponent<ModuleKISInventory>();
-        Debug.LogFormat("Item transfer | source {0}", fromToAction.host.name);
-        var itemsToDrop = new List<KIS_Item>();
-        foreach (var item in evaInventory.items) {
-          if (item.Value.carriable) {
-            itemsToDrop.Add(item.Value);
-          } else if (item.Value.equipped) {
-            item.Value.Unequip();
-            item.Value.equipped = true;  // Mark state for the further re-equip.
+          foreach (KIS_Item item in itemsToDrop) {
+            item.Drop(part);
           }
+          var transferedItems = new Dictionary<int, KIS_Item>(evaInventory.items);
+          StartCoroutine(WaitAndTransferItems(transferedItems, fromToAction.host));
         }
-        foreach (KIS_Item item in itemsToDrop) {
-          item.Drop(part);
-        }
-        var transferedItems = new Dictionary<int, KIS_Item>(evaInventory.items);
-        StartCoroutine(WaitAndTransferItems(transferedItems, fromToAction.host));
       }
     }
   }
