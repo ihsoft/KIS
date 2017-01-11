@@ -219,8 +219,11 @@ public sealed class KIS_Item {
     if (inventoryName != "") {
       node.AddValue("inventoryName", inventoryName);
     }
-    if (equipped && (equipMode == EquipMode.Part || equipMode == EquipMode.Physic)) {
-      Debug.LogFormat("Update config node of equipped part: {0}", this.availablePart.title);
+    // Items in pod and container may have equipped status True but they are not actually equipped,
+    // so there is no equipped part.
+    if (equipped && equippedPart != null
+        && (equipMode == EquipMode.Part || equipMode == EquipMode.Physic)) {
+      Debug.LogFormat("Update config node of equipped part: {0}", availablePart.title);
       partNode.ClearData();
       KIS_Shared.PartSnapshot(equippedPart).CopyTo(partNode);
     }
