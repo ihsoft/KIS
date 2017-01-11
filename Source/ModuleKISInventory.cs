@@ -399,10 +399,12 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
           destInventory.RefreshMassAndVolume();
 
           // Re-equip items on the EVA kerbal.
+          destInventory.startEquip.Clear();
           foreach (var item in destInventory.items.Values) {
             if (item.equipped) {
-              Debug.LogFormat("Re-equip item: {0}", item.availablePart.title);
-              item.Equip();
+              Debug.LogFormat("Schedule re-equipping item: {0}", item.availablePart.title);
+              item.equipped = false;
+              destInventory.startEquip.Add(item);
             }
           }
         }
