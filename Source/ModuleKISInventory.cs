@@ -641,7 +641,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
   }
 
   public KIS_Item GetEquipedItem(string equipSlot) {
-    foreach (KeyValuePair<int, KIS_Item> item in this.items) {
+    foreach (KeyValuePair<int, KIS_Item> item in items) {
       if (item.Value.equipped && item.Value.equipSlot == equipSlot) {
         return item.Value;
       }

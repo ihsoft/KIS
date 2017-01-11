@@ -24,7 +24,7 @@ public sealed class KIS_Item {
   public bool equipped = false;
   public ModuleKISInventory inventory;
   public ModuleKISItem prefabModule;
-  private GameObject equippedGameObj;
+  GameObject equippedGameObj;
   public Part equippedPart;
   Transform evaTransform;
   public enum ActionType {
