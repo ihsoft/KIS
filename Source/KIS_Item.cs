@@ -481,7 +481,7 @@ public sealed class KIS_Item {
         Vector3 equipPos = evaTransform.TransformPoint(prefabModule.equipPos);
         Quaternion equipRot = evaTransform.rotation * Quaternion.Euler(prefabModule.equipDir);
         equippedPart = KIS_Shared.CreatePart(
-            partNode, equipPos, equipRot, this.inventory.part, this.inventory.part, null, null,
+            partNode, equipPos, equipRot, inventory.part, inventory.part, null, null,
             OnEquippedPartCoupled);
       }
       if (equipMode == EquipMode.Part) {
@@ -560,7 +560,7 @@ public sealed class KIS_Item {
 
       //Create physic join
       FixedJoint evaJoint = equippedPart.gameObject.AddComponent<FixedJoint>();
-      evaJoint.connectedBody = inventory.part.Rigidbody;//evaCollider.attachedRigidbody;
+      evaJoint.connectedBody = inventory.part.Rigidbody;
       evaJoint.breakForce = EqippedPartJointBreakForce;
       evaJoint.breakTorque = EqippedPartJointBreakForce;
       KIS_Shared.ResetCollisionEnhancer(equippedPart);
