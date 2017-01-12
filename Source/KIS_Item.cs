@@ -379,7 +379,8 @@ public sealed class KIS_Item {
 
   public void Equip(ActorType actorType = ActorType.API) {
     // Only equip EVA kerbals.
-    if (!prefabModule || !inventory.vessel.isEVA) {
+    if (!prefabModule || inventory.invType != ModuleKISInventory.InventoryType.Eva) {
+      Debug.LogWarningFormat("Cannot equip item from inventory type: {0}", inventory.invType);
       return;
     }
     Debug.LogFormat("Equip item {0}", availablePart.name);
