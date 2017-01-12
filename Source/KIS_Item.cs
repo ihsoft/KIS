@@ -299,11 +299,6 @@ public sealed class KIS_Item {
       equippedGameObj.transform.rotation =
           evaTransform.rotation * Quaternion.Euler(prefabModule.equipDir);
       equippedGameObj.transform.position = evaTransform.TransformPoint(prefabModule.equipPos);
-      if (equippedPart && equippedPart.Rigidbody) {
-        equippedPart.Rigidbody.velocity = equippedPart.vessel.rootPart.Rigidbody.velocity;
-        equippedPart.Rigidbody.angularVelocity =
-            equippedPart.vessel.rootPart.Rigidbody.angularVelocity;
-      }
     }
     if (prefabModule != null) {
       prefabModule.OnItemUpdate(this);
