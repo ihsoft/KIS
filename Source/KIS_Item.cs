@@ -471,8 +471,7 @@ public sealed class KIS_Item {
         return;
       }
 
-      Part alreadyEquippedPart =
-          inventory.part.vessel.Parts.Find(p => p.partInfo.name == availablePart.name);
+      var alreadyEquippedPart = inventory.part.FindChildPart(availablePart.name);
       if (alreadyEquippedPart) {
         Debug.LogFormat("Part: {0} already found on eva", availablePart.name);
         equippedPart = alreadyEquippedPart;
@@ -543,7 +542,8 @@ public sealed class KIS_Item {
       if (equippedPart.collisionEnhancer) {
         UnityEngine.Object.DestroyImmediate(equippedPart.collisionEnhancer);
       }
-      UnityEngine.Object.Destroy(equippedPart.Rigidbody);
+      // Don't use DestroyImmediate() since the joint is not dead yet.
+      UnityEngine.Object.Destroy(equippedPart.rb);
     }
 
     if (equipMode == EquipMode.Physic) {
