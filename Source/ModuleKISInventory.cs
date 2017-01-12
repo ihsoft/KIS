@@ -319,11 +319,14 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
               item = AddItem(availablePart.partPrefab, qty, slot);
             }
             if (item != null) {
-              //ConfigAccessor.GetValueByPath(itemNode, "equipped", ref item.equipped);
               bool isEquipped = false;
               ConfigAccessor.GetValueByPath(itemNode, "equipped", ref isEquipped);
-              if (isEquipped && invType == InventoryType.Eva) {
-                startEquip.Add(item);
+              if (isEquipped) {
+                if (invType == InventoryType.Eva) {
+                  startEquip.Add(item);
+                } else {
+                  item.equipped = true;
+                }
               }
             }
           } else {
