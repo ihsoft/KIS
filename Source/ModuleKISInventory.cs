@@ -410,6 +410,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
               destInventory.startEquip.Add(item);
             }
           }
+          destInventory.helmetEquipped = helmetEquipped;  // Restore helmet state.
         }
       } else {
         // pod to pod
@@ -420,6 +421,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
           // Find target seat and schedule a coroutine.
           var destInventory = fromToAction.to.GetComponents<ModuleKISInventory>().ToList()
               .Find(x => x.podSeat == fromToAction.host.seatIdx);
+          destInventory.helmetEquipped = helmetEquipped;  // Move helmet state.
           StartCoroutine(destInventory.WaitAndTransferItems(items, fromToAction.host, this));
         }
       }
@@ -442,6 +444,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
               item.Value.equipped = true;  // Mark state for the further re-equip.
             }
           }
+          helmetEquipped = evaInventory.helmetEquipped;  // Save helmet state.
           foreach (var item in itemsToDrop) {
             item.Drop(part);
           }
