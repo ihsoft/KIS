@@ -35,10 +35,9 @@ sealed class KISAddonConfig : MonoBehaviour {
       return;
     }
 
-    // Male Kerbal.
-    UpdateEvaPrefab(PartLoader.getPartInfoByName(MaleKerbalEva), nodeSettings);
-    // Female Kerbal.
-    UpdateEvaPrefab(PartLoader.getPartInfoByName(FemaleKerbalEva), nodeSettings);
+    // Kerbal parts.
+    UpdateEvaPrefab(MaleKerbalEva, nodeSettings);
+    UpdateEvaPrefab(FemaleKerbalEva, nodeSettings);
 
     // Set inventory module for every pod with crew capacity.
     Debug.Log("Loading pod inventories...");
@@ -74,39 +73,34 @@ sealed class KISAddonConfig : MonoBehaviour {
     }
   }
 
-  void UpdateEvaPrefab(AvailablePart avPart, ConfigNode nodeSettings) {
-    var prefab = avPart.partPrefab;
-    // Adding module to EVA may cause an NPE but module update will still work.
-    try {
-      prefab.AddModule(typeof(ModuleKISInventory).Name);
-    } catch (Exception ex) {
-      Debug.LogFormat(
-          "NOT A BUG! Ignoring error while adding ModuleKISInventory to {0}: {1}", prefab, ex);
+  /// <summary>Load config of EVA modules for the requested part name.</summary>
+  void UpdateEvaPrefab(string partName, ConfigNode nodeSettings) {
+    var prefab = PartLoader.getPartInfoByName(partName).partPrefab;
+    if (LoadModuleConfig(prefab, typeof(ModuleKISInventory),
+                         nodeSettings.GetNode("EvaInventory"))) {
+      prefab.GetComponent<ModuleKISInventory>().invType = ModuleKISInventory.InventoryType.Eva;
     }
-    try {
-      prefab.AddModule(typeof(ModuleKISPickup).Name);
-    } catch (Exception ex) {
-      Debug.LogFormat("NOT A BUG! Ignoring error adding ModuleKISPickup to {0}: {1}", prefab, ex);
-    }
+    LoadModuleConfig(prefab, typeof(ModuleKISPickup), nodeSettings.GetNode("EvaPickup"));
+  }
 
-    // Setup inventory module for eva.
-    var evaInventory = prefab.GetComponent<ModuleKISInventory>();
-    KIS_Shared.AwakePartModule(evaInventory);
-    if (evaInventory) {
-      SetInventoryConfig(evaInventory, nodeSettings);
-      evaInventory.invType = ModuleKISInventory.InventoryType.Eva;
-      Debug.Log("Eva inventory module loaded successfully");
+  /// <summary>Loads config values for the part's module fro the provided config node.</summary>
+  /// <returns><c>true</c> if loaded successfully.</returns>
+  bool LoadModuleConfig(Part p, Type moduleType, ConfigNode node) {
+    var module = p.GetComponent(moduleType);
+    if (module == null) {
+      Debug.LogWarningFormat("Config node for module {0} in part {1} is NULL. Nothing to load!",
+                             moduleType, p.name);
+      return false;
     }
-
-    // Load KSP fields for ModuleKISPickup module.
-    var nodeEvaPickup = nodeSettings.GetNode("EvaPickup");
-    var evaPickup = prefab.GetComponent<ModuleKISPickup>();
-    KIS_Shared.AwakePartModule(evaPickup);
-    if (evaPickup && nodeEvaPickup != null) {
-      var fields = new BaseFieldList(evaPickup);
-      fields.Load(nodeEvaPickup);
-      Debug.Log("Eva pickup module loaded successfully");
+    if (node == null) {
+      Debug.LogWarningFormat("Cannot find module {0} on part {1}. Config not loaded!",
+                             moduleType, p.name);
+      return false;
     }
+    var baseFields = new BaseFieldList(module);
+    baseFields.Load(node);
+    Debug.LogFormat("Loaded config for {0} on part {1}", moduleType, p.name);
+    return true;
   }
 }
 
