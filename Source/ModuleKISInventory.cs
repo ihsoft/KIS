@@ -847,6 +847,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
         helmetEquipped = true;
         ScreenMessaging.ShowPriorityScreenMessage(
             "Cannot remove helmet, atmosphere does not contain oxygen !");
+        UISounds.PlayBipWrong();
         return false;
       }
       if (FlightGlobals.getStaticPressure() < KISAddonConfig.breathableAtmoPressure) {
@@ -854,6 +855,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
         ScreenMessaging.ShowPriorityScreenMessage(
             "Cannot remove helmet, pressure is less than {0} ! (Current : {1})",
             KISAddonConfig.breathableAtmoPressure, FlightGlobals.getStaticPressure());
+        UISounds.PlayBipWrong();
         return false;
       }
     }
