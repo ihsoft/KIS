@@ -115,6 +115,5 @@ UpgradeLog*.XML
 Plugins/MiniAVC.xml
 *.Settings
 *.sdsettings
-*.csproj
 *.local
 KIS_v*.zip
