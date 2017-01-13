@@ -1441,7 +1441,9 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
           } else {
             // Part come from scene
             if (items[slotIndex].StackAdd(1)) {
-              KISAddonPickup.draggedPart.Die();
+              if (!HighLogic.LoadedSceneIsEditor) {
+                KISAddonPickup.draggedPart.Die();  // In editor parts are not connected. 
+              }
               items[slotIndex].OnMove(srcInventory, this);
             }
           }
