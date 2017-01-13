@@ -11,13 +11,13 @@ namespace KIS {
 [PersistentFieldsDatabase("KIS/settings/KISConfig")]
 sealed class KISAddonConfig : MonoBehaviour {
   [PersistentField("StackableItemOverride/partName", isCollection = true)]
-  public static List<string> stackableList = new List<string>();
+  public readonly static List<string> stackableList = new List<string>();
 
   [PersistentField("StackableModule/moduleName", isCollection = true)]
-  public static List<string> stackableModules = new List<string>();
+  public readonly static List<string> stackableModules = new List<string>();
 
   [PersistentField("Global/breathableAtmoPressure")]
-  public static float breathableAtmoPressure = 0.5f;
+  public readonly static float breathableAtmoPressure = 0.5f;
 
   const string MaleKerbalEva = "kerbalEVA";
   const string FemaleKerbalEva = "kerbalEVAfemale";
