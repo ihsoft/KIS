@@ -54,7 +54,8 @@ sealed class KISAddonConfig : MonoBehaviour {
           var moduleInventory =
             avPart.partPrefab.AddModule(typeof(ModuleKISInventory).Name) as ModuleKISInventory;
           KIS_Shared.AwakePartModule(moduleInventory);
-          SetInventoryConfig(moduleInventory, nodeSettings);
+          var baseFields = new BaseFieldList(moduleInventory);
+          baseFields.Load(nodeSettings.GetNode("EvaInventory"));
           moduleInventory.podSeat = i;
           moduleInventory.invType = ModuleKISInventory.InventoryType.Pod;
           Debug.LogFormat("Pod inventory module(s) for seat {0} loaded successfully", i);
@@ -62,14 +63,6 @@ sealed class KISAddonConfig : MonoBehaviour {
           Debug.LogErrorFormat("Pod inventory module(s) for seat {0} can't be loaded!", i);
         }
       }
-    }
-  }
-
-  void SetInventoryConfig(Component moduleInventory, ConfigNode nodeSettings) {
-    var nodeEvaInventory = nodeSettings.GetNode("EvaInventory");
-    if (nodeEvaInventory != null) {
-      var baseFields = new BaseFieldList(moduleInventory);
-      baseFields.Load(nodeEvaInventory);
     }
   }
 
