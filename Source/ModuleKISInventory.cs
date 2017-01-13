@@ -843,7 +843,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
 
   public bool SetHelmet(bool active, bool checkAtmo = false) {
     if (checkAtmo) {
-      if (!this.part.vessel.mainBody.atmosphereContainsOxygen) {
+      if (!part.vessel.mainBody.atmosphereContainsOxygen) {
         helmetEquipped = true;
         ScreenMessaging.ShowPriorityScreenMessage(
             "Cannot remove helmet, atmosphere does not contain oxygen !");
@@ -1433,10 +1433,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
           if (KISAddonPickup.draggedItem != null) {
             srcInventory = KISAddonPickup.draggedItem.inventory;
             // Part come from inventory
-            bool checkVolume = true;
-            if (srcInventory == this) {
-              checkVolume = false;
-            }
+            bool checkVolume = srcInventory != this;
             if (items[slotIndex].StackAdd(KISAddonPickup.draggedItem.quantity, checkVolume)) {
               KISAddonPickup.draggedItem.Delete();
               items[slotIndex].OnMove(srcInventory, this);
