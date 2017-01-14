@@ -1,4 +1,5 @@
 ﻿using KSPDev.GUIUtils;
+using KSPDev.ProcessingUtils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -168,18 +169,38 @@ sealed class KISAddonPointer : MonoBehaviour {
 
       MakePointer();
              
-      InputLockManager.SetControlLock(ControlTypes.ALLBUTCAMERAS, "KISpointer");
+      LockUI();
       allowedAttachmentParts = allowedAttachmentParts; // Apply selection.
     }
   }
 
-  public static void StopPointer() {
+  /// <summary>Cancels active pointing mode and returns pointer to normal view.</summary>
+  /// <param name="unlockUI">
+  /// If <c>false</c> then input lock will not be released. Caller is responsible to release it,
+  /// otherwise game's input will be blocked.
+  /// </param>
+  /// <seealso cref="UnlockUI"/>
+  public static void StopPointer(bool unlockUI = true) {
     Debug.Log("StopPointer()");
     running = false;
     ResetMouseOver();
-    InputLockManager.RemoveControlLock("KISpointer");
+    if (unlockUI) {
+      UnlockUI();
+    }
     DestroyPointer();
     allowedAttachmentParts = allowedAttachmentParts; // Clear selection.
+  }
+
+  /// <summary>Acquires KIS input lock on UI interactions.</summary>
+  public static void LockUI() {
+    InputLockManager.SetControlLock(ControlTypes.ALLBUTCAMERAS, "KISpointer");
+    Debug.Log("KIS UI lock acquired");
+  }
+
+  /// <summary>Releases KIS input lock on UI interactions.</summary>
+  public static void UnlockUI() {
+    InputLockManager.RemoveControlLock("KISpointer");
+    Debug.Log("KIS UI lock released");
   }
 
   public void Update() {
@@ -541,10 +562,12 @@ sealed class KISAddonPointer : MonoBehaviour {
   /// <summary>Handles keyboard input.</summary>
   private void UpdateKey() {
     if (isRunning) {
-      if (KIS_Shared.IsKeyDown(KeyCode.Escape) || KIS_Shared.IsKeyDown(KeyCode.Return)) {
+      if (KIS_Shared.IsKeyUp(KeyCode.Escape) || KIS_Shared.IsKeyDown(KeyCode.Return)) {
         Debug.Log("Cancel key pressed, stop eva attach mode");
-        StopPointer();
+        StopPointer(unlockUI: false);
         SendPointerClick(PointerTarget.Nothing, Vector3.zero, Quaternion.identity, null, null);
+        // Delay unlocking to not let ESC be handled by the game.
+        AsyncCall.CallOnEndOfFrame(this, x => UnlockUI());
       }
       if (GameSettings.Editor_toggleSymMethod.GetKeyDown()) {  // "R" by default.
         if (pointerTarget != PointerTarget.PartMount && attachNodes.Count() > 1) {
