@@ -1,5 +1,6 @@
 ﻿using KSPDev.ConfigUtils;
 using KSPDev.GUIUtils;
+using KSP.UI.Screens;
 using System;
 using System.Collections.Generic;
 using System.Collections;
@@ -277,10 +278,54 @@ public static class KIS_Shared {
     return CreatePart(partNode, position, rotation, fromPart);
   }
 
-  public static Part CreatePart(ConfigNode partConfig, Vector3 position, Quaternion rotation,
-                                Part fromPart, Part coupleToPart = null,
-                                string srcAttachNodeID = null, AttachNode tgtAttachNode = null,
-                                OnPartCoupled onPartCoupled = null) {
+  /// <summary>Creates a new part from the config.</summary>
+  /// <param name="partConfig">Config to read part from.</param>
+  /// <param name="position">Initial position of the new part.</param>
+  /// <param name="rotation">Initial rotation of the new part.</param>
+  /// <param name="fromPart"></param>
+  /// <param name="coupleToPart">Optional. Part to couple new part to.</param>
+  /// <param name="srcAttachNodeId">
+  /// Optional. Attach node ID on the new part to use for coupling. It's required if coupling to
+  /// part is requested.
+  /// </param>
+  /// <param name="tgtAttachNode">
+  /// Optional. Attach node on the target part to use for coupling. It's required if
+  /// <paramref name="srcAttachNodeId"/> specifies a stack node.
+  /// </param>
+  /// <param name="onPartCoupled">
+  /// Callback to call when new part is fully operational and its joint is created (if any). It's
+  /// undetermined how long it may take before the callback is called. The calling code must expect
+  /// that there will be several frame updates and at least one fixed frame update.
+  /// </param>
+  /// <param name="createPhysicsless">
+  /// Tells if new part must be created without rigidbody and joint. It's only used to create
+  /// equippable parts. Any other use-case is highly unlikely.
+  /// </param>
+  /// <returns></returns>
+  public static Part CreatePart(
+      ConfigNode partConfig, Vector3 position, Quaternion rotation, Part fromPart,
+      Part coupleToPart = null,
+      string srcAttachNodeId = null,
+      AttachNode tgtAttachNode = null,
+      OnPartCoupled onPartCoupled = null,
+      bool createPhysicsless = false) {
+    // Sanity checks for the paramaeters.
+    if (coupleToPart != null) {
+      if (srcAttachNodeId == null
+          || srcAttachNodeId == "srfAttach" && tgtAttachNode != null
+          || srcAttachNodeId != "srfAttach"
+             && (tgtAttachNode == null || tgtAttachNode.id == "srfAttach")) {
+        Debug.LogWarningFormat(
+            "Wrong parts attach parameters: srcNodeId={0}, tgtNodeId={1}",
+            srcAttachNodeId ?? "N/A",
+            tgtAttachNode != null ? tgtAttachNode.id : "N/A");
+        // Best we can do is falling back to surface attach.
+        srcAttachNodeId = "srfAttach";
+        tgtAttachNode = null;
+      }
+    }
+
+    var refVessel = coupleToPart != null ? coupleToPart.vessel : fromPart.vessel;
     var node_copy = new ConfigNode();
     partConfig.CopyTo(node_copy);
     var snapshot = new ProtoPartSnapshot(node_copy, null, HighLogic.CurrentGame);
@@ -289,108 +334,120 @@ public static class KIS_Shared {
         || snapshot.flightID == 0) {
       snapshot.flightID = ShipConstruction.GetUniqueFlightID(HighLogic.CurrentGame.flightState);
     }
-    snapshot.parentIdx = 0;
+    snapshot.parentIdx = coupleToPart != null ? refVessel.parts.IndexOf(coupleToPart) : 0;
     snapshot.position = position;
     snapshot.rotation = rotation;
     snapshot.stageIndex = 0;
     snapshot.defaultInverseStage = 0;
     snapshot.seqOverride = -1;
     snapshot.inStageIndex = -1;
-    snapshot.attachMode = (int)AttachModes.SRF_ATTACH;
+    snapshot.attachMode = srcAttachNodeId == "srfAttach"
+        ? (int)AttachModes.SRF_ATTACH
+        : (int)AttachModes.STACK;
     snapshot.attached = true;
-    //snapshot.connected = true;
     snapshot.flagURL = fromPart.flagURL;
 
-    Part newPart = snapshot.Load(fromPart.vessel, false);
+    var newPart = snapshot.Load(refVessel, false);
+    refVessel.Parts.Add(newPart);
 
     newPart.transform.position = position;
     newPart.transform.rotation = rotation;
     newPart.missionID = fromPart.missionID;
 
-    fromPart.vessel.Parts.Add(newPart);
-
-    newPart.physicalSignificance = Part.PhysicalSignificance.NONE;
-    newPart.PromoteToPhysicalPart();
-    newPart.Unpack();
-    newPart.InitializeModules();
-
-    if (coupleToPart) {
-      newPart.Rigidbody.velocity = coupleToPart.Rigidbody.velocity;
-      newPart.Rigidbody.angularVelocity = coupleToPart.Rigidbody.angularVelocity;
+    if (coupleToPart != null) {
+      // Wait for part to initialize and then fire ready event.
+      newPart.StartCoroutine(
+          WaitAndCouple(newPart, srcAttachNodeId, tgtAttachNode, onPartCoupled,
+                        createPhysicsless: createPhysicsless));
     } else {
-      if (fromPart.Rigidbody) {
-        newPart.Rigidbody.velocity = fromPart.Rigidbody.velocity;
-        newPart.Rigidbody.angularVelocity = fromPart.Rigidbody.angularVelocity;
-      } else {
-        // If fromPart is a carried container
-        newPart.Rigidbody.velocity = fromPart.vessel.rootPart.Rigidbody.velocity;
-        newPart.Rigidbody.angularVelocity = fromPart.vessel.rootPart.Rigidbody.angularVelocity;
-      }
-    }
-
-    // New part by default is coupled with the active vessel.
-    newPart.decouple();
-
-    if (coupleToPart) {
-      newPart.StartCoroutine(WaitAndCouple(newPart, coupleToPart, srcAttachNodeID,
-                                           tgtAttachNode, onPartCoupled));
-    } else {
-      RenameAssemblyVessel(newPart);
+      // Wait for part to initialize and then decouple it.
+      newPart.StartCoroutine(WaitAndCouple(newPart, "srfAttach", null, (x1, x2, x3) => {
+        // Create a dropped part. It will become an independent vessel.
+        newPart.decouple();
+        RenameAssemblyVessel(newPart);
+        if (onPartCoupled != null) {
+          onPartCoupled(newPart, newPart.parent, tgtAttachNode);
+        }
+      }));
     }
     return newPart;
   }
 
-  static IEnumerator WaitAndCouple(Part newPart, Part tgtPart = null,
-                                   string srcAttachNodeID = null,
-                                   AttachNode tgtAttachNode = null,
-                                   OnPartCoupled onPartCoupled = null) {
-    // Get relative position & rotation
-    Vector3 toPartLocalPos = Vector3.zero;
-    Quaternion toPartLocalRot = Quaternion.identity;
-    if (tgtPart) {
-      if (tgtAttachNode == null) {
-        // Local position & rotation from part
-        toPartLocalPos = tgtPart.transform.InverseTransformPoint(newPart.transform.position);
-        toPartLocalRot =
-            Quaternion.Inverse(tgtPart.transform.rotation) * newPart.transform.rotation;
-      } else {
-        // Local position & rotation from node (KAS winch connector)
-        toPartLocalPos =
-            tgtAttachNode.nodeTransform.InverseTransformPoint(newPart.transform.position);
-        toPartLocalRot =
-            Quaternion.Inverse(tgtAttachNode.nodeTransform.rotation) * newPart.transform.rotation;
-      }
+  static IEnumerator WaitAndCouple(Part newPart, string srcAttachNodeId,
+                                   AttachNode tgtAttachNode, OnPartCoupled onPartReady,
+                                   bool createPhysicsless = false) {
+    var tgtPart = newPart.parent;
+    newPart.UpdateOrgPosAndRot(newPart.vessel.rootPart);//FIXME?
+    var phsysicSignificant = newPart.PhysicsSignificance;
+    newPart.PhysicsSignificance = 1;  // Disable physics on the part.
+
+    // Create proper attach nodes.
+    Debug.LogFormat("Couple new part {0} to {1}: srcNodeId={2}, tgtNode={3}",
+                    newPart.name, newPart.vessel,
+                    srcAttachNodeId, tgtAttachNode != null ? tgtAttachNode.id : "N/A");
+    var srcAttachNode = GetAttachNodeById(newPart, srcAttachNodeId);
+    srcAttachNode.attachedPart = tgtPart;
+    srcAttachNode.attachedPartId = tgtPart.flightID;
+    if (tgtAttachNode != null) {
+      tgtAttachNode.attachedPart = newPart;
+      tgtAttachNode.attachedPartId = newPart.flightID;
+    }
+    
+    // Wait until part is started.
+    Debug.LogFormat("Wait for part {0} to get alive...", newPart.name);
+    newPart.transform.parent = tgtPart.transform;
+    yield return new WaitWhile(() => !newPart.started && newPart.State != PartStates.DEAD);
+    newPart.transform.parent = null;
+    Debug.LogFormat("Part {0} is in state {1}", newPart.name, newPart.State);
+    if (newPart.State == PartStates.DEAD) {
+      Debug.LogWarningFormat("Part {0} has died before fully instantiating", newPart.name);
+      yield break;
     }
 
-    // Wait part to initialize            
-    while (!newPart.started && newPart.State != PartStates.DEAD) {
-      Debug.Log("CreatePart - Waiting initialization of the part...");
-      if (tgtPart) {
-        // Part stay in position 
-        if (tgtAttachNode == null) {
-          newPart.transform.position = tgtPart.transform.TransformPoint(toPartLocalPos);
-          newPart.transform.rotation = tgtPart.transform.rotation * toPartLocalRot;
-        } else {
-          newPart.transform.position = tgtAttachNode.nodeTransform.TransformPoint(toPartLocalPos);
-          newPart.transform.rotation = tgtAttachNode.nodeTransform.rotation * toPartLocalRot;
-        }
-      }
-      yield return null;
-    }
-    // Part stay in position 
-    if (tgtAttachNode == null) {
-      newPart.transform.position = tgtPart.transform.TransformPoint(toPartLocalPos);
-      newPart.transform.rotation = tgtPart.transform.rotation * toPartLocalRot;
+    // Hanle part's physics.
+    newPart.PhysicsSignificance = phsysicSignificant;
+    if (!createPhysicsless && phsysicSignificant != 1) {
+      Debug.LogFormat("Start physics on part {0}", newPart.name);
+      newPart.physicalSignificance = Part.PhysicalSignificance.NONE;
+      newPart.PromoteToPhysicalPart();
+      newPart.rb.velocity = tgtPart.Rigidbody.velocity;
+      newPart.rb.angularVelocity = tgtPart.Rigidbody.angularVelocity;
+      newPart.CreateAttachJoint(tgtPart.attachMode);
+      newPart.ResetJoints();
     } else {
-      newPart.transform.position = tgtAttachNode.nodeTransform.TransformPoint(toPartLocalPos);
-      newPart.transform.rotation = tgtAttachNode.nodeTransform.rotation * toPartLocalRot;
+      Debug.LogFormat("Skip physics init on part {0} due to settings", newPart.name);
     }
-    Debug.Log("CreatePart - Coupling part...");
-    CouplePart(newPart, tgtPart, srcAttachNodeID, tgtAttachNode);
+    newPart.Unpack();
+    newPart.InitializeModules();
 
-    if (onPartCoupled != null) {
-      onPartCoupled(newPart, tgtPart, tgtAttachNode);
+    // Notify the game about a new part that has just "coupled".
+    GameEvents.onPartCouple.Fire(new GameEvents.FromToAction<Part, Part>(newPart, tgtPart));
+    tgtPart.vessel.ClearStaging();
+    GameEvents.onVesselPartCountChanged.Fire(tgtPart.vessel);
+    newPart.vessel.checkLanded();
+    newPart.vessel.currentStage = StageManager.RecalculateVesselStaging(tgtPart.vessel) + 1;
+    GameEvents.onVesselWasModified.Fire(tgtPart.vessel);
+    newPart.CheckBodyLiftAttachment();
+
+    if (onPartReady != null) {
+      onPartReady(newPart, tgtPart, tgtAttachNode);
     }
+  }
+
+  /// <summary>Finds and returns attach node by name.</summary>
+  /// <param name="p">Part to find node for.</param>
+  /// <param name="id">Name of the node. Surface nodename is allowed as well (srfAttach).</param>
+  /// <returns>
+  /// Found node. If node with the exact name cannot be found then surface attach node is returned.
+  /// </returns>
+  public static AttachNode GetAttachNodeById(Part p, string id) {
+    var node = id == "srfAttach" ? p.srfAttachNode : p.FindAttachNode(id);
+    if (node == null) {
+      Debug.LogWarningFormat(
+          "Cannot find attach node {0} on part {1}. Using srfAttach", id, p.name);
+      node = p.srfAttachNode;
+    }
+    return node;
   }
 
   public static void CouplePart(Part srcPart, Part tgtPart,

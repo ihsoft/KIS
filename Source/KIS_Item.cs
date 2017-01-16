@@ -476,9 +476,9 @@ public sealed class KIS_Item {
         Quaternion equipRot = evaTransform.rotation * Quaternion.Euler(prefabModule.equipDir);
         equippedPart = KIS_Shared.CreatePart(
             partNode, equipPos, equipRot, inventory.part, inventory.part,
-            srcAttachNodeId: null,
-            tgtAttachNode: null,
-            onPartCoupled: OnEquippedPartCoupled);
+            srcAttachNodeId: "srfAttach",
+            onPartCoupled: OnEquippedPartCoupled,
+            createPhysicsless: equipMode != EquipMode.Physic);
       }
       if (equipMode == EquipMode.Part) {
         equippedGameObj = equippedPart.gameObject;
@@ -529,19 +529,6 @@ public sealed class KIS_Item {
       foreach (var col in equippedPart.gameObject.GetComponentsInChildren<Collider>()) {
         col.isTrigger = true;
       }
-
-      //Destroy joint to avoid buggy eva move
-      if (equippedPart.attachJoint) {
-        equippedPart.attachJoint.DestroyJoint();
-      }
-
-      //Destroy rigidbody
-      equippedPart.physicalSignificance = Part.PhysicalSignificance.NONE;
-      if (equippedPart.collisionEnhancer) {
-        UnityEngine.Object.DestroyImmediate(equippedPart.collisionEnhancer);
-      }
-      // Don't use DestroyImmediate() since the joint is not dead yet.
-      UnityEngine.Object.Destroy(equippedPart.rb);
     }
 
     if (equipMode == EquipMode.Physic) {
