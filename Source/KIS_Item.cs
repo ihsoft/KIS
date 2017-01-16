@@ -530,26 +530,6 @@ public sealed class KIS_Item {
         col.isTrigger = true;
       }
     }
-
-    if (equipMode == EquipMode.Physic) {
-      equippedPart.mass = 0.001f;
-      //Disable colliders
-      foreach (Collider col in equippedPart.gameObject.GetComponentsInChildren<Collider>()) {
-        col.isTrigger = true;
-      }
-
-      //Destroy joint to avoid buggy eva move
-      if (equippedPart.attachJoint) {
-        equippedPart.attachJoint.DestroyJoint();
-      }
-
-      //Create physic join
-      FixedJoint evaJoint = equippedPart.gameObject.AddComponent<FixedJoint>();
-      evaJoint.connectedBody = inventory.part.Rigidbody;
-      evaJoint.breakForce = EqippedPartJointBreakForce;
-      evaJoint.breakTorque = EqippedPartJointBreakForce;
-      KIS_Shared.ResetCollisionEnhancer(equippedPart);
-    }
   }
 
   public void Drop(Part fromPart = null) {
