@@ -497,6 +497,8 @@ public sealed class KIS_Item {
     if (!prefabModule) {
       return;
     }
+    // This must be firts thing to happen to prevent other handlers to trigger. 
+    equipped = false;
     if (equipMode == EquipMode.Model) {
       UnityEngine.Object.Destroy(equippedGameObj);
       if (prefabModule.equipRemoveHelmet) {
@@ -512,7 +514,6 @@ public sealed class KIS_Item {
     evaTransform = null;
     equippedPart = null;
     equippedGameObj = null;
-    equipped = false;
     if (actorType == ActorType.Player) {
       UISoundPlayer.instance.Play(prefabModule.moveSndPath);
     }

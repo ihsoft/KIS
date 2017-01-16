@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using KSPDev.ProcessingUtils;
+using System.Collections;
 using System;
 using System.Linq;
 using UnityEngine;
@@ -75,6 +76,18 @@ public class ModuleKISItem : PartModule {
   public bool staticAttached = false;
 
   FixedJoint staticAttachJoint;
+
+  protected virtual void OnPartDie() {
+    if (vessel.isEVA) {
+      var inventory = vessel.rootPart.GetComponent<ModuleKISInventory>();
+      var item = inventory.items.Values.FirstOrDefault(i => i.equipped && i.equippedPart == part);
+      if (item != null) {
+        Debug.LogFormat("Item {0} has been destroyed. Drop it from inventory of {1}",
+                        item.availablePart.title, inventory.part.name);
+        AsyncCall.CallOnEndOfFrame(inventory, x => inventory.DeleteItem(item.slot));
+      }
+    }
+  }
 
   public virtual void OnItemUse(KIS_Item item, KIS_Item.UseFrom useFrom) {
   }
