@@ -470,14 +470,14 @@ public sealed class KIS_Item {
       if (alreadyEquippedPart) {
         Debug.LogFormat("Part {0} already found on eva, use it as the item", availablePart.name);
         equippedPart = alreadyEquippedPart;
-        OnEquippedPartCoupled(equippedPart, null, null);
+        OnEquippedPartReady(equippedPart);
       } else {
         Vector3 equipPos = evaTransform.TransformPoint(prefabModule.equipPos);
         Quaternion equipRot = evaTransform.rotation * Quaternion.Euler(prefabModule.equipDir);
         equippedPart = KIS_Shared.CreatePart(
             partNode, equipPos, equipRot, inventory.part, inventory.part,
             srcAttachNodeId: "srfAttach",
-            onPartCoupled: OnEquippedPartCoupled,
+            onPartReady: OnEquippedPartReady,
             createPhysicsless: equipMode != EquipMode.Physic);
       }
       if (equipMode == EquipMode.Part) {
@@ -522,7 +522,7 @@ public sealed class KIS_Item {
     prefabModule.OnUnEquip(this);
   }
 
-  public void OnEquippedPartCoupled(Part createdPart, Part tgtPart, AttachNode tgtAttachNode) {
+  public void OnEquippedPartReady(Part createdPart) {
     if (equipMode == EquipMode.Part) {
       // Disable colliders since kerbal rotation doesn't respect physics. Equipped part collider
       // may give an insane momentum to the collided objects.  

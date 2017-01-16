@@ -1067,11 +1067,15 @@ sealed class KISAddonPickup : MonoBehaviour {
           coupleToPart: tgtPart,
           srcAttachNodeId: srcAttachNodeID,
           tgtAttachNode: tgtAttachNode,
-          onPartCoupled: OnPartCoupled);
+          onPartReady: createdPart => KIS_Shared.SendKISMessage(
+              createdPart, KIS_Shared.MessageAction.AttachEnd,
+              KISAddonPointer.GetCurrentAttachNode(), tgtPart, tgtAttachNode));
     } else {
-      newPart = KIS_Shared.CreatePart(draggedItem.partNode, pos, rot, draggedItem.inventory.part);
-      KIS_Shared.SendKISMessage(newPart, KIS_Shared.MessageAction.AttachEnd,
-                                KISAddonPointer.GetCurrentAttachNode(), tgtPart, tgtAttachNode);
+      newPart = KIS_Shared.CreatePart(
+          draggedItem.partNode, pos, rot, draggedItem.inventory.part,
+          onPartReady: createdPart => KIS_Shared.SendKISMessage(
+              createdPart, KIS_Shared.MessageAction.AttachEnd,
+              KISAddonPointer.GetCurrentAttachNode(), tgtPart, tgtAttachNode));
     }
     KISAddonPointer.StopPointer();
     movingPart = null;
@@ -1080,12 +1084,6 @@ sealed class KISAddonPickup : MonoBehaviour {
     return newPart;
   }
 
-  public void OnPartCoupled(Part createdPart, Part tgtPart = null,
-                            AttachNode tgtAttachNode = null) {
-    KIS_Shared.SendKISMessage(createdPart, KIS_Shared.MessageAction.AttachEnd,
-                              KISAddonPointer.GetCurrentAttachNode(), tgtPart, tgtAttachNode);
-  }
-      
   /// <summary>Enables mode that allows re-docking a vessel attached to a station.</summary>
   private void EnableRedockingMode() {
     if (KISAddonPointer.isRunning || cursorMode != CursorMode.Nothing) {

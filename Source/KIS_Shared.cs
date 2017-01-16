@@ -32,8 +32,7 @@ public static class KIS_Shared {
   public const int HighlighedPartRenderQueue = 4000;  // As of KSP 1.1.1230
 
   public static string bipWrongSndPath = "KIS/Sounds/bipwrong";
-  public delegate void OnPartCoupled(Part createdPart, Part tgtPart = null,
-                                     AttachNode tgtAttachNode = null);
+  public delegate void OnPartReady(Part createdPart);
 
   public enum MessageAction {
     DropEnd,
@@ -292,7 +291,7 @@ public static class KIS_Shared {
   /// Optional. Attach node on the target part to use for coupling. It's required if
   /// <paramref name="srcAttachNodeId"/> specifies a stack node.
   /// </param>
-  /// <param name="onPartCoupled">
+  /// <param name="onPartReady">
   /// Callback to call when new part is fully operational and its joint is created (if any). It's
   /// undetermined how long it may take before the callback is called. The calling code must expect
   /// that there will be several frame updates and at least one fixed frame update.
@@ -307,7 +306,7 @@ public static class KIS_Shared {
       Part coupleToPart = null,
       string srcAttachNodeId = null,
       AttachNode tgtAttachNode = null,
-      OnPartCoupled onPartCoupled = null,
+      OnPartReady onPartReady = null,
       bool createPhysicsless = false) {
     // Sanity checks for the paramaeters.
     if (coupleToPart != null) {
@@ -357,16 +356,16 @@ public static class KIS_Shared {
     if (coupleToPart != null) {
       // Wait for part to initialize and then fire ready event.
       newPart.StartCoroutine(
-          WaitAndCouple(newPart, srcAttachNodeId, tgtAttachNode, onPartCoupled,
+          WaitAndCouple(newPart, srcAttachNodeId, tgtAttachNode, onPartReady,
                         createPhysicsless: createPhysicsless));
     } else {
       // Wait for part to initialize and then decouple it.
-      newPart.StartCoroutine(WaitAndCouple(newPart, "srfAttach", null, (x1, x2, x3) => {
+      newPart.StartCoroutine(WaitAndCouple(newPart, "srfAttach", null, x => {
         // Create a dropped part. It will become an independent vessel.
         newPart.decouple();
         RenameAssemblyVessel(newPart);
-        if (onPartCoupled != null) {
-          onPartCoupled(newPart, newPart.parent, tgtAttachNode);
+        if (onPartReady != null) {
+          onPartReady(newPart);
         }
       }));
     }
@@ -374,7 +373,7 @@ public static class KIS_Shared {
   }
 
   static IEnumerator WaitAndCouple(Part newPart, string srcAttachNodeId,
-                                   AttachNode tgtAttachNode, OnPartCoupled onPartReady,
+                                   AttachNode tgtAttachNode, OnPartReady onPartReady,
                                    bool createPhysicsless = false) {
     var tgtPart = newPart.parent;
     newPart.UpdateOrgPosAndRot(newPart.vessel.rootPart);//FIXME?
@@ -430,7 +429,7 @@ public static class KIS_Shared {
     newPart.CheckBodyLiftAttachment();
 
     if (onPartReady != null) {
-      onPartReady(newPart, tgtPart, tgtAttachNode);
+      onPartReady(newPart);
     }
   }
 
