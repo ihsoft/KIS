@@ -22,13 +22,13 @@ from distutils import dir_util
 
 # ADJUST BEFORE RUN!
 # Set it to the local system path.
-SHELL_ZIP_BINARY = 'L:/Program Files/7-Zip/7z.exe'
+SHELL_ZIP_BINARY = 'C:/Program Files/7-Zip/7z.exe'
 
 # An executable which will be called to build the project's binaraies in release mode.
 SHELL_COMPILE_BINARY_SCRIPT = 'make_binary.cmd'
 
 # For information only.
-PACKAGE_TITLE = 'Kerbal Attachment System'
+PACKAGE_TITLE = 'Kerbal Invenotry System'
 
 # SRC configs.
 SRC = '..'
