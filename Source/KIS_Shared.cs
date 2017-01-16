@@ -393,17 +393,18 @@ public static class KIS_Shared {
     }
   }
 
-  public static void CouplePart(Part srcPart, Part tgtPart, string srcAttachNodeID = null,
+  public static void CouplePart(Part srcPart, Part tgtPart,
+                                string srcAttachNodeId = null,
                                 AttachNode tgtAttachNode = null) {
     // Node links
-    if (srcAttachNodeID != null) {
-      if (srcAttachNodeID == "srfAttach") {
+    if (srcAttachNodeId != null) {
+      if (srcAttachNodeId == "srfAttach") {
         Debug.LogFormat("Attach type: {0} | ID : {1}",
                         srcPart.srfAttachNode.nodeType, srcPart.srfAttachNode.id);
         srcPart.attachMode = AttachModes.SRF_ATTACH;
         srcPart.srfAttachNode.attachedPart = tgtPart;
       } else {
-        AttachNode srcAttachNode = srcPart.FindAttachNode(srcAttachNodeID);
+        AttachNode srcAttachNode = srcPart.FindAttachNode(srcAttachNodeId);
         if (srcAttachNode != null) {
           Debug.LogFormat("Attach type : {0} | ID : {1}",
                           srcPart.srfAttachNode.nodeType, srcAttachNode.id);
@@ -415,7 +416,7 @@ public static class KIS_Shared {
             Debug.LogWarning("Target node is null");
           }
         } else {
-          Debug.LogError("Source attach node not found !");
+          Debug.LogErrorFormat("Source attach node not found: {0}", srcAttachNodeId);
         }
       }
     } else {

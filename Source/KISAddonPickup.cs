@@ -1052,8 +1052,8 @@ sealed class KISAddonPickup : MonoBehaviour {
                               KISAddonPointer.GetCurrentAttachNode(), targetPart, targetAttachNode);
   }
 
-  private Part CreateAttach(Part tgtPart, Vector3 pos, Quaternion rot,
-                            string srcAttachNodeID = null, AttachNode tgtAttachNode = null) {
+  Part CreateAttach(Part tgtPart, Vector3 pos, Quaternion rot,
+                    string srcAttachNodeID = null, AttachNode tgtAttachNode = null) {
     Debug.Log("Create part & attach");
     Part newPart;
     draggedItem.StackRemove(1);
@@ -1062,8 +1062,12 @@ sealed class KISAddonPickup : MonoBehaviour {
       useExternalPartAttach = true;
     }
     if (tgtPart && !useExternalPartAttach) {
-      newPart = KIS_Shared.CreatePart(draggedItem.partNode, pos, rot, draggedItem.inventory.part,
-                                      tgtPart, srcAttachNodeID, tgtAttachNode, OnPartCoupled);
+      newPart = KIS_Shared.CreatePart(
+          draggedItem.partNode, pos, rot, draggedItem.inventory.part,
+          coupleToPart: tgtPart,
+          srcAttachNodeId: srcAttachNodeID,
+          tgtAttachNode: tgtAttachNode,
+          onPartCoupled: OnPartCoupled);
     } else {
       newPart = KIS_Shared.CreatePart(draggedItem.partNode, pos, rot, draggedItem.inventory.part);
       KIS_Shared.SendKISMessage(newPart, KIS_Shared.MessageAction.AttachEnd,

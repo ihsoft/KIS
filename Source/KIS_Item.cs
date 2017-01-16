@@ -378,7 +378,7 @@ public sealed class KIS_Item {
       Debug.LogWarningFormat("Cannot equip item from inventory type: {0}", inventory.invType);
       return;
     }
-    Debug.LogFormat("Equip item {0}", availablePart.name);
+    Debug.LogFormat("Equip item {0} in mode {1}", availablePart.title, equipMode);
 
     // Check skill if needed. Skip the check in sandbox modes.
     if (HighLogic.CurrentGame.Mode != Game.Modes.SANDBOX
@@ -468,15 +468,17 @@ public sealed class KIS_Item {
 
       var alreadyEquippedPart = inventory.part.FindChildPart(availablePart.name);
       if (alreadyEquippedPart) {
-        Debug.LogFormat("Part: {0} already found on eva", availablePart.name);
+        Debug.LogFormat("Part {0} already found on eva, use it as the item", availablePart.name);
         equippedPart = alreadyEquippedPart;
-        OnEquippedPartCoupled(equippedPart);
+        OnEquippedPartCoupled(equippedPart, null, null);
       } else {
         Vector3 equipPos = evaTransform.TransformPoint(prefabModule.equipPos);
         Quaternion equipRot = evaTransform.rotation * Quaternion.Euler(prefabModule.equipDir);
         equippedPart = KIS_Shared.CreatePart(
-            partNode, equipPos, equipRot, inventory.part, inventory.part, null, null,
-            OnEquippedPartCoupled);
+            partNode, equipPos, equipRot, inventory.part, inventory.part,
+            srcAttachNodeId: null,
+            tgtAttachNode: null,
+            onPartCoupled: OnEquippedPartCoupled);
       }
       if (equipMode == EquipMode.Part) {
         equippedGameObj = equippedPart.gameObject;
@@ -520,10 +522,10 @@ public sealed class KIS_Item {
     prefabModule.OnUnEquip(this);
   }
 
-  public void OnEquippedPartCoupled(Part createdPart, Part tgtPart = null,
-                                    AttachNode tgtAttachNode = null) {
+  public void OnEquippedPartCoupled(Part createdPart, Part tgtPart, AttachNode tgtAttachNode) {
     if (equipMode == EquipMode.Part) {
-      //Disable colliders
+      // Disable colliders since kerbal rotation doesn't respect physics. Equipped part collider
+      // may give an insane momentum to the collided objects.  
       foreach (var col in equippedPart.gameObject.GetComponentsInChildren<Collider>()) {
         col.isTrigger = true;
       }
