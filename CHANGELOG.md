@@ -1,4 +1,4 @@
-### 1.4.1 (pre-release)
+### 1.4.1 (January 16th, 2017)
 - [Fix #183] Equipped parts are not restored on scene load.
 - [Fix #186] NRE when using container in the editor.
 - [Fix #187] EVA equipped parts behave bad when sitting in the command seat.
