@@ -1,4 +1,11 @@
 ### 1.4.1 (pre-release)
+- [Fix #183] Equipped parts are not restored on scene load.
+- [Fix #186] NRE when using container in the editor.
+- [Fix #187] EVA equipped parts behave bad when sitting in the command seat.
+- [Fix #189] Handle ESC key.
+- [Fix #194] Remove helmet state is not persisted.
+- [Fix #195] Eqipped parts collide with kerbal model.
+- [Enhancement #184] Use KSP 1.2 feature to add inventories to kerbals.
 - [Enhancement #191] Add bottom attachment node to container mount.
 - [Enhancement #192] Disallow ILC-18k on container mount.
 - [Enhancement #193] Add quadrant attachment nodes to stock 2x2 panel.
