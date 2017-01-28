@@ -396,7 +396,7 @@ public static class KIS_Shared {
     Debug.LogFormat("Wait for part {0} to get alive...", newPart.name);
     newPart.transform.parent = tgtPart.transform;
     yield return new WaitWhile(() => !newPart.started && newPart.State != PartStates.DEAD);
-    newPart.transform.parent = null;
+    newPart.transform.parent = newPart.transform;
     Debug.LogFormat("Part {0} is in state {1}", newPart.name, newPart.State);
     if (newPart.State == PartStates.DEAD) {
       Debug.LogWarningFormat("Part {0} has died before fully instantiating", newPart.name);

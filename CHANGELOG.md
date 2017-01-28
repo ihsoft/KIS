@@ -1,3 +1,6 @@
+### 1.4.2 (January 28th, 2017)
+- [Fix #197] Part is created on the kerbal instead of the target vessel.
+
 ### 1.4.1 (January 16th, 2017)
 - [Fix #183] Equipped parts are not restored on scene load.
 - [Fix #186] NRE when using container in the editor.
