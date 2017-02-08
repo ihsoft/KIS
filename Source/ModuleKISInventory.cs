@@ -1024,11 +1024,6 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
   }
 
   void GuiMain(int windowID) {
-    var guiStyleTitle = new GUIStyle(GUI.skin.label);
-    guiStyleTitle.normal.textColor = Color.yellow;
-    guiStyleTitle.fontStyle = FontStyle.Bold;
-    guiStyleTitle.fontSize = 13;
-    guiStyleTitle.alignment = TextAnchor.MiddleCenter;
 
     GUILayout.BeginHorizontal();
 
