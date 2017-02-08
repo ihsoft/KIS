@@ -98,6 +98,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
       "Max destination volume reached. Part volume is: {0:#.####}L (+{1:#.####}L)";
   static readonly Message<string> CannotTransferInventoryMsg =
       "Pod {0} doesn't have personal inventory space";
+  static readonly Message MustBeCrewedAtLaunchMsg = "Must be crewed at launch to acquire items";
 
   public string openGuiName;
   public float totalVolume = 0;
@@ -1024,6 +1025,18 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
   }
 
   void GuiMain(int windowID) {
+    // For pod inventory make a special note.
+    if (HighLogic.LoadedSceneIsEditor && invType == InventoryType.Pod) {
+      GUILayout.BeginVertical();
+      var warningStyle = new GUIStyle();
+      warningStyle.normal.textColor = Color.yellow;
+      warningStyle.fontStyle = FontStyle.Bold;
+      warningStyle.fontSize = 11;
+      warningStyle.alignment = TextAnchor.MiddleCenter;
+      warningStyle.wordWrap = true;
+      GUILayout.Label(MustBeCrewedAtLaunchMsg, warningStyle);
+      GUILayout.EndVertical();
+    }
 
     GUILayout.BeginHorizontal();
 
