@@ -98,7 +98,8 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
       "Max destination volume reached. Part volume is: {0:#.####}L (+{1:#.####}L)";
   static readonly Message<string> CannotTransferInventoryMsg =
       "Pod {0} doesn't have personal inventory space";
-  static readonly Message MustBeCrewedAtLaunchMsg = "Must be crewed at launch to acquire items";
+  static readonly Message MustBeCrewedAtLaunchMsg =
+      "The seat must be crewed at launch to acquire items";
 
   public string openGuiName;
   public float totalVolume = 0;
