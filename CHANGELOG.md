@@ -1,3 +1,5 @@
+# 1.4.3 (February 7th, 2017)
+* [Fix #158] NRE when transferring crew into a pod part without KIS inventories.
 
 # 1.4.2 (January 28th, 2017)
 * [Fix #197] Part is created on the kerbal instead of the target vessel.

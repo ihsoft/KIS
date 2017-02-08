@@ -96,6 +96,8 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
   // UI strings.
   const string strMaxVolumeReached =
       "Max destination volume reached. Part volume is: {0:#.####}L (+{1:#.####}L)";
+  static readonly Message<string> CannotTransferInventoryMsg =
+      "Pod {0} doesn't have personal inventory space";
 
   public string openGuiName;
   public float totalVolume = 0;
@@ -165,6 +167,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
   /// <inheritdoc/>
   public override void OnAwake() {
     GameEvents.onCrewTransferred.Add(OnCrewTransferred);
+    GameEvents.onCrewTransferSelected.Add(OnCrewTransferSelected);
     GameEvents.onVesselChange.Add(OnVesselChange);
     GameEvents.onPartActionUICreate.Add(OnPartActionUICreate);
     GameEvents.onPartActionUIDismiss.Add(OnPartActionUIDismiss);
@@ -173,6 +176,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
   /// <summary>Overridden from MonoBehaviour.</summary>
   void OnDestroy() {
     GameEvents.onCrewTransferred.Remove(OnCrewTransferred);
+    GameEvents.onCrewTransferSelected.Remove(OnCrewTransferSelected);
     GameEvents.onVesselChange.Remove(OnVesselChange);
     GameEvents.onPartActionUICreate.Remove(OnPartActionUICreate);
     GameEvents.onPartActionUIDismiss.Remove(OnPartActionUIDismiss);
@@ -392,6 +396,22 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     }
   }
 
+  /// <summary>Checks if target part can accept non-empty inventories.</summary>
+  void OnCrewTransferSelected(CrewTransfer.CrewTransferData transferData) {
+    if (invType != InventoryType.Pod || transferData.sourcePart != part
+        || transferData.crewMember.seatIdx != podSeat || items.Count == 0) {
+      return;  // Not our problem.
+    }
+    var podInventories = transferData.destPart.FindModulesImplementing<ModuleKISInventory>()
+        .Count(x => x.invType == InventoryType.Pod);
+    if (transferData.destPart.CrewCapacity > podInventories) {
+      ScreenMessaging.ShowErrorScreenMessage(
+          CannotTransferInventoryMsg.Format(transferData.destPart.name));
+      UISounds.PlayBipWrong();
+      transferData.canTransfer = false;
+    }
+  }
+  
   void OnCrewTransferred(GameEvents.HostedFromToAction<ProtoCrewMember, Part> fromToAction) {
     // Ensure target pod will accept the inventory.
     if (!fromToAction.to.vessel.isEVA) {
