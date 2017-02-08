@@ -162,6 +162,26 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     return sb.ToString();
   }
 
+  /// <inheritdoc/>
+  public override void OnAwake() {
+    GameEvents.onCrewTransferred.Add(OnCrewTransferred);
+    GameEvents.onVesselChange.Add(OnVesselChange);
+    GameEvents.onPartActionUICreate.Add(OnPartActionUICreate);
+    GameEvents.onPartActionUIDismiss.Add(OnPartActionUIDismiss);
+  }
+
+  /// <summary>Overridden from MonoBehaviour.</summary>
+  void OnDestroy() {
+    GameEvents.onCrewTransferred.Remove(OnCrewTransferred);
+    GameEvents.onVesselChange.Remove(OnVesselChange);
+    GameEvents.onPartActionUICreate.Remove(OnPartActionUICreate);
+    GameEvents.onPartActionUIDismiss.Remove(OnPartActionUIDismiss);
+    if (HighLogic.LoadedSceneIsEditor) {
+      InputLockManager.RemoveControlLock("KISInventoryLock");
+      GameEvents.onTooltipDestroyRequested.Remove(OnTooltipDestroyRequestedEvent);
+    }
+  }
+
   /// <summary>Overridden from PartModule.</summary>
   public override void OnStart(StartState state) {
     base.OnStart(state);
@@ -187,16 +207,11 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     }
     guiMainWindowPos = defaultFlightPos;
 
-    Animation[] anim = this.part.FindModelAnimators(openAnimName);
+    Animation[] anim = part.FindModelAnimators(openAnimName);
     if (anim.Length > 0) {
-      openAnim = this.part.FindModelAnimators(openAnimName)[0];
+      openAnim = part.FindModelAnimators(openAnimName)[0];
     }
 
-    GameEvents.onCrewTransferred.Add(OnCrewTransferred);
-    GameEvents.onVesselChange.Add(OnVesselChange);
-    GameEvents.onPartActionUICreate.Add(OnPartActionUICreate);
-    GameEvents.onPartActionUIDismiss.Add(OnPartActionUIDismiss);
-          
     if (invType == InventoryType.Eva) {
       List<ProtoCrewMember> protoCrewMembers = vessel.GetVesselCrew();
       kerbalTrait = protoCrewMembers[0].experienceTrait.Title;
@@ -532,18 +547,6 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     // Update vessel cost in editor.
     if (HighLogic.LoadedSceneIsEditor) {
       GameEvents.onEditorShipModified.Fire(EditorLogic.fetch.ship);
-    }
-  }
-
-  /// <summary>Overridden from MonoBehaviour.</summary>
-  void OnDestroy() {
-    GameEvents.onCrewTransferred.Remove(OnCrewTransferred);
-    GameEvents.onVesselChange.Remove(OnVesselChange);
-    GameEvents.onPartActionUICreate.Remove(OnPartActionUICreate);
-    GameEvents.onPartActionUIDismiss.Remove(OnPartActionUIDismiss);
-    if (HighLogic.LoadedSceneIsEditor) {
-      InputLockManager.RemoveControlLock("KISInventoryLock");
-      GameEvents.onTooltipDestroyRequested.Remove(OnTooltipDestroyRequestedEvent);
     }
   }
 
