@@ -1024,7 +1024,6 @@ sealed class KISAddonPickup : MonoBehaviour {
     // Decouple from the former parent.
     // Note that decoupling of a part will trun it into a separte vessel and, hence, make it
     // phisycal even if part's config defines it as physicsless!
-    var parentPart = childPart.parent;
     KIS_Shared.DecoupleAssembly(childPart);
     childPart.vessel.SetPosition(pos);
     childPart.vessel.SetRotation(rot);
@@ -1039,17 +1038,31 @@ sealed class KISAddonPickup : MonoBehaviour {
       yield break;
     }
 
-    if (parentPart != null) {
-      // Adhere the moving assembly to fix the position, and wait for one fixed frame.
-      var fixedJoint = parentPart.gameObject.AddComponent<FixedJoint>();
-      fixedJoint.connectedBody = childPart.Rigidbody;
-      yield return new WaitForFixedUpdate();
-      UnityEngine.Object.DestroyImmediate(fixedJoint);
-    }
+    // Proactively disable collisions on the moving parts since there will be a period of time when
+    // they don't belong to the target vessel.
+    var childColliders = childPart.GetComponentsInChildren<Collider>(includeInactive: false);
+    CollisionManager.IgnoreCollidersOnVessel(targetPart.vessel, childColliders);
 
+    // Adhere the moving assembly to the target and wait for one fixed frame to have all callbacks
+    // and events handled.
+    var fixedJoint = targetPart.gameObject.AddComponent<FixedJoint>();
+    fixedJoint.connectedBody = childPart.rb;
+    yield return new WaitForFixedUpdate();
+    UnityEngine.Object.DestroyImmediate(fixedJoint);
+    
     // Do actual coupling.
     Debug.LogFormat("MoveAttach: Actually attach moving part {0}", childPart);
     KIS_Shared.CouplePart(childPart, targetPart, srcAttachNodeID, targetAttachNode);
+
+    // Drop physics from the root part if it's assumed to be physicsless. 
+    if (childPart.PhysicsSignificance == 1) {
+      childPart.transform.parent = targetPart.transform;
+      childPart.attachJoint.DestroyJoint();
+      Destroy(childPart.rb);
+      childPart.rb = null;
+      childPart.physicalSignificance = Part.PhysicalSignificance.NONE;
+    }
+
     KIS_Shared.SendKISMessage(childPart, KIS_Shared.MessageAction.AttachEnd,
                               KISAddonPointer.GetCurrentAttachNode(), targetPart, targetAttachNode);
   }
