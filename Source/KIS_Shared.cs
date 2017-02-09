@@ -459,6 +459,7 @@ public static class KIS_Shared {
                         srcPart.srfAttachNode.nodeType, srcPart.srfAttachNode.id);
         srcPart.attachMode = AttachModes.SRF_ATTACH;
         srcPart.srfAttachNode.attachedPart = tgtPart;
+        srcPart.srfAttachNode.attachedPartId = tgtPart.flightID;
       } else {
         AttachNode srcAttachNode = srcPart.FindAttachNode(srcAttachNodeId);
         if (srcAttachNode != null) {
@@ -466,6 +467,7 @@ public static class KIS_Shared {
                           srcPart.srfAttachNode.nodeType, srcAttachNode.id);
           srcPart.attachMode = AttachModes.STACK;
           srcAttachNode.attachedPart = tgtPart;
+          srcAttachNode.attachedPartId = tgtPart.flightID;
           if (tgtAttachNode != null) {
             tgtAttachNode.attachedPart = srcPart;
           } else {
