@@ -141,29 +141,24 @@ public static class KIS_Shared {
 
     // Regular parts can be just decoupled but docking ports want to do it via their own methods.
     var srcDockingPort = assemblyRoot.GetComponent<ModuleDockingNode>();
-    //FIXME
-    Debug.LogWarningFormat("*** detected docking port part: {0}", srcDockingPort);
     if (srcDockingPort != null && srcDockingPort.otherNode != null) {
       var tgtDockingPort = srcDockingPort.otherNode;
-      //FIXME
-      Debug.LogWarningFormat("Undock port {0} from {1}",
-                             DbgFormatter.PartId(srcDockingPort.part),
-                             DbgFormatter.PartId(tgtDockingPort.part));
+      Debug.LogFormat("Undock port {0} from {1}",
+                      DbgFormatter.PartId(srcDockingPort.part),
+                      DbgFormatter.PartId(tgtDockingPort.part));
       // Set ejection forces to zero to not have physics effect on KIS detach.
       var srcUndockForce = srcDockingPort.undockEjectionForce;
       srcDockingPort.undockEjectionForce = 0;
       var tgtUndockForce = tgtDockingPort.undockEjectionForce;
       tgtDockingPort.undockEjectionForce = 0;
-      // Propery undock docked ports.        
+      // Propery undock docked ports.
       srcDockingPort.Undock();
       // Restore undock forces on the parts.
       srcDockingPort.undockEjectionForce = srcUndockForce;
       tgtDockingPort.undockEjectionForce = tgtUndockForce;
     } else {
-      //FIXME
-      Debug.LogWarningFormat("Decouple part {0} from {1}",
-                             DbgFormatter.PartId(assemblyRoot),
-                             DbgFormatter.PartId(assemblyRoot.parent));
+      Debug.LogFormat("Decouple part {0} from {1}",
+                      DbgFormatter.PartId(assemblyRoot), DbgFormatter.PartId(assemblyRoot.parent));
       assemblyRoot.decouple();
     }
 
