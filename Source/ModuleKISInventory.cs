@@ -1,5 +1,6 @@
 ﻿using KSPDev.ConfigUtils;
 using KSPDev.GUIUtils;
+using KSPDev.LogUtils;
 using System;
 using System.Linq;
 using System.Collections.Generic;
@@ -247,8 +248,8 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
       if (HighLogic.LoadedSceneIsFlight) {
         if (FlightGlobals.ActiveVessel.isEVA) {
           float distEvaToContainer = Vector3.Distance(FlightGlobals.ActiveVessel.transform.position,
-                                                      this.part.transform.position);
-          ModuleKISPickup mPickup = KISAddonPickup.instance.GetActivePickupNearest(this.part);
+                                                      part.transform.position);
+          ModuleKISPickup mPickup = KISAddonPickup.instance.GetActivePickupNearest(part);
           if (!mPickup || distEvaToContainer > mPickup.maxDistance) {
             ShowInventory();
           }
@@ -267,7 +268,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
 
   void UpdateKey() {
     if (!HighLogic.LoadedSceneIsFlight
-        || FlightGlobals.ActiveVessel != this.part.vessel
+        || FlightGlobals.ActiveVessel != part.vessel
         || !FlightGlobals.ActiveVessel.isEVA) {
       return;
     }
@@ -531,7 +532,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
       } else {
         Events["ShowInventory"].guiActive = false;
         Events["ShowInventory"].guiActiveUnfocused = false;
-        ProtoCrewMember crewAtPodSeat = this.part.protoModuleCrew.Find(x => x.seatIdx == podSeat);
+        ProtoCrewMember crewAtPodSeat = part.protoModuleCrew.Find(x => x.seatIdx == podSeat);
         if (crewAtPodSeat != null) {
           string kerbalName = crewAtPodSeat.name.Split(' ').FirstOrDefault();
           Events["ShowInventory"].guiActive = true;
@@ -887,7 +888,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
 
     //Disable helmet and visor
     var skmrs =
-        new List<SkinnedMeshRenderer>(this.part.GetComponentsInChildren<SkinnedMeshRenderer>());
+        new List<SkinnedMeshRenderer>(part.GetComponentsInChildren<SkinnedMeshRenderer>());
     foreach (var skmr in skmrs) {
       if (skmr.name == "helmet" || skmr.name == "visor") {
         skmr.GetComponent<Renderer>().enabled = active;
@@ -952,21 +953,21 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     GUIStyles();
 
     // Set title
-    string title = this.part.partInfo.title;
+    string title = part.partInfo.title;
     if (invType == InventoryType.Pod) {
       title = part.partInfo.title + " | Seat " + podSeat;
       if (!HighLogic.LoadedSceneIsEditor) {
-        ProtoCrewMember crewAtPodSeat = this.part.protoModuleCrew.Find(x => x.seatIdx == podSeat);
+        ProtoCrewMember crewAtPodSeat = part.protoModuleCrew.Find(x => x.seatIdx == podSeat);
         if (crewAtPodSeat != null) {
           title = crewAtPodSeat.name;
         }
       }
     }
     if (invType == InventoryType.Eva) {
-      title = this.part.partInfo.title + " | " + kerbalTrait;
+      title = part.partInfo.title + " | " + kerbalTrait;
     }
     if (invType == InventoryType.Container && invName != "") {
-      title = this.part.partInfo.title + " | " + invName;
+      title = part.partInfo.title + " | " + invName;
     }
 
     guiMainWindowPos = GUILayout.Window(GetInstanceID(), guiMainWindowPos, GuiMain, title);
@@ -1088,10 +1089,9 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     }
 
     var sb = new StringBuilder();
-    sb.AppendLine("Volume : " + this.totalVolume.ToString("0.00")
-                  + "/" + this.maxVolume.ToString("0.00 L"));
-    sb.AppendLine("Mass : " + this.part.mass.ToString("0.000"));
-    sb.AppendLine("Cost : " + (this.GetContentCost() + part.partInfo.cost) + " √");
+    sb.AppendLine("Volume : " + totalVolume.ToString("0.00") + "/" + maxVolume.ToString("0.00 L"));
+    sb.AppendLine("Mass : " + part.mass.ToString("0.000"));
+    sb.AppendLine("Cost : " + (GetContentCost() + part.partInfo.cost) + " √");
     GUILayout.Box(sb.ToString(), boxStyle,
                   GUILayout.Width(Width), GUILayout.Height(45 + extraSpace));
     bool closeInv = false;
@@ -1279,7 +1279,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
             splitQty -= 1;
         }
         if (GUILayout.Button("Split (" + splitQty + ")", buttonStyle)) {
-          if (this.isFull() == false) {
+          if (!isFull()) {
             contextItem.quantity -= splitQty;
             AddItem(contextItem.availablePart.partPrefab, splitQty);
           } else {
@@ -1352,7 +1352,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
       scrollPositionDbg = GUILayout.BeginScrollView(scrollPositionDbg,
                                                     GUILayout.Width(400), GUILayout.Height(200));
       var skmrs =
-          new List<SkinnedMeshRenderer>(this.part.GetComponentsInChildren<SkinnedMeshRenderer>());
+          new List<SkinnedMeshRenderer>(part.GetComponentsInChildren<SkinnedMeshRenderer>());
       foreach (var skmr in skmrs) {
         GUILayout.Label("--- " + skmr.name + " ---");
         foreach (var bone in skmr.bones) {
@@ -1423,7 +1423,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     GUI.DrawTexture(textureRect, items[slotIndex].icon.texture, ScaleMode.ScaleToFit);
     if (HighLogic.LoadedSceneIsFlight) {
       if (FlightGlobals.ActiveVessel.isEVA
-          && FlightGlobals.ActiveVessel == this.part.vessel) {
+          && FlightGlobals.ActiveVessel == part.vessel) {
         // Keyboard shortcut
         int slotNb = slotIndex + 1;
         GUI.Label(textureRect, " " + slotNb.ToString(), upperLeftStyle);
