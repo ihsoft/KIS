@@ -680,7 +680,7 @@ sealed class KISAddonPickup : MonoBehaviour {
     if (item && item.staticAttached) {
       item.GroundDetach();  // Parts attached to the ground need special attention.
     } else {
-      part.decouple();  // Regular parts detach via regular methods.
+      KIS_Shared.DecoupleAssembly(part);
     }
     if (pickupModule) {
       KIS_Shared.PlaySoundAtPoint(

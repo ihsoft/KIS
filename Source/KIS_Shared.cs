@@ -1,5 +1,6 @@
 ﻿using KSPDev.ConfigUtils;
 using KSPDev.GUIUtils;
+using KSPDev.LogUtils;
 using KSP.UI.Screens;
 using System;
 using System.Collections.Generic;
@@ -137,7 +138,34 @@ public static class KIS_Shared {
     SendKISMessage(assemblyRoot, MessageAction.Decouple);
     Vessel oldVessel = assemblyRoot.vessel;
     var formerParent = assemblyRoot.parent;
-    assemblyRoot.decouple();
+
+    // Regular parts can be just decoupled but docking ports want to do it via their own methods.
+    var srcDockingPort = assemblyRoot.GetComponent<ModuleDockingNode>();
+    //FIXME
+    Debug.LogWarningFormat("*** detected docking port part: {0}", srcDockingPort);
+    if (srcDockingPort != null && srcDockingPort.otherNode != null) {
+      var tgtDockingPort = srcDockingPort.otherNode;
+      //FIXME
+      Debug.LogWarningFormat("Undock port {0} from {1}",
+                             DbgFormatter.PartId(srcDockingPort.part),
+                             DbgFormatter.PartId(tgtDockingPort.part));
+      // Set ejection forces to zero to not have physics effect on KIS detach.
+      var srcUndockForce = srcDockingPort.undockEjectionForce;
+      srcDockingPort.undockEjectionForce = 0;
+      var tgtUndockForce = tgtDockingPort.undockEjectionForce;
+      tgtDockingPort.undockEjectionForce = 0;
+      // Propery undock docked ports.        
+      srcDockingPort.Undock();
+      // Restore undock forces on the parts.
+      srcDockingPort.undockEjectionForce = srcUndockForce;
+      tgtDockingPort.undockEjectionForce = tgtUndockForce;
+    } else {
+      //FIXME
+      Debug.LogWarningFormat("Decouple part {0} from {1}",
+                             DbgFormatter.PartId(assemblyRoot),
+                             DbgFormatter.PartId(assemblyRoot.parent));
+      assemblyRoot.decouple();
+    }
 
     // HACK: As of KSP 1.0.5 some parts (e.g docking ports) can be attached by both a
     // surface node and by a stack node which looks like an editor bug in some corner case.
