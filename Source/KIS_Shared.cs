@@ -419,7 +419,7 @@ public static class KIS_Shared {
     newPart.Unpack();
     newPart.InitializeModules();
 
-    // Notify the game about a new part that has just "coupled".
+    // Notify game about a new part that has just "coupled".
     GameEvents.onPartCouple.Fire(new GameEvents.FromToAction<Part, Part>(newPart, tgtPart));
     tgtPart.vessel.ClearStaging();
     GameEvents.onVesselPartCountChanged.Fire(tgtPart.vessel);

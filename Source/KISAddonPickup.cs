@@ -1022,12 +1022,14 @@ sealed class KISAddonPickup : MonoBehaviour {
                               KISAddonPointer.GetCurrentAttachNode(), targetPart, targetAttachNode);
 
     // Decouple from the former parent.
+    // Note that decoupling of a part will trun it into a separte vessel and, hence, make it
+    // phisycal even if part's config defines it as physicsless!
     var parentPart = childPart.parent;
     KIS_Shared.DecoupleAssembly(childPart);
     childPart.vessel.SetPosition(pos);
     childPart.vessel.SetRotation(rot);
 
-    // Find out if couplin with a new parent is needed.
+    // Find out if coupling with a new parent is needed/allowed.
     var moduleItem = childPart.GetComponent<ModuleKISItem>();
     var useExternalPartAttach = moduleItem != null && moduleItem.useExternalPartAttach;
     if (targetPart == null || moduleItem != null && moduleItem.useExternalPartAttach) {
