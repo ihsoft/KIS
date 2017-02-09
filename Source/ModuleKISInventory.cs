@@ -220,8 +220,8 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     }
 
     if (invType == InventoryType.Eva) {
-      List<ProtoCrewMember> protoCrewMembers = vessel.GetVesselCrew();
-      kerbalTrait = protoCrewMembers[0].experienceTrait.Title;
+      var protoCrewMember = part.protoModuleCrew[0];
+      kerbalTrait = protoCrewMember.experienceTrait.Title;
     }
     sndFx.audio = part.gameObject.AddComponent<AudioSource>();
     sndFx.audio.volume = GameSettings.SHIP_VOLUME;

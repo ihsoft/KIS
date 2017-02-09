@@ -1,6 +1,7 @@
 # 1.4.3 (pre-release)
 * [Fix #158] NRE when transferring crew into a pod part without KIS inventories.
 * [Fix #200] Set decouple momentum on Cargo Mount to zero.
+* [Fix #199] Wrong kerbal class in inventory window info when in command seat.
 * [Enhancement #202] Make pod seat's inventory more clear.
 
 # 1.4.2 (January 28th, 2017)
