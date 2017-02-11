@@ -4,9 +4,7 @@
   "SHELL_COMPILE_BINARY_SCRIPT" : "make_binary.cmd",
   "STRUCTURE" : {
     "/": [
-      "?/Deps/*",
-      "/Binaries/CommunityCategoryKit",
-      "/Binaries/ModuleManager.2.7.5.dll",
+      "/Deps/*",
       "-README.*"
     ],
     "" : [
