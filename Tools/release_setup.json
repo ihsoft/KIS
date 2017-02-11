@@ -1,0 +1,30 @@
+{
+  "JSON_SCHEMA_VERSION": "1.0",
+  "PACKAGE_NAME": "KIS",
+  "SHELL_COMPILE_BINARY_SCRIPT" : "make_binary.cmd",
+  "STRUCTURE" : {
+    "/": [
+      "?/Deps/*",
+      "/Binaries/CommunityCategoryKit",
+      "/Binaries/ModuleManager.2.7.5.dll",
+      "-README.*"
+    ],
+    "" : [
+      "/Parts",
+      "/Patches",
+      "/Sounds",
+      "/Textures",
+      "/settings.cfg",
+      "/User Guide.pdf",
+      "/README.md",
+      "/LICENSE.md"
+    ],
+    "Plugins" : [
+      "{COMPILED_BINARY}",
+      "?{MINIAVC_VERSION_FILE}",
+      "/Binaries/MiniAVC.dll",
+      "/Binaries/KSPDev_Utils*",
+      "-*.xml"
+    ]
+  }
+}
