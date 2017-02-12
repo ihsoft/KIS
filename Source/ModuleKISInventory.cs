@@ -1202,7 +1202,8 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
 
     //Equip
     if (contextItem != null) {
-      if (contextItem.equipable && invType == InventoryType.Eva) {
+      if (contextItem.equipable && Mathf.Approximately(contextItem.quantity, 1.0f)
+          && invType == InventoryType.Eva) {
         noAction = false;
         if (contextItem.equipped) {
           if (GUILayout.Button("Unequip")) {
@@ -1602,7 +1603,6 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
       icon = null;
     }
   }
-
 
   /// <summary>Hides all UI elements.</summary>
   void OnTooltipDestroyRequestedEvent() {

@@ -5,6 +5,7 @@
 * [Fix #203] Some physicsless part trigger physics effect on move&attach.
 * [Enhancement #200] Set decouple momentum on Cargo Mount to zero.
 * [Enhancement #202] Make pod seat's inventory more clear.
+* [Enhancement #204] Allow stacking KIS tools.
 
 # 1.4.2 (January 28th, 2017)
 * [Fix #197] Part is created on the kerbal instead of the target vessel.

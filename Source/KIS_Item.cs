@@ -315,6 +315,11 @@ public sealed class KIS_Item {
     if (qty <= 0) {
       return false;
     }
+    if (equipped) {
+      ScreenMessaging.ShowPriorityScreenMessage("Cannot stack with equipped item");
+      UISounds.PlayBipWrong();
+      return false;
+    }
     float newVolume = inventory.totalVolume + (volume * qty);
     if (checkVolume && newVolume > inventory.maxVolume) {
       ScreenMessaging.ShowPriorityScreenMessage("Max destination volume reached (+{0:#.####})",
@@ -376,6 +381,11 @@ public sealed class KIS_Item {
     // Only equip EVA kerbals.
     if (!prefabModule || inventory.invType != ModuleKISInventory.InventoryType.Eva) {
       Debug.LogWarningFormat("Cannot equip item from inventory type: {0}", inventory.invType);
+      return;
+    }
+    if (quantity > 1) {
+      ScreenMessaging.ShowPriorityScreenMessage("Cannot equip stacked items");
+      UISounds.PlayBipWrong();
       return;
     }
     Debug.LogFormat("Equip item {0} in mode {1}", availablePart.title, equipMode);
