@@ -132,7 +132,7 @@ public static class KIS_Shared {
   /// <remarks>Also does external links cleanup on both vessels.</remarks>
   /// <param name="assemblyRoot">An assembly to decouple.</param>
   public static void DecoupleAssembly(Part assemblyRoot) {
-    if (!assemblyRoot.parent) {
+    if (assemblyRoot.parent == null) {
       return;  // Nothing to decouple.
     }
     SendKISMessage(assemblyRoot, MessageAction.Decouple);
@@ -157,7 +157,7 @@ public static class KIS_Shared {
       srcDockingPort.undockEjectionForce = srcUndockForce;
       tgtDockingPort.undockEjectionForce = tgtUndockForce;
     } else {
-      Debug.LogFormat("Decouple part {0} from {1}",
+      Debug.LogFormat("Decouple part {0} from part {1}",
                       DbgFormatter.PartId(assemblyRoot), DbgFormatter.PartId(assemblyRoot.parent));
       assemblyRoot.decouple();
     }
@@ -295,7 +295,7 @@ public static class KIS_Shared {
 
   public static Part CreatePart(AvailablePart avPart, Vector3 position, Quaternion rotation,
                                 Part fromPart) {
-    ConfigNode partNode = new ConfigNode();
+    var partNode = new ConfigNode();
     PartSnapshot(avPart.partPrefab).CopyTo(partNode);
     return CreatePart(partNode, position, rotation, fromPart);
   }
@@ -371,7 +371,6 @@ public static class KIS_Shared {
 
     var newPart = snapshot.Load(refVessel, false);
     refVessel.Parts.Add(newPart);
-
     newPart.transform.position = position;
     newPart.transform.rotation = rotation;
     newPart.missionID = fromPart.missionID;
@@ -404,7 +403,7 @@ public static class KIS_Shared {
     newPart.PhysicsSignificance = 1;  // Disable physics on the part.
 
     // Create proper attach nodes.
-    Debug.LogFormat("Couple new part {0} to {1}: srcNodeId={2}, tgtNode={3}",
+    Debug.LogFormat("Attach new part {0} to {1}: srcNodeId={2}, tgtNode={3}",
                     newPart.name, newPart.vessel,
                     srcAttachNodeId, tgtAttachNode != null ? tgtAttachNode.id : "N/A");
     var srcAttachNode = GetAttachNodeById(newPart, srcAttachNodeId);
@@ -475,7 +474,7 @@ public static class KIS_Shared {
   public static void CouplePart(Part srcPart, Part tgtPart,
                                 string srcAttachNodeId = null,
                                 AttachNode tgtAttachNode = null) {
-    // Node links
+    // Node links.
     if (srcAttachNodeId != null) {
       if (srcAttachNodeId == "srfAttach") {
         Debug.LogFormat("Attach type: {0} | ID : {1}",
