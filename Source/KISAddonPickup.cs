@@ -954,7 +954,7 @@ sealed class KISAddonPickup : MonoBehaviour {
     KISAddonCursor.CursorDefault();
   }
 
-  private void MoveDrop(Part tgtPart, Vector3 pos, Quaternion rot) {
+  void MoveDrop(Part tgtPart, Vector3 pos, Quaternion rot) {
     Debug.Log("Move part");
     ModuleKISPickup modulePickup = GetActivePickupNearest(pos);
     if (modulePickup) {
@@ -982,7 +982,7 @@ sealed class KISAddonPickup : MonoBehaviour {
     movingPart = null;
   }
 
-  private Part CreateDrop(Part tgtPart, Vector3 pos, Quaternion rot) {
+  Part CreateDrop(Part tgtPart, Vector3 pos, Quaternion rot) {
     Debug.Log("Create & drop part");
     ModuleKISPickup modulePickup = GetActivePickupNearest(pos);
     draggedItem.StackRemove(1);

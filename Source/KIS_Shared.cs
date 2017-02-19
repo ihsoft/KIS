@@ -33,7 +33,7 @@ public static class KIS_Shared {
   public const int HighlighedPartRenderQueue = 4000;  // As of KSP 1.1.1230
 
   public static string bipWrongSndPath = "KIS/Sounds/bipwrong";
-  public delegate void OnPartReady(Part createdPart);
+  public delegate void OnPartReady(Part affectedPart);
 
   public enum MessageAction {
     DropEnd,
@@ -331,7 +331,7 @@ public static class KIS_Shared {
       AttachNode tgtAttachNode = null,
       OnPartReady onPartReady = null,
       bool createPhysicsless = false) {
-    // Sanity checks for the paramaeters.
+    // Sanity checks for the parameters.
     if (coupleToPart != null) {
       if (srcAttachNodeId == null
           || srcAttachNodeId == "srfAttach" && tgtAttachNode != null
@@ -414,7 +414,7 @@ public static class KIS_Shared {
       tgtAttachNode.attachedPartId = newPart.flightID;
     }
     
-    // Wait until part is started.
+    // Wait until part is started. Keep it in position till it happen.
     Debug.LogFormat("Wait for part {0} to get alive...", newPart.name);
     newPart.transform.parent = tgtPart.transform;
     yield return new WaitWhile(() => !newPart.started && newPart.State != PartStates.DEAD);
