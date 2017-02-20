@@ -991,6 +991,39 @@ public static class KIS_Shared {
     return portNode.state == portNode.st_preattached.name;
   }
 
+  /// <summary>Resets docking node to state "ready".</summary>
+  /// <remarks>
+  /// It may take several update cycles before node actually reaches the ready state. Moreover,
+  /// due to internal logic of the node it may start interacting with another node, thus, turning
+  /// into a different state.
+  /// <para>
+  /// This method tries to do the reset right by simulating moving node out of reach for the other
+  /// node. Though, if this fails then a hard reset is done. It may leave this node or other nodes
+  /// in inconsistent state.
+  /// </para>
+  /// </remarks>
+  /// <param name="dockingNode">Node to reset.</param>
+  public static void ResetDockingNode(ModuleDockingNode dockingNode) {
+    if (dockingNode.state != dockingNode.st_ready.name) {
+      dockingNode.otherNode = null;  // Normally node does it in FixedUpdate().
+      if (dockingNode.fsm.CurrentState.IsValid(dockingNode.on_nodeDistance)) {
+        // Reset state politely by simulating nodes distance increase.
+        Debug.LogFormat("Soft reset node {0} from state '{1}' to '{2}'",
+                        DbgFormatter.PartId(dockingNode.part),
+                        dockingNode.state, dockingNode.st_ready.name);
+        dockingNode.fsm.RunEvent(dockingNode.on_nodeDistance);
+      } else {
+        // Do it a hard way: force the ready state!
+        Debug.LogWarningFormat("Hard reset node {0} to state '{1}' from state {2}",
+                               DbgFormatter.PartId(dockingNode.part),
+                               dockingNode.st_ready.name, dockingNode.fsm.currentStateName);
+        dockingNode.dockedPartUId = 0;
+        dockingNode.dockingNodeModuleIndex = 0;
+        dockingNode.fsm.StartFSM(dockingNode.st_ready.name);
+      }
+    }
+  }
+
   /// <summary>Couples docking port with another part.</summary>
   /// <remarks>Both parts must be already attached and the attach nodes correctly set.</remarks>
   /// <param name="dockingNode">Port to couple.</param>
