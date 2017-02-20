@@ -382,15 +382,8 @@ public static class KIS_Shared {
           WaitAndCouple(newPart, srcAttachNodeId, tgtAttachNode, onPartReady,
                         createPhysicsless: createPhysicsless));
     } else {
-      // Wait for part to initialize and then decouple it.
-      newPart.StartCoroutine(WaitAndCouple(newPart, "srfAttach", null, x => {
-        // Create a dropped part. It will become an independent vessel.
-        newPart.decouple();
-        RenameAssemblyVessel(newPart);
-        if (onPartReady != null) {
-          onPartReady(newPart);
-        }
-      }));
+      // Create new part as a separate vessel.
+      newPart.StartCoroutine(WaitAndMakeLonePart(newPart, onPartReady));
     }
     return newPart;
   }
@@ -1100,6 +1093,34 @@ public static class KIS_Shared {
         physicalChild.attachJoint = null;
       }
       physicalChild.CreateAttachJoint(physicalChild.attachMode);
+    }
+  }
+
+  /// <summary>Creates a new vessel from a single part.</summary>
+  /// <remarks>Initially the part must belong to some vessel.</remarks>
+  static IEnumerator WaitAndMakeLonePart(Part newPart, OnPartReady onPartReady) {
+    Debug.LogFormat("Create lone part vessel for {0}", DbgFormatter.PartId(newPart));
+    newPart.PromoteToPhysicalPart();
+    newPart.disconnect(true);
+    Vessel newVessel = newPart.gameObject.AddComponent<Vessel>();
+    newVessel.id = Guid.NewGuid();
+    if (newVessel.Initialize(false)) {
+      newVessel.vesselName = newPart.partInfo.title;
+      newVessel.IgnoreGForces(10);
+      newVessel.currentStage = StageManager.RecalculateVesselStaging(newVessel);
+      newPart.setParent(null);
+    }
+    yield return new WaitWhile(() => !newPart.started && newPart.State != PartStates.DEAD);
+    Debug.LogFormat("Part {0} is in state {1}", newPart.name, newPart.State);
+    if (newPart.State == PartStates.DEAD) {
+      Debug.LogWarningFormat("Part {0} has died before fully instantiating", newPart.name);
+      yield break;
+    }
+    newPart.Unpack();
+    newPart.InitializeModules();
+
+    if (onPartReady != null) {
+      onPartReady(newPart);
     }
   }
 }
