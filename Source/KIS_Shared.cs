@@ -998,6 +998,33 @@ public static class KIS_Shared {
     return portNode.state == portNode.st_preattached.name;
   }
 
+  /// <summary>Couples docking port with another part.</summary>
+  /// <remarks>Both parts must be already attached and the attach nodes correctly set.</remarks>
+  /// <param name="dockingNode">Port to couple.</param>
+  /// <param name="tgtPart">Part to couple with.</param>
+  /// <returns><c>true</c> if coupling was successful.</returns>
+  public static bool CoupleDockingPortWithPart(ModuleDockingNode dockingNode, Part tgtPart) {
+    Debug.LogFormat(
+        "Hard reset docking node {0} from state {1} to {2}",
+        DbgFormatter.PartId(tgtPart), dockingNode.state, dockingNode.st_preattached.name);
+    dockingNode.dockedPartUId = 0;
+    dockingNode.dockingNodeModuleIndex = 0;
+    // Target part lived in real world for some time, so its state may be anything. Do a hard reset.
+    dockingNode.fsm.StartFSM(dockingNode.st_ready.name);
+    var initState = dockingNode.lateFSMStart(PartModule.StartState.None);
+    // Make sure part init catched the new state.
+    while (initState.MoveNext()) {
+      // Do nothing. Just wait.
+    }
+    if (dockingNode.fsm.currentStateName != dockingNode.st_preattached.name) {
+      Debug.LogWarningFormat("Node on {0} is unexpected state '{1}'",
+                             DbgFormatter.PartId(dockingNode.part),
+                             dockingNode.fsm.currentStateName);
+      return false;
+    }
+    return true;
+  }
+
   /// <summary>Returns docking node that sits at the provided attach node.</summary>
   /// <param name="part">Part to get node for.</param>
   /// <param name="attachNodeId">
