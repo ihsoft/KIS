@@ -972,6 +972,46 @@ public static class KIS_Shared {
   public static bool IsKeyUp(KeyCode keyCode) {
     return InputLockManager.IsUnlocked(ControlTypes.UI) && Input.GetKeyUp(keyCode);
   }
+
+  /// <summary>Tells if two docking nodes can potentially dock.</summary>
+  static bool CheckNodesCompatible(ModuleDockingNode srcNode, ModuleDockingNode tgtNode) {
+    return
+        srcNode.nodeTypes.Any(tgtNode.nodeTypes.Contains)
+        && tgtNode.gendered == srcNode.gendered
+        && (!srcNode.gendered || tgtNode.genderFemale != srcNode.genderFemale)
+        && tgtNode.snapRotation == srcNode.snapRotation
+        && (!srcNode.snapRotation || Mathf.Approximately(tgtNode.snapOffset, srcNode.snapOffset));
+  }
+
+  /// <summary>Tells if node is docked to another node.</summary>
+  public static bool IsNodeDocked(ModuleDockingNode portNode) {
+    return portNode.state == portNode.st_docked_docker.name
+        || portNode.state == portNode.st_docked_dockee.name;
+  }
+
+  /// <summary>Tells if node is attached to another node.</summary>
+  /// <remarks>
+  /// When node's reference attach node is attached ot a non-node part it's always "attached",
+  /// not "docked". Two docking nodes can be in atatch mode when connected from the editor.
+  /// </remarks>
+  public static bool IsNodeCoupled(ModuleDockingNode portNode) {
+    return portNode.state == portNode.st_preattached.name;
+  }
+
+  /// <summary>Returns docking node that sits at the provided attach node.</summary>
+  /// <param name="part">Part to get node for.</param>
+  /// <param name="attachNodeId">
+  /// Refrence attach node ID. If not set then <paramref name="attachNode"/> will be used.
+  /// </param>
+  /// <param name="attachNode">
+  /// Reference attach node. If not set then method will return <c>null</c>.
+  /// </param>
+  /// <returns><c>null</c> if not node found.</returns>
+  public static ModuleDockingNode GetDockingNode(Part part, string attachNodeId = null, AttachNode attachNode = null) {
+    var nodeId = attachNodeId ?? (attachNode != null ? attachNode.id : null);
+    return part.FindModulesImplementing<ModuleDockingNode>()
+        .FirstOrDefault(x => x.referenceAttachNode == nodeId);
+  }
 }
 
 }  // namespace
