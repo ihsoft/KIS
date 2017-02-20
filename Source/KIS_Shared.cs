@@ -348,10 +348,10 @@ public static class KIS_Shared {
     }
 
     var refVessel = coupleToPart != null ? coupleToPart.vessel : fromPart.vessel;
-    var node_copy = new ConfigNode();
-    partConfig.CopyTo(node_copy);
-    var snapshot = new ProtoPartSnapshot(node_copy, null, HighLogic.CurrentGame);
-
+    var partNodeCopy = new ConfigNode();
+    partConfig.CopyTo(partNodeCopy);
+    var snapshot =
+        new ProtoPartSnapshot(partNodeCopy, refVessel.protoVessel, HighLogic.CurrentGame);
     if (HighLogic.CurrentGame.flightState.ContainsFlightID(snapshot.flightID)
         || snapshot.flightID == 0) {
       snapshot.flightID = ShipConstruction.GetUniqueFlightID(HighLogic.CurrentGame.flightState);
