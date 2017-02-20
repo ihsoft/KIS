@@ -471,6 +471,26 @@ public static class KIS_Shared {
     return node;
   }
 
+  /// <summary>Couples parts of different vessels together.</summary>
+  /// <remarks>
+  /// When parts are compatible docking ports thet are docked instead of coupling. Docking ports
+  /// handle own logic on docking.
+  /// <para>
+  /// Parts will be coupled even if source and/or target attach node is incorrect. In such a case
+  /// the parts will be logically and physically joint into one vessel but normal parts interaction
+  /// logic may get broken (e.g. fuel flow).
+  /// </para>
+  /// </remarks>
+  /// <param name="srcPart">Source part to couple.</param>
+  /// <param name="tgtPart">New parent of the source part.</param>
+  /// <param name="srcAttachNodeId">
+  /// Attach node id on the source part. Can be <c>null</c> for the compatibility but it's an
+  /// erroneous situation and it will be logged.
+  /// </param>
+  /// <param name="tgtAttachNode">
+  /// Attach node on the parent to couple thru. Can be <c>null</c> for the compatibility but it's an
+  /// erroneous situation and it will be logged.
+  /// </param>
   public static void CouplePart(Part srcPart, Part tgtPart,
                                 string srcAttachNodeId = null,
                                 AttachNode tgtAttachNode = null) {
