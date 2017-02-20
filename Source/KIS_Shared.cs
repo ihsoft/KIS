@@ -1040,6 +1040,40 @@ public static class KIS_Shared {
         .FirstOrDefault(x => x.referenceAttachNode == nodeId);
   }
 
+  /// <summary>Helper method to properly separate docking nodes.</summary>
+  /// <remarks>Docking nodes must be in state that allows undocking/decoupling.</remarks>
+  /// <returns><c>true</c> if at least one node was undocked/decoupled.</returns>
+  static bool SeparateDockingNodes(Part srcPart, Part tgtPart, bool doUndock = true) {
+    var changedNodes = false;
+    for (var i = 0; i < srcPart.Modules.Count; i++) {
+      var node = srcPart.Modules[i] as ModuleDockingNode;
+      if (node == null || node.otherNode == null || node.otherNode.part != tgtPart) {
+        continue;
+      }
+      var oldUndockForce = node.undockEjectionForce;
+      node.undockEjectionForce = 0;
+      if (IsNodeDocked(node)) {
+        if (!doUndock) {
+          continue;
+        }
+        Debug.LogFormat("Undock docking module {0} on part {1} from part {2}",
+                        i, DbgFormatter.PartId(node.part), DbgFormatter.PartId(node.part.parent));
+        node.Undock();
+        changedNodes = true;
+      } else if (IsNodeCoupled(node)) {
+        Debug.LogFormat("Decouple docking module {0} on part {1} from part {2}",
+                        i, DbgFormatter.PartId(node.part), DbgFormatter.PartId(node.part.parent));
+        node.Decouple();
+        changedNodes = true;
+      } else {
+        Debug.LogWarningFormat("Unexpected docking node state in module {0} on part {1}: {2}",
+                               i, DbgFormatter.PartId(node.part), node.state);
+      }
+      node.undockEjectionForce = oldUndockForce;
+    }
+    return changedNodes;
+  }
+
   /// <summary>
   /// Turns part into physicsless. It's a counterpart to <see cref="Part.PromoteToPhysicalPart"/>.
   /// </summary>
