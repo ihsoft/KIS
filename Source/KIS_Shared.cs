@@ -374,6 +374,7 @@ public static class KIS_Shared {
     newPart.transform.position = position;
     newPart.transform.rotation = rotation;
     newPart.missionID = fromPart.missionID;
+    newPart.UpdateOrgPosAndRot(newPart.vessel.rootPart);
 
     if (coupleToPart != null) {
       // Wait for part to initialize and then fire ready event.
@@ -398,7 +399,6 @@ public static class KIS_Shared {
                                    AttachNode tgtAttachNode, OnPartReady onPartReady,
                                    bool createPhysicsless = false) {
     var tgtPart = newPart.parent;
-    newPart.UpdateOrgPosAndRot(newPart.vessel.rootPart);//FIXME?
     var phsysicSignificant = newPart.PhysicsSignificance;
     newPart.PhysicsSignificance = 1;  // Disable physics on the part.
 
