@@ -392,8 +392,9 @@ public static class KIS_Shared {
                                    AttachNode tgtAttachNode, OnPartReady onPartReady,
                                    bool createPhysicsless = false) {
     var tgtPart = newPart.parent;
-    var phsysicSignificant = newPart.PhysicsSignificance;
-    newPart.PhysicsSignificance = 1;  // Disable physics on the part.
+    if (createPhysicsless) {
+      newPart.PhysicsSignificance = 1;  // Disable physics on the part.
+    }
 
     // Create proper attach nodes.
     Debug.LogFormat("Attach new part {0} to {1}: srcNodeId={2}, tgtNode={3}",
@@ -418,19 +419,7 @@ public static class KIS_Shared {
       yield break;
     }
 
-    // Hanle part's physics.
-    newPart.PhysicsSignificance = phsysicSignificant;
-    if (!createPhysicsless && phsysicSignificant != 1) {
-      Debug.LogFormat("Start physics on part {0}", newPart.name);
-      newPart.physicalSignificance = Part.PhysicalSignificance.NONE;
-      newPart.PromoteToPhysicalPart();
-      newPart.rb.velocity = tgtPart.Rigidbody.velocity;
-      newPart.rb.angularVelocity = tgtPart.Rigidbody.angularVelocity;
-      newPart.CreateAttachJoint(tgtPart.attachMode);
-      newPart.ResetJoints();
-    } else {
-      Debug.LogFormat("Skip physics init on part {0} due to settings", newPart.name);
-    }
+    // Complete part initialization.
     newPart.Unpack();
     newPart.InitializeModules();
 
