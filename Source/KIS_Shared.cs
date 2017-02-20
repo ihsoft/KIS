@@ -1012,6 +1012,35 @@ public static class KIS_Shared {
     return part.FindModulesImplementing<ModuleDockingNode>()
         .FirstOrDefault(x => x.referenceAttachNode == nodeId);
   }
+
+  /// <summary>
+  /// Turns part into physicsless. It's a counterpart to <see cref="Part.PromoteToPhysicalPart"/>.
+  /// </summary>
+  static void SetPartToPhysicsless(Part p) {
+    Debug.LogFormat("Disable phiycs on physicsless part {0}", DbgFormatter.PartId(p));
+    p.transform.parent = p.parent.transform;
+    p.attachJoint.DestroyJoint();
+    UnityEngine.Object.Destroy(p.rb);
+    p.rb = null;
+    p.physicalSignificance = Part.PhysicalSignificance.NONE;
+    UnityEngine.Object.Destroy(p.collisionEnhancer);
+    p.collisionEnhancer = null;
+    UnityEngine.Object.Destroy(p.partBuoyancy);
+    p.partBuoyancy = null;
+
+    // Re-attach physical children to the new physical parent since former parent is now
+    // physicsless (no RB means no joint).
+    var physicalChildren = new List<Part>();
+    p.FindNonPhysicslessChildren(physicalChildren);
+    foreach (var physicalChild in physicalChildren) {
+      Debug.LogFormat("Re-create joint for phisics child {0}", DbgFormatter.PartId(physicalChild));
+      if (physicalChild.attachJoint) {
+        physicalChild.attachJoint.DestroyJoint();
+        physicalChild.attachJoint = null;
+      }
+      physicalChild.CreateAttachJoint(physicalChild.attachMode);
+    }
+  }
 }
 
 }  // namespace
