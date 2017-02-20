@@ -407,11 +407,42 @@ public static class KIS_Shared {
       tgtAttachNode.attachedPart = newPart;
       tgtAttachNode.attachedPartId = newPart.flightID;
     }
+
+    // When target, source or both are docking ports force them into state PreAttached. It's the
+    // most safe state that simulates behavior of parts attached in the editor.
+    var srcDockingNode = GetDockingNode(newPart, attachNodeId: srcAttachNodeId);
+    if (srcDockingNode != null) {
+      // Source part is not yet started. It's functionality is very limited.
+      srcDockingNode.state = "PreAttached";
+      srcDockingNode.dockedPartUId = 0;
+      srcDockingNode.dockingNodeModuleIndex = 0;
+      Debug.LogFormat(
+          "Force new node {0} to state {1}", DbgFormatter.PartId(newPart), srcDockingNode.state);
+    }
+    var tgtDockingNode = GetDockingNode(tgtPart, attachNode: tgtAttachNode);
+    if (tgtDockingNode != null) {
+      CoupleDockingPortWithPart(tgtDockingNode, newPart);
+    }
     
     // Wait until part is started. Keep it in position till it happen.
     Debug.LogFormat("Wait for part {0} to get alive...", newPart.name);
     newPart.transform.parent = tgtPart.transform;
-    yield return new WaitWhile(() => !newPart.started && newPart.State != PartStates.DEAD);
+    var relPos = newPart.transform.localPosition;
+    var relRot = newPart.transform.localRotation;
+    if (newPart.PhysicsSignificance != 1) {
+      // Mangling with colliders on physicsless parts may result in camera effects.
+      var childColliders = newPart.GetComponentsInChildren<Collider>(includeInactive: false);
+      CollisionManager.IgnoreCollidersOnVessel(tgtPart.vessel, childColliders);
+    }
+    while (!newPart.started && newPart.State != PartStates.DEAD) {
+      yield return new WaitForFixedUpdate();
+      if (newPart.rb != null) {
+        newPart.rb.position = newPart.parent.transform.TransformPoint(relPos);
+        newPart.rb.rotation = newPart.parent.transform.rotation * relRot;
+        newPart.rb.velocity = newPart.parent.Rigidbody.velocity;
+        newPart.rb.angularVelocity = newPart.parent.Rigidbody.angularVelocity;
+      }
+    }
     newPart.transform.parent = newPart.transform;
     Debug.LogFormat("Part {0} is in state {1}", newPart.name, newPart.State);
     if (newPart.State == PartStates.DEAD) {
