@@ -1112,29 +1112,23 @@ public static class KIS_Shared {
   /// <returns><c>true</c> if at least one node was undocked/decoupled.</returns>
   static bool SeparateDockingNodes(Part srcPart, Part tgtPart, bool doUndock = true) {
     var changedNodes = false;
-    for (var i = 0; i < srcPart.Modules.Count; i++) {
-      var node = srcPart.Modules[i] as ModuleDockingNode;
-      if (node == null || node.otherNode == null || node.otherNode.part != tgtPart) {
-        continue;
-      }
+    var nodes = srcPart.FindModulesImplementing<ModuleDockingNode>();
+    foreach (var node in nodes) {
       var oldUndockForce = node.undockEjectionForce;
       node.undockEjectionForce = 0;
-      if (IsNodeDocked(node)) {
+      if (IsNodeDocked(node) && node.otherNode.part == tgtPart) {
         if (!doUndock) {
           continue;
         }
-        Debug.LogFormat("Undock docking module {0} on part {1} from part {2}",
-                        i, DbgFormatter.PartId(node.part), DbgFormatter.PartId(node.part.parent));
+        Debug.LogFormat("Undock docking module on part {0} from part {1}",
+                        DbgFormatter.PartId(node.part), DbgFormatter.PartId(tgtPart));
         node.Undock();
         changedNodes = true;
-      } else if (IsNodeCoupled(node)) {
-        Debug.LogFormat("Decouple docking module {0} on part {1} from part {2}",
-                        i, DbgFormatter.PartId(node.part), DbgFormatter.PartId(node.part.parent));
+      } else if (IsNodeCoupled(node) && node.referenceNode.attachedPart == tgtPart) {
+        Debug.LogFormat("Decouple docking module on part {0} from part {1}",
+                        DbgFormatter.PartId(node.part), DbgFormatter.PartId(tgtPart));
         node.Decouple();
         changedNodes = true;
-      } else {
-        Debug.LogWarningFormat("Unexpected docking node state in module {0} on part {1}: {2}",
-                               i, DbgFormatter.PartId(node.part), node.state);
       }
       node.undockEjectionForce = oldUndockForce;
     }
