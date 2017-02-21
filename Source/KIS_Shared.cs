@@ -1,6 +1,7 @@
 ﻿using KSPDev.ConfigUtils;
 using KSPDev.GUIUtils;
 using KSPDev.LogUtils;
+using KSPDev.ProcessingUtils;
 using KSP.UI.Screens;
 using System;
 using System.Collections.Generic;
@@ -1154,6 +1155,173 @@ public static class KIS_Shared {
   /// <seealso cref="AsyncDecoupleAssembly"/>
   public static void DecoupleAssembly(Part assemblyRoot, OnPartReady onReady = null) {
     assemblyRoot.StartCoroutine(AsyncDecoupleAssembly(assemblyRoot, onReady));
+  }
+
+  /// <summary>Move parts sub-tree to another parent.</summary>
+  /// <remarks>
+  /// This method correctly handles (de)coupling of docking ports. Plain call to the part's methods
+  /// breaks stock docking ports.
+  /// <para>There is no need to decouple assembly before move. It will be done automatically.</para>
+  /// <para>
+  /// It's not defined how much time this method can take. Expect at least couple of fixed frame
+  /// updates.
+  /// </para>
+  /// <para>
+  /// Note that KIS parts may require <i>external</i> attachment. If that's the case this method
+  /// will decouple and trigger coupling event but will not actually couple with the new target.
+  /// </para>
+  /// <para>
+  /// When moving a physicless part it becomes physical for the period of time. Once the move is
+  /// complete it's returned back to the physicsless state.
+  /// </para>
+  /// </remarks>
+  /// <param name="assemblyRoot">Root of the assembly to move.</param>
+  /// <param name="srcAttachNodeId">Attach node ID on the assembly root.</param>
+  /// <param name="tgtPart">New root part.</param>
+  /// <param name="tgtAttachNode">
+  /// Attach node ID on the new target. It can be <c>null</c> if assembly is attached via surface
+  /// node.
+  /// </param>
+  /// <param name="pos">Position of the assembly at the new parent.</param>
+  /// <param name="rot">Rotation of the assembly at the new parent.</param>
+  /// <param name="onReady">Cllaback to execute when assembly move completed.</param>
+  /// <returns>Enumerator that can be used as coroutine target.</returns>
+  public static IEnumerator AsyncMoveAssembly(
+      Part assemblyRoot, string srcAttachNodeId,
+      Part tgtPart, AttachNode tgtAttachNode, Vector3 pos, Quaternion rot, 
+      OnPartReady onReady = null) {
+    yield return AsyncDecoupleAssembly(assemblyRoot);
+    assemblyRoot.vessel.SetPosition(pos);
+    assemblyRoot.vessel.SetRotation(rot);
+
+    var srcAttachNode = GetAttachNodeById(assemblyRoot, srcAttachNodeId);
+    SendKISMessage(assemblyRoot, MessageAction.AttachStart, srcAttachNode, tgtPart, tgtAttachNode);
+
+    // Find out if coupling with a new parent is needed/allowed.
+    var moduleItem = assemblyRoot.GetComponent<ModuleKISItem>();
+    var useExternalPartAttach = moduleItem != null && moduleItem.useExternalPartAttach;
+    if (tgtPart == null || moduleItem != null && moduleItem.useExternalPartAttach) {
+      // Skip coupling logic.
+      SendKISMessage(assemblyRoot, MessageAction.AttachEnd, srcAttachNode, tgtPart, tgtAttachNode);
+      yield break;
+    }
+
+    // Proactively disable collisions on the moving parts since there will be a period of time when
+    // they don't belong to the target vessel.
+    var childColliders = assemblyRoot.GetComponentsInChildren<Collider>(includeInactive: false);
+    CollisionManager.IgnoreCollidersOnVessel(tgtPart.vessel, childColliders);
+
+    // Adhere the moving assembly to the target since it will take some fixed updates to complete.
+    var fixedJoint = assemblyRoot.gameObject.AddComponent<FixedJoint>();
+    fixedJoint.connectedBody = tgtPart.Rigidbody;
+
+    var srcNode = GetDockingNode(assemblyRoot, attachNodeId: srcAttachNodeId);
+    var tgtNode = GetDockingNode(tgtPart, attachNode: tgtAttachNode);
+    if (srcNode == null && tgtNode == null) {
+      CouplePart(assemblyRoot, tgtPart, srcAttachNodeId, tgtAttachNode);
+    } else if (srcNode != null && tgtNode != null && CheckNodesCompatible(srcNode, tgtNode)) {
+      yield return WaitAndDockPorts(srcNode, tgtNode);
+    } else {
+      yield return WaitAndCoupleDockingNode(assemblyRoot, srcAttachNodeId, tgtPart, tgtAttachNode);
+    }
+    UnityEngine.Object.DestroyImmediate(fixedJoint);
+    
+    // Drop physics from the root part if it's assumed to be physicsless.
+    if (assemblyRoot.PhysicsSignificance == 1) {
+      SetPartToPhysicsless(assemblyRoot);
+    }
+
+    SendKISMessage(assemblyRoot, MessageAction.AttachEnd, srcAttachNode, tgtPart, tgtAttachNode);
+
+    if (onReady != null) {
+      onReady(assemblyRoot);
+    }
+  }
+
+  /// <summary>Convinience method to schedule moving of assembly.</summary>
+  /// <remarks>
+  /// Do <i>not</i> expect the assembly is actually moved when this method returns. When it's
+  /// important to do stuff after the move provide <paramref name="onReady"/> callback.
+  /// </remarks>
+  /// <seealso cref="AsyncMoveAssembly"/>
+  public static void MoveAssembly(Part assemblyRoot, string srcAttachNodeId,
+      Part tgtPart, AttachNode tgtAttachNode, Vector3 pos, Quaternion rot, 
+      OnPartReady onReady = null) {
+    assemblyRoot.StartCoroutine(AsyncMoveAssembly(
+        assemblyRoot, srcAttachNodeId, tgtPart, tgtAttachNode, pos, rot, onReady));
+  }
+
+  /// <summary>Couples docking port(s) with parts.</summary>
+  /// <remarks>
+  /// When docking port reference node is attached to a regular part (or an incompatible docking
+  /// port) it's treated as a special state "PreAttached". Normally, this state is only possible
+  /// thru the editor, but with KIS an arbitrary part can be coupled in flight.
+  /// <para>
+  /// This method allows any of the parts (either source or target) to be a regular part. It can
+  /// also handle the case when both parts are docking nodes. The only case it cannot handle is when
+  /// none of the parts have docking node at the provided reference attach nodes.    
+  /// </para>
+  /// </remarks>
+  /// <param name="srcPart">Part being coupling.</param>
+  /// <param name="srcAttachNodeId">
+  /// Source part's attach node. It's also used to find docking node if any.
+  /// </param>
+  /// <param name="tgtPart">Part to couple with. It will be the new parent.</param>
+  /// <param name="tgtAttachNode">
+  /// Target part's attach node. It's also used to find docking node if any.
+  /// </param>
+  /// <returns></returns>
+  static IEnumerator WaitAndCoupleDockingNode(
+        Part srcPart, string srcAttachNodeId, Part tgtPart, AttachNode tgtAttachNode) {
+    CouplePart(srcPart, tgtPart, srcAttachNodeId, tgtAttachNode);
+    var srcNode = GetDockingNode(srcPart, attachNodeId: srcAttachNodeId);
+    if (srcNode != null) {
+      CoupleDockingPortWithPart(srcNode);
+    }
+    var tgtNode = GetDockingNode(tgtPart, attachNode: tgtAttachNode);
+    if (tgtNode != null) {
+      CoupleDockingPortWithPart(tgtNode);
+    }
+    yield return AsyncCall2.AsyncWaitForPhysics(
+        10,
+        () => (srcNode == null || IsNodeCoupled(srcNode))
+               && (tgtNode == null || IsNodeCoupled(tgtNode)),
+        update: frame => Debug.LogFormat(
+            "Wait for ports to couple: src={0}, tgt={1}",
+            (srcNode != null ? srcNode.state : "N/A"), (tgtNode != null ? tgtNode.state : "N/A")),
+        success: () => Debug.LogFormat(
+            "Coupled {0} (isDockingNode={1}) with {2} (isDockingNode={3})",
+            DbgFormatter.PartId(srcPart), srcNode != null,
+            DbgFormatter.PartId(tgtPart), tgtNode != null),
+        failure: () => Debug.LogErrorFormat(
+            "FAILED to couple {0} (isDockingNode={1}) with {2} (isDockingNode={3})",
+            DbgFormatter.PartId(srcPart), srcNode != null,
+            DbgFormatter.PartId(tgtPart), tgtNode != null));
+  }
+
+  /// <summary>Docks two <i>compatible</i> nodes.</summary>
+  /// <remarks>
+  /// Nodes must be positioned agains each other and retaing positioning for several fixed frame
+  /// updates.
+  /// </remarks>
+  static IEnumerator WaitAndDockPorts(ModuleDockingNode srcNode, ModuleDockingNode tgtNode) {
+    // Ports dock themselves. We only need to ensure they are in the right state and wait.
+    ResetDockingNode(srcNode);
+    ResetDockingNode(tgtNode);
+    yield return AsyncCall2.AsyncWaitForPhysics(
+        10,
+        () => IsNodeDocked(srcNode) && IsNodeDocked(tgtNode),
+        update: frame => Debug.LogFormat(
+            "Wait for ports to dock: src={0}, tgt={1}",
+            srcNode.fsm.currentStateName, tgtNode.fsm.currentStateName),
+        success: () => Debug.LogFormat(
+            "Docked ports: {0} <=> {1}",
+            DbgFormatter.PartId(srcNode.part),
+            DbgFormatter.PartId(tgtNode.part)),
+        failure: () => Debug.LogErrorFormat(
+            "FAILED to dock ports: {0} <=> {1}",
+            DbgFormatter.PartId(srcNode.part),
+            DbgFormatter.PartId(tgtNode.part)));
   }
 
   /// <summary>
