@@ -421,7 +421,7 @@ public static class KIS_Shared {
     }
     var tgtDockingNode = GetDockingNode(tgtPart, attachNode: tgtAttachNode);
     if (tgtDockingNode != null) {
-      CoupleDockingPortWithPart(tgtDockingNode, newPart);
+      CoupleDockingPortWithPart(tgtDockingNode);
     }
     
     // Wait until part is started. Keep it in position till it happen.
@@ -1052,19 +1052,27 @@ public static class KIS_Shared {
     }
   }
 
-  /// <summary>Couples docking port with another part.</summary>
-  /// <remarks>Both parts must be already attached and the attach nodes correctly set.</remarks>
+  /// <summary>Couples docking port with a part at its reference attach node.</summary>
+  /// <remarks>Both parts must be already connected and the attach nodes correctly set.</remarks>
   /// <param name="dockingNode">Port to couple.</param>
-  /// <param name="tgtPart">Part to couple with.</param>
   /// <returns><c>true</c> if coupling was successful.</returns>
-  public static bool CoupleDockingPortWithPart(ModuleDockingNode dockingNode, Part tgtPart) {
-    Debug.LogFormat(
-        "Hard reset docking node {0} from state {1} to {2}",
-        DbgFormatter.PartId(tgtPart), dockingNode.state, dockingNode.st_preattached.name);
-    dockingNode.dockedPartUId = 0;
-    dockingNode.dockingNodeModuleIndex = 0;
-    // Target part lived in real world for some time, so its state may be anything. Do a hard reset.
-    dockingNode.fsm.StartFSM(dockingNode.st_ready.name);
+  public static bool CoupleDockingPortWithPart(ModuleDockingNode dockingNode) {
+    var tgtPart = dockingNode.referenceNode.attachedPart;
+    if (tgtPart == null) {
+      Debug.LogErrorFormat("Node's part {0} is not attached to anything thru the reference node",
+                           DbgFormatter.PartId(dockingNode.part));
+      return false;
+    }
+    if (dockingNode.state != dockingNode.st_ready.name) {
+      Debug.LogWarningFormat(
+          "Hard reset docking node {0} from state '{1}' to '{2}'",
+          DbgFormatter.PartId(dockingNode.part),
+          dockingNode.state, dockingNode.st_ready.name);
+      dockingNode.dockedPartUId = 0;
+      dockingNode.dockingNodeModuleIndex = 0;
+      // Target part lived in real world for some time, so its state may be anything. Do a hard reset.
+      dockingNode.fsm.StartFSM(dockingNode.st_ready.name);
+    }
     var initState = dockingNode.lateFSMStart(PartModule.StartState.None);
     // Make sure part init catched the new state.
     while (initState.MoveNext()) {
@@ -1076,6 +1084,10 @@ public static class KIS_Shared {
                              dockingNode.fsm.currentStateName);
       return false;
     }
+    Debug.LogFormat(
+        "Successfully set docking node {0} to state {1} with part {2}",
+        DbgFormatter.PartId(dockingNode.part), dockingNode.fsm.currentStateName,
+        DbgFormatter.PartId(tgtPart));
     return true;
   }
 
