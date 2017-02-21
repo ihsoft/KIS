@@ -478,7 +478,8 @@ public static class KIS_Shared {
     } else {
       Debug.LogWarning("Missing source attach node !");
     }
-
+    Debug.LogFormat(
+        "Couple {0} with {1}", DbgFormatter.PartId(srcPart), DbgFormatter.PartId(tgtPart));
     srcPart.Couple(tgtPart);
   }
 
