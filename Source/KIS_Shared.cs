@@ -997,18 +997,26 @@ public static class KIS_Shared {
   }
 
   /// <summary>Tells if node is docked to another node.</summary>
+  /// <remarks>
+  /// It checks actual state thru the FSM, not thru the node's state property which is updated
+  /// asynchronously in <c>FixedUpdate()</c>.
+  /// </remarks>
   public static bool IsNodeDocked(ModuleDockingNode portNode) {
-    return portNode.state == portNode.st_docked_docker.name
-        || portNode.state == portNode.st_docked_dockee.name;
+    return portNode.fsm.currentStateName == portNode.st_docked_docker.name
+        || portNode.fsm.currentStateName == portNode.st_docked_dockee.name;
   }
 
   /// <summary>Tells if node is attached to another node.</summary>
   /// <remarks>
-  /// When node's reference attach node is attached ot a non-node part it's always "attached",
-  /// not "docked". Two docking nodes can be in atatch mode when connected from the editor.
+  /// It checks actual state thru the FSM, not thru the node's state property which is updated
+  /// asynchronously in <c>FixedUpdate()</c>.
+  /// <para>
+  /// When node's reference attach node is attached to a non-node part it's always "attached",
+  /// not "docked". Two docking nodes can be in attach mode when connected from the editor.
+  /// </para>
   /// </remarks>
   public static bool IsNodeCoupled(ModuleDockingNode portNode) {
-    return portNode.state == portNode.st_preattached.name;
+    return portNode.fsm.currentStateName == portNode.st_preattached.name;
   }
 
   /// <summary>Resets docking node to state "ready".</summary>
