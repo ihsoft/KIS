@@ -128,63 +128,6 @@ public static class KIS_Shared {
     }
   }
 
-  /// <summary>Decouples <paramref name="assemblyRoot"/> from the vessel.</summary>
-  /// <remarks>Also does external links cleanup on both vessels.</remarks>
-  /// <param name="assemblyRoot">An assembly to decouple.</param>
-  public static void DecoupleAssembly(Part assemblyRoot) {
-    if (assemblyRoot.parent == null) {
-      return;  // Nothing to decouple.
-    }
-    SendKISMessage(assemblyRoot, MessageAction.Decouple);
-    Vessel oldVessel = assemblyRoot.vessel;
-    var formerParent = assemblyRoot.parent;
-
-    // Regular parts can be just decoupled but docking ports want to do it via their own methods.
-    var srcDockingPort = assemblyRoot.GetComponent<ModuleDockingNode>();
-    if (srcDockingPort != null && srcDockingPort.otherNode != null) {
-      var tgtDockingPort = srcDockingPort.otherNode;
-      Debug.LogFormat("Undock port {0} from {1}",
-                      DbgFormatter.PartId(srcDockingPort.part),
-                      DbgFormatter.PartId(tgtDockingPort.part));
-      // Set ejection forces to zero to not have physics effect on KIS detach.
-      var srcUndockForce = srcDockingPort.undockEjectionForce;
-      srcDockingPort.undockEjectionForce = 0;
-      var tgtUndockForce = tgtDockingPort.undockEjectionForce;
-      tgtDockingPort.undockEjectionForce = 0;
-      // Propery undock docked ports.
-      srcDockingPort.Undock();
-      // Restore undock forces on the parts.
-      srcDockingPort.undockEjectionForce = srcUndockForce;
-      tgtDockingPort.undockEjectionForce = tgtUndockForce;
-    } else {
-      Debug.LogFormat("Decouple part {0} from part {1}",
-                      DbgFormatter.PartId(assemblyRoot), DbgFormatter.PartId(assemblyRoot.parent));
-      assemblyRoot.decouple();
-    }
-
-    // HACK: As of KSP 1.0.5 some parts (e.g docking ports) can be attached by both a
-    // surface node and by a stack node which looks like an editor bug in some corner case.
-    // In this case decouple() will only clear the surface node leaving the stack one
-    // refering the parent. This misconfiguration will badly affect all further KIS
-    // operations on the part. Do a cleanup job here to workaround this bug.
-    var orphanNode = assemblyRoot.FindAttachNodeByPart(formerParent);
-    if (orphanNode != null) {
-      Debug.LogWarningFormat("KSP BUG: Cleanup orphan node {0} in the assembly", orphanNode.id);
-      orphanNode.attachedPart = null;
-      // Also, check that parent is properly cleaned up.
-      var parentOrphanNode = formerParent.FindAttachNodeByPart(assemblyRoot);
-      if (parentOrphanNode != null) {
-        Debug.LogWarningFormat(
-            "KSP BUG: Cleanup orphan node {0} in the parent", parentOrphanNode.id);
-        parentOrphanNode.attachedPart = null;
-      }
-    }
-          
-    CleanupExternalLinks(oldVessel);
-    CleanupExternalLinks(assemblyRoot.vessel);
-    RenameAssemblyVessel(assemblyRoot);
-  }
-
   /// <summary>Gives a nicer name to a vessel created during KIS deatch operation.</summary>
   /// <remarks>When a part is pulled out of inventory or assembly deatched from a vessel it gets a
   /// standard name saying it's now "debris". When using KIS such parts are not actually debris.
@@ -1133,6 +1076,83 @@ public static class KIS_Shared {
       node.undockEjectionForce = oldUndockForce;
     }
     return changedNodes;
+  }
+
+  /// <summary>Decouples assembly form parent respecting docking nodes logic.</summary>
+  /// <remarks>
+  /// It takes one fixed frame update to complete the action. This may result in decoupled assembly
+  /// deviation from the original position due to gravity or other forces.
+  /// <para>
+  /// If assembly is already decoupled nothing will be done, and the callback will be called
+  /// immediately.
+  /// </para>
+  /// </remarks>
+  /// <param name="assemblyRoot">Root part of the assembly being decoupled.</param>
+  /// <param name="onReady">
+  /// Callback to call when decoupling is complete and all parts are updated.
+  /// </param>
+  public static IEnumerator AsyncDecoupleAssembly(Part assemblyRoot, OnPartReady onReady = null) {
+    if (assemblyRoot.parent == null) {
+      if (onReady != null) {
+        onReady(assemblyRoot);
+      }
+      yield break;  // Nothing to decouple.
+    }
+    SendKISMessage(assemblyRoot, MessageAction.Decouple);
+    Vessel oldVessel = assemblyRoot.vessel;
+    var formerParent = assemblyRoot.parent;
+
+    // Properly decouple/undock docking nodes. Only stock module is supported!
+    var hasPorts = SeparateDockingNodes(assemblyRoot, formerParent);
+    hasPorts |= SeparateDockingNodes(formerParent, assemblyRoot, doUndock: false);
+    if (!hasPorts) {
+      Debug.LogFormat("Decouple regular part {0} from regular part {1}",
+                      DbgFormatter.PartId(assemblyRoot), DbgFormatter.PartId(formerParent));
+      assemblyRoot.decouple();
+    }
+
+    // Allow one frame update to let other parts know about separation.
+    yield return new WaitForFixedUpdate();
+    
+    // HACK: As of KSP 1.0.5 some parts (e.g docking ports) can be attached by both a
+    // surface node and by a stack node which looks like an editor bug in some corner case.
+    // In this case decouple() will only clear the surface node leaving the stack one
+    // refering the parent. This misconfiguration will badly affect all further KIS
+    // operations on the part. Do a cleanup job here to workaround this bug.
+    var orphanNode = assemblyRoot.FindAttachNodeByPart(formerParent);
+    if (orphanNode != null) {
+      Debug.LogWarningFormat("KSP BUG: Cleanup orphan node {0} in the assembly", orphanNode.id);
+      orphanNode.attachedPart = null;
+      // Also, check that parent is properly cleaned up.
+      var parentOrphanNode = formerParent.FindAttachNodeByPart(assemblyRoot);
+      if (parentOrphanNode != null) {
+        Debug.LogWarningFormat(
+            "KSP BUG: Cleanup orphan node {0} in the parent", parentOrphanNode.id);
+        parentOrphanNode.attachedPart = null;
+      }
+    }
+          
+    CleanupExternalLinks(oldVessel);
+    CleanupExternalLinks(assemblyRoot.vessel);
+    RenameAssemblyVessel(assemblyRoot);
+
+    if (onReady != null) {
+      onReady(assemblyRoot);
+    }
+  }
+
+  /// <summary>Convinience method to schedule decoupling.</summary>
+  /// <remarks>
+  /// Do <i>not</i> expect the part is actually decoupled when this method returns. When it's
+  /// important to do stuff after the decoupling provide <paramref name="onReady"/> callback.
+  /// </remarks>
+  /// <param name="assemblyRoot">Root part of the assembly being decoupled.</param>
+  /// <param name="onReady">
+  /// Callback to call when decoupling is complete and all parts are updated.
+  /// </param>
+  /// <seealso cref="AsyncDecoupleAssembly"/>
+  public static void DecoupleAssembly(Part assemblyRoot, OnPartReady onReady = null) {
+    assemblyRoot.StartCoroutine(AsyncDecoupleAssembly(assemblyRoot, onReady));
   }
 
   /// <summary>
