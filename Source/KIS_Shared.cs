@@ -1032,22 +1032,23 @@ public static class KIS_Shared {
   /// </remarks>
   /// <param name="dockingNode">Node to reset.</param>
   public static void ResetDockingNode(ModuleDockingNode dockingNode) {
-    if (dockingNode.state != dockingNode.st_ready.name) {
+    if (dockingNode.fsm.currentStateName != dockingNode.st_ready.name) {
       dockingNode.otherNode = null;  // Normally node does it in FixedUpdate().
       if (dockingNode.fsm.CurrentState.IsValid(dockingNode.on_nodeDistance)) {
         // Reset state politely by simulating nodes distance increase.
         Debug.LogFormat("Soft reset node {0} from state '{1}' to '{2}'",
                         DbgFormatter.PartId(dockingNode.part),
-                        dockingNode.state, dockingNode.st_ready.name);
+                        dockingNode.fsm.currentStateName, dockingNode.st_ready.name);
         dockingNode.fsm.RunEvent(dockingNode.on_nodeDistance);
       } else {
         // Do it a hard way: force the ready state!
-        Debug.LogWarningFormat("Hard reset node {0} to state '{1}' from state {2}",
+        Debug.LogWarningFormat("Hard reset node {0} from state '{1}' to state '{2}'",
                                DbgFormatter.PartId(dockingNode.part),
-                               dockingNode.st_ready.name, dockingNode.fsm.currentStateName);
+                               dockingNode.fsm.currentStateName, dockingNode.st_ready.name);
         dockingNode.dockedPartUId = 0;
         dockingNode.dockingNodeModuleIndex = 0;
         dockingNode.fsm.StartFSM(dockingNode.st_ready.name);
+        dockingNode.state = dockingNode.st_ready.name;
       }
     }
   }
