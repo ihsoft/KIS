@@ -130,7 +130,9 @@ sealed class KISAddonPointer : MonoBehaviour {
     OnMouseExitPart,
     OnMouseEnterNode,
     OnMouseExitNode,
-    OnChangeAttachNode
+    OnChangeAttachNode,
+    OnPointerStarted,
+    OnPointerStopped,
   }
   private static OnPointerState SendPointerState;
 
@@ -171,6 +173,8 @@ sealed class KISAddonPointer : MonoBehaviour {
              
       LockUI();
       allowedAttachmentParts = allowedAttachmentParts; // Apply selection.
+      allowedAttachmentParts = allowedAttachmentParts;  // Apply selection.
+      SendPointerState(PointerTarget.Nothing, PointerState.OnPointerStarted, null, null);
     }
   }
 
@@ -184,6 +188,7 @@ sealed class KISAddonPointer : MonoBehaviour {
     Debug.Log("StopPointer()");
     running = false;
     ResetMouseOver();
+    SendPointerState(PointerTarget.Nothing, PointerState.OnPointerStopped, null, null);
     if (unlockUI) {
       UnlockUI();
     }

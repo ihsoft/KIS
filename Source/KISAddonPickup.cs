@@ -133,6 +133,7 @@ sealed class KISAddonPickup : MonoBehaviour {
   private static bool redockOk;
 
   public enum PointerMode {
+    Nothing,
     Drop,
     Attach,
     ReDock
@@ -897,6 +898,9 @@ sealed class KISAddonPickup : MonoBehaviour {
   private void OnPointerState(KISAddonPointer.PointerTarget pTarget,
                               KISAddonPointer.PointerState pState,
                               Part hoverPart, AttachNode hoverNode) {
+    if (pState == KISAddonPointer.PointerState.OnPointerStopped) {
+      pointerMode = PointerMode.Nothing;
+    }
     if (pState == KISAddonPointer.PointerState.OnMouseEnterNode) {
       if (pTarget == KISAddonPointer.PointerTarget.PartMount) {
         string keyAnchor = "[" + GameSettings.Editor_toggleSymMethod.name + "]";
