@@ -311,7 +311,7 @@ public sealed class KIS_Item {
     }
   }
 
-  public bool StackAdd(float qty, bool checkVolume = true) {
+  public bool CanStackAdd(float qty, bool checkVolume = true) {
     if (qty <= 0) {
       return false;
     }
@@ -326,9 +326,16 @@ public sealed class KIS_Item {
                                                 newVolume - inventory.maxVolume);
       return false;
     }
-    quantity += qty;
-    inventory.RefreshMassAndVolume();
     return true;
+  }
+
+  public bool StackAdd(float qty, bool checkVolume = true) {
+    if (CanStackAdd(qty, checkVolume)) {
+      quantity += qty;
+      inventory.RefreshMassAndVolume();
+      return true;
+    }
+    return false;
   }
 
   public bool StackRemove(float qty = 1) {

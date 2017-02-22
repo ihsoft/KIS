@@ -1472,12 +1472,12 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
               items[slotIndex].OnMove(srcInventory, this);
             }
           } else {
-            // Part come from scene
-            if (items[slotIndex].StackAdd(1)) {
-              if (!HighLogic.LoadedSceneIsEditor) {
-                KISAddonPickup.draggedPart.Die();  // In editor parts are not connected. 
-              }
-              items[slotIndex].OnMove(srcInventory, this);
+            // Part comes from scene.
+            if (items[slotIndex].CanStackAdd(1)) {
+              ConsumePartFromScene(KISAddonPickup.draggedPart, afterDie: x => {
+                items[slotIndex].StackAdd(1);
+                items[slotIndex].OnMove(srcInventory, this);
+              });
             }
           }
         } else {
@@ -1569,20 +1569,18 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
         } else if (KISAddonPickup.draggedPart != part) {
           // Picked part from scene
           if (carryPart) {
-            KIS_Shared.SendKISMessage(
-                KISAddonPickup.draggedPart, KIS_Shared.MessageAction.Store);
-            KIS_Item carryItem = AddItem(KISAddonPickup.draggedPart, 1, slotIndex);
-            KISAddonPickup.draggedPart.Die();
-            carryItem.Equip();
+            ConsumePartFromScene(KISAddonPickup.draggedPart, beforeDie: p => {
+              KIS_Shared.SendKISMessage(p, KIS_Shared.MessageAction.Store);
+              var carryItem = AddItem(p, 1, slotIndex);
+              carryItem.Equip();
+            });
           } else {
             if (VerifyIsNotAssembly(KISAddonPickup.draggedPart)
                 && VolumeAvailableFor(KISAddonPickup.draggedPart)) {
-              KIS_Shared.SendKISMessage(
-                  KISAddonPickup.draggedPart, KIS_Shared.MessageAction.Store);
-              AddItem(KISAddonPickup.draggedPart, 1, slotIndex);
-              if (!HighLogic.LoadedSceneIsEditor) {
-                KISAddonPickup.draggedPart.Die();
-              }
+              ConsumePartFromScene(KISAddonPickup.draggedPart, beforeDie: p => {
+                KIS_Shared.SendKISMessage(p, KIS_Shared.MessageAction.Store);
+                AddItem(p, 1, slotIndex);
+              });
             }
           }
         }
@@ -1607,6 +1605,45 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
   /// <summary>Hides all UI elements.</summary>
   void OnTooltipDestroyRequestedEvent() {
     showGui = false;
+  }
+
+  /// <summary>Properly detaches part from the parent and destroys it.</summary>
+  /// <param name="p">Part to destroy.</param>
+  /// <param name="beforeDie">
+  /// Callback to execute after decouple is complete but before the destruction.
+  /// </param>
+  /// <param name="afterDie">Callback to execute when part is destroyed.</param>
+  IEnumerator AsyncConsumePartFromScene(
+      Part p, KIS_Shared.OnPartReady beforeDie, KIS_Shared.OnPartReady afterDie) {
+    var formerParent = p.parent;
+
+    yield return KIS_Shared.AsyncDecoupleAssembly(p);
+    if (beforeDie != null) {
+      beforeDie(p);
+    }
+
+    if (!HighLogic.LoadedSceneIsEditor) {
+      // Parts in the editor are not connected.
+      Debug.LogFormat("Destroy consumed part {0}", DbgFormatter.PartId(p));
+      p.Die();
+
+      // Do cleanup in case of we're separating nodes.
+      if (formerParent != null) {
+        formerParent.FindModulesImplementing<ModuleDockingNode>()
+            .Where(x => x.otherNode != null && x.otherNode.part == p)
+            .ToList()
+            .ForEach(KIS_Shared.ResetDockingNode);
+      }
+    }
+    if (afterDie != null) {
+      afterDie(null);
+    }
+  }
+
+  /// <summary>Convinience method to schedule <see cref="AsyncConsumePartFromScene"/>.</summary>
+  void ConsumePartFromScene(
+      Part p, KIS_Shared.OnPartReady beforeDie = null, KIS_Shared.OnPartReady afterDie = null) {
+    StartCoroutine(AsyncConsumePartFromScene(p, beforeDie, afterDie));
   }
 }
   
