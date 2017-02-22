@@ -1016,7 +1016,8 @@ public static class KIS_Shared {
           dockingNode.state, dockingNode.st_ready.name);
       dockingNode.dockedPartUId = 0;
       dockingNode.dockingNodeModuleIndex = 0;
-      // Target part lived in real world for some time, so its state may be anything. Do a hard reset.
+      // Target part lived in real world for some time, so its state may be anything.
+      // Do a hard reset.
       dockingNode.fsm.StartFSM(dockingNode.st_ready.name);
     }
     var initState = dockingNode.lateFSMStart(PartModule.StartState.None);
@@ -1046,7 +1047,8 @@ public static class KIS_Shared {
   /// Reference attach node. If not set then method will return <c>null</c>.
   /// </param>
   /// <returns><c>null</c> if not node found.</returns>
-  public static ModuleDockingNode GetDockingNode(Part part, string attachNodeId = null, AttachNode attachNode = null) {
+  public static ModuleDockingNode GetDockingNode(
+      Part part, string attachNodeId = null, AttachNode attachNode = null) {
     var nodeId = attachNodeId ?? (attachNode != null ? attachNode.id : null);
     return part.FindModulesImplementing<ModuleDockingNode>()
         .FirstOrDefault(x => x.referenceAttachNode == nodeId);
