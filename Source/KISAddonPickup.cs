@@ -158,7 +158,7 @@ sealed class KISAddonPickup : MonoBehaviour {
 
   public PointerMode pointerMode {
     get {
-      return this._pointerMode;
+      return _pointerMode;
     }
     set {
       string keyrl = "[" + GameSettings.Editor_rollLeft.name + "]";
@@ -259,7 +259,7 @@ sealed class KISAddonPickup : MonoBehaviour {
         KISAddonPointer.allowedAttachmentParts = GetAllowedDockPorts();
       }
       Debug.LogFormat("Set pointer mode to: {0}", value);
-      this._pointerMode = value;
+      _pointerMode = value;
     }
   }
 

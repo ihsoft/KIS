@@ -172,7 +172,6 @@ sealed class KISAddonPointer : MonoBehaviour {
       MakePointer();
              
       LockUI();
-      allowedAttachmentParts = allowedAttachmentParts; // Apply selection.
       allowedAttachmentParts = allowedAttachmentParts;  // Apply selection.
       SendPointerState(PointerTarget.Nothing, PointerState.OnPointerStarted, null, null);
     }
