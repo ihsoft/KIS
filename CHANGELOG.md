@@ -1,4 +1,4 @@
-# 1.4.3 (pre-release)
+# 1.4.3 (February 22nd, 2017)
 * [Fix #107] Moving a docked port causes physics effects.
 * [Fix #158] NRE when transferring crew into a pod part without KIS inventories.
 * [Fix #199] Wrong kerbal class in inventory window info when in command seat.
