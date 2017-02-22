@@ -3,6 +3,7 @@
 * [Fix #158] NRE when transferring crew into a pod part without KIS inventories.
 * [Fix #199] Wrong kerbal class in inventory window info when in command seat.
 * [Fix #203] Some physicsless part trigger physics effect on move&attach.
+* [Fix #206] Using of re-dock feature blocks "detach" hotkey.
 * [Enhancement #200] Set decouple momentum on Cargo Mount to zero.
 * [Enhancement #202] Make pod seat's inventory more clear.
 * [Enhancement #204] Allow stacking KIS tools.
