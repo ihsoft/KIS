@@ -59,6 +59,7 @@
     <Compile Include="KSPDev_candidates.cs" />
     <Compile Include="KspLayers.cs" />
     <Compile Include="KISAddonCursor.cs" />
+    <Compile Include="MainScreenTweaker.cs" />
     <Compile Include="ModuleKISItemEvaPropellant.cs" />
     <Compile Include="KIS_IconViewer.cs" />
     <Compile Include="ModuleKISItemBook.cs" />

@@ -1,3 +1,6 @@
+# 1.4.4 (pre-release)
+* [Enhancement] Equip kerbal models on the start screen with sample KIS items. Can be adjusted/disabled via `settings.cfg`.
+
 # 1.4.3 (February 22nd, 2017)
 * [Fix #107] Moving a docked port causes physics effects.
 * [Fix #158] NRE when transferring crew into a pod part without KIS inventories.
