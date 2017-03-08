@@ -1284,7 +1284,7 @@ public static class KIS_Shared {
     if (tgtNode != null) {
       CoupleDockingPortWithPart(tgtNode);
     }
-    yield return AsyncCall2.AsyncWaitForPhysics(
+    yield return AsyncCall.AsyncWaitForPhysics(
         10,
         () => (srcNode == null || IsNodeCoupled(srcNode))
                && (tgtNode == null || IsNodeCoupled(tgtNode)),
@@ -1310,7 +1310,7 @@ public static class KIS_Shared {
     // Ports dock themselves. We only need to ensure they are in the right state and wait.
     ResetDockingNode(srcNode);
     ResetDockingNode(tgtNode);
-    yield return AsyncCall2.AsyncWaitForPhysics(
+    yield return AsyncCall.AsyncWaitForPhysics(
         10,
         () => IsNodeDocked(srcNode) && IsNodeDocked(tgtNode),
         update: frame => Debug.LogFormat(

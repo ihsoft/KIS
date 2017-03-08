@@ -84,7 +84,7 @@ public class ModuleKISItem : PartModule {
       if (item != null) {
         Debug.LogFormat("Item {0} has been destroyed. Drop it from inventory of {1}",
                         item.availablePart.title, inventory.part.name);
-        AsyncCall.CallOnEndOfFrame(inventory, x => inventory.DeleteItem(item.slot));
+        AsyncCall.CallOnEndOfFrame(inventory, () => inventory.DeleteItem(item.slot));
       }
     }
   }

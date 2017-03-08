@@ -571,7 +571,7 @@ sealed class KISAddonPointer : MonoBehaviour {
         StopPointer(unlockUI: false);
         SendPointerClick(PointerTarget.Nothing, Vector3.zero, Quaternion.identity, null, null);
         // Delay unlocking to not let ESC be handled by the game.
-        AsyncCall.CallOnEndOfFrame(this, x => UnlockUI());
+        AsyncCall.CallOnEndOfFrame(this, UnlockUI);
       }
       if (GameSettings.Editor_toggleSymMethod.GetKeyDown()) {  // "R" by default.
         if (pointerTarget != PointerTarget.PartMount && attachNodes.Count() > 1) {

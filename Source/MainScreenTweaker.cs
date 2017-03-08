@@ -63,7 +63,7 @@ sealed class MainScreenTweaker : MonoBehaviour {
   void Awake() {
     ConfigAccessor.ReadFieldsInType(GetType(), this);
     if (twekerEnabled) {
-      AsyncCall.CallOnEndOfFrame(this, x => WaitAndApplyTweaks());
+      AsyncCall.CallOnEndOfFrame(this, WaitAndApplyTweaks);
     }
   }
 
@@ -74,7 +74,7 @@ sealed class MainScreenTweaker : MonoBehaviour {
   }
 
   void LogObjectChildren(Transform objTransform) {
-    Debug.Log(DbgFormatter2.TranformPath(objTransform));
+    Debug.Log(DbgFormatter.TranformPath(objTransform));
     for (var i = 0; i < objTransform.transform.childCount; i++) {
       LogObjectChildren(objTransform.transform.GetChild(i));
     }
@@ -92,13 +92,13 @@ sealed class MainScreenTweaker : MonoBehaviour {
         // Try first name part separately since the scene objects don't have a single root.
         if (names[0] == "**") {
           reducedNames = names;  // Try all children in the root. 
-        } else if (!Hierarchy2.PatternMatch(names[0], root.transform.name)) {
+        } else if (!Hierarchy.PatternMatch(names[0], root.transform.name)) {
           continue;
         }
-        var objTransform = Hierarchy2.FindTransformByPath(root.transform, reducedNames);
+        var objTransform = Hierarchy.FindTransformByPath(root.transform, reducedNames);
         if (objTransform != null) {
           Debug.LogFormat("Tweak '{0}' matched kerbal model: {1}",
-                          tweak.tweakName, DbgFormatter2.TranformPath(objTransform));
+                          tweak.tweakName, DbgFormatter.TranformPath(objTransform));
           tweak.itemNames.ToList().ForEach(x => {
             var item = new TweakEquippableItem(x, tweak.matchMeshesBySuffix);
             item.ApplyTweak(objTransform.gameObject);
