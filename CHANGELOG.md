@@ -1,5 +1,6 @@
 # 1.4.4 (pre-release)
 * [Enhancement] Equip kerbal models on the start screen with sample KIS items. Can be adjusted/disabled via `settings.cfg`.
+* [Enhancement] Allow the Experiment Storage Unit to be carried on a kerbal's back (Wyzard256).
 
 # 1.4.3 (February 22nd, 2017)
 * [Fix #107] Moving a docked port causes physics effects.
