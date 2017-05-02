@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <doc>
     <assembly>
-        <name>KSPDev_Utils.0.21.0</name>
+        <name>KSPDev_Utils.0.22.1</name>
     </assembly>
     <members>
         <member name="T:KSPDev.ConfigUtils.AbstractCollectionTypeProto">
@@ -208,6 +208,78 @@
             A group of the annotation. When saving or loading persistent fields only the fields of this
             group will be considered. Must not be <c>null</c>.
             </param>
+        </member>
+        <member name="T:KSPDev.ConfigUtils.IPersistentField">
+             <summary>Interface for the simple types that need custom (de)serialization logic.</summary>
+             <remarks>
+             It's similar to <c>IConfigNode</c> interface in the compound types but with the following
+             differences:
+             <list type="bullet">
+             <item>The value is (de)serialized from/to a simple string.</item>
+             <item>
+             If the field is initialized to an instance of the type, then this instance will be used to
+             deserialize the value. If the field is not initialized but there is a value in the config file,
+             then a new instance will be created. For this reason the type must implement a default
+             constructor.
+             </item>
+             </list>
+             <para>
+             Note that the types that implement this interface will <i>never</i> be treated as compound. I.e.
+             <see cref="T:KSPDev.ConfigUtils.ConfigAccessor"/> will not try to persist the members of such types even though there
+             may be fields attributed with <see cref="T:KSPDev.ConfigUtils.PersistentFieldAttribute"/>.
+             </para>
+             </remarks>
+             <example>
+             Here is how a simple vector serialization may look like:
+             <code><![CDATA[
+             public class MyVector : IPeristentField {
+               float x;
+               float y;
+            
+               /// <inheritdoc/>
+               public string SerializeToString() {
+                 return string.Format("{0},{1}", x ,y);
+               }
+               /// <inheritdoc/>
+               public void ParseFromString(string value) {
+                 var elements = value.Split(',');
+                 x = float.Parse(elements[0]);
+                 y = float.Parse(elements[1]);
+               }
+             }
+             ]]></code>
+             <para>
+             This example doesn't do any checking when parsing the string, but in general it's a good idea to
+             do a sanity check of the string. It's OK to throw an exception from the parsing method when the
+             data is invalid.
+             </para>
+             </example>
+             <seealso cref="T:KSPDev.ConfigUtils.ConfigAccessor"/>
+             <seealso cref="T:KSPDev.ConfigUtils.PersistentFieldAttribute"/>
+        </member>
+        <member name="M:KSPDev.ConfigUtils.IPersistentField.SerializeToString">
+            <summary>Returns the object's state as a plain string.</summary>
+            <returns>Object's state.</returns>
+        </member>
+        <member name="M:KSPDev.ConfigUtils.IPersistentField.ParseFromString(System.String)">
+            <summary>Restores the object's state from a plain string.</summary>
+            <param name="value">String value to restore from.</param>
+            <remarks>It's OK to throw exceptions if the value cannot be parsed.</remarks>
+        </member>
+        <member name="T:KSPDev.ConfigUtils.PartConfig">
+            <summary>Helper methods to access and manipulate part's configs.</summary>
+        </member>
+        <member name="M:KSPDev.ConfigUtils.PartConfig.GetModuleConfig(PartModule,ConfigNode)">
+            <summary>Gets a config of the part module.</summary>
+            <remarks>
+            It takes into account the module index, so in case of the part has multiple modules of the
+            same type, the right module config will be returned.
+            </remarks>
+            <param name="module">Module to get config for.</param>
+            <param name="partNode">
+            Part's config to use. If omitted then part's prefab config is used.
+            </param>
+            <returns>Either the found config node or an empty node. It's never <c>null</c>.</returns>
         </member>
         <member name="T:KSPDev.ConfigUtils.PersistentFieldsDatabaseAttribute">
             <summary>
@@ -775,170 +847,191 @@
             <returns>New configuration node with the data.</returns>
         </member>
         <member name="M:KSPDev.ConfigUtils.PersistentField.DeserializeCompoundFieldsFromNode(ConfigNode,System.Object)">
-            <summary>Sets compound type field values from the config node.</summary>
+            <summary>Sets a compound type field values from the config node.</summary>
             <param name="node">Node to read values from.</param>
             <param name="instance">Owner of the fields.</param>
         </member>
         <member name="T:KSPDev.ConfigUtils.PersistentFieldAttribute">
-            <summary>A simple attribute for fields that need (de)serialization.</summary>
-            <remarks>
-            This form allows adjusting any <see cref="T:KSPDev.ConfigUtils.AbstractPersistentFieldAttribute"/> property
-            in the annotation, and has a shortcut to mark a field as collection
-            (<c><see cref="P:KSPDev.ConfigUtils.PersistentFieldAttribute.isCollection"/> = true</c>).
-            <para>
-            By default ordinal values are handled via <see cref="T:KSPDev.ConfigUtils.StandardOrdinaryTypesProto"/>
-            and collection fields via <see cref="T:KSPDev.ConfigUtils.GenericCollectionTypeProto"/>. These proto handlers can
-            be changed in the annotation by assigning values to properties
-            <see cref="P:KSPDev.ConfigUtils.PersistentFieldAttribute.ordinaryTypeProto"/> and/or <see cref="P:KSPDev.ConfigUtils.PersistentFieldAttribute.collectionTypeProto"/>.
-            </para>
-            </remarks>
-            <example>
-            Below is a simple usage of the attribute.
-            <code><![CDATA[
-            class ClassWithPersistentFields {
-              [PersistentField("my/listField", isCollection = true)]
-              private List<string> sampleList = new List<string>();
+             <summary>A simple attribute for the fields that need (de)serialization.</summary>
+             <remarks>
+             This form allows adjusting any <see cref="T:KSPDev.ConfigUtils.AbstractPersistentFieldAttribute"/> property
+             in the annotation, and has a shortcut to mark a field as a collection
+             (<c><see cref="P:KSPDev.ConfigUtils.PersistentFieldAttribute.isCollection"/> = true</c>).
+             <para>
+             By default the ordinal values are handled via <see cref="T:KSPDev.ConfigUtils.StandardOrdinaryTypesProto"/>
+             and the collection fields via <see cref="T:KSPDev.ConfigUtils.GenericCollectionTypeProto"/>. These proto handlers can
+             be changed in the annotation by assigning properties
+             <see cref="P:KSPDev.ConfigUtils.PersistentFieldAttribute.ordinaryTypeProto"/> and/or <see cref="P:KSPDev.ConfigUtils.PersistentFieldAttribute.collectionTypeProto"/>.
+             </para>
+             </remarks>
+             <example>
+             Below is a simple usage of the attribute.
+             <code><![CDATA[
+             class ClassWithPersistentFields {
+               [PersistentField("my/listField", isCollection = true)]
+               private List<string> sampleList = new List<string>();
+             
+               internal struct ComplexType {
+                 [PersistentField("val1", group = "nevermind")]
+                 public bool boolVal;
+                 [PersistentField("val2")]
+                 public Color colorVal;
+               }
+             
+               [PersistentField("my/setField", isCollection = true, group = "abc")]
+               private HashSet<ComplexType> sampleSet = new HashSet<ComplexType>();
+             
+               void SaveConfigs() {
+                 // Save a default group of fields: only field "sampleList" qualifies.
+                 ConfigAccessor.WriteFieldsIntoFile("settings.cfg", instance: this);
+                 /* The following structure in the file will be created:
+                  * {
+                  *   my
+                  *   {
+                  *     listField: string1
+                  *     listField: string2
+                  *   }
+                  * }
+                  */
+             
+                 // Save a specific group of fields: only field "sampleSet" belongs to group "abc".
+                 sampleSet.Add(new ComplexType() { boolVal = true, colorVal = Color.black });
+                 sampleSet.Add(new ComplexType() { boolVal = false, colorVal = Color.white });
+                 ConfigAccessor.WriteFieldsIntoFile("settings.cfg", instance: this, group: "abc");
+                 /* The following structure in the file will be created:
+                  * {
+                  *     setField
+                  *     {
+                  *       val1: True
+                  *       val2: 0,0,0,1
+                  *     }
+                  *     setField
+                  *     {
+                  *       val1: false
+                  *       val2: 1,1,1,1
+                  *     }
+                  *   }
+                  * }
+                  */
+               }
+             }
+             ]]></code>
+             <para>
+             Note that the group is ignored in the nested types. I.e. in <c>ComplexType</c> in this case.
+             However, if <c>ComplexType</c> was an immediate target of the <c>WriteFieldsIntoFile</c> call
+             then the group would be considered.
+             </para>
+             <para>
+             Visibility of the annotated field is also important. The persistent field attributes are only
+             visible in the child class if they were public or protected in the parent. The private field
+             annotations are not inherited and need to be handled at the level of the declaring class.
+             </para>
+             <code><![CDATA[
+             class Parent {
+               [PersistentField("parent_private")]
+               private int field1 = 1;
+             
+               [PersistentField("parent_protected")]
+               protected int field2 = 2;
+             
+               [PersistentField("parent_public")]
+               public int field3 = 3;
+             }
+             
+             class Child : Parent {
+               [PersistentField("child_private")]
+               private int field1 = 10;
+             
+               void SaveConfig() {
+                 // Save all fields in the inherited type. 
+                 ConfigAccessor.WriteFieldsIntoFile("settings.cfg", instance: this);
+                 /* The following structure in the file will be created:
+                  * {
+                  *     parent_protected: 2
+                  *     parent_public: 3
+                  *     child_private: 10
+                  * }
+                  */
+             
+                 // Save all fields in the base type. 
+                 ConfigAccessor.WriteFieldsIntoFile("settings.cfg", instance: (Parent) this);
+                 /* The following structure in the file will be created:
+                  * {
+                  *     parent_private: 1
+                  *     parent_protected: 2
+                  *     parent_public: 3
+                  * }
+                  */
+               }
+             }
+             ]]></code>
+             <para>
+             The code above implies that in a common case unsealed class should put the private fields in a
+             group other than default to avoid settings collision.
+             </para>
+             <para>
+             When the type of the field is different from a primitive C# type or a common Unity 4 type you
+             may need to provide a custom value handler to deal with (de)serializing. E.g. for an ordinary
+             type it may look like this:
+             </para>
+             <code><![CDATA[
+             class CustomType {
+               [PersistentField("my/custom/type", ordinaryTypeProto = typeof(MyTypeProto))]
+               private MyType field1;
+             }
+             ]]></code>
+             <para>
+             Or your custom class can implement a KSP interface <see cref="T:IConfigNode"/>, and it will be
+             invoked during the field saving and restoring.
+             </para>
+             <code><![CDATA[
+             class NodeCustomType : IConfigNode {
+               public virtual void Save(ConfigNode node) {
+               }
+               public virtual void Load(ConfigNode node) {
+               }
+             }
+             ]]></code>
+             <para>
+             It's important to note that complex (a.k.a. "compound") types like this are only handled when
+             the field's value is not <c>null</c>. I.e. in the following example the value of <c>field1</c>
+             will not be restored even if there is a node in the config file:
+             </para>
+             <code><![CDATA[
+             class MyModule : PartModule {
+               [PersistentField("field1")]
+               public NodeCustomType field1;
             
-              internal struct ComplexType {
-                [PersistentField("val1", group = "nevermind")]
-                public bool boolVal;
-                [PersistentField("val2")]
-                public Color colorVal;
-              }
-            
-              [PersistentField("my/setField", isCollection = true, group = "abc")]
-              private HashSet<ComplexType> sampleSet = new HashSet<ComplexType>();
-            
-              void SaveConfigs() {
-                // Save a default group of fields: only field "sampleList" qualifies.
-                ConfigAccessor.WriteFieldsIntoFile("settings.cfg", instance: this);
-                /* The following structure in the file will be created:
-                 * {
-                 *   my
-                 *   {
-                 *     listField: string1
-                 *     listField: string2
-                 *   }
-                 * }
-                 */
-            
-                // Save a specific group of fields: only field "sampleSet" belongs to group "abc".
-                sampleSet.Add(new ComplexType() { boolVal = true, colorVal = Color.black });
-                sampleSet.Add(new ComplexType() { boolVal = false, colorVal = Color.white });
-                ConfigAccessor.WriteFieldsIntoFile("settings.cfg", instance: this, group: "abc");
-                /* The following structure in the file will be created:
-                 * {
-                 *     setField
-                 *     {
-                 *       val1: True
-                 *       val2: 0,0,0,1
-                 *     }
-                 *     setField
-                 *     {
-                 *       val1: false
-                 *       val2: 1,1,1,1
-                 *     }
-                 *   }
-                 * }
-                 */
-              }
-            }
-            ]]></code>
-            <para>
-            Note that group is ignored in the nested types. I.e. in <c>ComplexType</c> in this case. Though,
-            if <c>ComplexType</c> was an immediate target of the <c>WriteFieldsIntoFile</c> call then the
-            group would be considered.
-            </para>
-            <para>
-            Visibility of the annotated field is also important. Persistent field attributes are only
-            visible in the child class if they were public or protected in the parent. Private field
-            annotations are not inherited and need to be handled at the level of the declaring class.
-            </para>
-            <code><![CDATA[
-            class Parent {
-              [PersistentField("parent_private")]
-              private int field1 = 1;
-            
-              [PersistentField("parent_protected")]
-              protected int field2 = 2;
-            
-              [PersistentField("parent_public")]
-              public int field3 = 3;
-            }
-            
-            class Child : Parent {
-              [PersistentField("child_private")]
-              private int field1 = 10;
-            
-              void SaveConfig() {
-                // Save all fields in the inherited type. 
-                ConfigAccessor.WriteFieldsIntoFile("settings.cfg", instance: this);
-                /* The following structure in the file will be created:
-                 * {
-                 *     parent_protected: 2
-                 *     parent_public: 3
-                 *     child_private: 10
-                 * }
-                 */
-            
-                // Save all fields in the base type. 
-                ConfigAccessor.WriteFieldsIntoFile("settings.cfg", instance: (Parent) this);
-                /* The following structure in the file will be created:
-                 * {
-                 *     parent_private: 1
-                 *     parent_protected: 2
-                 *     parent_public: 3
-                 * }
-                 */
-              }
-            }
-            ]]></code>
-            <para>
-            The code above implies that in a common case unsealed class should put private fields in a group
-            other than default to avoid settings collision.
-            </para>
-            <para>
-            When type of the field is different from primitive C# type or common Unity 4 type you may need
-            provide custom value handlers to deal with (de)serializing. E.g. for an ordinary type it may
-            look like this:
-            </para>
-            <code><![CDATA[
-            class CustomType {
-              [PersistentField("my/custom/type", ordinaryTypeProto = typeof(MyTypeProto))]
-              private MyType field1;
-            }
-            ]]></code>
-            <para>
-            Or you custom class can implement KSP interface <see cref="T:IConfigNode"/>, and it will be
-            invoked during field saving and restoring.
-            </para>
-            <code><![CDATA[
-            class NodeCustomType : IConfigNode {
-              public virtual void Save(ConfigNode node) {
-              }
-              public virtual void Load(ConfigNode node) {
-              }
-            }
-            ]]></code>
-            <para>
-            If your custom type is a collection that cannot be handled by the standard proto you can provide
-            your own collection proto handler. Note that if you do then annotated field will be treated as a
-            collection. In fact, when you set <c>isCollection = true</c> what actually happens is just
-            assigning <see cref="T:KSPDev.ConfigUtils.GenericCollectionTypeProto"/> as a collection proto handler.
-            </para>
-            <code><![CDATA[
-            class CustomTypes {
-              [PersistentField("my/custom/type", collectionTypeProto = typeof(MyCollectionProto))]
-              private MyCollection field1;
-            ]]>}
-            </code>
-            For more examples on custom proto handlers see <see cref="T:KSPDev.ConfigUtils.AbstractOrdinaryValueTypeProto"/> and
-            <see cref="T:KSPDev.ConfigUtils.AbstractCollectionTypeProto"/>.
-            </example>
-            <seealso cref="T:KSPDev.ConfigUtils.ConfigAccessor"/>
-            <seealso cref="T:KSPDev.ConfigUtils.AbstractOrdinaryValueTypeProto"/>
-            <seealso cref="T:KSPDev.ConfigUtils.AbstractCollectionTypeProto"/>
-            <seealso href="https://kerbalspaceprogram.com/api/interface_i_config_node.html">KSP: IConfigNode</seealso>
+               [PersistentField("field2")]
+               public NodeCustomType field2 = new NodeCustomType();
+             }
+             ]]></code>
+             <para>
+             In case of your type is really simple, and you can serialize it into a plain string, you may
+             choose to implement <see cref="T:KSPDev.ConfigUtils.IPersistentField"/> instead. It works in a similar way but the
+             source/target of the persistense is a string instead of a config node. Simple types deal with
+             <c>null</c>'s in a different way (read the docs for the interface).
+             </para>
+             <para>
+             If your custom type is a collection that cannot be handled by the standard proto you can provide
+             your own collection proto handler. Note that if you do then the annotated field will be treated
+             as a collection. In fact, when you set <c>isCollection = true</c> what actually happens is just
+             assigning <see cref="T:KSPDev.ConfigUtils.GenericCollectionTypeProto"/> as a collection proto handler.
+             </para>
+             <code><![CDATA[
+             class CustomTypes {
+               [PersistentField("my/custom/type", collectionTypeProto = typeof(MyCollectionProto))]
+               private MyCollection field1;
+             }
+             ]]></code>
+             For more examples on custom proto handlers see <see cref="T:KSPDev.ConfigUtils.AbstractOrdinaryValueTypeProto"/> and
+             <see cref="T:KSPDev.ConfigUtils.AbstractCollectionTypeProto"/>.
+             </example>
+             <seealso cref="T:KSPDev.ConfigUtils.ConfigAccessor"/>
+             <seealso cref="T:KSPDev.ConfigUtils.AbstractOrdinaryValueTypeProto"/>
+             <seealso cref="T:KSPDev.ConfigUtils.AbstractCollectionTypeProto"/>
+             <seealso cref="T:KSPDev.ConfigUtils.IPersistentField"/>
+             <seealso href="https://kerbalspaceprogram.com/api/interface_i_config_node.html">KSP: IConfigNode</seealso>
         </member>
         <member name="M:KSPDev.ConfigUtils.PersistentFieldAttribute.#ctor(System.String)">
             <inheritdoc/>
@@ -1137,19 +1230,19 @@
         </member>
         <member name="T:KSPDev.GUIUtils.MessageEnumValue`1">
              <summary>A class to wrap a UI string for an enum value.</summary>
-             <typeparam name="T">Enum type to define strings for.</typeparam>
+             <typeparam name="T">Enum type to define the strings for.</typeparam>
              <remarks>
              <para>
-             When string needs to be presented use <see cref="M:KSPDev.GUIUtils.MessageEnumValue`1.Format(`0)"/> to make the parameter substitute.
+             When a string needs to be presented, use <see cref="M:KSPDev.GUIUtils.MessageEnumValue`1.Format(`0)"/> to make the parameter substitute.
              </para>
              <para>
              In the future it may support localization but for now it's only a convinience wrapper.
              </para>
              </remarks>
              <example>
-             Instead of doing switches when an enum value should be presented on UI just define a message
-             that declares a map between values and their UI representations. You don't need specify every
-             single value in the map, there is an option to set a UI string for unknown value.  
+             Instead of doing switches when an enum value should be presented on UI, just define a message
+             that declares a map between the values and their UI representations. You don't need to specify
+             every single value in the map, there is an option to set a UI string for an unknown value.  
              <code><![CDATA[
              class MyMod : MonoBehaviour {
                enum MyEnum {
@@ -1160,14 +1253,14 @@
                  UnusedValue3,
                }
             
-               // Lookup with custom value for an unknown key.
+               // Lookup with a custom value for an unknown key.
                static readonly MessageEnumValue<MyEnum> Msg1 =
                    new MessageEnumValue<MyEnum>("UNKNOWN") {
                      {MyEnum.Enabled, "ENABLED"},
                      {MyEnum.Disabled, "DISABLED"},
                    };
             
-               // Default lookup.
+               // A more extended lookup.
                static readonly MessageEnumValue<MyEnum> Msg2 =
                    new MessageEnumValue<MyEnum>() {
                      {MyEnum.Enabled, "ENABLED"},
@@ -1189,13 +1282,14 @@
              </example>
         </member>
         <member name="M:KSPDev.GUIUtils.MessageEnumValue`1.#ctor(System.String)">
-            <summary>Creates an empty message with a default value for unknow entries.</summary>
+            <summary>Creates an empty message with a default value for the unknown entries.</summary>
             <param name="unknownKeyValue">
-            Value to return if lookup dictionary doesn't have the requested key.
+            Value to return if the lookup dictionary doesn't have the requested key.
             </param>
         </member>
         <member name="M:KSPDev.GUIUtils.MessageEnumValue`1.GetEnumerator">
-            <inheritdoc/>
+            <summary>Returns a key/pair enumerator.</summary>
+            <returns>Key/value enumerator.</returns>
         </member>
         <member name="M:KSPDev.GUIUtils.MessageEnumValue`1.Add(`0,System.String)">
             <summary>Adds a new lookup for the key.</summary>
@@ -1203,9 +1297,13 @@
             <param name="value">GUI string for the key.</param>
         </member>
         <member name="M:KSPDev.GUIUtils.MessageEnumValue`1.Format(`0)">
-            <summary>Formats message string with the provided arguments.</summary>
+            <summary>Formats a message string with the provided arguments.</summary>
             <param name="arg1">An argument to substitute.</param>
             <returns>Complete message string.</returns>
+        </member>
+        <member name="M:KSPDev.GUIUtils.MessageEnumValue`1.System#Collections#IEnumerable#GetEnumerator">
+            <summary>Returns an untyped key/value enumerator.</summary>
+            <returns>Key/value enumerator.</returns>
         </member>
         <member name="T:KSPDev.GUIUtils.MessageSpecialFloatValue">
              <summary>
@@ -2498,37 +2596,52 @@
             into a human readable string.</remarks>
             <param name="collection">A collection to represent as a string.</param>
             <param name="predicate">A predicate to use to extract string representation of an item. If
-            <param name="separator">String to use to glue the parts.</param>
             <c>null</c> then standard <c>ToString()</c> is used.</param>
+            <param name="separator">String to use to glue the parts.</param>
             <returns>Human readable form of the collection.</returns>
             <typeparam name="TSource">Collection's item type.</typeparam>
+        </member>
+        <member name="T:KSPDev.ModelUtils.AlignTransforms">
+            <summary>Helper methods to align transformations relative to each other.</summary>
+        </member>
+        <member name="M:KSPDev.ModelUtils.AlignTransforms.SnapAlign(UnityEngine.Transform,UnityEngine.Transform,UnityEngine.Transform)">
+            <summary>
+            Aligns the source node so that it's located at the target, and source and target are "looking"
+            at each other.
+            </summary>
+            <param name="source">Node to align.</param>
+            <param name="sourceChild">Child node of the source to use as the align point.</param>
+            <param name="target">Target node to align with.</param>
         </member>
         <member name="T:KSPDev.ModelUtils.Colliders">
             <summary>Various tools to deal with procedural colliders.</summary>
         </member>
         <member name="M:KSPDev.ModelUtils.Colliders.SetSimpleCollider(UnityEngine.GameObject,UnityEngine.PrimitiveType,System.Boolean)">
-            <summary>Drops colliders in all children objects, and adds one big collider to the parent.
+            <summary>
+            Drops the colliders in all the children objects, and adds one big collider to the parent.
             </summary>
             <remarks>
-            Intended to create one fast collider at the cost of precision. All the meshes in the parent
-            childs (including the parent) are processed to produce a boundary box. Then, this box is
-            applied to the requested primitive type that defines the shape of the collider.
+            The main purpose of this method is to create one fast collider at the cost of precision. All
+            the meshes in the object (the parent and the children) are processed to produce a single
+            boundary box. Then, this box is applied to the requested primitive type that defines the shape
+            of the final collider.
             <para>
-            Note, that rdaius if sphere and capsule is the same in both X and Y axis. If combined boundary
-            box has any of the dimensions significantly different then it makes sense to choose a
-            different collider type. Or break down the hirearchy into more colliders.
+            Note, that radius of the sphere and the capsule colliders is the same on both X and Y axis.
+            If the combined boundary box has any of the dimensions significantly different then it makes
+            sense to choose a different collider type. Or break down the hirearchy into more colliders.
             </para>
             </remarks>
             <param name="parent">Parent object.</param>
             <param name="type">
-            Type of the primitive mesh which is the best for wrapping all the meshes of the object. Only
-            <see cref="F:UnityEngine.PrimitiveType.Cube"/>, <see cref="F:UnityEngine.PrimitiveType.Capsule"/>, and
-            <see cref="F:UnityEngine.PrimitiveType.Sphere"/> are supported.
+            Type of the primitive which describes the parent object most precise in terms of the shape.
+            Only <see cref="F:UnityEngine.PrimitiveType.Cube"/>, <see cref="F:UnityEngine.PrimitiveType.Sphere"/>,
+            <see cref="F:UnityEngine.PrimitiveType.Cylinder"/>, and <see cref="F:UnityEngine.PrimitiveType.Capsule"/> are supported.
+            The two latter types produce in the same collider type - the capsule.
             </param>
             <param name="inscribeBoundaryIntoCollider">
-            If <c>true</c> then collider will define the outer boundaries so what all the meshes are
-            inside the volume. Otherwise, the combined meshes box will define the outer boundary of the
-            collider. It only makes sense for the colliders other than <see cref="F:UnityEngine.PrimitiveType.Cube"/>.
+            When calculating the total volume of the object, all its meshes produce a single box boundary.
+            Then, the collider either wraps this box entirely, or sits inside it entirely. If this
+            parameter is <c>true</c> then the collider will cover the boundary box.
             </param>
             <seealso href="https://docs.unity3d.com/ScriptReference/GameObject.html">
             Unity 3D: GameObject</seealso>
@@ -2564,6 +2677,37 @@
             <see cref="F:UnityEngine.PrimitiveType.Cylinder"/>, <see cref="F:UnityEngine.PrimitiveType.Sphere"/>, and
             <see cref="F:UnityEngine.PrimitiveType.Cube"/> are supported.
             </param>
+        </member>
+        <member name="M:KSPDev.ModelUtils.Colliders.SetCollisionIgnores(UnityEngine.Transform,UnityEngine.Transform,System.Boolean)">
+            <summary>Disables/enables all the colliders between the objects.</summary>
+            <remarks>
+            All colliders in all the children of the both objects are explicitly set to not collide with
+            each other. The ignore state is reset to <c>false</c> on every scene load.
+            </remarks>
+            <param name="obj1">Source object.</param>
+            <param name="obj2">Target object.</param>
+            <param name="ignore">
+            If <c>true</c> then the collisions between the objects will be ignored. Otherwise, the
+            collisions will be handled.
+            </param>
+            <seealso href="https://docs.unity3d.com/ScriptReference/Collider.html">
+            Unity3D: Collider</seealso>
+            <seealso href="https://docs.unity3d.com/ScriptReference/Physics.IgnoreCollision.html">
+            Unity3D: Physics.IgnoreCollision</seealso>
+        </member>
+        <member name="M:KSPDev.ModelUtils.Colliders.SetCollisionIgnores(Part,Part,System.Boolean)">
+            <summary>Disables/enables all the colliders between the parts.</summary>
+            <remarks>The ignore state is reset to <c>false</c> on every scene load.</remarks>
+            <param name="part1">Source part.</param>
+            <param name="part2">Target part.</param>
+            <param name="ignore">
+            If <c>true</c> then the collisions between the parts will be ignored. Otherwise, the
+            collisions will be handled.
+            </param>
+            <seealso href="https://docs.unity3d.com/ScriptReference/Collider.html">
+            Unity3D: Collider</seealso>
+            <seealso href="https://docs.unity3d.com/ScriptReference/Physics.IgnoreCollision.html">
+            Unity3D: Physics.IgnoreCollision</seealso>
         </member>
         <member name="T:KSPDev.ModelUtils.Colliders.PrimitiveCollider">
             <summary>Defines how collisions should be checked on a primitive.</summary>
@@ -2871,19 +3015,19 @@
             <summary>Translates meshes's verticies.</summary>
             <remarks>
             This is different from setting postion, rotation and scale to the transform. This method
-            actually changes vetricies in the mesh. It's not performance effective, so avoid doing it
-            frequiently.
+            <i>actually</i> changes vetricies in the mesh. It's not performance effective, so avoid doing
+            it frequiently.
             </remarks>
-            <param name="model">Model object to change mesh in.</param>
+            <param name="model">Model object to change the mesh in.</param>
             <param name="offset">
-            Offset for the verticies. If not specified then offset is zero. Offset is added <i>after</i>
-            scale and rotation have been applied.  
+            Offset for the verticies. If not specified then the offset is zero. The offset is added
+            <i>after</i> the scale and the rotation have been applied.  
             </param>
             <param name="rotation">
             Rotation for the verticies. If not set then no rotation is added.
             </param>
             <param name="scale">
-            Scale for the vertex positions. If not specified then scale is not affected.
+            Scale for the vertex positions. If not specified then the scale is not affected.
             </param>
         </member>
         <member name="T:KSPDev.ProcessingUtils.AsyncCall">
@@ -2985,7 +3129,7 @@
             Unity object to run coroutine on. If this object dies then waiting will be aborted without
             calling any callbacks.
             </param>
-            <param name="maxFrames">Number of fixed frame update to wait before giving up.</param>
+            <param name="maxFrames">Number of fixed frame updates to wait before giving up.</param>
             <param name="waitUntilFn">
             State checking function. It should return <c>true</c> once target state is reached. The very
             first execution happens immediately, <i>before</i> exiting from the method. If this
@@ -3033,13 +3177,30 @@
             ]]></code>
             <para>If you adjust <c>count</c> to <c>11</c> then the last message will be "Failure!".</para>
             </example>
+            <seealso cref="M:KSPDev.ProcessingUtils.AsyncCall.AsyncWaitForPhysics(System.Int32,System.Func{System.Boolean},System.Action,System.Action,System.Action{System.Int32},System.Boolean)"/>
             <seealso href="https://docs.unity3d.com/Manual/Coroutines.html">Unity 3D: Coroutines</seealso>
             <seealso href="https://docs.unity3d.com/ScriptReference/WaitForFixedUpdate.html">
             Unity 3D: WaitForFixedUpdate</seealso>
         </member>
         <member name="M:KSPDev.ProcessingUtils.AsyncCall.AsyncWaitForPhysics(System.Int32,System.Func{System.Boolean},System.Action,System.Action,System.Action{System.Int32},System.Boolean)">
             <summary>Async version of <see cref="M:KSPDev.ProcessingUtils.AsyncCall.WaitForPhysics(UnityEngine.MonoBehaviour,System.Int32,System.Func{System.Boolean},System.Action,System.Action,System.Action{System.Int32},System.Boolean)"/>.</summary>
-            <returns>Enumerator that can be used as coroutine target.</returns>
+            <param name="maxFrames">Number of fixed frame updates to wait before giving up.</param>
+            <param name="waitUntilFn">
+            State checking function. It should return <c>true</c> once target state is reached. The very
+            first execution happens immediately, <i>before</i> exiting from the method. If this
+            this execution returned <c>true</c> then the successful callback is also called immediately. 
+            </param>
+            <param name="success">Callback to execute when state has been successfully reached.</param>
+            <param name="failure">
+            Callabck to execute when state has not been reached before frame update limit is exhausted.
+            </param>
+            <param name="update">
+            Callback to execute every fixed frame update while waiting. This callabck will be called at
+            least once, and teh first call happens immediately. The argument tells how many frames the
+            method was waiting so far. For the very first call it's, obviously, zero.
+            </param>
+            <param name="traceUpdates">When <c>true</c> every wiating cycle will be logged.</param>
+            <returns>Enumerator that can be used as a coroutine target.</returns>
             <seealso cref="M:KSPDev.ProcessingUtils.AsyncCall.WaitForPhysics(UnityEngine.MonoBehaviour,System.Int32,System.Func{System.Boolean},System.Action,System.Action,System.Action{System.Int32},System.Boolean)"/>
             <example>
             This method is useful when synchronous wait is needed within a coroutine. Instead of
@@ -3321,6 +3482,74 @@
             <remarks>This callback is called before actual state change.</remarks>
             <param name="fromState">State before change.</param>
             <param name="toState">State after change.</param>
+        </member>
+        <member name="T:KSPDev.Types.PosAndRot">
+            <summary>Type to hold position and rotation of a transform. It can be serialized.</summary>
+            <remarks>
+            The value serializes into 6 numbers separated by a comma. They form two triplets:
+            <list type="bullet">
+            <item>The first triplet is a position: x, y, z.</item>
+            <item>
+            The second triplet is a Euler rotaion around each axis: x, y, z.
+            </item>
+            </list>
+            </remarks>
+        </member>
+        <member name="F:KSPDev.Types.PosAndRot.pos">
+            <summary>Position of the transform.</summary>
+        </member>
+        <member name="M:KSPDev.Types.PosAndRot.#ctor">
+            <summary>Constructs a default instance.</summary>
+            <remarks>Required for the persistence to work correctly.</remarks>
+            <para>
+            By default position is <c>(0,0,0)</c>, Euler angles are <c>(0,0,0)</c>, and the rotation is
+            <c>Quaternion.identity</c>.  
+            </para>
+            <seealso href="https://docs.unity3d.com/ScriptReference/Vector3.html">
+            Unity3D: Vector3</seealso>
+            <seealso href="https://docs.unity3d.com/ScriptReference/Quaternion-identity.html">
+            Unity3D: Quaternion</seealso>
+        </member>
+        <member name="M:KSPDev.Types.PosAndRot.#ctor(KSPDev.Types.PosAndRot)">
+            <summary>Constructs a copy of an object of the same type.</summary>
+            <param name="from">Source object.</param>
+        </member>
+        <member name="M:KSPDev.Types.PosAndRot.#ctor(UnityEngine.Vector3,UnityEngine.Vector3)">
+            <summary>Constructs an object from a transform properties.</summary>
+            <param name="pos">Position of the transform.</param>
+            <param name="euler">Euler rotation of the transform.</param>
+            <seealso href="https://docs.unity3d.com/ScriptReference/Vector3.html">
+            Unity3D: Vector3</seealso>
+            <seealso href="https://docs.unity3d.com/ScriptReference/Transform.html">
+            Unity3D: Transform</seealso>
+        </member>
+        <member name="M:KSPDev.Types.PosAndRot.Clone">
+            <summary>Gives a deep copy of the object.</summary>
+            <returns>New object.</returns>
+        </member>
+        <member name="M:KSPDev.Types.PosAndRot.SerializeToString">
+            <inheritdoc/>
+        </member>
+        <member name="M:KSPDev.Types.PosAndRot.ParseFromString(System.String)">
+            <inheritdoc/>
+        </member>
+        <member name="M:KSPDev.Types.PosAndRot.ToString">
+            <summary>Shows a human readable representation.</summary>
+            <returns>String value.</returns>
+        </member>
+        <member name="M:KSPDev.Types.PosAndRot.NormlizeAngles">
+            <summary>
+            Ensures that all the angles are in the range of <c>[0; 360)</c>. 
+            </summary>
+        </member>
+        <member name="P:KSPDev.Types.PosAndRot.euler">
+            <summary>Euler rotation.</summary>
+            <remarks>
+            The rotation angles are automatically adjusted to stay within the [0; 360) range.
+            </remarks>
+        </member>
+        <member name="P:KSPDev.Types.PosAndRot.rot">
+            <summary>Orientation of the transform.</summary>
         </member>
         <member name="T:VersionLogger">
             <summary>
