@@ -1,4 +1,4 @@
-# 1.4.4 (pre-release)
+# 1.4.4 (May 1st, 2017)
 * [Enhancement] Equip kerbal models on the start screen with sample KIS items. Can be adjusted/disabled via `settings.cfg`.
 * [Enhancement] Allow the Experiment Storage Unit to be carried on a kerbal's back (Wyzard256).
 * [Fix] Proper paths in the fun parts.
