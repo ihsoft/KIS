@@ -19,7 +19,7 @@ public sealed class ModuleKISItemSoundPlayer : ModuleKISItem {
       return;
     }
     if (HighLogic.LoadedSceneIsFlight) {
-      sndFx.audio = this.part.gameObject.AddComponent<AudioSource>();
+      sndFx.audio = part.gameObject.AddComponent<AudioSource>();
       sndFx.audio.volume = GameSettings.SHIP_VOLUME;
       sndFx.audio.rolloffMode = AudioRolloffMode.Linear;
       sndFx.audio.dopplerLevel = 0f;
