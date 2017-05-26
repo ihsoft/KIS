@@ -1,6 +1,6 @@
-#KIS - Kerbal Inventory System
-####Mod for [Kerbal Space Program](http://www.kerbalspaceprogram.com/)
-===
+# KIS - Kerbal Inventory System
+#### Mod for [Kerbal Space Program](http://www.kerbalspaceprogram.com/)
+---
 
 KIS introduce new gameplay mechanics by adding a brand new inventory sytem and EVA usables items as tools. 
 You want to build a rover on Duna from scratch? Now you can...
@@ -18,5 +18,5 @@ Main features
 - Clear code and .cfg modules to help other modders items creation.
 - Standalone (KAS and ModuleManager is not needed).
 
-===
-Forum thread: [KIS](http://forum.kerbalspaceprogram.com/threads/113111-0-90-Kerbal-Inventory-System-%28KIS%29-1-0-0)  
+---
+Forum thread: [KIS](http://forum.kerbalspaceprogram.com/index.php?/topic/149848-13-kerbal-inventory-system-kis-v150)  
