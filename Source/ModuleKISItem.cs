@@ -1,4 +1,5 @@
 ﻿using KSPDev.ProcessingUtils;
+using System.Collections.Generic;
 using System.Collections;
 using System;
 using System.Linq;
@@ -121,12 +122,12 @@ public class ModuleKISItem : PartModule {
     }
   }
 
-  public void OnKISAction(BaseEventData baseEventData) {
+  public void OnKISAction(Dictionary<string, object> eventData) {
     if (allowStaticAttach == ItemAttachMode.Disabled || useExternalStaticAttach) {
       return;
     }
-    string action = baseEventData.GetString("action");
-    Part tgtPart = (Part)baseEventData.Get("targetPart");
+    var action = eventData["action"].ToString();
+    var tgtPart = eventData["targetPart"] as Part;
     //FIXME: use enum values 
     if (action == KIS_Shared.MessageAction.Store.ToString()
         || action == KIS_Shared.MessageAction.DropEnd.ToString()

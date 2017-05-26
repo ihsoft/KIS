@@ -46,12 +46,12 @@ public static class KIS_Shared {
 
   public static void SendKISMessage(Part destPart, MessageAction action, AttachNode srcNode = null,
                                     Part tgtPart = null, AttachNode tgtNode = null) {
-    BaseEventData bEventData = new BaseEventData(BaseEventData.Sender.AUTO);
-    bEventData.Set("action", action.ToString());
-    bEventData.Set("sourceNode", srcNode);
-    bEventData.Set("targetPart", tgtPart);
-    bEventData.Set("targetNode", tgtNode);
-    destPart.SendMessage("OnKISAction", bEventData, SendMessageOptions.DontRequireReceiver);
+    var eventData = new Dictionary<string, object>();
+    eventData["action"] = action.ToString();
+    eventData["sourceNode"] = srcNode;
+    eventData["targetPart"] = tgtPart;
+    eventData["targetNode"] = tgtNode;
+    destPart.SendMessage("OnKISAction", eventData, SendMessageOptions.DontRequireReceiver);
   }
 
   // TODO: Deprecate the method after June 2016.

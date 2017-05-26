@@ -1,3 +1,6 @@
+# 1.5.0 (May 25th, 2017)
+* [Change] `OnKISAction` now accepts a dictionary parameter instead of the deprecated `BaseEventData`.
+
 # 1.4.4 (May 1st, 2017)
 * [Enhancement] Equip kerbal models on the start screen with sample KIS items. Can be adjusted/disabled via `settings.cfg`.
 * [Enhancement] Allow the Experiment Storage Unit to be carried on a kerbal's back (Wyzard256).
