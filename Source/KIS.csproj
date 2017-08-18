@@ -57,6 +57,7 @@
   <ItemGroup>
     <Compile Include="EditorDefaultItemsAdder.cs" />
     <Compile Include="KSPDev_candidates.cs" />
+    <Compile Include="KSPDev_candidates\PressureType.cs" />
     <Compile Include="KspLayers.cs" />
     <Compile Include="KISAddonCursor.cs" />
     <Compile Include="MainScreenTweaker.cs" />
@@ -81,6 +82,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UISounds.cs" />
     <Compile Include="VolumeLType.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="KSPDev_candidates" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
