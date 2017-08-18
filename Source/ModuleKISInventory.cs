@@ -524,34 +524,35 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
       return;
     }
     // Update context menu
+    var invEvent = PartModuleUtils.GetEvent(this, ShowInventory);
     if (invType == InventoryType.Pod) {
       if (HighLogic.LoadedSceneIsEditor) {
-        Events["ShowInventory"].guiActive = true;
-        Events["ShowInventory"].guiActiveUnfocused = true;
-        Events["ShowInventory"].guiName = "Seat " + podSeat + " inventory";
+        invEvent.guiActive = true;
+        invEvent.guiActiveUnfocused = true;
+        invEvent.guiName = "Seat " + podSeat + " inventory";
       } else {
-        Events["ShowInventory"].guiActive = false;
-        Events["ShowInventory"].guiActiveUnfocused = false;
+        invEvent.guiActive = false;
+        invEvent.guiActiveUnfocused = false;
         ProtoCrewMember crewAtPodSeat = part.protoModuleCrew.Find(x => x.seatIdx == podSeat);
         if (crewAtPodSeat != null) {
           string kerbalName = crewAtPodSeat.name.Split(' ').FirstOrDefault();
-          Events["ShowInventory"].guiActive = true;
-          Events["ShowInventory"].guiActiveUnfocused = true;
-          Events["ShowInventory"].guiName = kerbalName + "'s inventory";
+          invEvent.guiActive = true;
+          invEvent.guiActiveUnfocused = true;
+          invEvent.guiName = kerbalName + "'s inventory";
         }
       }
     } else {
-      Events["ShowInventory"].guiActive = true;
-      Events["ShowInventory"].guiActiveUnfocused = true;
-      Events["ShowInventory"].guiName = "Inventory";
+      invEvent.guiActive = true;
+      invEvent.guiActiveUnfocused = true;
+      invEvent.guiName = "Inventory";
       if (invName != "") {
-        Events["ShowInventory"].guiName = "Inventory | " + invName;
+        invEvent.guiName = "Inventory | " + invName;
       }
     }
     if (HighLogic.LoadedSceneIsFlight) {
       ModuleKISPickup mPickup = KISAddonPickup.instance.GetActivePickupNearest(part);
       if (mPickup) {
-        Events["ShowInventory"].unfocusedRange = mPickup.maxDistance;
+        invEvent.unfocusedRange = mPickup.maxDistance;
       }
     }
     PartActionUICreated = true;
