@@ -80,6 +80,7 @@
     <Compile Include="KIS_Shared.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UISounds.cs" />
+    <Compile Include="VolumeLType.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
