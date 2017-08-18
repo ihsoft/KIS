@@ -1,4 +1,5 @@
-﻿using KSPDev.ConfigUtils;
+﻿using KIS.GUIUtils;
+using KSPDev.ConfigUtils;
 using KSPDev.GUIUtils;
 using KSPDev.LogUtils;
 using System;
@@ -6,12 +7,238 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Collections;
 using System.Text;
+using KSPDev.PartUtils;
 using UnityEngine;
 
 namespace KIS {
 
+// Next localization ID: #kisLOC_00033.
 [PersistentFieldsDatabase("KIS/settings/KISConfig")]
 public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifier {
+  #region Localizable GUI strings.
+  protected static readonly Message NoItemEquippedMsg = new Message(
+      "#kisLOC_00000",
+      defaultTemplate: "Cannot use equipped item because nothing is equipped",
+      description: "The message to present when 'use' key is pressed, but no item is equipped in"
+      + " the right hand of the EVA kerbal.");
+
+  protected static readonly Message<string> CannotTransferInventoryMsg = new Message<string>(
+      "#kisLOC_00001",
+      defaultTemplate: "Pod <<1>> doesn't have personal inventory space",
+      description: "The message to present when EVA kerbal enters a pod which doesn't have KIS"
+      + " inventory.");
+
+  protected static readonly Message<int> PartHasChildrenMsg = new Message<int>(
+      "#kisLOC_00002",
+      defaultTemplate: "Cannot put an assembly into inventory: <<1>> part(s) attached",
+      description: "The message to present when EVA kerbal tries to put into inventory an assembly"
+      + " of multiple parts."
+      + "\nArgument <<1>> is the number of the children parts atatched to the part being dragged.");
+
+  protected static readonly Message<VolumeLType, VolumeLType> MaxVolumeReachedMsg =
+      new Message<VolumeLType, VolumeLType>(
+          "#kisLOC_00003",
+          defaultTemplate: "Max destination volume reached: <<1>> (+<<2>>)",
+          description: "The message to present when an item being dragged into an inventory which"
+          + "doesn't have enough free space."
+          + "\nArgument <<1>> is a value of type VolumeLType which specifies the volume which is"
+          + " attempted to be moved."
+          + "\nArgument <<2>> is a value of type VolumeLType which specifies the exceeding volume"
+          +" over the max inventory capacity.");
+
+  protected static readonly Message NotAccessibleWhileCarriedMsg = new Message(
+      "#kisLOC_00004",
+      defaultTemplate: "This storage is not accessible while carried!",
+      description: "The message to present when a storage, which is being carried on a back of an"
+      + " EVA kerbal, is attempted to be accessed.");
+
+  protected static readonly Message NotAccessibleFromOutsideMsg = new Message(
+      "#kisLOC_00005",
+      defaultTemplate: "This storage is not accessible from the outside!",
+      description: "The message to present when an inventory which cannot be accessed from EVA is"
+      + " attempted to be opened by an EVA kerbal.");
+
+  protected static readonly Message NotAccessibleFromInsideMsg =new Message(
+      "#kisLOC_00006",
+      defaultTemplate: "This storage is not accessible from the inside!",
+      description: "The message to present when an inventory which cannot be accessed from inside"
+      + " the vessel is attempted to be accessed while the active vessel is no an EVA kerbal.");
+
+  protected static readonly Message CannotRemoveHelmetNoOxygenMsg = new Message(
+      "#kisLOC_00007",
+      defaultTemplate: "Cannot remove helmet: atmosphere does not contain oxygen!",
+      description: "The message to present when a remove helmet action is attempted in the"
+      + " atmosphere which doesn't contain oxygen.");
+
+  protected static readonly Message<PressureType, PressureType>
+      CannotRemoveHelmetPressureTooLowMsg = new Message<PressureType, PressureType>(
+          "#kisLOC_00008",
+          defaultTemplate: "Cannot remove helmet: pressure too low (<<2>> < <<1>>)",
+          description: "The message to present when a remove helmet action is attempted in the"
+          + " atmosphere which is not dense enough."
+          + "\nArgument <<1>> is a value of type PressureType which specifies a minimum allowed"
+          + " pressure."
+          + "\nArgument <<2>> is a value of type PressureType which specifies the actual pressure"
+          + " outside.");
+
+  protected static readonly Message InventoryFullCannotSplitMsg = new Message(
+      "#kisLOC_00009",
+      defaultTemplate: "Inventory is full, cannot split!",
+      description: "The message to present when a split action is attempted on the the inventory,"
+      + " but there are no empty slots available to fit the new pack.");
+
+  protected static readonly Message CarriableItemsNotForSeatsInventoryMsg = new Message(
+      "#kisLOC_00010",
+      defaultTemplate: "Carriable items cannot be stored in the seat's inventory",
+      description: "The message to present when an item, designed to be carried by an EVA kerbal,"
+      + " is attempted to be put into a pod's seat inventory.");
+
+  protected static readonly Message PartAlreadyCarriedMsg = new Message(
+      "#kisLOC_00011",
+      defaultTemplate: "Another part is already carried",
+      description: "The message to present when an item is attempted to be placed on an EVA kerbal,"
+      + " but there is another item already being carried.");
+
+  protected static readonly Message MustBeCrewedAtLaunchMsg = new Message(
+      "#kisLOC_00012",
+      defaultTemplate: "The seat must be crewed at launch to acquire items",
+      description: "The text to show in an inventory window in the editor to highlight the fact"
+      + " that the items added there will only be availabe in the flight if the seat is occupied"
+      + " at the launch.");
+
+  protected static readonly Message RemoveHelmetMenuTxt = new Message(
+      "#kisLOC_00013",
+      defaultTemplate: "Remove Helmet",
+      description: "The name of the context menu item that removes kerbal's helmet if the"
+      + " environment conditions allow it.");
+
+  protected static readonly Message PutOnHelmetMenuTxt =new Message(
+      "#kisLOC_00014",
+      defaultTemplate: "Put On Helmet",
+      description: "The name of the context menu item that pust the kerbal's helmet back.");
+
+  protected static readonly Message<string, int> PodInventoryWindowTitle =
+      new Message<string, int>(
+          "#kisLOC_00015",
+          defaultTemplate: "<<1>> | Seat <<2>>",
+          description: "The title of the window that represents an open pod's inventory in the"
+          + " editor."
+          + "\nArgument <<1>> is a name of the part that holds the inventory."
+          + "\nArgument <<2>> is a number of the seat to which the inventory belongs.");
+
+  protected static readonly Message<string, string> PersonalInventoryWindowTitle =
+      new Message<string, string>(
+          "#kisLOC_00016",
+          defaultTemplate: "<<1>> | <<2>>",
+          description: "The title of the window that represents an open kerbal's inventory."
+          + "\nArgument <<1>> is a name of the part that holds the inventory."
+          + "\nArgument <<2>> is a name of the kerbal.");
+
+  protected static readonly Message<string, string> ContainerInventoryWindowTitle =
+      new Message<string, string>(
+          "#kisLOC_00017",
+          defaultTemplate: "<<1>> | <<2>>",
+          description: "The title of the window that represents an open parts's inventory in the"
+          + " flight. This title is only used when the inventory has a custom name."
+          + "\nArgument <<1>> is a name of the part that holds the inventory."
+          + "\nArgument <<2>> is a custom name of the inventory.");
+
+  protected static readonly Message<string, string> TooltipWindowTitle =
+      new Message<string, string>(
+          "#kisLOC_00018",
+          defaultTemplate: "<<1>> | <<2>>",
+          description: "The title of the window that shows a tooltip for the item being hovered"
+          + " over in the open inventory."
+          + "\nArgument <<1>> is a name of the part item."
+          + "\nArgument <<2>> is a custom name of the inventory.");
+
+  protected static readonly Message ItemActionMenuWindowTitle = new Message(
+      "#kisLOC_00019",
+      defaultTemplate: "Action",
+      description: "The title of the window that represents a context menu for a specific item in"
+      + " the inventory.");
+
+  protected static readonly Message AcceptNameChangeBtn = new Message(
+      "#kisLOC_00020",
+      defaultTemplate: "OK",
+      description: "The caption of the button that accepts the changed inventory name. This button"
+      + " is vary narrow, so keep the text as short as possible.");
+
+  protected static readonly Message SetInventoryNameBtn = new Message(
+      "#kisLOC_00021",
+      defaultTemplate: "Set name",
+      description: "The caption of the button that shows an input field to enter a custom name for"
+      + " an inventory.");
+
+  protected static readonly Message CloseInventoryBtn = new Message(
+      "#kisLOC_00022",
+      defaultTemplate: "Close",
+      description: "The caption of the button that closes the opened inventory dialog.");
+
+  protected static readonly Message UnequipItemContextMenuBtn = new Message(
+      "#kisLOC_00023",
+      defaultTemplate: "Unequip",
+      description: "The caption of the button that triggers the uneqip action on the item in the"
+      + " inventory. The button is shown in a context menu of the selected item.");
+
+  protected static readonly Message EquipItemContextBtn = new Message(
+      "#kisLOC_00024",
+      defaultTemplate: "Equip",
+      description: "The caption of the button that triggers the eqip action on the item in the"
+      + " inventory. The button is shown in a context menu of the selected item.");
+
+  protected static readonly Message DropCarriedItemContextBtn = new Message(
+      "#kisLOC_00025",
+      defaultTemplate: "Drop",
+      description: "The caption of the button that triggers the drop action on the item in the"
+      + " inventory. The button is shown in a context menu of the selected item.");
+
+  protected static readonly Message<int> SplitItemsContextBtn = new Message<int>(
+      "#kisLOC_00026",
+      defaultTemplate: "Split (<<1>>)",
+      description: "The caption of the button that extracts the specified number of items from the"
+      + " selected inventory slot, and moves them into a new slot."
+      + "\nArgument <<1>> is the number of items to extract.");
+
+  protected static readonly Message<int> ItemsQuantityItemContextMsg = new Message<int>(
+      "#kisLOC_00027",
+      defaultTemplate: "Quantity: <<1>>",
+      description: "The text to show in the context menu of the selected inventory item that"
+      + " tells how many items are in the slot."
+      + "\nArgument <<1>> is the number of items in the slot.");
+
+  protected static readonly Message NoActionItemContextMsg = new Message(
+      "#kisLOC_00028",
+      defaultTemplate: "No action",
+      description: "The text to show in the context menu of the selected inventory item that"
+      + " tells that no actions can be done on the item(s) in the slot.");
+
+  protected static readonly Message<int> PodSeatInventoryMenuTxt = new Message<int>(
+      "#kisLOC_00029",
+      defaultTemplate: "Seat <<1>> inventory",
+      description: "The name of the part's menu item that opens the inventory for a pod's seat."
+      + "\nArgument <<1>> is the number of seat.");
+
+  protected static readonly Message<string> PersonalInventoryMenuTxt = new Message<string>(
+      "#kisLOC_00030",
+      defaultTemplate: "<<1>>'s inventory",
+      description: "The name of the part's menu item that opens the inventory of a specific kerbal."
+      + "\nArgument <<1>> is the name of the first of the kerbal.");
+
+  protected static readonly Message PartInventoryMenuTxt = new Message(
+      "#kisLOC_00031",
+      defaultTemplate: "Inventory",
+      description: "The name of the part's menu item that opens the associated inventory. The"
+      + " \"part\" can be a kerbal.");
+
+  protected static readonly Message<string> PartInventoryWithNameMenuTxt = new Message<string>(
+      "#kisLOC_00032",
+      defaultTemplate: "Inventory | <<1>>",
+      description: "The name of the part's menu item that opens the associated inventory with a"
+      + " custom name. The \"part\" can be a kerbal."
+      + "\nArgument <<1>> is a custom name of the inventory.");
+  #endregion
+
   // Inventory
   public Dictionary<int, KIS_Item> items = new Dictionary<int, KIS_Item>();
   [KSPField]
@@ -94,14 +321,6 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
   [PersistentField("Editor/PodInventory/addToTheFirstSeatOnly", isCollection = true)]
   public static List<String> defaultItemsForTheFirstSeat = new List<string>();
 
-  // UI strings.
-  const string strMaxVolumeReached =
-      "Max destination volume reached. Part volume is: {0:#.####}L (+{1:#.####}L)";
-  static readonly Message<string> CannotTransferInventoryMsg =
-      "Pod {0} doesn't have personal inventory space";
-  static readonly Message MustBeCrewedAtLaunchMsg =
-      "The seat must be crewed at launch to acquire items";
-
   public string openGuiName;
   public float totalVolume = 0;
   public int podSeat = -1;
@@ -152,9 +371,6 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
   // Debug
   private KIS_Item debugItem;
   
-  // Messages.  
-  const string NoItemEquippedMsg = "Cannot use equipped item because nothing is equipped";
-
   /// <summary>Overridden from PartModule.</summary>
   public override string GetInfo() {
     var sb = new StringBuilder();
@@ -529,7 +745,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
       if (HighLogic.LoadedSceneIsEditor) {
         invEvent.guiActive = true;
         invEvent.guiActiveUnfocused = true;
-        invEvent.guiName = "Seat " + podSeat + " inventory";
+        invEvent.guiName = PodSeatInventoryMenuTxt.Format(podSeat);
       } else {
         invEvent.guiActive = false;
         invEvent.guiActiveUnfocused = false;
@@ -538,16 +754,15 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
           string kerbalName = crewAtPodSeat.name.Split(' ').FirstOrDefault();
           invEvent.guiActive = true;
           invEvent.guiActiveUnfocused = true;
-          invEvent.guiName = kerbalName + "'s inventory";
+          invEvent.guiName = PersonalInventoryMenuTxt.Format(kerbalName);
         }
       }
     } else {
       invEvent.guiActive = true;
       invEvent.guiActiveUnfocused = true;
-      invEvent.guiName = "Inventory";
-      if (invName != "") {
-        invEvent.guiName = "Inventory | " + invName;
-      }
+      invEvent.guiName = invName != ""
+          ? PartInventoryWithNameMenuTxt.Format(invName)
+          : PartInventoryMenuTxt.Format();
     }
     if (HighLogic.LoadedSceneIsFlight) {
       ModuleKISPickup mPickup = KISAddonPickup.instance.GetActivePickupNearest(part);
@@ -749,8 +964,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
   bool VerifyIsNotAssembly(Part p) {
     if (!HighLogic.LoadedSceneIsEditor && KISAddonPickup.grabbedPartsCount > 1) {
       ScreenMessaging.ShowPriorityScreenMessage(
-          "Cannot put a part with children into the inventory. There are {0} part(s) attached",
-          KISAddonPickup.grabbedPartsCount - 1);
+          PartHasChildrenMsg.Format(KISAddonPickup.grabbedPartsCount - 1));
       return false;
     }
     return true;
@@ -761,7 +975,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     var newTotalVolume = GetContentVolume() + partVolume;
     if (newTotalVolume > maxVolume) {
       ScreenMessaging.ShowPriorityScreenMessage(
-          strMaxVolumeReached, partVolume, newTotalVolume - maxVolume);
+          MaxVolumeReachedMsg.Format(partVolume, newTotalVolume - maxVolume));
       return false;
     }
     return true;
@@ -775,7 +989,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
       float newTotalVolume = GetContentVolume() + item.stackVolume;
       if (newTotalVolume > maxVolume) {
         ScreenMessaging.ShowPriorityScreenMessage(
-            strMaxVolumeReached, item.stackVolume, (newTotalVolume - maxVolume));
+            MaxVolumeReachedMsg.Format(item.stackVolume, (newTotalVolume - maxVolume)));
         return false;
       } else {
         return true;
@@ -794,6 +1008,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
   }
 
   [KSPEvent(guiActiveEditor = true, guiActive = true, guiActiveUnfocused = true)]
+  [LocalizableItem(tag = null)]
   public void ShowInventory() {
     if (showGui) {
       // Destroy icons viewer
@@ -826,18 +1041,15 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
         // the container is dropped.
         // TODO: Find a way to update serialized state and remove this check (#89). 
         if (GetComponent<ModuleKISItemEvaTweaker>() && vessel.isEVA) {
-          ScreenMessaging.ShowPriorityScreenMessage(
-              "This storage is not accessible while carried !");
+          ScreenMessaging.ShowPriorityScreenMessage(NotAccessibleWhileCarriedMsg);
           return;
         }
         if (FlightGlobals.ActiveVessel.isEVA && !externalAccess) {
-          ScreenMessaging.ShowPriorityScreenMessage(
-              "This storage is not accessible from the outside !");
+          ScreenMessaging.ShowPriorityScreenMessage(NotAccessibleFromOutsideMsg);
           return;
         }
         if (!FlightGlobals.ActiveVessel.isEVA && !internalAccess) {
-          ScreenMessaging.ShowPriorityScreenMessage(
-              "This storage is not accessible from the inside !");
+          ScreenMessaging.ShowPriorityScreenMessage(NotAccessibleFromInsideMsg);
           return;
         }
       }
@@ -871,16 +1083,15 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     if (checkAtmo) {
       if (!part.vessel.mainBody.atmosphereContainsOxygen) {
         helmetEquipped = true;
-        ScreenMessaging.ShowPriorityScreenMessage(
-            "Cannot remove helmet, atmosphere does not contain oxygen !");
+        ScreenMessaging.ShowPriorityScreenMessage(CannotRemoveHelmetNoOxygenMsg);
         UISounds.PlayBipWrong();
         return false;
       }
       if (FlightGlobals.getStaticPressure() < KISAddonConfig.breathableAtmoPressure) {
         helmetEquipped = true;
         ScreenMessaging.ShowPriorityScreenMessage(
-            "Cannot remove helmet, pressure is less than {0} ! (Current : {1})",
-            KISAddonConfig.breathableAtmoPressure, FlightGlobals.getStaticPressure());
+            CannotRemoveHelmetPressureTooLowMsg.Format(
+                KISAddonConfig.breathableAtmoPressure, FlightGlobals.getStaticPressure()));
         UISounds.PlayBipWrong();
         return false;
       }
@@ -955,7 +1166,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     // Set title
     string title = part.partInfo.title;
     if (invType == InventoryType.Pod) {
-      title = part.partInfo.title + " | Seat " + podSeat;
+      title = PodInventoryWindowTitle.Format(part.partInfo.title, podSeat);
       if (!HighLogic.LoadedSceneIsEditor) {
         ProtoCrewMember crewAtPodSeat = part.protoModuleCrew.Find(x => x.seatIdx == podSeat);
         if (crewAtPodSeat != null) {
@@ -964,19 +1175,19 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
       }
     }
     if (invType == InventoryType.Eva) {
-      title = part.partInfo.title + " | " + kerbalTrait;
+      title = PersonalInventoryWindowTitle.Format(part.partInfo.title, kerbalTrait);
     }
     if (invType == InventoryType.Container && invName != "") {
-      title = part.partInfo.title + " | " + invName;
+      title = ContainerInventoryWindowTitle.Format(part.partInfo.title, invName);
     }
 
     guiMainWindowPos = GUILayout.Window(GetInstanceID(), guiMainWindowPos, GuiMain, title);
 
     if (tooltipItem != null) {
       if (contextItem == null) {
-        string tooltipName = tooltipItem.availablePart.title;
-        if (tooltipItem.inventoryName != "")
-          tooltipName += " | " + tooltipItem.inventoryName;
+        var tooltipName = tooltipItem.inventoryName != ""
+            ? TooltipWindowTitle.Format(tooltipItem.availablePart.title, tooltipItem.inventoryName)
+            : tooltipItem.availablePart.title;
         GUILayout.Window(GetInstanceID() + 780,
                          new Rect(Event.current.mousePosition.x + 5,
                                   Event.current.mousePosition.y + 5, 400, 1),
@@ -988,7 +1199,8 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
           guiMainWindowPos.x + contextRect.x + (contextRect.width / 2),
           guiMainWindowPos.y + contextRect.y + (contextRect.height / 2),
           80, 10);
-      GUILayout.Window(GetInstanceID() + 781, contextRelativeRect, GuiContextMenu, "Action");
+      GUILayout.Window(
+          GetInstanceID() + 781, contextRelativeRect, GuiContextMenu, ItemActionMenuWindowTitle);
       if (contextClick) {
         contextClick = false;
         splitQty = 1;
@@ -1054,27 +1266,25 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
       if (guiSetName) {
         GUILayout.BeginHorizontal();
         invName = GUILayout.TextField(invName, 14, GUILayout.Height(22));
-        if (GUILayout.Button(new GUIContent("OK", ""), GUILayout.Width(30), GUILayout.Height(22))) {
+        if (GUILayout.Button(AcceptNameChangeBtn, GUILayout.Width(30), GUILayout.Height(22))) {
           guiSetName = false;
         }
         GUILayout.EndHorizontal();
       } else {
-        if (GUILayout.Button(new GUIContent("Set name", ""),
+        if (GUILayout.Button(SetInventoryNameBtn,
                              GUILayout.Width(Width), GUILayout.Height(22))) {
           guiSetName = true;
         }
       }
     } else if (invType == InventoryType.Eva) {
       if (helmetEquipped) {
-        if (GUILayout.Button(new GUIContent("Remove Helmet", ""),
-                             GUILayout.Width(Width), GUILayout.Height(22))) {
+        if (GUILayout.Button(RemoveHelmetMenuTxt, GUILayout.Width(Width), GUILayout.Height(22))) {
           if (SetHelmet(false, true)) {
             UISoundPlayer.instance.Play(helmetOffSndPath);
           }
         }
       } else {
-        if (GUILayout.Button(new GUIContent("Put On Helmet", ""),
-                             GUILayout.Width(Width), GUILayout.Height(22))) {
+        if (GUILayout.Button(PutOnHelmetMenuTxt, GUILayout.Width(Width), GUILayout.Height(22))) {
           if (SetHelmet(true)) {
             UISoundPlayer.instance.Play(helmetOnSndPath);
           }
@@ -1096,8 +1306,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
                   GUILayout.Width(Width), GUILayout.Height(45 + extraSpace));
     bool closeInv = false;
 
-    if (GUILayout.Button(new GUIContent("Close", "Close container"),
-                         GUILayout.Width(Width), GUILayout.Height(21))) {
+    if (GUILayout.Button(CloseInventoryBtn, GUILayout.Width(Width), GUILayout.Height(21))) {
       closeInv = true;
     }
     GUILayout.EndVertical();
@@ -1206,12 +1415,12 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
           && invType == InventoryType.Eva) {
         noAction = false;
         if (contextItem.equipped) {
-          if (GUILayout.Button("Unequip")) {
+          if (GUILayout.Button(UnequipItemContextMenuBtn)) {
             contextItem.Unequip(KIS_Item.ActorType.Player);
             contextItem = null;
           }
         } else {
-          if (GUILayout.Button("Equip")) {
+          if (GUILayout.Button(EquipItemContextBtn)) {
             contextItem.Equip(KIS_Item.ActorType.Player);
             contextItem = null;
           }
@@ -1223,7 +1432,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     if (contextItem != null) {
       if (contextItem.carriable && invType == InventoryType.Eva) {
         noAction = false;
-        if (GUILayout.Button("Drop")) {
+        if (GUILayout.Button(DropCarriedItemContextBtn)) {
           contextItem.Drop();
           contextItem = null;
         }
@@ -1264,8 +1473,10 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
             }
           }
         }
-        if (contextItem != null)
-          GUILayout.Label("Quantity : " + contextItem.quantity, GUILayout.Width(100));
+        if (contextItem != null) {
+          GUILayout.Label(
+              ItemsQuantityItemContextMsg.Format(contextItem.quantity), GUILayout.Width(100));
+        }
         GUILayout.EndHorizontal();
       }
     }
@@ -1279,12 +1490,12 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
           if (splitQty - 1 > 0)
             splitQty -= 1;
         }
-        if (GUILayout.Button("Split (" + splitQty + ")", buttonStyle)) {
+        if (GUILayout.Button(SplitItemsContextBtn.Format(splitQty), buttonStyle)) {
           if (!isFull()) {
             contextItem.quantity -= splitQty;
             AddItem(contextItem.availablePart.partPrefab, splitQty);
           } else {
-            ScreenMessaging.ShowPriorityScreenMessage("Inventory is full, cannot split !");
+            ScreenMessaging.ShowPriorityScreenMessage(InventoryFullCannotSplitMsg);
           }
           contextItem = null;
         }
@@ -1326,7 +1537,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
       }
     }
     if (noAction) {
-      GUILayout.Label("No action");
+      GUILayout.Label(NoActionItemContextMsg);
     }
   }
 
@@ -1528,8 +1739,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
 
       if (draggedItemModule && draggedItemModule.carriable) {
         if (HighLogic.LoadedSceneIsEditor && podSeat != -1) {
-          ScreenMessaging.ShowPriorityScreenMessage(
-              "Carriable items cannot be stored in the seat's inventory");
+          ScreenMessaging.ShowPriorityScreenMessage(CarriableItemsNotForSeatsInventoryMsg);
           storePart = false;
         } else if (HighLogic.LoadedSceneIsFlight && invType == InventoryType.Eva) {
           carryPart = true;
@@ -1544,8 +1754,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
               }
               carryPart = false;
               storePart = false;
-              ScreenMessaging.ShowPriorityScreenMessage(
-                  "Another part is already carried on slot <{0}>", draggedItemModule.equipSlot);
+              ScreenMessaging.ShowPriorityScreenMessage(PartAlreadyCarriedMsg);
               break;
             }
           }
