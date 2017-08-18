@@ -792,8 +792,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     actionMethod(item);
   }
 
-  [KSPEvent(name = "ContextMenuShowInventory", guiActiveEditor = true, active = true,
-            guiActive = true, guiActiveUnfocused = true, guiName = "")]
+  [KSPEvent(guiActiveEditor = true, guiActive = true, guiActiveUnfocused = true)]
   public void ShowInventory() {
     if (showGui) {
       // Destroy icons viewer
