@@ -9,7 +9,7 @@ namespace KIS {
 public sealed class KIS_Item {
   public ConfigNode partNode;
   public AvailablePart availablePart;
-  public float quantity;
+  public int quantity;
   public KIS_IconViewer icon = null;
   public bool stackable = false;
   public string equipSlot;
@@ -118,7 +118,7 @@ public sealed class KIS_Item {
 
   /// <summary>Creates a new part from save.</summary>
   public KIS_Item(AvailablePart availablePart, ConfigNode itemNode, ModuleKISInventory inventory,
-                  float quantity = 1) {
+                  int quantity = 1) {
     // Get part node
     this.availablePart = availablePart;
     partNode = new ConfigNode();
@@ -143,7 +143,7 @@ public sealed class KIS_Item {
   }
 
   /// <summary>Creates a new part from scene.</summary>
-  public KIS_Item(Part part, ModuleKISInventory inventory, float quantity = 1) {
+  public KIS_Item(Part part, ModuleKISInventory inventory, int quantity = 1) {
     // Get part node
     this.availablePart = PartLoader.getPartInfoByName(part.partInfo.name);
     this.partNode = new ConfigNode();
@@ -162,7 +162,7 @@ public sealed class KIS_Item {
     }
   }
 
-  void InitConfig(AvailablePart availablePart, ModuleKISInventory inventory, float quantity) {
+  void InitConfig(AvailablePart availablePart, ModuleKISInventory inventory, int quantity) {
     this.inventory = inventory;
     this.quantity = quantity;
     prefabModule = availablePart.partPrefab.GetComponent<ModuleKISItem>();
@@ -329,7 +329,7 @@ public sealed class KIS_Item {
     return true;
   }
 
-  public bool StackAdd(float qty, bool checkVolume = true) {
+  public bool StackAdd(int qty, bool checkVolume = true) {
     if (CanStackAdd(qty, checkVolume)) {
       quantity += qty;
       inventory.RefreshMassAndVolume();
@@ -338,7 +338,7 @@ public sealed class KIS_Item {
     return false;
   }
 
-  public bool StackRemove(float qty = 1) {
+  public bool StackRemove(int qty = 1) {
     if (qty <= 0) {
       return false;
     }

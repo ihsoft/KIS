@@ -125,7 +125,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
   Rect defaultEditorPos = new Rect(Screen.width / 3, 40, 10, 10);
   Rect defaultFlightPos = new Rect(0, 50, 10, 10);
   Vector2 scrollPositionDbg;
-  float splitQty = 1;
+  int splitQty = 1;
   bool clickThroughLocked = false;
   bool guiSetName = false;
   bool PartActionUICreated = false;
@@ -600,7 +600,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
   }
 
   public KIS_Item AddItem(AvailablePart availablePart, ConfigNode partNode,
-                          float qty = 1, int slot = -1) {
+                          int qty = 1, int slot = -1) {
     KIS_Item item = null;
     if (items.ContainsKey(slot)) {
       slot = -1;
@@ -622,7 +622,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     return item;
   }
 
-  public KIS_Item AddItem(Part part, float qty = 1, int slot = -1) {
+  public KIS_Item AddItem(Part part, int qty = 1, int slot = -1) {
     KIS_Item item = null;
     if (items.ContainsKey(slot)) {
       slot = -1;
