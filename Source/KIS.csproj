@@ -40,8 +40,7 @@
       <HintPath>Q:\KSP_Data\Managed\Assembly-CSharp-firstpass.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="KSPDev_Utils.0.23.0">
-      <HintPath>..\Binaries\KSPDev_Utils.0.23.0.dll</HintPath>
+    <Reference Include="KSPDev_Utils.0.26">
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
