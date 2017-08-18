@@ -50,7 +50,7 @@ sealed class MainScreenTweaker : MonoBehaviour {
   
   /// <summary>Tells if all object paths in the scene needs to be logged.</summary>
   /// <remarks>Only enable it to get the full hierarchy dump.</remarks>
-  [PersistentField("MainScreenTweaker/enabled")]
+  [PersistentField("MainScreenTweaker/logAllObjects")]
   public readonly bool logAllObjects = false;
 
   /// <summary>Full list of configured tweaks on the screan.</summary>
