@@ -250,13 +250,13 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
       description: "The text to display in the inventory slot background to tell if the item is"
       + " being equipped by the kerbal.");
 
-  Message<int> SlotIdContextCaption = new Message<int>(
+  protected static readonly Message<int> SlotIdContextCaption = new Message<int>(
       "#kisLOC_00035",
       defaultTemplate: "<<1>>",
       description: "The text to display in the inventory slot background to identify it."
       + "\nArgument <<1>> is the number of the slot.");
 
-  Message<int> MultipleItemsContextCaption = new Message<int>(
+  protected static readonly Message<int> MultipleItemsContextCaption = new Message<int>(
       "#kisLOC_00036",
       defaultTemplate: "x<<1>>",
       description: "The text to display in the inventory slot background to tell ho many items are"
