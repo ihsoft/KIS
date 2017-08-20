@@ -265,6 +265,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
   #endregion
 
   static readonly GUILayoutOption QuantityAdjustBtnLayout = GUILayout.Width(20);
+  static GUIStyle noWrapLabelStyle;
 
   // Inventory
   public Dictionary<int, KIS_Item> items = new Dictionary<int, KIS_Item>();
@@ -1172,6 +1173,8 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     lowerRightStyle.padding = new RectOffset(4, 4, 4, 4);
     lowerRightStyle.normal.textColor = Color.white;
 
+    noWrapLabelStyle = new GUIStyle(GUI.skin.label);
+    noWrapLabelStyle.wordWrap = false;
 
     buttonStyle = new GUIStyle(GUI.skin.button);
     buttonStyle.padding = new RectOffset(4, 4, 4, 4);
@@ -1225,7 +1228,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
       var contextRelativeRect = new Rect(
           guiMainWindowPos.x + contextRect.x + (contextRect.width / 2),
           guiMainWindowPos.y + contextRect.y + (contextRect.height / 2),
-          80, 10);
+          0, 0);
       GUILayout.Window(
           GetInstanceID() + 781, contextRelativeRect, GuiContextMenu, ItemActionMenuWindowTitle);
       if (contextClick) {
@@ -1502,8 +1505,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
           }
         }
         if (contextItem != null) {
-          GUILayout.Label(
-              ItemsQuantityItemContextMsg.Format(contextItem.quantity), GUILayout.Width(100));
+          GUILayout.Label(ItemsQuantityItemContextMsg.Format(contextItem.quantity));
         }
         GUILayout.EndHorizontal();
       }
@@ -1565,7 +1567,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
       }
     }
     if (noAction) {
-      GUILayout.Label(NoActionItemContextMsg);
+      GUILayout.Label(NoActionItemContextMsg, noWrapLabelStyle);
     }
   }
 
