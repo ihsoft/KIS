@@ -221,7 +221,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
 
   protected static readonly Message<string> PersonalInventoryMenuTxt = new Message<string>(
       "#kisLOC_00030",
-      defaultTemplate: "<<1>>'s inventory",
+      defaultTemplate: "<<1>>`s inventory",
       description: "The name of the part's menu item that opens the inventory of a specific kerbal."
       + "\nArgument <<1>> is the name of the first of the kerbal.");
 
