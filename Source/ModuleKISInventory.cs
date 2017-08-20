@@ -12,7 +12,7 @@ using UnityEngine;
 
 namespace KIS {
 
-// Next localization ID: #kisLOC_00033.
+// Next localization ID: #kisLOC_00037.
 [PersistentFieldsDatabase("KIS/settings/KISConfig")]
 public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifier {
   #region Localizable GUI strings.
@@ -237,6 +237,31 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
       description: "The name of the part's menu item that opens the associated inventory with a"
       + " custom name. The \"part\" can be a kerbal."
       + "\nArgument <<1>> is a custom name of the inventory.");
+
+  protected static readonly Message CarriedItemContextCaption = new Message(
+      "#kisLOC_00033",
+      defaultTemplate: "Carried",
+      description: "The text to display in the inventory slot background to tell if the item is"
+      + " being carried by the kerbal.");
+
+  protected static readonly Message EquippedItemContextCaption = new Message(
+      "#kisLOC_00034",
+      defaultTemplate: "Equip.",
+      description: "The text to display in the inventory slot background to tell if the item is"
+      + " being equipped by the kerbal.");
+
+  Message<int> SlotIdContextCaption = new Message<int>(
+      "#kisLOC_00035",
+      defaultTemplate: "<<1>>",
+      description: "The text to display in the inventory slot background to identify it."
+      + "\nArgument <<1>> is the number of the slot.");
+
+  Message<int> MultipleItemsContextCaption = new Message<int>(
+      "#kisLOC_00036",
+      defaultTemplate: "x<<1>>",
+      description: "The text to display in the inventory slot background to tell ho many items are"
+      + " stacked."
+      + "\nArgument <<1>> is the number of the items in the slot.");
   #endregion
 
   static readonly GUILayoutOption QuantityAdjustBtnLayout = GUILayout.Width(20);
@@ -1367,7 +1392,9 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
 
     if (tooltipItem.quantity > 1) {
       // Show total if stacked
-      GUI.Label(textureRect, "x" + tooltipItem.quantity.ToString() + " ", lowerRightStyle);
+      GUI.Label(textureRect,
+          MultipleItemsContextCaption.Format(tooltipItem.quantity),
+          lowerRightStyle);
       text2.AppendLine("Total cost : " + tooltipItem.totalCost + " √");
       text2.AppendLine("Total volume : " + tooltipItem.stackVolume.ToString("0.00 L"));
       text2.AppendLine("Total mass : " + tooltipItem.totalMass);
@@ -1639,17 +1666,22 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
           && FlightGlobals.ActiveVessel == part.vessel) {
         // Keyboard shortcut
         int slotNb = slotIndex + 1;
-        GUI.Label(textureRect, " " + slotNb.ToString(), upperLeftStyle);
+        var margin = new Rect(textureRect);
+        margin.xMin += 4;
+        margin.xMax -= 4;
+        GUI.Label(margin, SlotIdContextCaption.Format(slotNb), upperLeftStyle);
         if (items[slotIndex].carried) {
-          GUI.Label(textureRect, " Carried  ", upperRightStyle);
+          GUI.Label(margin, CarriedItemContextCaption, upperRightStyle);
         } else if (items[slotIndex].equipped) {
-          GUI.Label(textureRect, " Equip.  ", upperRightStyle);
+          GUI.Label(margin, EquippedItemContextCaption, upperRightStyle);
         }
       }
     }
     if (items[slotIndex].stackable) {
       // Quantity
-      GUI.Label(textureRect, "x" + items[slotIndex].quantity.ToString() + "  ", lowerRightStyle);
+      GUI.Label(textureRect,
+                MultipleItemsContextCaption.Format(items[slotIndex].quantity),
+                lowerRightStyle);
     }
 
     if (Event.current.type == EventType.MouseDown
