@@ -1664,8 +1664,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
   void GuiHandleUsedSlot(Rect textureRect, int slotIndex) {
     GUI.DrawTexture(textureRect, items[slotIndex].icon.texture, ScaleMode.ScaleToFit);
     if (HighLogic.LoadedSceneIsFlight) {
-      if (FlightGlobals.ActiveVessel.isEVA
-          && FlightGlobals.ActiveVessel == part.vessel) {
+      if (FlightGlobals.ActiveVessel.isEVA && FlightGlobals.ActiveVessel == part.vessel) {
         // Keyboard shortcut
         int slotNb = slotIndex + 1;
         var margin = new Rect(textureRect);
