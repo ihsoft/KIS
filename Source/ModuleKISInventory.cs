@@ -239,6 +239,8 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
       + "\nArgument <<1>> is a custom name of the inventory.");
   #endregion
 
+  static readonly GUILayoutOption QuantityAdjustBtnLayout = GUILayout.Width(20);
+
   // Inventory
   public Dictionary<int, KIS_Item> items = new Dictionary<int, KIS_Item>();
   [KSPField]
@@ -1411,8 +1413,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
 
     //Equip
     if (contextItem != null) {
-      if (contextItem.equipable && Mathf.Approximately(contextItem.quantity, 1.0f)
-          && invType == InventoryType.Eva) {
+      if (contextItem.equipable && contextItem.quantity == 1 && invType == InventoryType.Eva) {
         noAction = false;
         if (contextItem.equipped) {
           if (GUILayout.Button(UnequipItemContextMenuBtn)) {
@@ -1444,25 +1445,25 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
       if (contextItem.stackable) {
         noAction = false;
         GUILayout.BeginHorizontal();
-        if (GUILayout.Button("-", buttonStyle, GUILayout.Width(20))) {
+        if (GUILayout.Button("-", buttonStyle, QuantityAdjustBtnLayout)) {
           if (Input.GetKey(KeyCode.LeftShift)) {
-            if (contextItem.quantity - 10 > 0) {
+            if (contextItem.quantity > 10) {
               if (contextItem.StackRemove(10) == false)
                 contextItem = null;
             }
           } else if (Input.GetKey(KeyCode.LeftControl)) {
-            if (contextItem.quantity - 100 > 0) {
+            if (contextItem.quantity > 100) {
               if (contextItem.StackRemove(100) == false)
                 contextItem = null;
             }
           } else {
-            if (contextItem.quantity - 1 > 0) {
+            if (contextItem.quantity > 1) {
               if (contextItem.StackRemove(1) == false)
                 contextItem = null;
             }
           }
         }
-        if (GUILayout.Button("+", buttonStyle, GUILayout.Width(20))) {
+        if (GUILayout.Button("+", buttonStyle, QuantityAdjustBtnLayout)) {
           if (contextItem.stackable) {
             if (Input.GetKey(KeyCode.LeftShift)) {
               contextItem.StackAdd(10);
@@ -1486,7 +1487,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
       if (contextItem.quantity > 1) {
         noAction = false;
         GUILayout.BeginHorizontal();
-        if (GUILayout.Button("-", buttonStyle, GUILayout.Width(20))) {
+        if (GUILayout.Button("-", buttonStyle, QuantityAdjustBtnLayout)) {
           if (splitQty - 1 > 0)
             splitQty -= 1;
         }
@@ -1499,7 +1500,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
           }
           contextItem = null;
         }
-        if (GUILayout.Button("+", buttonStyle, GUILayout.Width(20))) {
+        if (GUILayout.Button("+", buttonStyle, QuantityAdjustBtnLayout)) {
           if (splitQty + 1 < contextItem.quantity)
             splitQty += 1;
         }
