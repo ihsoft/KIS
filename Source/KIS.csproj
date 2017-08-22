@@ -87,8 +87,7 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>IF EXIST "Q:\GameData\KIS" xcopy "$(TargetPath)" "Q:\GameData\KIS\Plugins\" /Y
-IF EXIST "Q:\GameData\KIS" xcopy "$(ProjectDir)\..\Binaries\KSPDev_Utils.*.dll" "Q:\GameData\KIS\Plugins\" /Y
-</PostBuildEvent>
+IF EXIST "Q:\GameData\KIS" xcopy "$(TargetDir)KSPDev_Utils*.dll" "Q:\GameData\KIS\Plugins\" /Y</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
