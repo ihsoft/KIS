@@ -55,7 +55,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="EditorDefaultItemsAdder.cs" />
-    <Compile Include="KSPDev_candidates.cs" />
     <Compile Include="KSPDev_candidates\PressureType.cs" />
     <Compile Include="KspLayers.cs" />
     <Compile Include="KISAddonCursor.cs" />
