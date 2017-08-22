@@ -65,21 +65,9 @@ public sealed class VolumeLType {
   /// <returns>A formatted and localized string</returns>
   public static string Format(double value, string format = null) {
     if (format != null) {
-      return value.ToString(format) + liter.Format();
+      return value.ToString(format) + liter;
     }
-    if (value < 0.1) {
-      return value.ToString("0.00#") + liter.Format();
-    }
-    if (value < 1.0) {
-      return value.ToString("0.00") + liter.Format();
-    }
-    if (value < 10.0) {
-      return value.ToString("0.0#") + liter.Format();
-    }
-    if (value < 100.0) {
-      return value.ToString("0.#") + liter.Format();
-    }
-    return value.ToString("0") + liter.Format();
+    return CompactNumberType.Format(value) + liter;
   }
 
   /// <summary>Returns a string formatted as a human friendly volume specification.</summary>
