@@ -40,7 +40,8 @@
       <HintPath>Q:\KSP_Data\Managed\Assembly-CSharp-firstpass.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="KSPDev_Utils.0.26">
+    <Reference Include="KSPDev_Utils.0.27-pre">
+      <HintPath>..\Binaries\KSPDev_Utils.0.27-pre.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -55,7 +56,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="EditorDefaultItemsAdder.cs" />
-    <Compile Include="KSPDev_candidates\PressureType.cs" />
     <Compile Include="KspLayers.cs" />
     <Compile Include="KISAddonCursor.cs" />
     <Compile Include="MainScreenTweaker.cs" />
