@@ -79,8 +79,6 @@ public static class KIS_Shared {
       return true;
     } else {
       Debug.LogError("Sound not found in the game database !");
-      ScreenMessaging.ShowPriorityScreenMessageWithTimeout(
-          10, "Sound file : {0} has not been found, please check your KIS installation !",sndPath);
       return false;
     }
   }
