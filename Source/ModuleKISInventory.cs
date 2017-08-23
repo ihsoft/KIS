@@ -24,26 +24,26 @@ public class ModuleKISInventory : PartModule,
     IPartModule, IsDestroyable, IKSPDevModuleInfo {
 
   #region Localizable GUI strings.
-  protected static readonly Message NoItemEquippedMsg = new Message(
+  static readonly Message NoItemEquippedMsg = new Message(
       "#kisLOC_00000",
       defaultTemplate: "Cannot use equipped item because nothing is equipped",
       description: "The message to present when 'use' key is pressed, but no item is equipped in"
       + " the right hand of the EVA kerbal.");
 
-  protected static readonly Message<string> CannotTransferInventoryMsg = new Message<string>(
+  static readonly Message<string> CannotTransferInventoryMsg = new Message<string>(
       "#kisLOC_00001",
       defaultTemplate: "Pod <<1>> doesn't have personal inventory space",
       description: "The message to present when EVA kerbal enters a pod which doesn't have KIS"
       + " inventory.");
 
-  protected static readonly Message<int> PartHasChildrenMsg = new Message<int>(
+  static readonly Message<int> PartHasChildrenMsg = new Message<int>(
       "#kisLOC_00002",
       defaultTemplate: "Cannot put an assembly into inventory: <<1>> part(s) attached",
       description: "The message to present when EVA kerbal tries to put into inventory an assembly"
       + " of multiple parts."
       + "\nArgument <<1>> is the number of the children parts atatched to the part being dragged.");
 
-  protected static readonly Message<VolumeLType, VolumeLType> MaxVolumeReachedMsg =
+  static readonly Message<VolumeLType, VolumeLType> MaxVolumeReachedMsg =
       new Message<VolumeLType, VolumeLType>(
           "#kisLOC_00003",
           defaultTemplate: "Max destination volume reached: <<1>> (+<<2>>)",
@@ -54,31 +54,31 @@ public class ModuleKISInventory : PartModule,
           + "\nArgument <<2>> is a value of type VolumeLType which specifies the exceeding volume"
           +" over the max inventory capacity.");
 
-  protected static readonly Message NotAccessibleWhileCarriedMsg = new Message(
+  static readonly Message NotAccessibleWhileCarriedMsg = new Message(
       "#kisLOC_00004",
       defaultTemplate: "This storage is not accessible while carried!",
       description: "The message to present when a storage, which is being carried on a back of an"
       + " EVA kerbal, is attempted to be accessed.");
 
-  protected static readonly Message NotAccessibleFromOutsideMsg = new Message(
+  static readonly Message NotAccessibleFromOutsideMsg = new Message(
       "#kisLOC_00005",
       defaultTemplate: "This storage is not accessible from the outside!",
       description: "The message to present when an inventory which cannot be accessed from EVA is"
       + " attempted to be opened by an EVA kerbal.");
 
-  protected static readonly Message NotAccessibleFromInsideMsg =new Message(
+  static readonly Message NotAccessibleFromInsideMsg =new Message(
       "#kisLOC_00006",
       defaultTemplate: "This storage is not accessible from the inside!",
       description: "The message to present when an inventory which cannot be accessed from inside"
       + " the vessel is attempted to be accessed while the active vessel is no an EVA kerbal.");
 
-  protected static readonly Message CannotRemoveHelmetNoOxygenMsg = new Message(
+  static readonly Message CannotRemoveHelmetNoOxygenMsg = new Message(
       "#kisLOC_00007",
       defaultTemplate: "Cannot remove helmet: atmosphere does not contain oxygen!",
       description: "The message to present when a remove helmet action is attempted in the"
       + " atmosphere which doesn't contain oxygen.");
 
-  protected static readonly Message<PressureType, PressureType>
+  static readonly Message<PressureType, PressureType>
       CannotRemoveHelmetPressureTooLowMsg = new Message<PressureType, PressureType>(
           "#kisLOC_00008",
           defaultTemplate: "Cannot remove helmet: pressure too low (<<2>> < <<1>>)",
@@ -89,43 +89,43 @@ public class ModuleKISInventory : PartModule,
           + "\nArgument <<2>> is a value of type PressureType which specifies the actual pressure"
           + " outside.");
 
-  protected static readonly Message InventoryFullCannotSplitMsg = new Message(
+  static readonly Message InventoryFullCannotSplitMsg = new Message(
       "#kisLOC_00009",
       defaultTemplate: "Inventory is full, cannot split!",
       description: "The message to present when a split action is attempted on the the inventory,"
       + " but there are no empty slots available to fit the new pack.");
 
-  protected static readonly Message CarriableItemsNotForSeatsInventoryMsg = new Message(
+  static readonly Message CarriableItemsNotForSeatsInventoryMsg = new Message(
       "#kisLOC_00010",
       defaultTemplate: "Carriable items cannot be stored in the seat's inventory",
       description: "The message to present when an item, designed to be carried by an EVA kerbal,"
       + " is attempted to be put into a pod's seat inventory.");
 
-  protected static readonly Message PartAlreadyCarriedMsg = new Message(
+  static readonly Message PartAlreadyCarriedMsg = new Message(
       "#kisLOC_00011",
       defaultTemplate: "Another part is already carried",
       description: "The message to present when an item is attempted to be placed on an EVA kerbal,"
       + " but there is another item already being carried.");
 
-  protected static readonly Message MustBeCrewedAtLaunchMsg = new Message(
+  static readonly Message MustBeCrewedAtLaunchMsg = new Message(
       "#kisLOC_00012",
       defaultTemplate: "The seat must be crewed at launch to acquire items",
       description: "The text to show in an inventory window in the editor to highlight the fact"
       + " that the items added there will only be availabe in the flight if the seat is occupied"
       + " at the launch.");
 
-  protected static readonly Message RemoveHelmetMenuTxt = new Message(
+  static readonly Message RemoveHelmetMenuTxt = new Message(
       "#kisLOC_00013",
       defaultTemplate: "Remove Helmet",
       description: "The name of the context menu item that removes kerbal's helmet if the"
       + " environment conditions allow it.");
 
-  protected static readonly Message PutOnHelmetMenuTxt =new Message(
+  static readonly Message PutOnHelmetMenuTxt =new Message(
       "#kisLOC_00014",
       defaultTemplate: "Put On Helmet",
       description: "The name of the context menu item that pust the kerbal's helmet back.");
 
-  protected static readonly Message<string, int> PodInventoryWindowTitle =
+  static readonly Message<string, int> PodInventoryWindowTitle =
       new Message<string, int>(
           "#kisLOC_00015",
           defaultTemplate: "<<1>> | Seat <<2>>",
@@ -134,7 +134,7 @@ public class ModuleKISInventory : PartModule,
           + "\nArgument <<1>> is a name of the part that holds the inventory."
           + "\nArgument <<2>> is a number of the seat to which the inventory belongs.");
 
-  protected static readonly Message<string, string> PersonalInventoryWindowTitle =
+  static readonly Message<string, string> PersonalInventoryWindowTitle =
       new Message<string, string>(
           "#kisLOC_00016",
           defaultTemplate: "<<1>> | <<2>>",
@@ -142,7 +142,7 @@ public class ModuleKISInventory : PartModule,
           + "\nArgument <<1>> is a name of the part that holds the inventory."
           + "\nArgument <<2>> is a name of the kerbal.");
 
-  protected static readonly Message<string, string> ContainerInventoryWindowTitle =
+  static readonly Message<string, string> ContainerInventoryWindowTitle =
       new Message<string, string>(
           "#kisLOC_00017",
           defaultTemplate: "<<1>> | <<2>>",
@@ -151,7 +151,7 @@ public class ModuleKISInventory : PartModule,
           + "\nArgument <<1>> is a name of the part that holds the inventory."
           + "\nArgument <<2>> is a custom name of the inventory.");
 
-  protected static readonly Message<string, string> TooltipWindowTitle =
+  static readonly Message<string, string> TooltipWindowTitle =
       new Message<string, string>(
           "#kisLOC_00018",
           defaultTemplate: "<<1>> | <<2>>",
@@ -160,118 +160,118 @@ public class ModuleKISInventory : PartModule,
           + "\nArgument <<1>> is a name of the part item."
           + "\nArgument <<2>> is a custom name of the inventory.");
 
-  protected static readonly Message ItemActionMenuWindowTitle = new Message(
+  static readonly Message ItemActionMenuWindowTitle = new Message(
       "#kisLOC_00019",
       defaultTemplate: "Action",
       description: "The title of the window that represents a context menu for a specific item in"
       + " the inventory.");
 
-  protected static readonly Message AcceptNameChangeBtn = new Message(
+  static readonly Message AcceptNameChangeBtn = new Message(
       "#kisLOC_00020",
       defaultTemplate: "OK",
       description: "The caption of the button that accepts the changed inventory name. This button"
       + " is vary narrow, so keep the text as short as possible.");
 
-  protected static readonly Message SetInventoryNameBtn = new Message(
+  static readonly Message SetInventoryNameBtn = new Message(
       "#kisLOC_00021",
       defaultTemplate: "Set name",
       description: "The caption of the button that shows an input field to enter a custom name for"
       + " an inventory.");
 
-  protected static readonly Message CloseInventoryBtn = new Message(
+  static readonly Message CloseInventoryBtn = new Message(
       "#kisLOC_00022",
       defaultTemplate: "Close",
       description: "The caption of the button that closes the opened inventory dialog.");
 
-  protected static readonly Message UnequipItemContextMenuBtn = new Message(
+  static readonly Message UnequipItemContextMenuBtn = new Message(
       "#kisLOC_00023",
       defaultTemplate: "Unequip",
       description: "The caption of the button that triggers the uneqip action on the item in the"
       + " inventory. The button is shown in a context menu of the selected item.");
 
-  protected static readonly Message EquipItemContextBtn = new Message(
+  static readonly Message EquipItemContextBtn = new Message(
       "#kisLOC_00024",
       defaultTemplate: "Equip",
       description: "The caption of the button that triggers the eqip action on the item in the"
       + " inventory. The button is shown in a context menu of the selected item.");
 
-  protected static readonly Message DropCarriedItemContextBtn = new Message(
+  static readonly Message DropCarriedItemContextBtn = new Message(
       "#kisLOC_00025",
       defaultTemplate: "Drop",
       description: "The caption of the button that triggers the drop action on the item in the"
       + " inventory. The button is shown in a context menu of the selected item.");
 
-  protected static readonly Message<int> SplitItemsContextBtn = new Message<int>(
+  static readonly Message<int> SplitItemsContextBtn = new Message<int>(
       "#kisLOC_00026",
       defaultTemplate: "Split (<<1>>)",
       description: "The caption of the button that extracts the specified number of items from the"
       + " selected inventory slot, and moves them into a new slot."
       + "\nArgument <<1>> is the number of items to extract.");
 
-  protected static readonly Message<int> ItemsQuantityItemContextMsg = new Message<int>(
+  static readonly Message<int> ItemsQuantityItemContextMsg = new Message<int>(
       "#kisLOC_00027",
       defaultTemplate: "Quantity: <<1>>",
       description: "The text to show in the context menu of the selected inventory item that"
       + " tells how many items are in the slot."
       + "\nArgument <<1>> is the number of items in the slot.");
 
-  protected static readonly Message NoActionItemContextMsg = new Message(
+  static readonly Message NoActionItemContextMsg = new Message(
       "#kisLOC_00028",
       defaultTemplate: "No action",
       description: "The text to show in the context menu of the selected inventory item that"
       + " tells that no actions can be done on the item(s) in the slot.");
 
-  protected static readonly Message<int> PodSeatInventoryMenuTxt = new Message<int>(
+  static readonly Message<int> PodSeatInventoryMenuTxt = new Message<int>(
       "#kisLOC_00029",
       defaultTemplate: "Seat <<1>> inventory",
       description: "The name of the part's menu item that opens the inventory for a pod's seat."
       + "\nArgument <<1>> is the number of seat.");
 
-  protected static readonly Message<string> PersonalInventoryMenuTxt = new Message<string>(
+  static readonly Message<string> PersonalInventoryMenuTxt = new Message<string>(
       "#kisLOC_00030",
       defaultTemplate: "<<1>>`s inventory",
       description: "The name of the part's menu item that opens the inventory of a specific kerbal."
       + "\nArgument <<1>> is the name of the first of the kerbal.");
 
-  protected static readonly Message PartInventoryMenuTxt = new Message(
+  static readonly Message PartInventoryMenuTxt = new Message(
       "#kisLOC_00031",
       defaultTemplate: "Inventory",
       description: "The name of the part's menu item that opens the associated inventory. The"
       + " \"part\" can be a kerbal.");
 
-  protected static readonly Message<string> PartInventoryWithNameMenuTxt = new Message<string>(
+  static readonly Message<string> PartInventoryWithNameMenuTxt = new Message<string>(
       "#kisLOC_00032",
       defaultTemplate: "Inventory | <<1>>",
       description: "The name of the part's menu item that opens the associated inventory with a"
       + " custom name. The \"part\" can be a kerbal."
       + "\nArgument <<1>> is a custom name of the inventory.");
 
-  protected static readonly Message CarriedItemContextCaption = new Message(
+  static readonly Message CarriedItemContextCaption = new Message(
       "#kisLOC_00033",
       defaultTemplate: "Carried",
       description: "The text to display in the inventory slot background to tell if the item is"
       + " being carried by the kerbal.");
 
-  protected static readonly Message EquippedItemContextCaption = new Message(
+  static readonly Message EquippedItemContextCaption = new Message(
       "#kisLOC_00034",
       defaultTemplate: "Equip.",
       description: "The text to display in the inventory slot background to tell if the item is"
       + " being equipped by the kerbal.");
 
-  protected static readonly Message<int> SlotIdContextCaption = new Message<int>(
+  static readonly Message<int> SlotIdContextCaption = new Message<int>(
       "#kisLOC_00035",
       defaultTemplate: "<<1>>",
       description: "The text to display in the inventory slot background to identify it."
       + "\nArgument <<1>> is the number of the slot.");
 
-  protected static readonly Message<int> MultipleItemsContextCaption = new Message<int>(
+  static readonly Message<int> MultipleItemsContextCaption = new Message<int>(
       "#kisLOC_00036",
       defaultTemplate: "x<<1>>",
       description: "The text to display in the inventory slot background to tell ho many items are"
       + " stacked."
       + "\nArgument <<1>> is the number of the items in the slot.");
 
-  protected static readonly Message<VolumeLType, VolumeLType> InventoryVolumeInfo =
+  static readonly Message<VolumeLType, VolumeLType> InventoryVolumeInfo =
       new Message<VolumeLType, VolumeLType>(
           "#kisLOC_00037",
           defaultTemplate: "Volume: <<1>> / <<2>>",
@@ -279,70 +279,70 @@ public class ModuleKISInventory : PartModule,
           + "\nArgument <<1>> is the occupied volume of the inventory of type VolumeLType."
           + "\nArgument <<2>> is the maximum volume of the inventory of type VolumeLType.");
 
-  protected static readonly Message<MassType> InventoryMassInfo = new Message<MassType>(
+  static readonly Message<MassType> InventoryMassInfo = new Message<MassType>(
       "#kisLOC_00038",
       defaultTemplate: "Mass: <<1>>",
       description: "The total part mass in the main inventory window. It includes the combined mass"
       + " of all the items in the inventory."
       + "\nArgument <<1>> is the total mass of type MassType.");
 
-  protected static readonly Message<CostType> InventoryCostInfo = new Message<CostType>(
+  static readonly Message<CostType> InventoryCostInfo = new Message<CostType>(
       "#kisLOC_00039",
       defaultTemplate: "Cost: <<1>>",
       description: "The total part cost in the main inventory window. It includes the combined cost"
       + " of all the items in the inventory."
       + "\nArgument <<1>> is the total cost of type CostType.");
 
-  protected static readonly Message<VolumeLType> ItemVolumeTooltipInfo = new Message<VolumeLType>(
+  static readonly Message<VolumeLType> ItemVolumeTooltipInfo = new Message<VolumeLType>(
       "#kisLOC_00040",
       defaultTemplate: "Volume: <<1>>",
       description: "The volume of a single item in the inventory slot. It's presented in a tooltip"
       + " window."
       + "\nArgument <<1>> is the volume of type VolumeLType.");
 
-  protected static readonly Message<MassType> ItemDryMassTooltipInfo = new Message<MassType>(
+  static readonly Message<MassType> ItemDryMassTooltipInfo = new Message<MassType>(
       "#kisLOC_00041",
       defaultTemplate: "Dry mass: <<1>>",
       description: "The mass of a single item in the inventory slot without the resources or the"
       + " contents. It's presented in a tooltip window."
       + "\nArgument <<1>> is the mass of type MassType.");
 
-  protected static readonly Message<MassType> ItemResourceMassTooltipInfo = new Message<MassType>(
+  static readonly Message<MassType> ItemResourceMassTooltipInfo = new Message<MassType>(
       "#kisLOC_00042",
       defaultTemplate: "Resource mass: <<1>>",
       description: "The mass of the resources in a single item in the inventory slot. It's"
       + " presented in a tooltip window."
       + "\nArgument <<1>> is the mass of type MassType.");
 
-  protected static readonly Message<CostType> ItemCostTooltipInfo = new Message<CostType>(
+  static readonly Message<CostType> ItemCostTooltipInfo = new Message<CostType>(
       "#kisLOC_00043",
       defaultTemplate: "Cost: <<1>>",
       description: "The cost of a single item in the inventory slot including the cost of the"
       + " resources. It's presented in a tooltip window."
       + "\nArgument <<1>> is the cost of type CostType.");
 
-  protected static readonly Message<CostType> ItemContentsCostTooltipInfo = new Message<CostType>(
+  static readonly Message<CostType> ItemContentsCostTooltipInfo = new Message<CostType>(
       "#kisLOC_00044",
       defaultTemplate: "Contents cost: <<1>>",
       description: "The cost of the contents of a single item in the inventory slot. It's presented"
       + " in a tooltip window."
       + "\nArgument <<1>> is the cost of type CostType.");
 
-  protected static readonly Message<MassType> ItemContentsMassTooltipInfo = new Message<MassType>(
+  static readonly Message<MassType> ItemContentsMassTooltipInfo = new Message<MassType>(
       "#kisLOC_00045",
       defaultTemplate: "Contents mass: <<1>>",
       description: "The mass of the contents of a single item in the inventory slot. It's presented"
       + " in a tooltip window."
       + "\nArgument <<1>> is the mass of type MassType.");
 
-  protected static readonly Message<CostType> TotalSlotCostTooltipInfo = new Message<CostType>(
-    "#kisLOC_00046",
-    defaultTemplate: "Total cost: <<1>>",
-    description: "The total cost of the items in the inventory slot. It's presented in a tooltip"
-    + " window."
-    + "\nArgument <<1>> is the cost of type CostType.");
+  static readonly Message<CostType> TotalSlotCostTooltipInfo = new Message<CostType>(
+      "#kisLOC_00046",
+      defaultTemplate: "Total cost: <<1>>",
+      description: "The total cost of the items in the inventory slot. It's presented in a tooltip"
+      + " window."
+      + "\nArgument <<1>> is the cost of type CostType.");
 
-  protected static readonly Message<VolumeLType> TotalSlotVolumeTooltipInfo =
+  static readonly Message<VolumeLType> TotalSlotVolumeTooltipInfo =
       new Message<VolumeLType>(
           "#kisLOC_00047",
           defaultTemplate: "Total volume: <<1>>",
@@ -350,33 +350,33 @@ public class ModuleKISInventory : PartModule,
           + " tooltip window."
           + "\nArgument <<1>> is the volume of type VolumeLType.");
 
-  protected static readonly Message<MassType> TotalSlotMassTooltipInfo = new Message<MassType>(
+  static readonly Message<MassType> TotalSlotMassTooltipInfo = new Message<MassType>(
       "#kisLOC_00048",
       defaultTemplate: "Total mass: <<1>>",
       description: "The total mass of the items in the inventory slot. It's presented in a tooltip"
       + " window."
       + "\nArgument <<1>> is the mass of type MassType.");
 
-  protected static readonly Message NoResourcesItemTooltipInfo = new Message(
+  static readonly Message NoResourcesItemTooltipInfo = new Message(
       "#kisLOC_00049",
       defaultTemplate: "Part has no resources",
       description: "The message to present in the tooltip window when the item has no resources.");
 
-  protected static readonly Message<string> EquipItemSlotTootltipInfo = new Message<string>(
+  static readonly Message<string> EquipItemSlotTootltipInfo = new Message<string>(
       "#kisLOC_00050",
       defaultTemplate: "Equip slot: <<1>>",
       description: "The information for the equippable slot of the item. It's presented in a"
       + " tooltip window."
       + "\nArgument <<1>> is the string name of the slot. E.g. \"rightHand\".");
 
-  protected static readonly Message<string> EquipItemKeyTootltipInfo = new Message<string>(
+  static readonly Message<string> EquipItemKeyTootltipInfo = new Message<string>(
       "#kisLOC_00051",
       defaultTemplate: "Press [<<1>>] to use (equipped)",
       description: "The information for the key that activates the equipped item. It's presented in"
       + " a tooltip window."
       + "\nArgument <<1>> is the string name of the key as set in the settings file.");
 
-  protected static readonly Message<ResourceType, CompactNumberType, CompactNumberType>
+  static readonly Message<ResourceType, CompactNumberType, CompactNumberType>
       ItemResourceTootltipInfo = new Message<ResourceType, CompactNumberType, CompactNumberType>(
           "#kisLOC_00052",
           defaultTemplate: "<<1>>: <<2>> / <<3>>",
@@ -386,7 +386,7 @@ public class ModuleKISInventory : PartModule,
           + "\nArgument <<2>> is the current reserve of the resource."
           + "\nArgument <<3>> is the maximum amount of the resource.");
 
-  protected static readonly Message<string, CompactNumberType, CompactNumberType>
+  static readonly Message<string, CompactNumberType, CompactNumberType>
       ItemScienceDataTooltipInfo = new Message<string, CompactNumberType, CompactNumberType>(
           "#kisLOC_00053",
           defaultTemplate: "<<1>> (Data=<<2>>, Value=<<3>>)",
@@ -396,7 +396,7 @@ public class ModuleKISInventory : PartModule,
           + "\nArgument <<2>> is the science data amount."
           + "\nArgument <<3>> is the value of the science data.");
 
-  protected static readonly Message ItemNoScienceDataTooltipInfo = new Message(
+  static readonly Message ItemNoScienceDataTooltipInfo = new Message(
       "#kisLOC_00054",
       defaultTemplate: "Part has no science data",
       description: "The message to present in the tooltip window when the item has no science"
