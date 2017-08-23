@@ -579,7 +579,7 @@ public class ModuleKISInventory : PartModule,
 
   #region IHasContextMenu implementation
   public void UpdateContextMenu() {
-    var invEvent = PartModuleUtils.GetEvent(this, ShowInventory);
+    var invEvent = PartModuleUtils.GetEvent(this, ToggleInventory);
     if (invType == InventoryType.Pod) {
       if (HighLogic.LoadedSceneIsEditor) {
         invEvent.guiActive = true;
@@ -597,7 +597,7 @@ public class ModuleKISInventory : PartModule,
         } else {
           if (showGui) {
             // In case of there was GUI active but the kerbal has left the seat.
-            ShowInventory(); 
+            ToggleInventory(); 
           }
         }
       }
@@ -787,7 +787,7 @@ public class ModuleKISInventory : PartModule,
                                                       part.transform.position);
           ModuleKISPickup mPickup = KISAddonPickup.instance.GetActivePickupNearest(part);
           if (!mPickup || distEvaToContainer > mPickup.maxDistance) {
-            ShowInventory();
+            ToggleInventory();
           }
         }
       }
@@ -811,7 +811,7 @@ public class ModuleKISInventory : PartModule,
 
     // Open inventory on keypress
     if (KIS_Shared.IsKeyDown(evaInventoryKey)) {
-      ShowInventory();
+      ToggleInventory();
     }
     // Use slot when not in drag mode.
     if (!KISAddonPointer.isRunning) {
@@ -872,7 +872,7 @@ public class ModuleKISInventory : PartModule,
 
   void OnVesselChange(Vessel vess) {
     if (showGui) {
-      ShowInventory();
+      ToggleInventory();
     }
   }
 
@@ -1234,7 +1234,7 @@ public class ModuleKISInventory : PartModule,
 
   [KSPEvent(guiActiveEditor = true, guiActive = true, guiActiveUnfocused = true)]
   [LocalizableItem(tag = null)]
-  public void ShowInventory() {
+  public void ToggleInventory() {
     if (showGui) {
       // Destroy icons viewer
       foreach (KeyValuePair<int, KIS_Item> item in items) {
@@ -1550,7 +1550,7 @@ public class ModuleKISInventory : PartModule,
       GUI.DragWindow(new Rect(0, 0, 10000, 30));
     }
     if (closeInv) {
-      ShowInventory();
+      ToggleInventory();
     }
   }
 
