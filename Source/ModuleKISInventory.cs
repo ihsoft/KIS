@@ -560,10 +560,6 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     GameEvents.onVesselChange.Remove(OnVesselChange);
     GameEvents.onPartActionUICreate.Remove(OnPartActionUICreate);
     GameEvents.onPartActionUIDismiss.Remove(OnPartActionUIDismiss);
-    if (HighLogic.LoadedSceneIsEditor) {
-      InputLockManager.RemoveControlLock("KISInventoryLock");
-      GameEvents.onTooltipDestroyRequested.Remove(OnTooltipDestroyRequestedEvent);
-    }
   }
 
   /// <summary>Overridden from PartModule.</summary>
@@ -585,10 +581,6 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
       }
     }
 
-    if (HighLogic.LoadedSceneIsEditor) {
-      InputLockManager.RemoveControlLock("KISInventoryLock");
-      GameEvents.onTooltipDestroyRequested.Add(OnTooltipDestroyRequestedEvent);
-    }
     guiMainWindowPos = defaultFlightPos;
 
     Animation[] anim = part.FindModelAnimators(openAnimName);
