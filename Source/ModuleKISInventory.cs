@@ -1638,7 +1638,8 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
           }
         }
         if (contextItem != null) {
-          GUILayout.Label(ItemsQuantityItemContextMsg.Format(contextItem.quantity));
+          GUILayout.Label(
+              ItemsQuantityItemContextMsg.Format(contextItem.quantity), noWrapLabelStyle);
         }
         GUILayout.EndHorizontal();
       }
