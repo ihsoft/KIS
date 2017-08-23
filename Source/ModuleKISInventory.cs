@@ -544,9 +544,11 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
 
   /// <inheritdoc/>
   public override void OnAwake() {
-    GameEvents.onCrewTransferred.Add(OnCrewTransferred);
-    GameEvents.onCrewTransferSelected.Add(OnCrewTransferSelected);
-    GameEvents.onVesselChange.Add(OnVesselChange);
+    if (HighLogic.LoadedSceneIsFlight) {
+      GameEvents.onCrewTransferred.Add(OnCrewTransferred);
+      GameEvents.onCrewTransferSelected.Add(OnCrewTransferSelected);
+      GameEvents.onVesselChange.Add(OnVesselChange);
+    }
     GameEvents.onPartActionUICreate.Add(OnPartActionUICreate);
     GameEvents.onPartActionUIDismiss.Add(OnPartActionUIDismiss);
   }
