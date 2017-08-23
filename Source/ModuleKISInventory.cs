@@ -442,6 +442,7 @@ public class ModuleKISInventory : PartModule,
   static readonly GUILayoutOption QuantityAdjustBtnLayout = GUILayout.Width(20);
   static GUIStyle noWrapLabelStyle;
 
+  #region KSP Part's config fields
   // Inventory
   public Dictionary<int, KIS_Item> items = new Dictionary<int, KIS_Item>();
   [KSPField]
@@ -474,7 +475,9 @@ public class ModuleKISInventory : PartModule,
   public string invName = "";
   [KSPField(isPersistant = true)]
   public bool helmetEquipped = true;
+  #endregion
 
+  #region Global settings
   [PersistentField("EvaInventory/inventoryKey")]
   public static string evaInventoryKey = "tab";
 
@@ -523,6 +526,7 @@ public class ModuleKISInventory : PartModule,
 
   [PersistentField("Editor/PodInventory/addToTheFirstSeatOnly", isCollection = true)]
   public static List<String> defaultItemsForTheFirstSeat = new List<string>();
+  #endregion
 
   public string openGuiName;
   public float totalVolume = 0;
@@ -618,7 +622,7 @@ public class ModuleKISInventory : PartModule,
   public virtual string GetModuleTitle() {
     return ModuleTitleInfo;
   }
-  
+
   /// <inheritdoc/>
   public override string GetInfo() {
     var sb = new StringBuilder();
