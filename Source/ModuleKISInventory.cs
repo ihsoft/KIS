@@ -13,15 +13,15 @@ using UnityEngine;
 
 namespace KIS {
 
-// Next localization ID: #kisLOC_00055.
+// Next localization ID: #kisLOC_00056.
 [PersistentFieldsDatabase("KIS/settings/KISConfig")]
 public class ModuleKISInventory : PartModule,
     // KSP interfaces.
-    IPartCostModifier, IPartMassModifier,
+    IPartCostModifier, IPartMassModifier, IModuleInfo,
     // KSPDev interfaces.
     IHasContextMenu,
     // KSPDev syntax sugar interfaces.
-    IPartModule, IsDestroyable {
+    IPartModule, IsDestroyable, IKSPDevModuleInfo {
 
   #region Localizable GUI strings.
   protected static readonly Message NoItemEquippedMsg = new Message(
@@ -401,6 +401,11 @@ public class ModuleKISInventory : PartModule,
       defaultTemplate: "Part has no science data",
       description: "The message to present in the tooltip window when the item has no science"
       + " data.");
+
+  static readonly Message ModuleTitleInfo = new Message(
+      "#kisLOC_00055",
+      defaultTemplate: "KIS Inventory",
+      description: "The title of the module to present in the editor details window.");
   #endregion
 
   static readonly GUILayoutOption QuantityAdjustBtnLayout = GUILayout.Width(20);
@@ -576,8 +581,14 @@ public class ModuleKISInventory : PartModule,
     }
   }
   #endregion
+
+  #region IModuleInfo implementation
+  /// <inheritdoc/>
+  public virtual string GetModuleTitle() {
+    return ModuleTitleInfo;
+  }
   
-  /// <summary>Overridden from PartModule.</summary>
+  /// <inheritdoc/>
   public override string GetInfo() {
     var sb = new StringBuilder();
     sb.AppendFormat("<b>Max Volume</b>: {0:F2} L", maxVolume);
@@ -588,6 +599,17 @@ public class ModuleKISInventory : PartModule,
     sb.AppendLine();
     return sb.ToString();
   }
+
+  /// <inheritdoc/>
+  public virtual Callback<Rect> GetDrawModulePanelCallback() {
+    return null;
+  }
+
+  /// <inheritdoc/>
+  public virtual string GetPrimaryField() {
+    return null;
+  }
+  #endregion
 
   /// <inheritdoc/>
   public override void OnAwake() {
@@ -606,6 +628,7 @@ public class ModuleKISInventory : PartModule,
     GameEvents.onCrewTransferSelected.Remove(OnCrewTransferSelected);
     GameEvents.onVesselChange.Remove(OnVesselChange);
   }
+  #endregion
 
   /// <summary>Overridden from PartModule.</summary>
   public override void OnStart(StartState state) {
