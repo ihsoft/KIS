@@ -851,7 +851,7 @@ public class ModuleKISInventory : PartModule,
       transferData.canTransfer = false;
     }
   }
-  
+
   void OnCrewTransferred(GameEvents.HostedFromToAction<ProtoCrewMember, Part> fromToAction) {
     UpdateContextMenu();
 
@@ -890,7 +890,13 @@ public class ModuleKISInventory : PartModule,
           destInventory.helmetEquipped = helmetEquipped;  // Restore helmet state.
         }
       } else {
-        // pod to pod
+        // Pod-to-Pod
+        // The target seat is always known from the crew proto, but the source seat has to be
+        // deducted. To do so, an assumtion is made that the event listeners are called in the
+        // exactly same order as they were registered, and the modules register the listeners in the
+        // order of appearance in the part's config. Basing on this, if a POD inventory has some
+        // items but the relevant seat ID is not occupied, then the kerbal has just left the pod
+        // from this seat. If there are no items, then it doesn't matter anyways.
         ProtoCrewMember crewAtPodSeat =
             fromToAction.from.protoModuleCrew.Find(x => x.seatIdx == podSeat);
         if (items.Count > 0 && crewAtPodSeat == null) {
