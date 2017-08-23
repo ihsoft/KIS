@@ -1291,11 +1291,13 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     upperRightStyle = new GUIStyle(GUI.skin.label);
     upperRightStyle.alignment = TextAnchor.UpperRight;
     upperRightStyle.fontSize = 9;
+    upperRightStyle.padding = new RectOffset(4, 4, 4, 4);
     upperRightStyle.normal.textColor = Color.yellow;
 
     upperLeftStyle = new GUIStyle(GUI.skin.label);
     upperLeftStyle.alignment = TextAnchor.UpperLeft;
     upperLeftStyle.fontSize = 11;
+    upperLeftStyle.padding = new RectOffset(4, 4, 4, 4);
     upperLeftStyle.normal.textColor = Color.green;
 
     lowerRightStyle = new GUIStyle(GUI.skin.label);
@@ -1547,7 +1549,7 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     }
 
     // Show science data
-    List<ScienceData> sciences = tooltipItem.GetSciences();
+    var sciences = tooltipItem.GetSciences();
     if (sciences.Count > 0) {
       foreach (ScienceData scienceData in sciences) {
         text2.AppendLine(ItemScienceDataTooltipInfo.Format(
@@ -1558,7 +1560,6 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     } else {
       text2.AppendLine(ItemNoScienceDataTooltipInfo);
     }
-
 
     GUILayout.Box(text2.ToString(), boxStyle, GUILayout.Width(200), GUILayout.Height(100));
     GUILayout.EndVertical();
@@ -1796,27 +1797,23 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
   /// <param name="textureRect">Slot's rect in UI.</param>
   /// <param name="slotIndex">Slot's index in inventory.</param>
   void GuiHandleUsedSlot(Rect textureRect, int slotIndex) {
-    GUI.DrawTexture(textureRect, items[slotIndex].icon.texture, ScaleMode.ScaleToFit);
+    var item = items[slotIndex];
+    GUI.DrawTexture(textureRect, item.icon.texture, ScaleMode.ScaleToFit);
     if (HighLogic.LoadedSceneIsFlight) {
       if (FlightGlobals.ActiveVessel.isEVA && FlightGlobals.ActiveVessel == part.vessel) {
         // Keyboard shortcut
         int slotNb = slotIndex + 1;
-        var margin = new Rect(textureRect);
-        margin.xMin += 4;
-        margin.xMax -= 4;
-        GUI.Label(margin, SlotIdContextCaption.Format(slotNb), upperLeftStyle);
-        if (items[slotIndex].carried) {
-          GUI.Label(margin, CarriedItemContextCaption, upperRightStyle);
-        } else if (items[slotIndex].equipped) {
-          GUI.Label(margin, EquippedItemContextCaption, upperRightStyle);
+        GUI.Label(textureRect, SlotIdContextCaption.Format(slotNb), upperLeftStyle);
+        if (item.carried) {
+          GUI.Label(textureRect, CarriedItemContextCaption, upperRightStyle);
+        } else if (item.equipped) {
+          GUI.Label(textureRect, EquippedItemContextCaption, upperRightStyle);
         }
       }
     }
-    if (items[slotIndex].stackable) {
+    if (item.stackable) {
       // Quantity
-      GUI.Label(textureRect,
-                MultipleItemsContextCaption.Format(items[slotIndex].quantity),
-                lowerRightStyle);
+      GUI.Label(textureRect, MultipleItemsContextCaption.Format(item.quantity), lowerRightStyle);
     }
 
     if (Event.current.type == EventType.MouseDown
