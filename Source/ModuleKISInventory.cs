@@ -18,6 +18,8 @@ namespace KIS {
 public class ModuleKISInventory : PartModule,
     // KSP interfaces.
     IPartCostModifier, IPartMassModifier,
+    // KSPDev interfaces.
+    IHasContextMenu,
     // KSPDev syntax sugar interfaces.
     IPartModule, IsDestroyable {
 
@@ -512,7 +514,6 @@ public class ModuleKISInventory : PartModule,
   int splitQty = 1;
   bool clickThroughLocked = false;
   bool guiSetName = false;
-  bool PartActionUICreated = false;
 
   //Tooltip
   private KIS_Item tooltipItem;
@@ -535,6 +536,46 @@ public class ModuleKISInventory : PartModule,
 
   // Debug
   private KIS_Item debugItem;
+
+  #region IHasContextMenu implementation
+  public void UpdateContextMenu() {
+    var invEvent = PartModuleUtils.GetEvent(this, ShowInventory);
+    if (invType == InventoryType.Pod) {
+      if (HighLogic.LoadedSceneIsEditor) {
+        invEvent.guiActive = true;
+        invEvent.guiActiveUnfocused = true;
+        invEvent.guiName = PodSeatInventoryMenuTxt.Format(podSeat);
+      } else {
+        invEvent.guiActive = false;
+        invEvent.guiActiveUnfocused = false;
+        ProtoCrewMember crewAtPodSeat = part.protoModuleCrew.Find(x => x.seatIdx == podSeat);
+        if (crewAtPodSeat != null) {
+          string kerbalName = crewAtPodSeat.name.Split(' ').FirstOrDefault();
+          invEvent.guiActive = true;
+          invEvent.guiActiveUnfocused = true;
+          invEvent.guiName = PersonalInventoryMenuTxt.Format(kerbalName);
+        } else {
+          if (showGui) {
+            // In case of there was GUI active but the kerbal has left the seat.
+            ShowInventory(); 
+          }
+        }
+      }
+    } else {
+      invEvent.guiActive = true;
+      invEvent.guiActiveUnfocused = true;
+      invEvent.guiName = invName != ""
+          ? PartInventoryWithNameMenuTxt.Format(invName)
+          : PartInventoryMenuTxt.Format();
+    }
+    if (HighLogic.LoadedSceneIsFlight) {
+      ModuleKISPickup mPickup = KISAddonPickup.instance.GetActivePickupNearest(part);
+      if (mPickup) {
+        invEvent.unfocusedRange = mPickup.maxDistance;
+      }
+    }
+  }
+  #endregion
   
   /// <summary>Overridden from PartModule.</summary>
   public override string GetInfo() {
@@ -555,8 +596,7 @@ public class ModuleKISInventory : PartModule,
       GameEvents.onCrewTransferSelected.Add(OnCrewTransferSelected);
       GameEvents.onVesselChange.Add(OnVesselChange);
     }
-    GameEvents.onPartActionUICreate.Add(OnPartActionUICreate);
-    GameEvents.onPartActionUIDismiss.Add(OnPartActionUIDismiss);
+    UpdateContextMenu();
   }
 
   #region IsDestroyable implementation
@@ -565,8 +605,6 @@ public class ModuleKISInventory : PartModule,
     GameEvents.onCrewTransferred.Remove(OnCrewTransferred);
     GameEvents.onCrewTransferSelected.Remove(OnCrewTransferSelected);
     GameEvents.onVesselChange.Remove(OnVesselChange);
-    GameEvents.onPartActionUICreate.Remove(OnPartActionUICreate);
-    GameEvents.onPartActionUIDismiss.Remove(OnPartActionUIDismiss);
   }
 
   /// <summary>Overridden from PartModule.</summary>
@@ -792,6 +830,8 @@ public class ModuleKISInventory : PartModule,
   }
   
   void OnCrewTransferred(GameEvents.HostedFromToAction<ProtoCrewMember, Part> fromToAction) {
+    UpdateContextMenu();
+
     // Ensure target pod will accept the inventory.
     if (!fromToAction.to.vessel.isEVA) {
       // Assing pod seat if not yet done.
@@ -892,50 +932,6 @@ public class ModuleKISInventory : PartModule,
       if (srcInventory) {
         srcInventory.RefreshMassAndVolume();
       }
-    }
-  }
-
-  void OnPartActionUICreate(Part p) {
-    if (part != p || PartActionUICreated) {
-      return;
-    }
-    // Update context menu
-    var invEvent = PartModuleUtils.GetEvent(this, ShowInventory);
-    if (invType == InventoryType.Pod) {
-      if (HighLogic.LoadedSceneIsEditor) {
-        invEvent.guiActive = true;
-        invEvent.guiActiveUnfocused = true;
-        invEvent.guiName = PodSeatInventoryMenuTxt.Format(podSeat);
-      } else {
-        invEvent.guiActive = false;
-        invEvent.guiActiveUnfocused = false;
-        ProtoCrewMember crewAtPodSeat = part.protoModuleCrew.Find(x => x.seatIdx == podSeat);
-        if (crewAtPodSeat != null) {
-          string kerbalName = crewAtPodSeat.name.Split(' ').FirstOrDefault();
-          invEvent.guiActive = true;
-          invEvent.guiActiveUnfocused = true;
-          invEvent.guiName = PersonalInventoryMenuTxt.Format(kerbalName);
-        }
-      }
-    } else {
-      invEvent.guiActive = true;
-      invEvent.guiActiveUnfocused = true;
-      invEvent.guiName = invName != ""
-          ? PartInventoryWithNameMenuTxt.Format(invName)
-          : PartInventoryMenuTxt.Format();
-    }
-    if (HighLogic.LoadedSceneIsFlight) {
-      ModuleKISPickup mPickup = KISAddonPickup.instance.GetActivePickupNearest(part);
-      if (mPickup) {
-        invEvent.unfocusedRange = mPickup.maxDistance;
-      }
-    }
-    PartActionUICreated = true;
-  }
-
-  void OnPartActionUIDismiss(Part p) {
-    if (part == p) {
-      PartActionUICreated = false;
     }
   }
 
@@ -1975,11 +1971,6 @@ public class ModuleKISInventory : PartModule,
       icon.Dispose();
       icon = null;
     }
-  }
-
-  /// <summary>Hides all UI elements.</summary>
-  void OnTooltipDestroyRequestedEvent() {
-    showGui = false;
   }
 
   /// <summary>Properly detaches part from the parent and destroys it.</summary>
