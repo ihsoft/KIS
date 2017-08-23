@@ -649,6 +649,16 @@ public class ModuleKISInventory : PartModule,
   }
   #endregion
 
+  #region IsDestroyable implementation
+  /// <inheritdoc/>
+  public virtual void OnDestroy() {
+    GameEvents.onCrewTransferred.Remove(OnCrewTransferred);
+    GameEvents.onCrewTransferSelected.Remove(OnCrewTransferSelected);
+    GameEvents.onVesselChange.Remove(OnVesselChange);
+  }
+  #endregion
+
+  #region PartModule overrides
   /// <inheritdoc/>
   public override void OnAwake() {
     if (HighLogic.LoadedSceneIsFlight) {
@@ -659,16 +669,7 @@ public class ModuleKISInventory : PartModule,
     UpdateContextMenu();
   }
 
-  #region IsDestroyable implementation
   /// <inheritdoc/>
-  public virtual void OnDestroy() {
-    GameEvents.onCrewTransferred.Remove(OnCrewTransferred);
-    GameEvents.onCrewTransferSelected.Remove(OnCrewTransferSelected);
-    GameEvents.onVesselChange.Remove(OnVesselChange);
-  }
-  #endregion
-
-  /// <summary>Overridden from PartModule.</summary>
   public override void OnStart(StartState state) {
     base.OnStart(state);
     if (state == StartState.None) {
@@ -716,6 +717,66 @@ public class ModuleKISInventory : PartModule,
       SetHelmet(false, true);
     }
   }
+
+  /// <inheritdoc/>
+  public override void OnLoad(ConfigNode node) {
+    base.OnLoad(node);
+    foreach (ConfigNode itemNode in node.nodes) {
+      if (itemNode.name == "ITEM") {
+        if (itemNode.HasValue("partName") && itemNode.HasValue("slot") && itemNode.HasValue("quantity")) {
+          string availablePartName = itemNode.GetValue("partName");
+          AvailablePart availablePart = PartLoader.getPartInfoByName(availablePartName);
+          if (availablePart != null) {
+            int slot = int.Parse(itemNode.GetValue("slot"));
+            int qty = int.Parse(itemNode.GetValue("quantity"));
+            KIS_Item item = null;
+            if (itemNode.HasNode("PART")) {
+              item = AddItem(availablePart, itemNode, qty, slot);
+            } else {
+              Debug.LogWarningFormat("No part node found on item {0}, creating new one from prefab",
+                                     availablePartName);
+              item = AddItem(availablePart.partPrefab, qty, slot);
+            }
+            if (item != null) {
+              bool isEquipped = false;
+              ConfigAccessor.GetValueByPath(itemNode, "equipped", ref isEquipped);
+              if (isEquipped) {
+                if (invType == InventoryType.Eva) {
+                  startEquip.Add(item);
+                } else {
+                  item.equipped = true;
+                }
+              }
+            }
+          } else {
+            Debug.LogErrorFormat("Unable to load {0} from inventory", availablePartName);
+          }
+        } else {
+          Debug.LogError("Unable to load an item from inventory");
+        }
+      }
+    }
+  }
+
+  /// <inheritdoc/>
+  public override void OnSave(ConfigNode node) {
+    base.OnSave(node);
+    foreach (KeyValuePair<int, KIS_Item> item in items) {
+      ConfigNode itemNode = node.AddNode("ITEM");
+      item.Value.OnSave(itemNode);
+
+      // Science recovery works by retrieving all MODULE/ScienceData 
+      // subnodes from the part node, so copy all experiments from 
+      // contained parts to where it expects to find them. 
+      // This duplicates data but allows recovery to work properly. 
+      foreach (ConfigNode module in item.Value.partNode.GetNodes("MODULE")) {
+        foreach (ConfigNode experiment in module.GetNodes("ScienceData")) {
+          experiment.CopyTo(node.AddNode("ScienceData"));
+        }
+      }
+    }
+  }
+  #endregion
 
   /// <summary>Overridden from MonoBehaviour.</summary>
   void Update() {
@@ -791,65 +852,6 @@ public class ModuleKISInventory : PartModule,
       } else {
         if (SetHelmet(true)) {
           UISoundPlayer.instance.Play(helmetOnSndPath);
-        }
-      }
-    }
-  }
-
-  /// <summary>Overridden from PartModule.</summary>
-  public override void OnLoad(ConfigNode node) {
-    base.OnLoad(node);
-    foreach (ConfigNode itemNode in node.nodes) {
-      if (itemNode.name == "ITEM") {
-        if (itemNode.HasValue("partName") && itemNode.HasValue("slot") && itemNode.HasValue("quantity")) {
-          string availablePartName = itemNode.GetValue("partName");
-          AvailablePart availablePart = PartLoader.getPartInfoByName(availablePartName);
-          if (availablePart != null) {
-            int slot = int.Parse(itemNode.GetValue("slot"));
-            int qty = int.Parse(itemNode.GetValue("quantity"));
-            KIS_Item item = null;
-            if (itemNode.HasNode("PART")) {
-              item = AddItem(availablePart, itemNode, qty, slot);
-            } else {
-              Debug.LogWarningFormat("No part node found on item {0}, creating new one from prefab",
-                                     availablePartName);
-              item = AddItem(availablePart.partPrefab, qty, slot);
-            }
-            if (item != null) {
-              bool isEquipped = false;
-              ConfigAccessor.GetValueByPath(itemNode, "equipped", ref isEquipped);
-              if (isEquipped) {
-                if (invType == InventoryType.Eva) {
-                  startEquip.Add(item);
-                } else {
-                  item.equipped = true;
-                }
-              }
-            }
-          } else {
-            Debug.LogErrorFormat("Unable to load {0} from inventory", availablePartName);
-          }
-        } else {
-          Debug.LogError("Unable to load an item from inventory");
-        }
-      }
-    }
-  }
-
-  /// <summary>Overridden from PartModule.</summary>
-  public override void OnSave(ConfigNode node) {
-    base.OnSave(node);
-    foreach (KeyValuePair<int, KIS_Item> item in items) {
-      ConfigNode itemNode = node.AddNode("ITEM");
-      item.Value.OnSave(itemNode);
-
-      // Science recovery works by retrieving all MODULE/ScienceData 
-      // subnodes from the part node, so copy all experiments from 
-      // contained parts to where it expects to find them. 
-      // This duplicates data but allows recovery to work properly. 
-      foreach (ConfigNode module in item.Value.partNode.GetNodes("MODULE")) {
-        foreach (ConfigNode experiment in module.GetNodes("ScienceData")) {
-          experiment.CopyTo(node.AddNode("ScienceData"));
         }
       }
     }
