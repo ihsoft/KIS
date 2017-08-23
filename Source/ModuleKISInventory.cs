@@ -12,7 +12,7 @@ using UnityEngine;
 
 namespace KIS {
 
-// Next localization ID: #kisLOC_00037.
+// Next localization ID: #kisLOC_00055.
 [PersistentFieldsDatabase("KIS/settings/KISConfig")]
 public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifier {
   #region Localizable GUI strings.
@@ -262,6 +262,137 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
       description: "The text to display in the inventory slot background to tell ho many items are"
       + " stacked."
       + "\nArgument <<1>> is the number of the items in the slot.");
+
+  protected static readonly Message<VolumeLType, VolumeLType> InventoryVolumeInfo =
+      new Message<VolumeLType, VolumeLType>(
+          "#kisLOC_00037",
+          defaultTemplate: "Volume: <<1>> / <<2>>",
+          description: "The volume stat of the iventory in the main inventory window."
+          + "\nArgument <<1>> is the occupied volume of the inventory of type VolumeLType."
+          + "\nArgument <<2>> is the maximum volume of the inventory of type VolumeLType.");
+
+  protected static readonly Message<MassType> InventoryMassInfo = new Message<MassType>(
+      "#kisLOC_00038",
+      defaultTemplate: "Mass: <<1>>",
+      description: "The total part mass in the main inventory window. It includes the combined mass"
+      + " of all the items in the inventory."
+      + "\nArgument <<1>> is the total mass of type MassType.");
+
+  protected static readonly Message<CostType> InventoryCostInfo = new Message<CostType>(
+      "#kisLOC_00039",
+      defaultTemplate: "Cost: <<1>>",
+      description: "The total part cost in the main inventory window. It includes the combined cost"
+      + " of all the items in the inventory."
+      + "\nArgument <<1>> is the total cost of type CostType.");
+
+  protected static readonly Message<VolumeLType> ItemVolumeTooltipInfo = new Message<VolumeLType>(
+      "#kisLOC_00040",
+      defaultTemplate: "Volume: <<1>>",
+      description: "The volume of a single item in the inventory slot. It's presented in a tooltip"
+      + " window."
+      + "\nArgument <<1>> is the volume of type VolumeLType.");
+
+  protected static readonly Message<MassType> ItemDryMassTooltipInfo = new Message<MassType>(
+      "#kisLOC_00041",
+      defaultTemplate: "Dry mass: <<1>>",
+      description: "The mass of a single item in the inventory slot without the resources or the"
+      + " contents. It's presented in a tooltip window."
+      + "\nArgument <<1>> is the mass of type MassType.");
+
+  protected static readonly Message<MassType> ItemResourceMassTooltipInfo = new Message<MassType>(
+      "#kisLOC_00042",
+      defaultTemplate: "Resource mass: <<1>>",
+      description: "The mass of the resources in a single item in the inventory slot. It's"
+      + " presented in a tooltip window."
+      + "\nArgument <<1>> is the mass of type MassType.");
+
+  protected static readonly Message<CostType> ItemCostTooltipInfo = new Message<CostType>(
+      "#kisLOC_00043",
+      defaultTemplate: "Cost: <<1>>",
+      description: "The cost of a single item in the inventory slot including the cost of the"
+      + " resources. It's presented in a tooltip window."
+      + "\nArgument <<1>> is the cost of type CostType.");
+
+  protected static readonly Message<CostType> ItemContentsCostTooltipInfo = new Message<CostType>(
+      "#kisLOC_00044",
+      defaultTemplate: "Contents cost: <<1>>",
+      description: "The cost of the contents of a single item in the inventory slot. It's presented"
+      + " in a tooltip window."
+      + "\nArgument <<1>> is the cost of type CostType.");
+
+  protected static readonly Message<MassType> ItemContentsMassTooltipInfo = new Message<MassType>(
+      "#kisLOC_00045",
+      defaultTemplate: "Contents mass: <<1>>",
+      description: "The mass of the contents of a single item in the inventory slot. It's presented"
+      + " in a tooltip window."
+      + "\nArgument <<1>> is the mass of type MassType.");
+
+  protected static readonly Message<CostType> TotalSlotCostTooltipInfo = new Message<CostType>(
+    "#kisLOC_00046",
+    defaultTemplate: "Total cost: <<1>>",
+    description: "The total cost of the items in the inventory slot. It's presented in a tooltip"
+    + " window."
+    + "\nArgument <<1>> is the cost of type CostType.");
+
+  protected static readonly Message<VolumeLType> TotalSlotVolumeTooltipInfo =
+      new Message<VolumeLType>(
+          "#kisLOC_00047",
+          defaultTemplate: "Total volume: <<1>>",
+          description: "The total volume of the items in the inventory slot. It's presented in a"
+          + " tooltip window."
+          + "\nArgument <<1>> is the volume of type VolumeLType.");
+
+  protected static readonly Message<MassType> TotalSlotMassTooltipInfo = new Message<MassType>(
+      "#kisLOC_00048",
+      defaultTemplate: "Total mass: <<1>>",
+      description: "The total mass of the items in the inventory slot. It's presented in a tooltip"
+      + " window."
+      + "\nArgument <<1>> is the mass of type MassType.");
+
+  protected static readonly Message NoResourcesItemTooltipInfo = new Message(
+      "#kisLOC_00049",
+      defaultTemplate: "Part has no resources",
+      description: "The message to present in the tooltip window when the item has no resources.");
+
+  protected static readonly Message<string> EquipItemSlotTootltipInfo = new Message<string>(
+      "#kisLOC_00050",
+      defaultTemplate: "Equip slot: <<1>>",
+      description: "The information for the equippable slot of the item. It's presented in a"
+      + " tooltip window."
+      + "\nArgument <<1>> is the string name of the slot. E.g. \"rightHand\".");
+
+  protected static readonly Message<string> EquipItemKeyTootltipInfo = new Message<string>(
+      "#kisLOC_00051",
+      defaultTemplate: "Press [<<1>>] to use (equipped)",
+      description: "The information for the key that activates the equipped item. It's presented in"
+      + " a tooltip window."
+      + "\nArgument <<1>> is the string name of the key as set in the settings file.");
+
+  protected static readonly Message<ResourceType, CompactNumberType, CompactNumberType>
+      ItemResourceTootltipInfo = new Message<ResourceType, CompactNumberType, CompactNumberType>(
+          "#kisLOC_00052",
+          defaultTemplate: "<<1>>: <<2>> / <<3>>",
+          description: "The template to present the resources reserve in the item. It's presented"
+          + " in a tooltip window."
+          + "\nArgument <<1>> is the resource name of type ResourceType."
+          + "\nArgument <<2>> is the current reserve of the resource."
+          + "\nArgument <<3>> is the maximum amount of the resource.");
+
+  protected static readonly Message<string, CompactNumberType, CompactNumberType>
+      ItemScienceDataTooltipInfo = new Message<string, CompactNumberType, CompactNumberType>(
+          "#kisLOC_00053",
+          defaultTemplate: "<<1>> (Data=<<2>>, Value=<<3>>)",
+          description: "The template to present the science data stored in the item. It's presented"
+          + " in a tooltip window."
+          + "\nArgument <<1>> is the science title."
+          + "\nArgument <<2>> is the science data amount."
+          + "\nArgument <<3>> is the value of the science data.");
+
+  protected static readonly Message ItemNoScienceDataTooltipInfo = new Message(
+      "#kisLOC_00054",
+      defaultTemplate: "Part has no science data",
+      description: "The message to present in the tooltip window when the item has no science"
+      + " data.");
   #endregion
 
   static readonly GUILayoutOption QuantityAdjustBtnLayout = GUILayout.Width(20);
@@ -1329,9 +1460,9 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     }
 
     var sb = new StringBuilder();
-    sb.AppendLine("Volume : " + totalVolume.ToString("0.00") + "/" + maxVolume.ToString("0.00 L"));
-    sb.AppendLine("Mass : " + part.mass.ToString("0.000"));
-    sb.AppendLine("Cost : " + (GetContentCost() + part.partInfo.cost) + " √");
+    sb.AppendLine(InventoryVolumeInfo.Format(totalVolume, maxVolume));
+    sb.AppendLine(InventoryMassInfo.Format(part.mass));
+    sb.AppendLine(InventoryCostInfo.Format(GetContentCost() + part.partInfo.cost));
     GUILayout.Box(sb.ToString(), boxStyle,
                   GUILayout.Width(Width), GUILayout.Height(45 + extraSpace));
     bool closeInv = false;
@@ -1368,25 +1499,26 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     GUI.DrawTexture(textureRect, tooltipItem.icon.texture, ScaleMode.ScaleToFit);
     GUILayout.EndVertical();
 
-    GUILayout.BeginVertical();
-    StringBuilder sb = new StringBuilder();
-    sb.AppendLine("Volume : " + tooltipItem.volume.ToString("0.00 L"));
-    sb.AppendLine("Dry mass : " + tooltipItem.dryMass.ToString("0.000"));
+    var sb = new StringBuilder();
+    sb.AppendLine(ItemVolumeTooltipInfo.Format(tooltipItem.volume));
+    sb.AppendLine(ItemDryMassTooltipInfo.Format(tooltipItem.dryMass));
     if (tooltipItem.availablePart.partPrefab.Resources.Count > 0) {
-      sb.AppendLine("Ressource mass : " + tooltipItem.resourceMass.ToString("0.000"));
+      sb.AppendLine(ItemResourceMassTooltipInfo.Format(tooltipItem.resourceMass));
     }
-    sb.AppendLine("Cost : " + tooltipItem.cost + " √");
+    sb.AppendLine(ItemCostTooltipInfo.Format(tooltipItem.cost));
     if (tooltipItem.contentCost > 0) {
-      sb.AppendLine("Content cost : " + tooltipItem.contentCost + " √");
+      sb.AppendLine(ItemContentsCostTooltipInfo.Format(tooltipItem.contentCost));
     }
     if (tooltipItem.contentMass > 0) {
-      sb.AppendLine("Content mass : " + tooltipItem.contentMass.ToString("0.000"));
+      sb.AppendLine(ItemContentsMassTooltipInfo.Format(tooltipItem.contentMass));
     }
     if (tooltipItem.equipSlot != null) {
-      sb.AppendLine("Equip slot : " + tooltipItem.equipSlot);
-      if (tooltipItem.equipSlot == "rightHand")
-        sb.AppendLine("Press [" + evaRightHandKey + "] to use (equipped)");
+      sb.AppendLine(EquipItemSlotTootltipInfo.Format(tooltipItem.equipSlot));
+      if (tooltipItem.equipSlot == "rightHand") {
+        sb.AppendLine(EquipItemKeyTootltipInfo.Format(evaRightHandKey));
+      }
     }
+    GUILayout.BeginVertical();
     GUILayout.Box(sb.ToString(), boxStyle, GUILayout.Width(150), GUILayout.Height(100));
     GUILayout.EndVertical();
 
@@ -1398,19 +1530,19 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
       GUI.Label(textureRect,
           MultipleItemsContextCaption.Format(tooltipItem.quantity),
           lowerRightStyle);
-      text2.AppendLine("Total cost : " + tooltipItem.totalCost + " √");
-      text2.AppendLine("Total volume : " + tooltipItem.stackVolume.ToString("0.00 L"));
-      text2.AppendLine("Total mass : " + tooltipItem.totalMass);
+      text2.AppendLine(TotalSlotCostTooltipInfo.Format(tooltipItem.totalCost));
+      text2.AppendLine(TotalSlotVolumeTooltipInfo.Format(tooltipItem.stackVolume));
+      text2.AppendLine(TotalSlotMassTooltipInfo.Format(tooltipItem.totalMass));
     } else {
       // Show resource if not stacked
       List<KIS_Item.ResourceInfo> resources = tooltipItem.GetResources();
       if (resources.Count > 0) {
         foreach (KIS_Item.ResourceInfo resource in resources) {
-          text2.AppendLine(resource.resourceName + " : " + resource.amount.ToString("0.000") + " / "
-                           + resource.maxAmount.ToString("0.000"));
+          text2.AppendLine(ItemResourceTootltipInfo.Format(
+              resource.resourceName, resource.amount, resource.maxAmount));
         }
       } else {
-        text2.AppendLine("Part has no resources");
+        text2.AppendLine(NoResourcesItemTooltipInfo);
       }
     }
 
@@ -1418,12 +1550,13 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     List<ScienceData> sciences = tooltipItem.GetSciences();
     if (sciences.Count > 0) {
       foreach (ScienceData scienceData in sciences) {
-        text2.AppendLine(scienceData.title + " (Data=" + scienceData.dataAmount.ToString("0.00")
-                         //+ ",Value=" + scienceData.TransmitValue.ToString("0.00") + ")");
-                         + ",Value=" + (scienceData.baseTransmitValue * scienceData.transmitBonus).ToString("0.00") + ")");
+        text2.AppendLine(ItemScienceDataTooltipInfo.Format(
+            scienceData.title,
+            scienceData.dataAmount,
+            scienceData.baseTransmitValue * scienceData.transmitBonus));
       }
     } else {
-      text2.AppendLine("Part has no science data");
+      text2.AppendLine(ItemNoScienceDataTooltipInfo);
     }
 
 
