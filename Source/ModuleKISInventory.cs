@@ -13,7 +13,7 @@ using UnityEngine;
 
 namespace KIS {
 
-// Next localization ID: #kisLOC_00056.
+// Next localization ID: #kisLOC_00061.
 [PersistentFieldsDatabase("KIS/settings/KISConfig")]
 public class ModuleKISInventory : PartModule,
     // KSP interfaces.
@@ -406,6 +406,37 @@ public class ModuleKISInventory : PartModule,
       "#kisLOC_00055",
       defaultTemplate: "KIS Inventory",
       description: "The title of the module to present in the editor details window.");
+
+  static readonly Message<VolumeLType> MaxVolumePartInfo = new Message<VolumeLType>(
+      "#kisLOC_00056",
+      defaultTemplate: "Max Volume: <<1>>",
+      description: "The info string in the editor for the maximum allowed volume of the"
+      + " inventory."
+      + "\nArgument <<1>> is the voulme of type VolumeLType");
+
+  static readonly Message InternalAccessAllowedPartInfo = new Message(
+      "#kisLOC_00057",
+      defaultTemplate: "<color=#00FFFF>Can be accessed from inside</color>",
+      description: "The info string in the editor to present if kerbals can access the items in the"
+      + " inventory when staying inside the vessel.");
+
+  static readonly Message InternalAccessNotAllowedPartInfo = new Message(
+      "#kisLOC_00058",
+      defaultTemplate: "<color=#FFA500>Cannot be accessed from inside</color>",
+      description: "The info string in the editor to present if kerbals cannot access the items in"
+      + " the inventory when staying inside the vessel.");
+
+  static readonly Message ExternalAccessAllowedPartInfo = new Message(
+      "#kisLOC_00059",
+      defaultTemplate: "<color=#00FFFF>Can be accessed from EVA</color>",
+      description: "The info string in the editor to present if kerbals can access the items in the"
+      + " inventory when going EVA.");
+
+  static readonly Message ExternalAccessNotAllowedPartInfo = new Message(
+      "#kisLOC_00060",
+      defaultTemplate: "<color=#FFA500>Cannot be accessed from EVA</color>",
+      description: "The info string in the editor to present if kerbals cannot access the items in"
+      + " the inventory when going EVA.");
   #endregion
 
   static readonly GUILayoutOption QuantityAdjustBtnLayout = GUILayout.Width(20);
@@ -591,11 +622,14 @@ public class ModuleKISInventory : PartModule,
   /// <inheritdoc/>
   public override string GetInfo() {
     var sb = new StringBuilder();
-    sb.AppendFormat("<b>Max Volume</b>: {0:F2} L", maxVolume);
+    sb.AppendLine(MaxVolumePartInfo.Format(maxVolume));
     sb.AppendLine();
-    sb.AppendFormat("<b>Internal access</b>: {0}", internalAccess ? "ALLOWED" : "DISALLOWED");
-    sb.AppendLine();
-    sb.AppendFormat("<b>External access</b>: {0}", externalAccess ? "ALLOWED" : "DISALLOWED");
+    sb.AppendLine(internalAccess
+        ? InternalAccessAllowedPartInfo
+        : InternalAccessNotAllowedPartInfo);
+    sb.AppendLine(externalAccess
+        ? ExternalAccessAllowedPartInfo
+        : ExternalAccessNotAllowedPartInfo);
     sb.AppendLine();
     return sb.ToString();
   }
