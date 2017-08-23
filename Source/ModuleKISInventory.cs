@@ -2,6 +2,7 @@
 using KSPDev.ConfigUtils;
 using KSPDev.GUIUtils;
 using KSPDev.LogUtils;
+using KSPDev.KSPInterfaces;
 using System;
 using System.Linq;
 using System.Collections.Generic;
@@ -14,7 +15,12 @@ namespace KIS {
 
 // Next localization ID: #kisLOC_00055.
 [PersistentFieldsDatabase("KIS/settings/KISConfig")]
-public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifier {
+public class ModuleKISInventory : PartModule,
+    // KSP interfaces.
+    IPartCostModifier, IPartMassModifier,
+    // KSPDev syntax sugar interfaces.
+    IPartModule, IsDestroyable {
+
   #region Localizable GUI strings.
   protected static readonly Message NoItemEquippedMsg = new Message(
       "#kisLOC_00000",
@@ -553,8 +559,9 @@ public class ModuleKISInventory : PartModule, IPartCostModifier, IPartMassModifi
     GameEvents.onPartActionUIDismiss.Add(OnPartActionUIDismiss);
   }
 
-  /// <summary>Overridden from MonoBehaviour.</summary>
-  void OnDestroy() {
+  #region IsDestroyable implementation
+  /// <inheritdoc/>
+  public virtual void OnDestroy() {
     GameEvents.onCrewTransferred.Remove(OnCrewTransferred);
     GameEvents.onCrewTransferSelected.Remove(OnCrewTransferSelected);
     GameEvents.onVesselChange.Remove(OnVesselChange);
