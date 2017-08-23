@@ -723,7 +723,8 @@ public class ModuleKISInventory : PartModule,
     base.OnLoad(node);
     foreach (ConfigNode itemNode in node.nodes) {
       if (itemNode.name == "ITEM") {
-        if (itemNode.HasValue("partName") && itemNode.HasValue("slot") && itemNode.HasValue("quantity")) {
+        if (itemNode.HasValue("partName") && itemNode.HasValue("slot")
+            && itemNode.HasValue("quantity")) {
           string availablePartName = itemNode.GetValue("partName");
           AvailablePart availablePart = PartLoader.getPartInfoByName(availablePartName);
           if (availablePart != null) {

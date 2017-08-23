@@ -90,9 +90,11 @@ public class ModuleKISItem : PartModule {
     }
   }
 
+  #region IInventoryItem candidate
   public virtual void OnItemUse(KIS_Item item, KIS_Item.UseFrom useFrom) {
   }
 
+  // TODO(ihsoft): Deprecate it. Too expensive.
   public virtual void OnItemUpdate(KIS_Item item) {
   }
 
@@ -111,6 +113,7 @@ public class ModuleKISItem : PartModule {
 
   public virtual void OnUnEquip(KIS_Item item) {
   }
+  #endregion
 
   public virtual void OnPartUnpack() {
     if (allowStaticAttach == ItemAttachMode.Disabled || useExternalStaticAttach) {
