@@ -19,11 +19,10 @@ namespace KIS {
 [PersistentFieldsDatabase("KIS/settings/KISConfig")]
 sealed class KISAddonPickup : MonoBehaviour {
   /// <summary>A helper class to handle mouse clicks in the editor.</summary>
-  private class EditorClickListener : MonoBehaviour, IBeginDragHandler,
-                                      IDragHandler, IEndDragHandler {
-    private EditorPartIcon partIcon;
-    private bool dragStarted;
-    private const PointerEventData.InputButton PartDragButton = PointerEventData.InputButton.Left;
+  class EditorClickListener : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler {
+    EditorPartIcon partIcon;
+    bool dragStarted;
+    const PointerEventData.InputButton PartDragButton = PointerEventData.InputButton.Left;
 
     public virtual void OnBeginDrag(PointerEventData eventData) {
       // Start dargging for KIS or delegate event to the editor.
@@ -63,7 +62,7 @@ sealed class KISAddonPickup : MonoBehaviour {
     }
   }
 
-  // Icons paths.
+  #region Icons paths
   const string GrabIcon = "KIS/Textures/grab";
   const string GrabOkIcon = "KIS/Textures/grabOk";
   const string ForbiddenIcon = "KIS/Textures/forbidden";
@@ -96,6 +95,7 @@ sealed class KISAddonPickup : MonoBehaviour {
       "This part can't be detached from the ground without a tool";
   const string NotSupportedText = "The function is not supported on this part";
   const string CannotAttachText = "Attach function is not supported on this part";
+  #endregion
 
   [PersistentField("Editor/partGrabModifiers")]
   static KeyModifiers editorGrabPartModifiers = KeyModifiers.None;
@@ -681,7 +681,7 @@ sealed class KISAddonPickup : MonoBehaviour {
           "Unexpected actor executed KIS action via UI: {0}", FlightGlobals.ActiveVessel);
     }
 
-    // Deatch part and play detach sound if one available.
+    // Detach part and play a detach sound if one available.
     ModuleKISItem item = part.GetComponent<ModuleKISItem>();
     if (item && item.staticAttached) {
       item.GroundDetach();  // Parts attached to the ground need special attention.
@@ -778,7 +778,7 @@ sealed class KISAddonPickup : MonoBehaviour {
     draggedPart = part;
     draggedItem = null;
     if (cursorMode == CursorMode.Detach) {
-      Debug.Log("Deatch mode is not expected in Pickup()");
+      Debug.Log("Detach mode is not expected in Pickup()");
     }
     HandlePickup(cursorMode == CursorMode.ReDock ? PickupMode.Undock : PickupMode.Move);
   }
@@ -1084,7 +1084,7 @@ sealed class KISAddonPickup : MonoBehaviour {
   /// of the same type. This point is considered a docking point, and from here detachment is
   /// started.</remarks>
   /// <param name="part">A child part to start scanning from.</param>
-  private void OnMouseRedockEnterPart(Part part) {
+  void OnMouseRedockEnterPart(Part part) {
     // Abort on an async state change.
     if (!HighLogic.LoadedSceneIsFlight || hoverInventoryGui() || cursorMode != CursorMode.ReDock) {
       return;
@@ -1153,13 +1153,13 @@ sealed class KISAddonPickup : MonoBehaviour {
   /// </remarks>
   /// <param name="part">A hierarchy root being grabbed.</param>
   /// <returns><c>true</c> when the hierarchy can be grabbed.</returns>
-  private bool CheckCanGrabRealPart(Part part) {
-    // Don't grab kerbals. It's weird, and they don't have attachment nodes anyways.
     if (part.name == "kerbalEVA" || part.name == "kerbalEVAfemale") {
       ReportCheckError(CannotGrabStatus, CannotMoveKerbonautText);
+  bool CheckCanGrabRealPart(Part part) {
+    // Don't grab kerbals. It's weird, and they don't have the attachment nodes anyways.
       return false;
     }
-    // Check there are kerbals in range.
+    // Check if there are kerbals in range.
     if (!HasActivePickupInRange(part)) {
       ReportCheckError(TooFarStatus, TooFarText, cursorIcon: TooFarIcon);
       return false;
@@ -1238,7 +1238,7 @@ sealed class KISAddonPickup : MonoBehaviour {
         // Check specific KIS items
         if (item.allowPartAttach == ModuleKISItem.ItemAttachMode.Disabled) {
           // Part restricts attachments and detachments.
-          //FIXME: Findout what part cannot be detached. And why.
+          //TODO(ihsoft): Findout what parts cannot be detached. And why.
           Debug.LogErrorFormat("Unknown item being detached: {0}", item);
           ReportCheckError("Can't detach", "(This part can't be detached)");
           return false;
@@ -1266,7 +1266,7 @@ sealed class KISAddonPickup : MonoBehaviour {
 
   /// <summary>Checks if part can be attached. At least in theory.</summary>
   /// <remarks>This method doesn't say if part *will* be attached if such attempt is made.</remarks>   
-  private bool CheckIsAttachable(Part part, bool reportToConsole = false) {
+  bool CheckIsAttachable(Part part, bool reportToConsole = false) {
     var item = part.GetComponent<ModuleKISItem>();
 
     // Check if part has at least one free node.
