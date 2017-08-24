@@ -608,7 +608,7 @@ public class ModuleKISInventory : PartModule,
           ? PartInventoryWithNameMenuTxt.Format(invName)
           : PartInventoryMenuTxt.Format();
     }
-    if (HighLogic.LoadedSceneIsFlight) {
+    if (HighLogic.LoadedSceneIsFlight && FlightGlobals.ActiveVessel != null) {
       ModuleKISPickup mPickup = KISAddonPickup.instance.GetActivePickupNearest(part);
       if (mPickup) {
         invEvent.unfocusedRange = mPickup.maxDistance;
@@ -666,7 +666,6 @@ public class ModuleKISInventory : PartModule,
       GameEvents.onCrewTransferSelected.Add(OnCrewTransferSelected);
       GameEvents.onVesselChange.Add(OnVesselChange);
     }
-    UpdateContextMenu();
   }
 
   /// <inheritdoc/>
@@ -716,6 +715,7 @@ public class ModuleKISInventory : PartModule,
     if (!helmetEquipped) {
       SetHelmet(false, true);
     }
+    UpdateContextMenu();
   }
 
   /// <inheritdoc/>
