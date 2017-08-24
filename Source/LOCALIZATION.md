@@ -18,5 +18,6 @@ not use the same namespace as the parent. No modules are allowed to define own v
 | Module name            | Module | Namespace start | Namespace end |
 | ---------------------- | ------ | --------------- | ------------- |
 | ModuleKISInventory     | 0      | #kisLOC_00000   | #kisLOC_00999 |
+| KISAddonPickup         | 1      | #kisLOC_01000   | #kisLOC_01999 |
 | Specail classes        | 99     | #kisLOC_99000   | #kisLOC_99999 |
 | _Next available value_ | 1      | #kasLOC_01000   | #kisLOC_01999 |
