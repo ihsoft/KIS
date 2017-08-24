@@ -716,11 +716,11 @@ sealed class KISAddonPickup : MonoBehaviour {
     foreach (var pickupModule in pickupModules) {
       float partDist = Vector3.Distance(pickupModule.part.transform.position, position);
       if (partDist <= pickupModule.maxDistance) {
-        if (canPartAttachOnly == false && canStaticAttachOnly == false) {
+        if (!canPartAttachOnly && !canStaticAttachOnly) {
           nearPickupModule = true;
-        } else if (canPartAttachOnly == true && pickupModule.allowPartAttach) {
+        } else if (canPartAttachOnly && pickupModule.allowPartAttach) {
           nearPickupModule = true;
-        } else if (canStaticAttachOnly == true && pickupModule.allowStaticAttach) {
+        } else if (canStaticAttachOnly && pickupModule.allowStaticAttach) {
           nearPickupModule = true;
         }
       }
@@ -1172,8 +1172,8 @@ sealed class KISAddonPickup : MonoBehaviour {
   /// game's "console"). Otherwise, excess of mass only results in changing cursor icon to
   /// <seealso cref="TooHeavyIcon"/>.</param>
   /// <returns><c>true</c> if total mass is within the limits.</returns>
-  private bool CheckMass(Vector3 grabPosition, Part part, out int grabbedPartsCount,
-                         bool reportToConsole = false) {
+  bool CheckMass(Vector3 grabPosition, Part part, out int grabbedPartsCount,
+                 bool reportToConsole = false) {
     grabbedMass = KIS_Shared.GetAssemblyMass(part, out grabbedPartsCount);
     float pickupMaxMass = GetAllPickupMaxMassInRange(grabPosition);
     if (grabbedMass > pickupMaxMass) {
@@ -1194,7 +1194,7 @@ sealed class KISAddonPickup : MonoBehaviour {
   /// excess of mass only results in changing cursor icon to <seealso cref="TooHeavyIcon"/>.
   /// </param>
   /// <returns><c>true</c> if total mass is within the limits.</returns>
-  private bool CheckItemMass(Vector3 grabPosition, KIS_Item item, bool reportToConsole = false) {
+  bool CheckItemMass(Vector3 grabPosition, KIS_Item item, bool reportToConsole = false) {
     grabbedMass = item.totalMass;
     float pickupMaxMass = GetAllPickupMaxMassInRange(grabPosition);
     if (grabbedMass > pickupMaxMass) {
@@ -1339,9 +1339,9 @@ sealed class KISAddonPickup : MonoBehaviour {
   /// </param>
   /// <param name="cursorIcon">Specifies which cursor icon to use. Only makes sense when
   /// <paramref name="reportToConsole"/> is <c>false</c>.</param>
-  private void ReportCheckError(string error, string reason,
-                                bool reportToConsole = false,
-                                string cursorIcon = ForbiddenIcon) {
+  void ReportCheckError(string error, string reason,
+                        bool reportToConsole = false,
+                        string cursorIcon = ForbiddenIcon) {
     if (reportToConsole) {
       ScreenMessaging.ShowInfoScreenMessage("{0}: {1}", error, reason);
       UISounds.PlayBipWrong();
