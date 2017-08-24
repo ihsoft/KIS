@@ -505,11 +505,6 @@ sealed class KISAddonPickup : MonoBehaviour {
       return;
     }
 
-    // Do nothing if part is EVA
-    if (part.vessel.isEVA) {
-      return;
-    }
-
     KIS_Shared.SetHierarchySelection(part, true /* isSelected */);
     if (!CheckCanGrabRealPart(part)) {
       return;
@@ -565,7 +560,7 @@ sealed class KISAddonPickup : MonoBehaviour {
     }
 
     // Don't separate kerbals with their parts. They have a reason to be attached.
-    if (part.name == "kerbalEVA" || part.name == "kerbalEVAfemale") {
+    if (part.vessel.isEVA) {
       KISAddonCursor.CursorEnable("KIS/Textures/forbidden", "Can't detach",
                                   "(This kerbanaut looks too attached to the part)");
       return;
@@ -1153,10 +1148,10 @@ sealed class KISAddonPickup : MonoBehaviour {
   /// </remarks>
   /// <param name="part">A hierarchy root being grabbed.</param>
   /// <returns><c>true</c> when the hierarchy can be grabbed.</returns>
-    if (part.name == "kerbalEVA" || part.name == "kerbalEVAfemale") {
-      ReportCheckError(CannotGrabStatus, CannotMoveKerbonautText);
   bool CheckCanGrabRealPart(Part part) {
     // Don't grab kerbals. It's weird, and they don't have the attachment nodes anyways.
+    if (part.vessel.isEVA) {
+      ReportCheckError(GrabNotOkStatusTooltipTxt, CannotMoveKerbonautTooltipTxt);
       return false;
     }
     // Check if there are kerbals in range.
