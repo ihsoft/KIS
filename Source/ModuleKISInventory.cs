@@ -684,8 +684,9 @@ public class ModuleKISInventory : PartModule,
       if (invType == InventoryType.Pod && podSeat != -1) {
         var crewAtPodSeat = part.protoModuleCrew.Find(x => x.seatIdx == podSeat);
         if (crewAtPodSeat == null && items.Count > 0) {
-          Debug.LogFormat("Clear unoccupied seat inventory: pod={0}, seat={1}, count={2}, mass={3}",
-                          part, podSeat, items.Count, GetContentMass());
+          HostedDebugLog.Info(
+              this, "Clear unoccupied seat inventory: seat={0}, count={1}, mass={2}",
+              podSeat, items.Count, GetContentMass());
           items.Clear();
           RefreshMassAndVolume();
         }
@@ -712,7 +713,7 @@ public class ModuleKISInventory : PartModule,
     sndFx.audio.loop = false;
     sndFx.audio.playOnAwake = false;
     foreach (var item in startEquip) {
-      Debug.LogFormat("equip {0}", item.availablePart.name);
+      HostedDebugLog.Info(this, "equip {0}", item.availablePart.name);
       item.Equip();
     }
     RefreshMassAndVolume();
@@ -739,8 +740,9 @@ public class ModuleKISInventory : PartModule,
             if (itemNode.HasNode("PART")) {
               item = AddItem(availablePart, itemNode, qty, slot);
             } else {
-              Debug.LogWarningFormat("No part node found on item {0}, creating new one from prefab",
-                                     availablePartName);
+              HostedDebugLog.Warning(
+                  this, "No part node found on item {0}, creating new one from prefab",
+                  availablePartName);
               item = AddItem(availablePart.partPrefab, qty, slot);
             }
             if (item != null) {
@@ -755,10 +757,10 @@ public class ModuleKISInventory : PartModule,
               }
             }
           } else {
-            Debug.LogErrorFormat("Unable to load {0} from inventory", availablePartName);
+            HostedDebugLog.Error(this, "Unable to load {0} from inventory", availablePartName);
           }
         } else {
-          Debug.LogError("Unable to load an item from inventory");
+          HostedDebugLog.Error(this, "Unable to load an item from inventory");
         }
       }
     }
@@ -906,8 +908,9 @@ public class ModuleKISInventory : PartModule,
       // Assing pod seat if not yet done.
       if (fromToAction.host.seatIdx == -1) {  
         fromToAction.host.seatIdx = GetFirstFreeSeatIdx(fromToAction.to);
-        Debug.LogFormat("Assign {0} to seat {1} in {2}",
-                        fromToAction.host.name, fromToAction.host.seatIdx, fromToAction.to.name);
+        HostedDebugLog.Info(
+            this, "Assign {0} to seat {1} in {2}",
+            fromToAction.host.name, fromToAction.host.seatIdx, fromToAction.to);
       }
     }
 
@@ -918,8 +921,8 @@ public class ModuleKISInventory : PartModule,
             fromToAction.from.protoModuleCrew.Find(x => x.seatIdx == podSeat);
         if (items.Count > 0 && crewAtPodSeat == null) {
           ModuleKISInventory destInventory = fromToAction.to.GetComponent<ModuleKISInventory>();
-          Debug.LogFormat("Items transfer | source {0} ({1})", part.name, podSeat);
-          Debug.LogFormat("Items transfer | destination: {0}", destInventory.part.name);
+          HostedDebugLog.Info(this, "Items transfer | source seat: {0}", podSeat);
+          HostedDebugLog.Info(this, "Items transfer | destination: {0}", destInventory.part);
           MoveItems(items, destInventory);
           RefreshMassAndVolume();
           destInventory.RefreshMassAndVolume();
@@ -928,7 +931,8 @@ public class ModuleKISInventory : PartModule,
           destInventory.startEquip.Clear();
           foreach (var item in destInventory.items.Values) {
             if (item.equipped) {
-              Debug.LogFormat("Schedule re-equipping item: {0}", item.availablePart.title);
+              HostedDebugLog.Info(
+                  this, "Schedule re-equipping item: {0}", item.availablePart.title);
               item.equipped = false;
               destInventory.startEquip.Add(item);
             }
@@ -946,7 +950,7 @@ public class ModuleKISInventory : PartModule,
         ProtoCrewMember crewAtPodSeat =
             fromToAction.from.protoModuleCrew.Find(x => x.seatIdx == podSeat);
         if (items.Count > 0 && crewAtPodSeat == null) {
-          Debug.LogFormat("Items transfer | source: {0} ({1})", part.name, podSeat);
+          HostedDebugLog.Info(this, "Items transfer | source seat: {0}", podSeat);
           // Find target seat and schedule a coroutine.
           var destInventory = fromToAction.to.GetComponents<ModuleKISInventory>().ToList()
               .Find(x => x.podSeat == fromToAction.host.seatIdx);
@@ -963,7 +967,7 @@ public class ModuleKISInventory : PartModule,
       if (fromToAction.from.vessel.isEVA && fromToAction.host.seatIdx == podSeat) {
         if (fromToAction.host.seatIdx == podSeat) {
           var evaInventory = fromToAction.from.GetComponent<ModuleKISInventory>();
-          Debug.LogFormat("Item transfer | source {0}", fromToAction.host.name);
+          HostedDebugLog.Info(this, "Item transfer | source {0}", fromToAction.host.name);
           var itemsToDrop = new List<KIS_Item>();
           foreach (var item in evaInventory.items) {
             if (item.Value.carriable) {
@@ -991,7 +995,7 @@ public class ModuleKISInventory : PartModule,
         return i;
       }
     }
-    Debug.LogErrorFormat("Cannot find a free seat in: {0}", p.name);
+    HostedDebugLog.Error(this, "Cannot find a free seat in: {0}", p);
     return -1;
   }
 
@@ -1002,7 +1006,7 @@ public class ModuleKISInventory : PartModule,
     var crewAtPodSeat = part.protoModuleCrew.Find(x => x.seatIdx == podSeat);
     if (crewAtPodSeat == protoCrew) {
       MoveItems(transferedItems, this);
-      Debug.LogFormat("Item transfer | destination: {0} (seatIdx={1})", part.name, podSeat);
+      HostedDebugLog.Info(this, "Item transfer | destination seat: {0}", podSeat);
       RefreshMassAndVolume();
       if (srcInventory) {
         srcInventory.RefreshMassAndVolume();
@@ -1056,7 +1060,8 @@ public class ModuleKISInventory : PartModule,
     if (slot < 0 || slot > maxSlot) {
       slot = GetFreeSlot();
       if (slot == -1) {
-        Debug.LogErrorFormat("AddItem error : No free slot available for {0}", availablePart.title);
+        HostedDebugLog.Error(
+            this, "AddItem error : No free slot available for {0}", availablePart.title);
         return null;
       }
     }
@@ -1069,7 +1074,7 @@ public class ModuleKISInventory : PartModule,
     return item;
   }
 
-  public KIS_Item AddItem(Part part, int qty = 1, int slot = -1) {
+  public KIS_Item AddItem(Part p, int qty = 1, int slot = -1) {
     KIS_Item item = null;
     if (items.ContainsKey(slot)) {
       slot = -1;
@@ -1078,11 +1083,12 @@ public class ModuleKISInventory : PartModule,
     if (slot < 0 || slot > maxSlot) {
       slot = GetFreeSlot();
       if (slot == -1) {
-        Debug.LogErrorFormat("AddItem error : No free slot available for {0}", part.partInfo.title);
+        HostedDebugLog.Error(
+            this, "AddItem error : No free slot available for {0}", p.partInfo.title);
         return null;
       }
     }
-    item = new KIS_Item(part, this, qty);
+    item = new KIS_Item(p, this, qty);
     items.Add(slot, item);
     if (showGui) {
       items[slot].EnableIcon(itemIconResolution);
@@ -2065,7 +2071,7 @@ public class ModuleKISInventory : PartModule,
 
     if (!HighLogic.LoadedSceneIsEditor) {
       // Parts in the editor are not connected.
-      Debug.LogFormat("Destroy consumed part {0}", DbgFormatter.PartId(p));
+      HostedDebugLog.Info(this, "Destroy consumed part: {0}", p);
       p.Die();
 
       // Do cleanup in case of we're separating nodes.
