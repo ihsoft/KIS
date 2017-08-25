@@ -54,12 +54,6 @@ public static class KIS_Shared {
     destPart.SendMessage("OnKISAction", eventData, SendMessageOptions.DontRequireReceiver);
   }
 
-  // TODO: Deprecate the method after June 2016.
-  [ObsoleteAttribute("Use Mouse.HoveredPart instead", true)]
-  public static Part GetPartUnderCursor() {
-    return Mouse.HoveredPart;
-  }
-
   public static void PlaySoundAtPoint(string soundPath, Vector3 position) {
     AudioSource.PlayClipAtPoint(GameDatabase.Instance.GetAudioClip(soundPath), position);
   }
