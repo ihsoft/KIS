@@ -1,4 +1,9 @@
-﻿using KSPDev.GUIUtils;
+﻿// Kerbal Inventory System
+// Mod's author: KospY (http://forum.kerbalspaceprogram.com/index.php?/profile/33868-kospy/)
+// Module authors: KospY, igor.zavoychinskiy@gmail.com
+// License: Restricted
+
+using KSPDev.GUIUtils;
 using System;
 using System.Linq;
 using System.Collections.Generic;
@@ -397,7 +402,7 @@ public sealed class KIS_Item {
     }
     Debug.LogFormat("Equip item {0} in mode {1}", availablePart.title, equipMode);
 
-    // Check skill if needed. Skip the check in sandbox modes.
+    // Check if the skill is needed. Skip the check in the sandbox modes.
     if (HighLogic.CurrentGame.Mode != Game.Modes.SANDBOX
         && HighLogic.CurrentGame.Mode != Game.Modes.SCIENCE_SANDBOX
         && !String.IsNullOrEmpty(prefabModule.equipSkill)) {
