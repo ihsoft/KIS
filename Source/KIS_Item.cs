@@ -3,6 +3,7 @@
 // Module authors: KospY, igor.zavoychinskiy@gmail.com
 // License: Restricted
 
+using KIS.GUIUtils;
 using KSPDev.GUIUtils;
 using System;
 using System.Linq;
@@ -11,7 +12,47 @@ using UnityEngine;
 
 namespace KIS {
 
+// Next localization ID: #kisLOC_02005.
 public sealed class KIS_Item {
+
+  #region Localizable GUI strings.
+  static readonly Message CannotEquipItemStackedMsg = new Message(
+      "#kisLOC_02000",
+      defaultTemplate: "Cannot equip stacked items",
+      description: "The screen message to present when the item was attempted to equip, but the"
+      + " relevant inventory slot has more than one item (stacked).");
+
+  static readonly Message<string, string> CannotEquipAlreadyCarryingMsg =
+      new Message<string, string>(
+          "#kisLOC_02001",
+          defaultTemplate: "Cannot equip item, slot [<<1>>] already used for carrying <<2>>",
+          description: "The screen message to present when the item was attempted to equip, but its"
+          + " equip slot is already taken by a carriable item."
+          + "\nArgument <<1>> is the name of the equip slot of the item."
+          + "\nArgument <<2>> is the name of the item being carried.");
+
+  static readonly Message<string> CannotEquipRestrictedToSkillMsg = new Message<string>(
+      "#kisLOC_02002",
+      defaultTemplate: "This item can only be used by a kerbal with the skill: <<1>>",
+      description: "The screen message to present when the item was attempted to equip, but a"
+      + " specific kerbal trait (skill) is required to handle the item."
+      + "\nArgument <<1>> is the name of the required trait.");
+
+  static readonly Message<VolumeLType> CannotStackMaxVolumeReachedMsg = new Message<VolumeLType>(
+      "#kisLOC_02003",
+      defaultTemplate: "Max destination volume reached (+<<1>>)",
+      description: "The screen message to present when the item was attempted to be added to an"
+      + " existing slot stack, but the resulted inventory volume would exceed the maximum allowed"
+      + " volume."
+      + "\nArgument <<1>> is the excessive volume. Format: VolumeLType.");
+
+  static readonly Message CannotStackItemEquippedMsg = new Message(
+      "#kisLOC_02004",
+      defaultTemplate: "Cannot stack with equipped item",
+      description: "The screen message to present when the item was attempted to be added to an"
+      + " existing slot stack, but the item being added is currently equipped.");
+  #endregion
+
   public ConfigNode partNode;
   public AvailablePart availablePart;
   public int quantity;
@@ -321,14 +362,14 @@ public sealed class KIS_Item {
       return false;
     }
     if (equipped) {
-      ScreenMessaging.ShowPriorityScreenMessage("Cannot stack with equipped item");
+      ScreenMessaging.ShowPriorityScreenMessage(CannotStackItemEquippedMsg);
       UISounds.PlayBipWrong();
       return false;
     }
     float newVolume = inventory.totalVolume + (volume * qty);
     if (checkVolume && newVolume > inventory.maxVolume) {
-      ScreenMessaging.ShowPriorityScreenMessage("Max destination volume reached (+{0:#.####})",
-                                                newVolume - inventory.maxVolume);
+      ScreenMessaging.ShowPriorityScreenMessage(
+          CannotStackMaxVolumeReachedMsg.Format(newVolume - inventory.maxVolume));
       return false;
     }
     return true;
@@ -396,7 +437,7 @@ public sealed class KIS_Item {
       return;
     }
     if (quantity > 1) {
-      ScreenMessaging.ShowPriorityScreenMessage("Cannot equip stacked items");
+      ScreenMessaging.ShowPriorityScreenMessage(CannotEquipItemStackedMsg);
       UISounds.PlayBipWrong();
       return;
     }
@@ -417,8 +458,7 @@ public sealed class KIS_Item {
       if (!skillFound) {
         if (actorType == ActorType.Player) {
           ScreenMessaging.ShowPriorityScreenMessage(
-              "This item can only be used by a kerbal with the skill : {0}",
-              prefabModule.equipSkill);
+              CannotEquipRestrictedToSkillMsg.Format(prefabModule.equipSkill));
           UISounds.PlayBipWrong();
         }
         return;
@@ -431,8 +471,7 @@ public sealed class KIS_Item {
       if (equippedItem != null) {
         if (equippedItem.carriable && actorType == ActorType.Player) {
           ScreenMessaging.ShowPriorityScreenMessage(
-              "Cannot equip item, slot <{0}> already used for carrying {1}",
-              equipSlot, equippedItem.availablePart.title);
+              CannotEquipAlreadyCarryingMsg.Format(equipSlot, equippedItem.availablePart.title));
           UISounds.PlayBipWrong();
           return;
         }
