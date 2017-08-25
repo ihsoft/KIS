@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Collections;
 using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using UnityEngine;
 
 namespace KIS {
@@ -131,17 +132,27 @@ public static class KIS_Shared {
   /// </list>
   /// Also, vessel's type is reset to <c>VesselType.Unknown</c>.</remarks>
   /// <param name="part">A part of the vessel to get name and vessel from.</param>
-  public static void RenameAssemblyVessel(Part part) {
-    part.vessel.vesselType = VesselType.Unknown;
-    part.vessel.vesselName = part.partInfo.title;
-    ModuleKISInventory inv = part.GetComponent<ModuleKISInventory>();
-    if (inv && inv.invName.Length > 0) {
-      // Add inventory name suffix if any.
-      part.vessel.vesselName += string.Format(" ({0})", inv.invName);
-    }
-    // For assemblies add number of parts.
-    if (part.vessel.parts.Count > 1) {
-      part.vessel.vesselName += string.Format(" with {0} parts", part.vessel.parts.Count - 1);
+  /// <param name="sourceVessel">A vessel from which the new vessel was born.</param>
+  public static void RenameAssemblyVessel(Part part, Vessel sourceVessel = null) {
+    if (sourceVessel == null || part.vessel.parts.Count == 1) {
+      // Make a lone part vessel name.
+      part.vessel.vesselType = VesselType.Unknown;
+      part.vessel.vesselName = part.partInfo.title;
+      ModuleKISInventory inv = part.GetComponent<ModuleKISInventory>();
+      if (inv && inv.invName.Length > 0) {
+        // Add inventory name suffix if any.
+        part.vessel.vesselName += string.Format(" ({0})", inv.invName);
+      }
+    } else {
+      // Inherit the name form the source vessel.
+      part.vessel.vesselType = sourceVessel.vesselType;
+      var match = Regex.Match(sourceVessel.vesselName, @"^(.*?)(\d+)\s*$");
+      if (match.Success) {
+        // The source vessel was a result of split, increment the version.
+        part.vessel.vesselName = match.Groups[1].Value + (int.Parse(match.Groups[2].Value) + 1);
+      } else {
+        part.vessel.vesselName = sourceVessel.vesselName + " 1";
+      }
     }
   }
 
@@ -1130,7 +1141,7 @@ public static class KIS_Shared {
           
     CleanupExternalLinks(oldVessel);
     CleanupExternalLinks(assemblyRoot.vessel);
-    RenameAssemblyVessel(assemblyRoot);
+    RenameAssemblyVessel(assemblyRoot, sourceVessel: oldVessel);
 
     if (onReady != null) {
       onReady(assemblyRoot);
