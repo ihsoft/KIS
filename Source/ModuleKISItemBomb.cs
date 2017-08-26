@@ -3,6 +3,7 @@
 // Module authors: KospY, igor.zavoychinskiy@gmail.com
 // License: Restricted
 
+using KSPDev.GUIUtils;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -10,7 +11,9 @@ using UnityEngine;
 
 namespace KIS {
 
-public sealed class ModuleKISItemBomb : ModuleKISItem {
+public sealed class ModuleKISItemBomb : ModuleKISItem,
+    // KSPDEV sugar interfaces.
+    IHasGUI {
   [KSPField]
   public float delay = 5f;
   [KSPField]
@@ -90,12 +93,15 @@ public sealed class ModuleKISItemBomb : ModuleKISItem {
     }
   }
 
-  private void OnGUI() {
+  #region IHasGUI implementation
+  /// <inheritdoc/>
+  public void OnGUI() {
     if (showSetup) {
       GUI.skin = HighLogic.Skin;
       guiWindowPos = GUILayout.Window(GetInstanceID(), guiWindowPos, GuiSetup, "Explosive - Setup");
     }
   }
+  #endregion
 
   #region Local utility methods
   void GuiSetup(int windowID) {
