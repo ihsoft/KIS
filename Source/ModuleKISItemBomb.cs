@@ -7,16 +7,23 @@ using KSPDev.GUIUtils;
 using KSPDev.KSPInterfaces;
 using System;
 using System.Collections.Generic;
-using System.Text;
 using UnityEngine;
 
 namespace KIS {
 
+// Next localization ID: #kisLOC_05001.
 public sealed class ModuleKISItemBomb : ModuleKISItem,
     // KSP interfaces.
     IModuleInfo,
     // KSPDEV sugar interfaces.
     IKSPDevModuleInfo, IHasGUI {
+
+  #region Localizable GUI strings.
+  static readonly Message ModuleTitleInfo = new Message(
+      "#kisLOC_05000",
+      defaultTemplate: "KIS Bomb",
+      description: "The title of the module to present in the editor details window.");
+  #endregion
 
   [KSPField]
   public float delay = 5f;
@@ -52,15 +59,12 @@ public sealed class ModuleKISItemBomb : ModuleKISItem,
 
   /// <inheritdoc/>
   public string GetPrimaryField() {
-    return null;
+    return ExplosionRadiusInfo.Format(maxRadius);
   }
 
   /// <inheritdoc/>
   public override string GetInfo() {
-    var sb = new StringBuilder();
-    sb.AppendFormat("<b>Explosion max radius</b>: {0:F0}m", maxRadius);
-    sb.AppendLine();
-    return sb.ToString();
+    return ExplosionRadiusInfo.Format(maxRadius);
   }
   #endregion
 
