@@ -27,9 +27,9 @@ public sealed class ModuleKISItemBomb : ModuleKISItem {
   public FXGroup fxSndTimeStart;
   public FXGroup fxSndTimeLoop;
   public FXGroup fxSndTimeEnd;
-  private float radius = 10f;
-  private bool activated = false;
-  private bool showSetup = false;
+  float radius = 10f;
+  bool activated;
+  bool showSetup;
   public Rect guiWindowPos;
 
   public override string GetInfo() {
@@ -97,7 +97,8 @@ public sealed class ModuleKISItemBomb : ModuleKISItem {
     }
   }
 
-  private void GuiSetup(int windowID) {
+  #region Local utility methods
+  void GuiSetup(int windowID) {
     GUIStyle centeredStyle = GUI.skin.GetStyle("Label");
     centeredStyle.alignment = TextAnchor.MiddleCenter;
     // TIMER
@@ -158,7 +159,9 @@ public sealed class ModuleKISItemBomb : ModuleKISItem {
     }
     GUI.DragWindow();
   }
+  #endregion
 
+  #region KSP events and actions
   [KSPEvent(name = "Activate", active = true, guiActive = false, guiActiveUnfocused = true,
             guiName = "Activate")]
   public void Activate() {
@@ -177,6 +180,7 @@ public sealed class ModuleKISItemBomb : ModuleKISItem {
         new Rect(Input.mousePosition.x, (Screen.height - Input.mousePosition.y), 200, 100);
     showSetup = !showSetup;
   }
+  #endregion
 }
 
 }  // namespace
