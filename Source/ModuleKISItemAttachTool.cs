@@ -13,9 +13,9 @@ public class ModuleKISItemAttachTool : ModuleKISItem {
   [KSPField]
   public bool toolPartAttach = true;
   [KSPField]
-  public bool toolStaticAttach = false;
+  public bool toolStaticAttach;
   [KSPField]
-  public bool toolPartStack = false;
+  public bool toolPartStack;
   [KSPField]
   public string attachPartSndPath = "KIS/Sounds/attachPart";
   [KSPField]
@@ -25,13 +25,13 @@ public class ModuleKISItemAttachTool : ModuleKISItem {
   [KSPField]
   public string detachStaticSndPath = "KIS/Sounds/detachStatic";
 
-  private string orgAttachPartSndPath;
-  private string orgDetachPartSndPath;
-  private string orgAttachStaticSndPath;
-  private string orgDetachStaticSndPath;
-  private bool orgToolPartAttach;
-  private bool orgToolStaticAttach;
-  private bool orgToolPartStack;
+  string orgAttachPartSndPath;
+  string orgDetachPartSndPath;
+  string orgAttachStaticSndPath;
+  string orgDetachStaticSndPath;
+  bool orgToolPartAttach;
+  bool orgToolStaticAttach;
+  bool orgToolPartStack;
 
   public override string GetInfo() {
     var sb = new StringBuilder();
@@ -41,6 +41,7 @@ public class ModuleKISItemAttachTool : ModuleKISItem {
     return sb.ToString();
   }
 
+  #region ModuleKISItem overrides
   public override void OnItemUse(KIS_Item item, KIS_Item.UseFrom useFrom) {
     // Check if grab key is pressed
     if (useFrom == KIS_Item.UseFrom.KeyDown) {
@@ -87,6 +88,7 @@ public class ModuleKISItemAttachTool : ModuleKISItem {
       pickupModule.detachStaticSndPath = orgDetachStaticSndPath;
     }
   }
+  #endregion
 }
   
 }  // namespace
