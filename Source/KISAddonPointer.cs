@@ -1,4 +1,9 @@
-﻿using KSPDev.GUIUtils;
+﻿// Kerbal Inventory System
+// Mod's author: KospY (http://forum.kerbalspaceprogram.com/index.php?/profile/33868-kospy/)
+// Module authors: KospY, igor.zavoychinskiy@gmail.com
+// License: Restricted
+
+using KSPDev.GUIUtils;
 using KSPDev.ProcessingUtils;
 using System;
 using System.Collections.Generic;
