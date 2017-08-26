@@ -5,8 +5,8 @@ namespace KIS {
 
 public class ModuleKISPartDrag : PartModule {
   public string dragIconPath = "KIS/Textures/unknow";
-  public string dragText = "Unknow action";
-  public string dragText2 = "Bla bla";
+  public string dragText = "Unknown action";
+  public string dragText2 = "";
 
   public virtual void OnItemDragged(KIS_Item draggedItem) {
   }
