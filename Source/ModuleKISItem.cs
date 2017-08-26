@@ -98,6 +98,7 @@ public class ModuleKISItem : PartModule {
   public virtual void OnItemUpdate(KIS_Item item) {
   }
 
+  // TODO(ihsoft): Deprecate it. Too expensive.
   public virtual void OnItemGUI(KIS_Item item) {
   }
 

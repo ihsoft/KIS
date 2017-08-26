@@ -805,6 +805,7 @@ public class ModuleKISInventory : PartModule,
 
   /// <summary>Overridden from MonoBehaviour.</summary>
   void LateUpdate() {
+    //TODO(ihsoft): It's too BAD for performance.
     foreach (KeyValuePair<int, KIS_Item> item in items) {
       item.Value.Update();
     }
@@ -1398,6 +1399,7 @@ public class ModuleKISInventory : PartModule,
     }
 
     // Update GUI of items
+    //TODO(ihsoft): Call in the per item display instead. 
     foreach (KeyValuePair<int, KIS_Item> item in items) {
       item.Value.GUIUpdate();
     }
@@ -1880,6 +1882,7 @@ public class ModuleKISInventory : PartModule,
     if (HighLogic.LoadedSceneIsFlight) {
       if (FlightGlobals.ActiveVessel.isEVA && FlightGlobals.ActiveVessel == part.vessel) {
         // Keyboard shortcut
+        //TODO(ihsoft): Show the slot shorcut instead.
         int slotNb = slotIndex + 1;
         GUI.Label(textureRect, SlotIdContextCaption.Format(slotNb), upperLeftStyle);
         if (item.carried) {

@@ -340,6 +340,7 @@ public sealed class KIS_Item {
     }
   }
 
+  //TODO(ihsoft): It's too expensive to call it for every item.
   public void Update() {
     if (equippedGameObj != null) {
       equippedGameObj.transform.rotation =
