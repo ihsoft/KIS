@@ -3,13 +3,37 @@
 // Module authors: KospY, igor.zavoychinskiy@gmail.com
 // License: Restricted
 
+using KSPDev.GUIUtils;
+using KSPDev.KSPInterfaces;
 using System;
 using System.Linq;
-using System.Text;
 
 namespace KIS {
 
-public class ModuleKISItemAttachTool : ModuleKISItem {
+// Next localization ID: #kisLOC_04003.
+public class ModuleKISItemAttachTool : ModuleKISItem,
+    // KSP interfaces.
+    IModuleInfo,
+    // KSPDev sugar interfaces.
+    IKSPDevModuleInfo {
+
+  #region Localizable GUI strings.
+  static readonly Message ModuleTitleInfo = new Message(
+      "#kisLOC_04000",
+      defaultTemplate: "KIS Attach Tool",
+      description: "");
+
+  static readonly Message AllowNodeAttachModeInfo = new Message(
+      "#kisLOC_04001",
+      defaultTemplate: "<color=#00FFFF>Can attach to the stack nodes</color>",
+      description: "");
+
+  static readonly Message OnlySurfaceAttachModeInfo = new Message(
+      "#kisLOC_04002",
+      defaultTemplate: "<color=#FFA500>Can only attach to the part's surface</color>",
+      description: "");
+  #endregion
+
   [KSPField]
   public bool toolPartAttach = true;
   [KSPField]
@@ -33,13 +57,27 @@ public class ModuleKISItemAttachTool : ModuleKISItem {
   bool orgToolStaticAttach;
   bool orgToolPartStack;
 
-  public override string GetInfo() {
-    var sb = new StringBuilder();
-    if (toolPartStack) {
-      sb.AppendLine("Allow snap attach on stack node");
-    }
-    return sb.ToString();
+  #region IPartInfo interface
+  /// <inheritdoc/>
+  public string GetModuleTitle() {
+    return ModuleTitleInfo;
   }
+
+  /// <inheritdoc/>
+  public Callback<UnityEngine.Rect> GetDrawModulePanelCallback() {
+    return null;
+  }
+
+  /// <inheritdoc/>
+  public string GetPrimaryField() {
+    return !toolPartStack ? OnlySurfaceAttachModeInfo.Format() : null;
+  }
+
+  /// <inheritdoc/>
+  public override string GetInfo() {
+    return toolPartStack ? AllowNodeAttachModeInfo : OnlySurfaceAttachModeInfo;
+  }
+  #endregion
 
   #region ModuleKISItem overrides
   public override void OnItemUse(KIS_Item item, KIS_Item.UseFrom useFrom) {
