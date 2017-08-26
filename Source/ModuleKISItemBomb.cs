@@ -4,6 +4,7 @@
 // License: Restricted
 
 using KSPDev.GUIUtils;
+using KSPDev.KSPInterfaces;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -12,8 +13,11 @@ using UnityEngine;
 namespace KIS {
 
 public sealed class ModuleKISItemBomb : ModuleKISItem,
+    // KSP interfaces.
+    IModuleInfo,
     // KSPDEV sugar interfaces.
-    IHasGUI {
+    IKSPDevModuleInfo, IHasGUI {
+
   [KSPField]
   public float delay = 5f;
   [KSPField]
@@ -35,12 +39,30 @@ public sealed class ModuleKISItemBomb : ModuleKISItem,
   bool showSetup;
   public Rect guiWindowPos;
 
+  #region IModuleInfo implementation
+  /// <inheritdoc/>
+  public string GetModuleTitle() {
+    return ModuleTitleInfo;
+  }
+
+  /// <inheritdoc/>
+  public Callback<Rect> GetDrawModulePanelCallback() {
+    return null;
+  }
+
+  /// <inheritdoc/>
+  public string GetPrimaryField() {
+    return null;
+  }
+
+  /// <inheritdoc/>
   public override string GetInfo() {
     var sb = new StringBuilder();
     sb.AppendFormat("<b>Explosion max radius</b>: {0:F0}m", maxRadius);
     sb.AppendLine();
     return sb.ToString();
   }
+  #endregion
 
   public override void OnStart(StartState state) {
     base.OnStart(state);
