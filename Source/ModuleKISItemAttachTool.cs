@@ -21,17 +21,19 @@ public class ModuleKISItemAttachTool : ModuleKISItem,
   static readonly Message ModuleTitleInfo = new Message(
       "#kisLOC_04000",
       defaultTemplate: "KIS Attach Tool",
-      description: "");
+      description: "The title of the module to present in the editor details window.");
 
   static readonly Message AllowNodeAttachModeInfo = new Message(
       "#kisLOC_04001",
       defaultTemplate: "<color=#00FFFF>Can attach to the stack nodes</color>",
-      description: "");
+      description: "The info message to present in the editor's details window to denote that this"
+      + " tool can attach parts at the stack nodes.");
 
   static readonly Message OnlySurfaceAttachModeInfo = new Message(
       "#kisLOC_04002",
       defaultTemplate: "<color=#FFA500>Can only attach to the part's surface</color>",
-      description: "");
+      description: "The info message to present in the editor's details window to denote that this"
+      + " tool can attach the parts at the surface of another part, but not at the stack nodes.");
   #endregion
 
   [KSPField]
