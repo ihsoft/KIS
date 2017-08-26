@@ -734,7 +734,7 @@ sealed class KISAddonPickup : MonoBehaviour {
 
     // Drag part over another one if possible (ex : mount)
     if (draggedPart && pDrag) {
-      KISAddonCursor.CursorEnable(pDrag.dragIconPath, pDrag.dragText, '(' + pDrag.dragText2 + ')');
+      KISAddonCursor.CursorEnable(pDrag.dragIconPath, pDrag.dragText, pDrag.dragText2);
       return;
     }
 
