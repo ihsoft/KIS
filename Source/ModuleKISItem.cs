@@ -15,7 +15,7 @@ using UnityEngine;
 
 namespace KIS {
 
-// Next localization ID: #kisLOC_06000.
+// Next localization ID: #kisLOC_06013.
 public class ModuleKISItem : PartModule,
     // KSP interfaces.
     IModuleInfo,
@@ -29,6 +29,83 @@ public class ModuleKISItem : PartModule,
       "#kisLOC_06000",
       defaultTemplate: "KIS Item",
       description: "The title of the module to present in the editor details window.");
+
+  static readonly Message<string> EquippableInfo = new Message<string>(
+      "#kisLOC_06001",
+      defaultTemplate: "Equips on: <<1>>",
+      description: "The info string to show in the editor to state that the item can be equipped"
+      + " on the kerbal at the designated equip slot."
+      + "\nArgument <<1>> is a the slot name.");
+
+  static readonly Message<string> CarriableInfo = new Message<string>(
+      "#kisLOC_06002",
+      defaultTemplate: "Carried on: <<1>>",
+      description: "The info string to show in the editor to state that the item can be carried"
+      + " by the kerbal at the designated equip slot."
+      + "\nArgument <<1>> is a the slot name.");
+  
+  static readonly Message EqupSlot_LeftHand = new Message(
+      "#kisLOC_06003",
+      defaultTemplate: "left hand",
+      description: "The name for the left hand equip slot.");
+
+  static readonly Message EqupSlot_RightHand = new Message(
+      "#kisLOC_06004",
+      defaultTemplate: "right hand",
+      description: "The name for the right hand equip slot.");
+
+  static readonly Message EqupSlot_Jetpack = new Message(
+      "#kisLOC_06005",
+      defaultTemplate: "jetpack",
+      description: "The name for the jetpack equip slot.");
+
+  static readonly Message EqupSlot_Eyes = new Message(
+      "#kisLOC_06006",
+      defaultTemplate: "eyes",
+      description: "The name for the eye equip slot.");
+
+  static readonly Message EqupSlot_Helmet = new Message(
+      "#kisLOC_06007",
+      defaultTemplate: "helmet",
+      description: "The name for the helmet equip slot.");
+
+  static readonly Dictionary<string, Message> EquipSlotsLookup = new Dictionary<string, Message> {
+      { "leftHand", EqupSlot_LeftHand },
+      { "rightHand", EqupSlot_RightHand },
+      { "jetpack", EqupSlot_Jetpack },
+      { "eyes", EqupSlot_Eyes },
+      { "helmet", EqupSlot_Helmet },
+  };
+
+  static readonly Message AttachesToPartsWithoutToolsInfo = new Message(
+      "#kisLOC_06008",
+      defaultTemplate: "Attaches to a part without a tool",
+      description: "The info string to show in the editor to state that the item can be attached"
+      + " to another part without a need of any attach tool.");
+
+  static readonly Message DoesntAttachToPartsInfo = new Message(
+      "#kisLOC_06009",
+      defaultTemplate: "<color=orange>Doesn't attach to the parts</color>",
+      description: "The info string to show in the editor to state that the item CANNOT be attached"
+      + " to another part.");
+
+  static readonly Message AttachToSurfaceWithoutToolsInfo = new Message(
+      "#kisLOC_06010",
+      defaultTemplate: "Attaches to the surface without a tool",
+      description: "The info string to show in the editor to state that the item can be attached"
+      + " to the surface without a need of any attach tool.");
+
+  static readonly Message AttachToSurfaceNeedsToolInfo = new Message(
+      "#kisLOC_06011",
+      defaultTemplate: "The tool is need to attach to the surface",
+      description: "The info string to show in the editor to state that the item can be attached"
+      + " to the surface, but the appropriate tool will be needed.");
+
+  static readonly Message<ForceType> SurfaceAttachStrengthInfo = new Message<ForceType>(
+      "#kisLOC_06012",
+      defaultTemplate: "Surface attach strength: <<1>>",
+      description: "The info string to show in the editor to specify with what force the part will"
+      + " be attached to the surface (if such attachment is allowed).");
   #endregion
 
   /// <summary>Specifies how item can be attached.</summary>
@@ -114,7 +191,16 @@ public class ModuleKISItem : PartModule,
 
   /// <inheritdoc/>
   public virtual string GetPrimaryField() {
-    return null;
+    var sb = new StringBuilder();
+    if (allowPartAttach == ItemAttachMode.Disabled) {
+      sb.AppendLine(DoesntAttachToPartsInfo);
+    } else if (allowPartAttach == ItemAttachMode.AllowedAlways) {
+      sb.AppendLine(AttachesToPartsWithoutToolsInfo);
+    }
+    if (allowStaticAttach == ItemAttachMode.AllowedAlways) {
+      sb.AppendLine(AttachToSurfaceWithoutToolsInfo);
+    }
+    return sb.ToString().Trim();
   }
 
   /// <inheritdoc/>
@@ -232,6 +318,22 @@ public class ModuleKISItem : PartModule,
   /// <returns>The list with the localized strings.</returns>
   protected virtual string[] GetParamInfo() {
     var res = new List<string>();
+    if (equipable) {
+      var slotName = EquipSlotsLookup.ContainsKey(equipSlot)
+          ? EquipSlotsLookup[equipSlot].Format()
+          : equipSlot;
+      res.Add(EquippableInfo.Format(slotName));
+    }
+    if (carriable) {
+      var slotName = EquipSlotsLookup.ContainsKey(equipSlot)
+          ? EquipSlotsLookup[equipSlot].Format()
+          : equipSlot;
+      res.Add(CarriableInfo.Format(slotName));
+    }
+    if (allowStaticAttach == ItemAttachMode.AllowedAlways
+        || allowStaticAttach == ItemAttachMode.AllowedWithKisTool) {
+      res.Add(SurfaceAttachStrengthInfo.Format(staticAttachBreakForce));
+    }
     return res.ToArray();
   }
 
@@ -240,6 +342,9 @@ public class ModuleKISItem : PartModule,
   /// <returns>The list with the localized strings.</returns>
   protected virtual string[] GetPropInfo() {
     var res = new List<string>();
+    if (allowStaticAttach == ItemAttachMode.AllowedWithKisTool) {
+      res.Add(AttachToSurfaceNeedsToolInfo);
+    }
     return res.ToArray();
   }
   #endregion
