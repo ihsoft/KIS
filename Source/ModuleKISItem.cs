@@ -32,19 +32,19 @@ public class ModuleKISItem : PartModule {
   [KSPField]
   public string shortcutKeyAction = "drop";
   [KSPField]
-  public bool usableFromEva = false;
+  public bool usableFromEva;
   [KSPField]
-  public bool usableFromContainer = false;
+  public bool usableFromContainer;
   [KSPField]
-  public bool usableFromPod = false;
+  public bool usableFromPod;
   [KSPField]
-  public bool usableFromEditor = false;
+  public bool usableFromEditor;
   [KSPField]
   public string useName = "use";
   [KSPField]
-  public bool stackable = false;
+  public bool stackable;
   [KSPField]
-  public bool equipable = false;
+  public bool equipable;
   [KSPField]
   public string equipMode = "model";
   [KSPField]
@@ -62,23 +62,23 @@ public class ModuleKISItem : PartModule {
   [KSPField]
   public Vector3 equipDir = new Vector3(0f, 0f, 0f);
   [KSPField]
-  public float volumeOverride = 0;
+  public float volumeOverride;
   [KSPField]
-  public bool carriable = false;
+  public bool carriable;
   [KSPField]
   public ItemAttachMode allowPartAttach = ItemAttachMode.AllowedWithKisTool;
   [KSPField]
   public ItemAttachMode allowStaticAttach = ItemAttachMode.Disabled;
   [KSPField]
-  public bool useExternalPartAttach = false;
+  public bool useExternalPartAttach;
   // For KAS
   [KSPField]
-  public bool useExternalStaticAttach = false;
+  public bool useExternalStaticAttach;
   // For KAS
   [KSPField]
   public float staticAttachBreakForce = 10;
   [KSPField(isPersistant = true)]
-  public bool staticAttached = false;
+  public bool staticAttached;
 
   FixedJoint staticAttachJoint;
 
