@@ -119,8 +119,10 @@ public class ModuleKISItem : PartModule,
 
   /// <inheritdoc/>
   public override string GetInfo() {
-    var sb = new StringBuilder();
-    return sb.ToString();
+    return
+        string.Join("\n", GetParamInfo())
+        + "\n\n"
+        + string.Join("\n", GetPropInfo());
   }
   #endregion
 
@@ -223,6 +225,24 @@ public class ModuleKISItem : PartModule,
       staticAttached = false;
     }
   }
+
+  #region Inheritable & customization methods
+  /// <summary>Returns parameterized info strings.</summary>
+  /// <remarks>These strings have a value that can change from part to part.</remarks>
+  /// <returns>The list with the localized strings.</returns>
+  protected virtual string[] GetParamInfo() {
+    var res = new List<string>();
+    return res.ToArray();
+  }
+
+  /// <summary>Returns property info strings.</summary>
+  /// <remarks>These strings reflect the boolean settings on the part.</remarks>
+  /// <returns>The list with the localized strings.</returns>
+  protected virtual string[] GetPropInfo() {
+    var res = new List<string>();
+    return res.ToArray();
+  }
+  #endregion
 
   #region Local utility methods
   IEnumerator WaitAndStaticAttach() {
