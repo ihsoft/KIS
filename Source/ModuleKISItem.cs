@@ -2,6 +2,7 @@
 // Mod's author: KospY (http://forum.kerbalspaceprogram.com/index.php?/profile/33868-kospy/)
 // Module authors: KospY, igor.zavoychinskiy@gmail.com
 // License: Restricted
+using KSPDev.KSPInterfaces;
 using KSPDev.ProcessingUtils;
 using System.Collections.Generic;
 using System.Collections;
@@ -11,7 +12,9 @@ using UnityEngine;
 
 namespace KIS {
 
-public class ModuleKISItem : PartModule {
+public class ModuleKISItem : PartModule,
+    // KSPDEV interfaces.
+    IsPartDeathListener, IsPackable {
   /// <summary>Specifies how item can be attached.</summary>
   public enum ItemAttachMode {
     /// <summary>Not initialized. Special value.</summary>
@@ -83,6 +86,9 @@ public class ModuleKISItem : PartModule {
   FixedJoint staticAttachJoint;
 
   protected virtual void OnPartDie() {
+  #region IsPartDeathListener implementation
+  /// <inheritdoc/>
+  public virtual void OnPartDie() {
     if (vessel.isEVA) {
       var inventory = vessel.rootPart.GetComponent<ModuleKISInventory>();
       var item = inventory.items.Values.FirstOrDefault(i => i.equipped && i.equippedPart == part);
@@ -93,6 +99,7 @@ public class ModuleKISItem : PartModule {
       }
     }
   }
+  #endregion
 
   #region IInventoryItem candidate
   public virtual void OnItemUse(KIS_Item item, KIS_Item.UseFrom useFrom) {
@@ -120,6 +127,12 @@ public class ModuleKISItem : PartModule {
   }
   #endregion
 
+  #region IsPackable implementation
+  /// <inheritdoc/>
+  public virtual void OnPartPack() {
+  }
+
+  /// <inheritdoc/>
   public virtual void OnPartUnpack() {
     if (allowStaticAttach == ItemAttachMode.Disabled || useExternalStaticAttach) {
       return;
@@ -129,6 +142,7 @@ public class ModuleKISItem : PartModule {
       GroundAttach();
     }
   }
+  #endregion
 
   public void OnKISAction(Dictionary<string, object> eventData) {
     if (allowStaticAttach == ItemAttachMode.Disabled || useExternalStaticAttach) {
