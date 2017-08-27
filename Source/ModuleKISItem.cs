@@ -2,6 +2,8 @@
 // Mod's author: KospY (http://forum.kerbalspaceprogram.com/index.php?/profile/33868-kospy/)
 // Module authors: KospY, igor.zavoychinskiy@gmail.com
 // License: Restricted
+
+using KSPDev.GUIUtils;
 using KSPDev.KSPInterfaces;
 using KSPDev.ProcessingUtils;
 using System.Collections.Generic;
@@ -13,6 +15,7 @@ using UnityEngine;
 
 namespace KIS {
 
+// Next localization ID: #kisLOC_06000.
 public class ModuleKISItem : PartModule,
     // KSP interfaces.
     IModuleInfo,
@@ -20,6 +23,14 @@ public class ModuleKISItem : PartModule,
     IsPartDeathListener, IsPackable,
     // KSPDEV sugar interfaces.
     IKSPDevModuleInfo {
+
+  #region Localizable GUI strings.
+  static readonly Message ModuleTitleInfo = new Message(
+      "#kisLOC_06000",
+      defaultTemplate: "KIS Item",
+      description: "The title of the module to present in the editor details window.");
+  #endregion
+
   /// <summary>Specifies how item can be attached.</summary>
   public enum ItemAttachMode {
     /// <summary>Not initialized. Special value.</summary>
@@ -93,7 +104,7 @@ public class ModuleKISItem : PartModule,
   #region IModuleInfo implementation
   /// <inheritdoc/>
   public virtual string GetModuleTitle() {
-    return "";
+    return ModuleTitleInfo;
   }
 
   /// <inheritdoc/>

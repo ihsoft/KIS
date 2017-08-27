@@ -23,5 +23,6 @@ not use the same namespace as the parent. No modules are allowed to define own v
 | KISAddonPointer         | 3      | #kisLOC_03000   | #kisLOC_03999 |
 | ModuleKISItemAttachTool | 4      | #kisLOC_04000   | #kisLOC_04999 |
 | ModuleKISItemBomb       | 5      | #kisLOC_05000   | #kisLOC_05999 |
+| ModuleKISItem           | 6      | #kisLOC_06000   | #kisLOC_06999 |
 | Specail classes         | 99     | #kisLOC_99000   | #kisLOC_99999 |
 | _Next available value_  | 1      | #kasLOC_01000   | #kisLOC_01999 |
