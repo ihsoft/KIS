@@ -72,12 +72,6 @@ public class ModuleKISItemAttachTool : ModuleKISItem,
     }
     return base.GetPrimaryField() + "\n" + OnlySurfaceAttachModeInfo.Format();
   }
-
-  /// <inheritdoc/>
-  public override string GetInfo() {
-    return base.GetInfo() + "\n"
-        + (toolPartStack ? AllowNodeAttachModeInfo : OnlySurfaceAttachModeInfo);
-  }
   #endregion
 
   #region ModuleKISItem overrides
@@ -126,6 +120,18 @@ public class ModuleKISItemAttachTool : ModuleKISItem,
       pickupModule.attachStaticSndPath = orgAttachStaticSndPath;
       pickupModule.detachStaticSndPath = orgDetachStaticSndPath;
     }
+  }
+  #endregion
+
+  #region Inheritable & customization methods
+  /// <inheritdoc/>
+  protected override string[] GetPropInfo() {
+    if (!toolPartStack) {
+      return base.GetPropInfo();
+    }
+    return base.GetPropInfo().Concat(new[] {
+        AllowNodeAttachModeInfo.Format(),
+    }).ToArray();
   }
   #endregion
 }
