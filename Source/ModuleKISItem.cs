@@ -212,6 +212,19 @@ public class ModuleKISItem : PartModule,
     StartCoroutine(WaitAndStaticAttach());
   }
 
+  public void GroundDetach() {
+    if (staticAttached) {
+      Debug.LogFormat(
+          "Removing static rigidbody and fixed joint on: {0}", this.part.partInfo.title);
+      if (staticAttachJoint) {
+        Destroy(staticAttachJoint);
+      }
+      staticAttachJoint = null;
+      staticAttached = false;
+    }
+  }
+
+  #region Local utility methods
   IEnumerator WaitAndStaticAttach() {
     // Wait for part to become active in case of it came from inventory.
     while (!part.started && part.State != PartStates.DEAD) {
@@ -238,18 +251,7 @@ public class ModuleKISItem : PartModule,
     }
     GroundDetach();
   }
-
-  public void GroundDetach() {
-    if (staticAttached) {
-      Debug.LogFormat(
-          "Removing static rigidbody and fixed joint on: {0}", this.part.partInfo.title);
-      if (staticAttachJoint) {
-        Destroy(staticAttachJoint);
-      }
-      staticAttachJoint = null;
-      staticAttached = false;
-    }
-  }
+  #endregion
 }
 
 }  // namespace
