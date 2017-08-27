@@ -8,13 +8,18 @@ using System.Collections.Generic;
 using System.Collections;
 using System;
 using System.Linq;
+using System.Text;
 using UnityEngine;
 
 namespace KIS {
 
 public class ModuleKISItem : PartModule,
+    // KSP interfaces.
+    IModuleInfo,
     // KSPDEV interfaces.
-    IsPartDeathListener, IsPackable {
+    IsPartDeathListener, IsPackable,
+    // KSPDEV sugar interfaces.
+    IKSPDevModuleInfo {
   /// <summary>Specifies how item can be attached.</summary>
   public enum ItemAttachMode {
     /// <summary>Not initialized. Special value.</summary>
@@ -85,7 +90,29 @@ public class ModuleKISItem : PartModule,
 
   FixedJoint staticAttachJoint;
 
-  protected virtual void OnPartDie() {
+  #region IModuleInfo implementation
+  /// <inheritdoc/>
+  public virtual string GetModuleTitle() {
+    return "";
+  }
+
+  /// <inheritdoc/>
+  public virtual Callback<Rect> GetDrawModulePanelCallback() {
+    return null;
+  }
+
+  /// <inheritdoc/>
+  public virtual string GetPrimaryField() {
+    return null;
+  }
+
+  /// <inheritdoc/>
+  public override string GetInfo() {
+    var sb = new StringBuilder();
+    return sb.ToString();
+  }
+  #endregion
+
   #region IsPartDeathListener implementation
   /// <inheritdoc/>
   public virtual void OnPartDie() {

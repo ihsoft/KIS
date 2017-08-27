@@ -61,23 +61,22 @@ public class ModuleKISItemAttachTool : ModuleKISItem,
 
   #region IPartInfo interface
   /// <inheritdoc/>
-  public string GetModuleTitle() {
+  public override string GetModuleTitle() {
     return ModuleTitleInfo;
   }
 
   /// <inheritdoc/>
-  public Callback<UnityEngine.Rect> GetDrawModulePanelCallback() {
-    return null;
-  }
-
-  /// <inheritdoc/>
-  public string GetPrimaryField() {
-    return !toolPartStack ? OnlySurfaceAttachModeInfo.Format() : null;
+  public override string GetPrimaryField() {
+    if (toolPartStack) {
+      return base.GetPrimaryField();
+    }
+    return base.GetPrimaryField() + "\n" + OnlySurfaceAttachModeInfo.Format();
   }
 
   /// <inheritdoc/>
   public override string GetInfo() {
-    return toolPartStack ? AllowNodeAttachModeInfo : OnlySurfaceAttachModeInfo;
+    return base.GetInfo() + "\n"
+        + (toolPartStack ? AllowNodeAttachModeInfo : OnlySurfaceAttachModeInfo);
   }
   #endregion
 
