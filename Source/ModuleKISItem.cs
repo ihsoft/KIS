@@ -191,16 +191,7 @@ public class ModuleKISItem : PartModule,
 
   /// <inheritdoc/>
   public virtual string GetPrimaryField() {
-    var sb = new StringBuilder();
-    if (allowPartAttach == ItemAttachMode.Disabled) {
-      sb.AppendLine(DoesntAttachToPartsInfo);
-    } else if (allowPartAttach == ItemAttachMode.AllowedAlways) {
-      sb.AppendLine(AttachesToPartsWithoutToolsInfo);
-    }
-    if (allowStaticAttach == ItemAttachMode.AllowedAlways) {
-      sb.AppendLine(AttachToSurfaceWithoutToolsInfo);
-    }
-    return sb.ToString().Trim();
+    return string.Join("\n", GetPrimaryFieldInfo());
   }
 
   /// <inheritdoc/>
@@ -344,6 +335,22 @@ public class ModuleKISItem : PartModule,
     var res = new List<string>();
     if (allowStaticAttach == ItemAttachMode.AllowedWithKisTool) {
       res.Add(AttachToSurfaceNeedsToolInfo);
+    }
+    return res.ToArray();
+  }
+
+  /// <summary>Returns info strings to display in the primary details screen.</summary>
+  /// <remarks>Limit this list to the bare minimum as this view doesn't assume much space.</remarks>
+  /// <returns>The list with the localized strings.</returns>
+  protected virtual string[] GetPrimaryFieldInfo() {
+    var res = new List<string>();
+    if (allowPartAttach == ItemAttachMode.Disabled) {
+      res.Add(DoesntAttachToPartsInfo);
+    } else if (allowPartAttach == ItemAttachMode.AllowedAlways) {
+      res.Add(AttachesToPartsWithoutToolsInfo);
+    }
+    if (allowStaticAttach == ItemAttachMode.AllowedAlways) {
+      res.Add(AttachToSurfaceWithoutToolsInfo);
     }
     return res.ToArray();
   }
