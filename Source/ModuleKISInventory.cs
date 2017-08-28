@@ -1875,17 +1875,17 @@ public class ModuleKISInventory : PartModule,
   void GuiHandleUsedSlot(Rect textureRect, int slotIndex) {
     var item = items[slotIndex];
     GUI.DrawTexture(textureRect, item.icon.texture, ScaleMode.ScaleToFit);
-    if (HighLogic.LoadedSceneIsFlight) {
-      if (FlightGlobals.ActiveVessel.isEVA && FlightGlobals.ActiveVessel == part.vessel) {
-        // Keyboard shortcut
-        //TODO(ihsoft): Show the slot shorcut instead.
-        int slotNb = slotIndex + 1;
-        GUI.Label(textureRect, SlotIdContextCaption.Format(slotNb), upperLeftStyle);
-        if (item.carried) {
-          GUI.Label(textureRect, CarriedItemContextCaption, upperRightStyle);
-        } else if (item.equipped) {
-          GUI.Label(textureRect, EquippedItemContextCaption, upperRightStyle);
-        }
+    // Part's vessel is null when in the editor mode.
+    if (part.vessel != null && FlightGlobals.ActiveVessel == part.vessel
+        && FlightGlobals.ActiveVessel.isEVA) {
+      // Keyboard shortcut
+      //TODO(ihsoft): Show the slot shorcut instead.
+      int slotNb = slotIndex + 1;
+      GUI.Label(textureRect, SlotIdContextCaption.Format(slotNb), upperLeftStyle);
+      if (item.carried) {
+        GUI.Label(textureRect, CarriedItemContextCaption, upperRightStyle);
+      } else if (item.equipped) {
+        GUI.Label(textureRect, EquippedItemContextCaption, upperRightStyle);
       }
     }
     if (item.stackable) {
