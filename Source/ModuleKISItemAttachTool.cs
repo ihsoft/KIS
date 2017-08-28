@@ -6,6 +6,7 @@
 using KSPDev.GUIUtils;
 using KSPDev.KSPInterfaces;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace KIS {
@@ -64,14 +65,6 @@ public class ModuleKISItemAttachTool : ModuleKISItem,
   public override string GetModuleTitle() {
     return ModuleTitleInfo;
   }
-
-  /// <inheritdoc/>
-  public override string GetPrimaryField() {
-    if (toolPartStack) {
-      return base.GetPrimaryField();
-    }
-    return base.GetPrimaryField() + "\n" + OnlySurfaceAttachModeInfo.Format();
-  }
   #endregion
 
   #region ModuleKISItem overrides
@@ -125,13 +118,17 @@ public class ModuleKISItemAttachTool : ModuleKISItem,
 
   #region Inheritable & customization methods
   /// <inheritdoc/>
-  protected override string[] GetPropInfo() {
-    if (!toolPartStack) {
-      return base.GetPropInfo();
-    }
+  protected override IEnumerable<string> GetPropInfo() {
     return base.GetPropInfo().Concat(new[] {
-        AllowNodeAttachModeInfo.Format(),
-    }).ToArray();
+        toolPartStack ? AllowNodeAttachModeInfo.Format() : null,
+    });
+  }
+
+  /// <inheritdoc/>
+  protected override IEnumerable<string> GetPrimaryFieldInfo() {
+    return base.GetPrimaryFieldInfo().Concat(new[] {
+        !toolPartStack ? OnlySurfaceAttachModeInfo.Format() : null,
+    });
   }
   #endregion
 }

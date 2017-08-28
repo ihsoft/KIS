@@ -191,15 +191,15 @@ public class ModuleKISItem : PartModule,
 
   /// <inheritdoc/>
   public virtual string GetPrimaryField() {
-    return string.Join("\n", GetPrimaryFieldInfo());
+    return string.Join("\n", GetPrimaryFieldInfo().Where(x => x != null).ToArray());
   }
 
   /// <inheritdoc/>
   public override string GetInfo() {
     return
-        string.Join("\n", GetParamInfo())
+        string.Join("\n", GetParamInfo().Where(x => x != null).ToArray())
         + "\n\n"
-        + string.Join("\n", GetPropInfo());
+        + string.Join("\n", GetPropInfo().Where(x => x != null).ToArray());
   }
   #endregion
 
@@ -305,54 +305,59 @@ public class ModuleKISItem : PartModule,
 
   #region Inheritable & customization methods
   /// <summary>Returns parameterized info strings.</summary>
-  /// <remarks>These strings have a value that can change from part to part.</remarks>
-  /// <returns>The list with the localized strings.</returns>
-  protected virtual string[] GetParamInfo() {
-    var res = new List<string>();
-    if (equipable) {
-      var slotName = EquipSlotsLookup.ContainsKey(equipSlot)
-          ? EquipSlotsLookup[equipSlot].Format()
-          : equipSlot;
-      res.Add(EquippableInfo.Format(slotName));
-    }
-    if (carriable) {
-      var slotName = EquipSlotsLookup.ContainsKey(equipSlot)
-          ? EquipSlotsLookup[equipSlot].Format()
-          : equipSlot;
-      res.Add(CarriableInfo.Format(slotName));
-    }
-    if (allowStaticAttach == ItemAttachMode.AllowedAlways
-        || allowStaticAttach == ItemAttachMode.AllowedWithKisTool) {
-      res.Add(SurfaceAttachStrengthInfo.Format(staticAttachBreakForce));
-    }
-    return res.ToArray();
+  /// <remarks>
+  /// These strings have a value that can change from part to part. E.g. "resource1: XXX".
+  /// </remarks>
+  /// <returns>
+  /// The list with the localized strings. There can be <c>null</c> values, they will be safely
+  /// ignored when making the editor info string.
+  /// </returns>
+  protected virtual IEnumerable<string> GetParamInfo() {
+    var slotName = EquipSlotsLookup.ContainsKey(equipSlot)
+        ? EquipSlotsLookup[equipSlot].Format()
+        : equipSlot;
+    return new[] {
+        equipable
+            ? EquippableInfo.Format(slotName) : null,
+        carriable
+            ? CarriableInfo.Format(slotName) : null,
+        allowStaticAttach == ItemAttachMode.AllowedAlways
+        || allowStaticAttach == ItemAttachMode.AllowedWithKisTool
+            ? SurfaceAttachStrengthInfo.Format(staticAttachBreakForce) : null,
+    };
   }
 
   /// <summary>Returns property info strings.</summary>
-  /// <remarks>These strings reflect the boolean settings on the part.</remarks>
-  /// <returns>The list with the localized strings.</returns>
-  protected virtual string[] GetPropInfo() {
-    var res = new List<string>();
-    if (allowStaticAttach == ItemAttachMode.AllowedWithKisTool) {
-      res.Add(AttachToSurfaceNeedsToolInfo);
-    }
-    return res.ToArray();
+  /// <remarks>
+  /// These strings reflect the boolean settings on the part. E.g. "has something", "can do this",
+  /// "cannot do this", "not usable for that", etc.
+  /// </remarks>
+  /// <returns>
+  /// The list with the localized strings. There can be <c>null</c> values, they will be safely
+  /// ignored when making the editor info string.
+  /// </returns>
+  protected virtual IEnumerable<string> GetPropInfo() {
+    return new[] {
+        allowStaticAttach == ItemAttachMode.AllowedWithKisTool
+            ? AttachToSurfaceNeedsToolInfo.Format() : null,
+    };
   }
 
   /// <summary>Returns info strings to display in the primary details screen.</summary>
   /// <remarks>Limit this list to the bare minimum as this view doesn't assume much space.</remarks>
-  /// <returns>The list with the localized strings.</returns>
-  protected virtual string[] GetPrimaryFieldInfo() {
-    var res = new List<string>();
-    if (allowPartAttach == ItemAttachMode.Disabled) {
-      res.Add(DoesntAttachToPartsInfo);
-    } else if (allowPartAttach == ItemAttachMode.AllowedAlways) {
-      res.Add(AttachesToPartsWithoutToolsInfo);
-    }
-    if (allowStaticAttach == ItemAttachMode.AllowedAlways) {
-      res.Add(AttachToSurfaceWithoutToolsInfo);
-    }
-    return res.ToArray();
+  /// <returns>
+  /// The list with the localized strings. There can be <c>null</c> values, they will be safely
+  /// ignored when making the editor info string.
+  /// </returns>
+  protected virtual IEnumerable<string> GetPrimaryFieldInfo() {
+    return new[] {
+        allowPartAttach == ItemAttachMode.Disabled
+            ? DoesntAttachToPartsInfo.Format() : null,
+        allowPartAttach == ItemAttachMode.AllowedAlways
+            ?  AttachesToPartsWithoutToolsInfo.Format() : null,
+        allowStaticAttach == ItemAttachMode.AllowedAlways
+            ? AttachToSurfaceWithoutToolsInfo.Format() : null,
+    };
   }
   #endregion
 
