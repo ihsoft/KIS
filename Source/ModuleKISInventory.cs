@@ -788,16 +788,12 @@ public class ModuleKISInventory : PartModule,
 
   /// <summary>Overridden from MonoBehaviour.</summary>
   void Update() {
-    if (showGui) {
-      if (HighLogic.LoadedSceneIsFlight) {
-        if (FlightGlobals.ActiveVessel.isEVA) {
-          float distEvaToContainer = Vector3.Distance(FlightGlobals.ActiveVessel.transform.position,
-                                                      part.transform.position);
-          ModuleKISPickup mPickup = KISAddonPickup.instance.GetActivePickupNearest(part);
-          if (!mPickup || distEvaToContainer > mPickup.maxDistance) {
-            ToggleInventory();
-          }
-        }
+    if (showGui && HighLogic.LoadedSceneIsFlight && FlightGlobals.ActiveVessel.isEVA) {
+      var distEvaToContainer = Vector3.Distance(
+          FlightGlobals.ActiveVessel.transform.position, part.transform.position);
+      var pickup = KISAddonPickup.instance.GetActivePickupNearest(part);
+      if (!pickup || distEvaToContainer > pickup.maxDistance) {
+        ToggleInventory();
       }
     }
     UpdateKey();
