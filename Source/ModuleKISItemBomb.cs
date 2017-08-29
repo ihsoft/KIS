@@ -88,7 +88,7 @@ public sealed class ModuleKISItemBomb : ModuleKISItem,
   float radius = 10f;
   bool activated;
   bool showSetup;
-  public Rect guiWindowPos;
+  Rect guiWindowPos;
 
   #region ModuleKISItem overrides
   /// <inheritdoc/>
