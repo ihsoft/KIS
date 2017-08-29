@@ -12,7 +12,7 @@ using UnityEngine;
 
 namespace KIS {
 
-// Next localization ID: #kisLOC_05001.
+// Next localization ID: #kisLOC_05011.
 public sealed class ModuleKISItemBomb : ModuleKISItem,
     // KSPDEV sugar interfaces.
     IHasGUI {
@@ -22,6 +22,52 @@ public sealed class ModuleKISItemBomb : ModuleKISItem,
       "#kisLOC_05000",
       defaultTemplate: "KIS Bomb",
       description: "The title of the module to present in the editor details window.");
+
+  static readonly Message<DistanceType> ExplosionRadiusInfo = new Message<DistanceType>(
+      "#kisLOC_05001",
+      defaultTemplate: "Max explosion radius: <<1>>",
+      description: "The info message to present in the editor's details window for the maximum"
+      + " radius of explosion of the bomb."
+      + "\nArgument <<1>> is the radius. Format: DistanceType.");
+
+  static readonly Message SetupWindowTitle = new Message(
+      "#kisLOC_05002",
+      defaultTemplate: "Explosive - Setup",
+      description: "The title of the GUI window to setup the bomb.");
+
+  static readonly Message TimerSettingsSectionTxt = new Message(
+      "#kisLOC_05003",
+      defaultTemplate: "Timer",
+      description: "The GUI section title for settig up the explosion timer.");
+
+  Message<int> TimerDelayInSecondsTxt = new Message<int>(
+      "#kisLOC_05004",
+      defaultTemplate: "<<1>> s",
+      description: "The string that displays number of seconds till the bomb trigger.");
+
+  static readonly Message RadiusSettingsSectionTxt = new Message(
+      "#kisLOC_05005",
+      defaultTemplate: "Explosion radius",
+      description: "The GUI section title for settig up the explosion area.");
+
+  static readonly Message<DistanceType, DistanceType> ExplosionRadiusTxt =
+      new Message<DistanceType, DistanceType>(
+      "#kisLOC_05006",
+      defaultTemplate: "<<1>> / <<2>>",
+      description: "The string that displays current setting of the explosion radius."
+      + "\nArgument <<1>> is the current radius. Format: DistanceType."
+      + "\nArgument <<2>> is the maximum allowed radius for the part. Format: DistanceType.");
+
+  static readonly Message ActivateExplosionDialogTxt = new Message(
+      "#kisLOC_05007",
+      defaultTemplate: "ACTIVATE (cannot be undone)",
+      description: "The caption on the button that starts the timer. It cannot be stopped!");
+
+  static readonly Message CloseSetupDialogTxt = new Message(
+      "#kisLOC_05008",
+      defaultTemplate: "Close",
+      description: "The caption on the button that closes the setup menu without starting the"
+      + " timer");
   #endregion
 
   [KSPField]
@@ -105,7 +151,7 @@ public sealed class ModuleKISItemBomb : ModuleKISItem,
   public void OnGUI() {
     if (showSetup && !activated) {
       GUI.skin = HighLogic.Skin;
-      guiWindowPos = GUILayout.Window(GetInstanceID(), guiWindowPos, GuiSetup, "Explosive - Setup");
+      guiWindowPos = GUILayout.Window(GetInstanceID(), guiWindowPos, GuiSetup, SetupWindowTitle);
     }
   }
   #endregion
@@ -114,8 +160,9 @@ public sealed class ModuleKISItemBomb : ModuleKISItem,
   void GuiSetup(int windowID) {
     GUIStyle centeredStyle = GUI.skin.GetStyle("Label");
     centeredStyle.alignment = TextAnchor.MiddleCenter;
+    centeredStyle.wordWrap = false;
     // TIMER
-    GUILayout.Label("Timer", centeredStyle, GUILayout.Width(200));
+    GUILayout.Label(TimerSettingsSectionTxt, centeredStyle);
     GUILayout.BeginHorizontal();
     if (GUILayout.Button(" -- ", GUILayout.Width(30))) {
       if (delay > 10) {
@@ -127,7 +174,8 @@ public sealed class ModuleKISItemBomb : ModuleKISItem,
         delay--;
       }
     }
-    GUILayout.Label(delay + " s", centeredStyle, GUILayout.Width(80));
+    GUILayout.Label(
+        TimerDelayInSecondsTxt.Format((int)delay), centeredStyle, GUILayout.ExpandWidth(true));
     if (GUILayout.Button(" + ", GUILayout.Width(30))) {
       delay++;
     }
@@ -139,7 +187,7 @@ public sealed class ModuleKISItemBomb : ModuleKISItem,
     GUILayout.Space(5);
 
     // Explosion radius
-    GUILayout.Label("Explosion radius", centeredStyle, GUILayout.Width(200));
+    GUILayout.Label(RadiusSettingsSectionTxt, centeredStyle);
     GUILayout.BeginHorizontal();
     if (GUILayout.Button(" -- ", GUILayout.Width(30))) {
       if (radius > 1f) {
@@ -151,7 +199,7 @@ public sealed class ModuleKISItemBomb : ModuleKISItem,
         radius = radius - 0.5f;
       }
     }
-    GUILayout.Label(radius + " / " + maxRadius + " m", centeredStyle, GUILayout.Width(80));
+    GUILayout.Label(ExplosionRadiusTxt.Format(radius, maxRadius), centeredStyle);
     if (GUILayout.Button(" + ", GUILayout.Width(30))) {
       if ((radius + 0.5f) <= maxRadius) {
         radius = radius + 0.5f;
@@ -164,10 +212,10 @@ public sealed class ModuleKISItemBomb : ModuleKISItem,
     }
     GUILayout.EndHorizontal();
 
-    if (GUILayout.Button(" ! Activate !")) {
+    if (GUILayout.Button(ActivateExplosionDialogTxt)) {
       Activate();
     }
-    if (GUILayout.Button("Close")) {
+    if (GUILayout.Button(CloseSetupDialogTxt)) {
       showSetup = false;
     }
     GUI.DragWindow();
@@ -175,8 +223,11 @@ public sealed class ModuleKISItemBomb : ModuleKISItem,
   #endregion
 
   #region KSP events and actions
-  [KSPEvent(name = "Activate", active = true, guiActive = false, guiActiveUnfocused = true,
-            guiName = "Activate")]
+  [KSPEvent(guiActiveUnfocused = true)]
+  [LocalizableItem(
+      tag = "#kisLOC_05009",
+      defaultTemplate = "Activate",
+      description = "The name of the context menu item to activate the bomb.")]
   public void Activate() {
     if (!activated) {
       activated = true;
@@ -187,11 +238,14 @@ public sealed class ModuleKISItemBomb : ModuleKISItem,
     }
   }
 
-  [KSPEvent(name = "Setup", active = true, guiActive = false, guiActiveUnfocused = true,
-            guiName = "Setup")]
+  [KSPEvent(guiActiveUnfocused = true)]
+  [LocalizableItem(
+      tag = "#kisLOC_05010",
+      defaultTemplate = "Setup",
+      description = "The name of the context menu item to open the bomb GUI setup window.")]
   public void Setup() {
     guiWindowPos =
-        new Rect(Input.mousePosition.x, (Screen.height - Input.mousePosition.y), 200, 100);
+        new Rect(Input.mousePosition.x, (Screen.height - Input.mousePosition.y), 0, 0);
     showSetup = !showSetup;
   }
   #endregion
