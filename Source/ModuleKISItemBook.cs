@@ -12,9 +12,51 @@ using UnityEngine;
 
 namespace KIS {
 
+// Next localization ID: #kisLOC_07007.
 public sealed class ModuleKISItemBook: ModuleKISItem,
     // KSPDEV sugar interfaces.
     IPartModule {
+
+  #region Localizable GUI strings.
+  static readonly Message ModuleTitleInfo = new Message(
+      "#kisLOC_07000",
+      defaultTemplate: "KIS Guide",
+      description: "The title of the module to present in the editor details window.");
+  
+  static readonly Message PrimaryBookField = new Message(
+      "#kisLOC_07001",
+      defaultTemplate: "KIS for Dummers",
+      description: "The info message to present in the editor's details window to designate the"
+      + " fact that this item is for the learning purposes only.");
+
+  static readonly Message ReaderWindowTitle = new Message(
+      "#kisLOC_07002",
+      defaultTemplate: "Reader",
+      description: "The title for the window that shows the guide pages.");
+
+  static readonly Message PreviousPageBtn = new Message(
+      "#kisLOC_07003",
+      defaultTemplate: "Previous page",
+      description: "The caption on the button that navigates to the previous page.");
+
+  static readonly Message NextPageBtn = new Message(
+      "#kisLOC_07004",
+      defaultTemplate: "Next page",
+      description: "The caption on the button that navigates to the next page.");
+
+  static readonly Message CloseBtn = new Message(
+      "#kisLOC_07005",
+      defaultTemplate: "Close",
+      description: "The caption on the button that closes the guide window.");
+
+  static readonly Message<int, int> CurrentPageTxt = new Message<int, int>(
+      "#kisLOC_07006",
+      defaultTemplate: "Page <<1>> / <<2>>",
+      description: "The string in the reader window that displays the current page number."
+      + "\nArgument <<1>> is the number of the current page."
+      + "\nArgument <<2>> is the total number of the pages.");
+  #endregion
+
   #region Part's config fields
   [KSPField]
   public int pageWidth = 800;
@@ -36,6 +78,13 @@ public sealed class ModuleKISItemBook: ModuleKISItem,
   Texture2D pageTexture;
   Rect guiWindowPos;
   KIS_Item currentItem;
+  #endregion
+
+  #region PartModule overrides
+  /// <inheritdoc/>
+  public override string GetModuleDisplayName() {
+    return ModuleTitleInfo;
+  }
   #endregion
 
   #region ModuleKISItem overrides
@@ -62,8 +111,17 @@ public sealed class ModuleKISItemBook: ModuleKISItem,
     if (showPage) {
       GUI.skin = HighLogic.Skin;
       currentItem = item;
-      guiWindowPos = GUILayout.Window(GetInstanceID(), guiWindowPos, GuiReader, "Reader");
+      guiWindowPos = GUILayout.Window(GetInstanceID(), guiWindowPos, GuiReader, ReaderWindowTitle);
     }
+  }
+  #endregion
+  
+  #region Inheritable & customization methods
+  /// <inheritdoc/>
+  protected override IEnumerable<string> GetPrimaryFieldInfo() {
+    return base.GetPrimaryFieldInfo().Concat(new[] {
+        PrimaryBookField.Format(),
+    });
   }
   #endregion
 
@@ -74,15 +132,15 @@ public sealed class ModuleKISItemBook: ModuleKISItem,
     GUI.DrawTexture(textureRect, pageTexture, ScaleMode.ScaleToFit);
           
     GUILayout.BeginHorizontal();
-    if (GUILayout.Button("Previous page")) {
+    if (GUILayout.Button(PreviousPageBtn)) {
       if ((pageIndex - 1) >= 0) {
         pageIndex = pageIndex - 1;
         pageTexture = GameDatabase.Instance.GetTexture(pageList[pageIndex], false);
         UISoundPlayer.instance.Play(bookPageSndPath);
       }
     }
-    GUILayout.Label("Page " + (pageIndex + 1) + " / " + pageTotal);
-    if (GUILayout.Button("Next page")) {
+    GUILayout.Label(CurrentPageTxt.Format(pageIndex + 1, pageTotal));
+    if (GUILayout.Button(NextPageBtn)) {
       if ((pageIndex + 1) < pageList.Count) {
         pageIndex = pageIndex + 1;
         pageTexture = GameDatabase.Instance.GetTexture(pageList[pageIndex], false);
@@ -91,7 +149,7 @@ public sealed class ModuleKISItemBook: ModuleKISItem,
     }
     GUILayout.EndHorizontal();
 
-    if (GUILayout.Button("Close")) {
+    if (GUILayout.Button(CloseBtn)) {
       showPage = false;
       UISoundPlayer.instance.Play(bookCloseSndPath);
     }

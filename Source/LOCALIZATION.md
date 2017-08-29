@@ -24,5 +24,6 @@ not use the same namespace as the parent. No modules are allowed to define own v
 | ModuleKISItemAttachTool | 4      | #kisLOC_04000   | #kisLOC_04999 |
 | ModuleKISItemBomb       | 5      | #kisLOC_05000   | #kisLOC_05999 |
 | ModuleKISItem           | 6      | #kisLOC_06000   | #kisLOC_06999 |
+| ModuleKISItemBook       | 7      | #kisLOC_07000   | #kisLOC_07999 |
 | Specail classes         | 99     | #kisLOC_99000   | #kisLOC_99999 |
-| _Next available value_  | 7      | #kasLOC_01000   | #kisLOC_01999 |
+| _Next available value_  | 8      | #kasLOC_01000   | #kisLOC_01999 |
