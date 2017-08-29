@@ -15,7 +15,7 @@ using UnityEngine;
 
 namespace KIS {
 
-// Next localization ID: #kisLOC_05011.
+// Next localization ID: #kisLOC_05012.
 public sealed class ModuleKISItemBomb : ModuleKISItem,
     // KSPDEV sugar interfaces.
     IHasGUI, IPartModule {
@@ -71,6 +71,13 @@ public sealed class ModuleKISItemBomb : ModuleKISItem,
       defaultTemplate: "Close",
       description: "The caption on the button that closes the setup menu without starting the"
       + " timer");
+
+  Message<int> TimeToEscapeMsg = new Message<int>(
+      "#kisLOC_05011",
+      defaultTemplate: "You have <<1>> seconds to escape!",
+      description: "The mesasge to display when the bomb is activated. It's show nonly once and"
+      + " doesn't update as the bomb is ticking."
+      + "\nArgument <<1>> is the timer setting in seconds.");
   #endregion
 
   #region Part's config fields
@@ -109,6 +116,7 @@ public sealed class ModuleKISItemBomb : ModuleKISItem,
       sndTimeLoop.Play();
       PartModuleUtils.SetupEvent(this, ActivateEvent, x => x.active = false);
       PartModuleUtils.SetupEvent(this, SetupEvent, x => x.active = false);
+      ScreenMessaging.ShowPriorityScreenMessage(TimeToEscapeMsg.Format((int)delay));
     }
   }
 
