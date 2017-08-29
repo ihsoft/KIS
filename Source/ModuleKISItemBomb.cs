@@ -129,13 +129,13 @@ public sealed class ModuleKISItemBomb : ModuleKISItem,
       if (delay < 0) {
         sndTimeStart.Stop();
         sndTimeLoop.Stop();
-        Explode(part.transform.position, radius);
+        Explode(part.transform.position);
       }
     }
   }
   #endregion
 
-  public void Explode(Vector3 pos, float radius) {
+  void Explode(Vector3 pos) {
     var nearestColliders = new List<Collider>(Physics.OverlapSphere(pos, radius, 557059));
     foreach (var col in nearestColliders) {
       // Check if if the collider have a rigidbody
