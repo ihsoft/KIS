@@ -85,6 +85,7 @@ public sealed class ModuleKISItemBomb : ModuleKISItem,
   public string timeEndSndPath = "KIS/Sounds/timeBombEnd";
   #endregion
 
+  #region Local fields
   AudioSource sndTimeStart;
   AudioSource sndTimeLoop;
   AudioSource sndTimeEnd;
@@ -92,6 +93,35 @@ public sealed class ModuleKISItemBomb : ModuleKISItem,
   bool activated;
   bool showSetup;
   Rect guiWindowPos;
+  #endregion
+
+  #region KSP events and actions
+  [KSPEvent(guiActiveUnfocused = true)]
+  [LocalizableItem(
+      tag = "#kisLOC_05009",
+      defaultTemplate = "Activate",
+      description = "The name of the context menu item to activate the bomb.")]
+  public void ActivateEvent() {
+    if (!activated) {
+      activated = true;
+      sndTimeStart.Play();
+      sndTimeLoop.Play();
+      PartModuleUtils.SetupEvent(this, ActivateEvent, x => x.active = false);
+      PartModuleUtils.SetupEvent(this, SetupEvent, x => x.active = false);
+    }
+  }
+
+  [KSPEvent(guiActiveUnfocused = true)]
+  [LocalizableItem(
+      tag = "#kisLOC_05010",
+      defaultTemplate = "Setup",
+      description = "The name of the context menu item to open the bomb GUI setup window.")]
+  public void SetupEvent() {
+    guiWindowPos =
+        new Rect(Input.mousePosition.x, (Screen.height - Input.mousePosition.y), 0, 0);
+    showSetup = !showSetup;
+  }
+  #endregion
 
   #region PartModule overrides
   /// <inheritdoc/>
@@ -135,24 +165,6 @@ public sealed class ModuleKISItemBomb : ModuleKISItem,
   }
   #endregion
 
-  void Explode(Vector3 pos) {
-    var nearestColliders = new List<Collider>(Physics.OverlapSphere(pos, radius, 557059));
-    foreach (var col in nearestColliders) {
-      // Check if if the collider have a rigidbody
-      if (!col.attachedRigidbody) {
-        continue;
-      }
-      // Check if it's a part
-      Part p = col.attachedRigidbody.GetComponent<Part>();
-      if (!p) {
-        continue;
-      }
-      p.explosionPotential = radius;
-      p.explode();
-      p.Die();
-    }
-  }
-
   #region IHasGUI implementation
   /// <inheritdoc/>
   public void OnGUI() {
@@ -160,6 +172,15 @@ public sealed class ModuleKISItemBomb : ModuleKISItem,
       GUI.skin = HighLogic.Skin;
       guiWindowPos = GUILayout.Window(GetInstanceID(), guiWindowPos, GuiSetup, SetupWindowTitle);
     }
+  }
+  #endregion
+
+  #region Inheritable & customization methods
+  /// <inheritdoc/>
+  protected override IEnumerable<string> GetParamInfo() {
+    return base.GetParamInfo().Concat(new[] {
+        ExplosionRadiusInfo.Format(maxRadius),
+    });
   }
   #endregion
 
@@ -227,42 +248,23 @@ public sealed class ModuleKISItemBomb : ModuleKISItem,
     }
     GUI.DragWindow();
   }
-  #endregion
 
-  #region KSP events and actions
-  [KSPEvent(guiActiveUnfocused = true)]
-  [LocalizableItem(
-      tag = "#kisLOC_05009",
-      defaultTemplate = "Activate",
-      description = "The name of the context menu item to activate the bomb.")]
-  public void ActivateEvent() {
-    if (!activated) {
-      activated = true;
-      sndTimeStart.Play();
-      sndTimeLoop.Play();
-      PartModuleUtils.SetupEvent(this, ActivateEvent, x => x.active = false);
-      PartModuleUtils.SetupEvent(this, SetupEvent, x => x.active = false);
+  void Explode(Vector3 pos) {
+    var nearestColliders = new List<Collider>(Physics.OverlapSphere(pos, radius, 557059));
+    foreach (var col in nearestColliders) {
+      // Check if if the collider have a rigidbody
+      if (!col.attachedRigidbody) {
+        continue;
+      }
+      // Check if it's a part
+      Part p = col.attachedRigidbody.GetComponent<Part>();
+      if (!p) {
+        continue;
+      }
+      p.explosionPotential = radius;
+      p.explode();
+      p.Die();
     }
-  }
-
-  [KSPEvent(guiActiveUnfocused = true)]
-  [LocalizableItem(
-      tag = "#kisLOC_05010",
-      defaultTemplate = "Setup",
-      description = "The name of the context menu item to open the bomb GUI setup window.")]
-  public void SetupEvent() {
-    guiWindowPos =
-        new Rect(Input.mousePosition.x, (Screen.height - Input.mousePosition.y), 0, 0);
-    showSetup = !showSetup;
-  }
-  #endregion
-
-  #region Inheritable & customization methods
-  /// <inheritdoc/>
-  protected override IEnumerable<string> GetParamInfo() {
-    return base.GetParamInfo().Concat(new[] {
-        ExplosionRadiusInfo.Format(maxRadius),
-    });
   }
   #endregion
 }
