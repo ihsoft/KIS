@@ -172,12 +172,12 @@ public sealed class ModuleKISItemBomb : ModuleKISItem,
     }
     GUILayout.Label(radius + " / " + maxRadius + " m", centeredStyle, GUILayout.Width(80));
     if (GUILayout.Button(" + ", GUILayout.Width(30))) {
-      if ((radius + 0.5f) < maxRadius) {
+      if ((radius + 0.5f) <= maxRadius) {
         radius = radius + 0.5f;
       }
     }
     if (GUILayout.Button(" ++ ", GUILayout.Width(30))) {
-      if ((radius + 1f) < maxRadius) {
+      if ((radius + 1f) <= maxRadius) {
         radius = radius + 1f;
       }
     }
