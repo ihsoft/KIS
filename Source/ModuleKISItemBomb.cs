@@ -30,8 +30,6 @@ public sealed class ModuleKISItemBomb : ModuleKISItem,
   [KSPField]
   public float maxRadius = 10f;
   [KSPField]
-  public string activateText = "Activate";
-  [KSPField]
   public string timeStartSndPath = "KIS/Sounds/timeBombStart";
   [KSPField]
   public string timeLoopSndPath = "KIS/Sounds/timeBombLoop";
@@ -73,7 +71,6 @@ public sealed class ModuleKISItemBomb : ModuleKISItem,
     if (state == StartState.Editor || state == StartState.None) {
       return;
     }
-    Events["Activate"].guiName = activateText;
     KIS_Shared.createFXSound(this.part, fxSndTimeStart, timeStartSndPath, false);
     KIS_Shared.createFXSound(this.part, fxSndTimeLoop, timeLoopSndPath, true);
     KIS_Shared.createFXSound(this.part, fxSndTimeEnd, timeEndSndPath, false);
