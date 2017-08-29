@@ -5,6 +5,7 @@
 
 using KSPDev.GUIUtils;
 using KSPDev.PartUtils;
+using KSPDev.SoundsUtils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -81,9 +82,9 @@ public sealed class ModuleKISItemBomb : ModuleKISItem,
   [KSPField]
   public string timeEndSndPath = "KIS/Sounds/timeBombEnd";
 
-  public FXGroup fxSndTimeStart;
-  public FXGroup fxSndTimeLoop;
-  public FXGroup fxSndTimeEnd;
+  AudioSource sndTimeStart;
+  AudioSource sndTimeLoop;
+  AudioSource sndTimeEnd;
   float radius = 10f;
   bool activated;
   bool showSetup;
@@ -101,9 +102,9 @@ public sealed class ModuleKISItemBomb : ModuleKISItem,
     if (state == StartState.Editor || state == StartState.None) {
       return;
     }
-    KIS_Shared.createFXSound(this.part, fxSndTimeStart, timeStartSndPath, false);
-    KIS_Shared.createFXSound(this.part, fxSndTimeLoop, timeLoopSndPath, true);
-    KIS_Shared.createFXSound(this.part, fxSndTimeEnd, timeEndSndPath, false);
+    sndTimeStart = SpatialSounds.Create3dSound(gameObject, timeStartSndPath);
+    sndTimeEnd = SpatialSounds.Create3dSound(gameObject, timeEndSndPath);
+    sndTimeLoop = SpatialSounds.Create3dSound(gameObject, timeLoopSndPath, loop: true);
   }
 
   public override void OnUpdate() {
@@ -117,12 +118,12 @@ public sealed class ModuleKISItemBomb : ModuleKISItem,
     }
     if (activated) {
       delay -= TimeWarp.deltaTime;
-      if (delay < 1 && !fxSndTimeEnd.audio.isPlaying) {
-        fxSndTimeEnd.audio.Play();
+      if (delay < 1 && !sndTimeEnd.isPlaying) {
+        sndTimeEnd.Play();
       }
       if (delay < 0) {
-        fxSndTimeStart.audio.Stop();
-        fxSndTimeLoop.audio.Stop();
+        sndTimeStart.Stop();
+        sndTimeLoop.Stop();
         Explode(part.transform.position, radius);
       }
     }
@@ -231,8 +232,8 @@ public sealed class ModuleKISItemBomb : ModuleKISItem,
   public void Activate() {
     if (!activated) {
       activated = true;
-      fxSndTimeStart.audio.Play();
-      fxSndTimeLoop.audio.Play();
+      sndTimeStart.Play();
+      sndTimeLoop.Play();
       PartModuleUtils.SetupEvent(this, Activate, x => x.active = false);
       PartModuleUtils.SetupEvent(this, Setup, x => x.active = false);
     }
