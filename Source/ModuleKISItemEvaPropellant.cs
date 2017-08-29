@@ -19,14 +19,17 @@ public class ModuleKISItemEvaPropellant : ModuleKISItem {
   protected readonly Message EvaPackRefueledMsg = "EVA pack fully refueled";
   #endregion
 
+  #region Part's config fields
   /// <summary>Sound to play when refuel operation succeeded.</summary>
   [KSPField]
   public string refuelSndPath = "KIS/Sounds/refuelEva";
+  #endregion
 
   /// <summary>Name of the propellant resource in the canister part.</summary>
   /// <remarks>It dopesn't need to match EVA pack propellant name.</remarks>
   public const string EvaPropellantResourceName = "EVA Propellant";
 
+  #region ModuleKISItem overrides
   /// <inheritdoc/>
   public override void OnItemUse(KIS_Item item, KIS_Item.UseFrom useFrom) {
     if (useFrom != KIS_Item.UseFrom.KeyUp) {
@@ -37,7 +40,9 @@ public class ModuleKISItemEvaPropellant : ModuleKISItem {
       }
     }
   }
+  #endregion
 
+  #region Inheritable & customization methods
   /// <summary>Fills up canister to the maximum capacity.</summary>
   /// <param name="item">Item to refill.</param>
   protected virtual void RefillCanister(KIS_Item item) {
@@ -66,8 +71,7 @@ public class ModuleKISItemEvaPropellant : ModuleKISItem {
         item.SetResource(EvaPropellantResourceName, canisterFuelResource.amount - canRefuel);
         evaFuelResource.amount += canRefuel;
         if (canRefuel < needsFuel) {
-          ScreenMessaging.ShowPriorityScreenMessage(
-            NotEnoughPropellantMsg);
+          ScreenMessaging.ShowPriorityScreenMessage(NotEnoughPropellantMsg);
         } else {
           ScreenMessaging.ShowPriorityScreenMessage(EvaPackRefueledMsg);
         }
@@ -82,6 +86,7 @@ public class ModuleKISItemEvaPropellant : ModuleKISItem {
   protected static KIS_Item.ResourceInfo GetCanisterFuelResource(KIS_Item item) {
     return item.GetResources().First(x => x.resourceName == EvaPropellantResourceName);
   }
+  #endregion
 }
 
 }  // namespace
