@@ -201,22 +201,22 @@ public sealed class ModuleKISItemBomb : ModuleKISItem,
     // TIMER
     GUILayout.Label(TimerSettingsSectionTxt, centeredStyle);
     using (new GUILayout.HorizontalScope()) {
-      if (GUILayout.Button(" -- ", GUILayout.Width(30))) {
+      if (GUILayout.Button("--", GUILayout.Width(30))) {
         if (delay > 10) {
           delay = delay - 10;
         }
       }
-      if (GUILayout.Button(" - ", GUILayout.Width(30))) {
+      if (GUILayout.Button("-", GUILayout.Width(30))) {
         if (delay > 0) {
           delay--;
         }
       }
       GUILayout.Label(
           TimerDelayInSecondsTxt.Format((int)delay), centeredStyle, GUILayout.ExpandWidth(true));
-      if (GUILayout.Button(" + ", GUILayout.Width(30))) {
+      if (GUILayout.Button("+", GUILayout.Width(30))) {
         delay++;
       }
-      if (GUILayout.Button(" ++ ", GUILayout.Width(30))) {
+      if (GUILayout.Button("++", GUILayout.Width(30))) {
         delay = delay + 10;
       }
     }
