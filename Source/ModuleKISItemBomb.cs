@@ -122,7 +122,7 @@ public sealed class ModuleKISItemBomb : ModuleKISItem,
   #region IHasGUI implementation
   /// <inheritdoc/>
   public void OnGUI() {
-    if (showSetup) {
+    if (showSetup && !activated) {
       GUI.skin = HighLogic.Skin;
       guiWindowPos = GUILayout.Window(GetInstanceID(), guiWindowPos, GuiSetup, "Explosive - Setup");
     }
@@ -201,7 +201,8 @@ public sealed class ModuleKISItemBomb : ModuleKISItem,
       activated = true;
       fxSndTimeStart.audio.Play();
       fxSndTimeLoop.audio.Play();
-      Events["Activate"].guiActiveUnfocused = false;
+      PartModuleUtils.SetupEvent(this, Activate, x => x.active = false);
+      PartModuleUtils.SetupEvent(this, Setup, x => x.active = false);
     }
   }
 
