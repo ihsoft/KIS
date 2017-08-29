@@ -116,7 +116,7 @@ public sealed class ModuleKISItemBomb : ModuleKISItem,
     if (showSetup) {
       var distToPart = Vector3.Distance(
           FlightGlobals.ActiveVessel.transform.position, part.transform.position);
-      var setupEvent = PartModuleUtils.GetEvent(this, Setup);
+      var setupEvent = PartModuleUtils.GetEvent(this, SetupEvent);
       if (setupEvent == null || distToPart > setupEvent.unfocusedRange) {
         showSetup = false;
       }
@@ -220,7 +220,7 @@ public sealed class ModuleKISItemBomb : ModuleKISItem,
     }
 
     if (GUILayout.Button(ActivateExplosionDialogTxt)) {
-      Activate();
+      ActivateEvent();
     }
     if (GUILayout.Button(CloseSetupDialogTxt)) {
       showSetup = false;
@@ -235,13 +235,13 @@ public sealed class ModuleKISItemBomb : ModuleKISItem,
       tag = "#kisLOC_05009",
       defaultTemplate = "Activate",
       description = "The name of the context menu item to activate the bomb.")]
-  public void Activate() {
+  public void ActivateEvent() {
     if (!activated) {
       activated = true;
       sndTimeStart.Play();
       sndTimeLoop.Play();
-      PartModuleUtils.SetupEvent(this, Activate, x => x.active = false);
-      PartModuleUtils.SetupEvent(this, Setup, x => x.active = false);
+      PartModuleUtils.SetupEvent(this, ActivateEvent, x => x.active = false);
+      PartModuleUtils.SetupEvent(this, SetupEvent, x => x.active = false);
     }
   }
 
@@ -250,7 +250,7 @@ public sealed class ModuleKISItemBomb : ModuleKISItem,
       tag = "#kisLOC_05010",
       defaultTemplate = "Setup",
       description = "The name of the context menu item to open the bomb GUI setup window.")]
-  public void Setup() {
+  public void SetupEvent() {
     guiWindowPos =
         new Rect(Input.mousePosition.x, (Screen.height - Input.mousePosition.y), 0, 0);
     showSetup = !showSetup;
