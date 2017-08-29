@@ -79,21 +79,21 @@ public sealed class ModuleKISItemBomb : ModuleKISItem,
   public override void OnUpdate() {
     base.OnUpdate();
     if (showSetup) {
-      float distToPart = Vector3.Distance(FlightGlobals.ActiveVessel.transform.position,
-                                          this.part.transform.position);
+      var distToPart = Vector3.Distance(FlightGlobals.ActiveVessel.transform.position,
+                                        part.transform.position);
       if (distToPart > 2) {
         showSetup = false;
       }
     }
     if (activated) {
-      delay += -TimeWarp.deltaTime;
+      delay -= TimeWarp.deltaTime;
       if (delay < 1 && !fxSndTimeEnd.audio.isPlaying) {
         fxSndTimeEnd.audio.Play();
       }
       if (delay < 0) {
         fxSndTimeStart.audio.Stop();
         fxSndTimeLoop.audio.Stop();
-        Explode(this.part.transform.position, radius);
+        Explode(part.transform.position, radius);
       }
     }
   }
