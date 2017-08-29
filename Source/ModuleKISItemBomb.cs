@@ -4,19 +4,18 @@
 // License: Restricted
 
 using KSPDev.GUIUtils;
-using KSPDev.KSPInterfaces;
+using KSPDev.PartUtils;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace KIS {
 
 // Next localization ID: #kisLOC_05001.
 public sealed class ModuleKISItemBomb : ModuleKISItem,
-    // KSP interfaces.
-    IModuleInfo,
     // KSPDEV sugar interfaces.
-    IKSPDevModuleInfo, IHasGUI {
+    IHasGUI {
 
   #region Localizable GUI strings.
   static readonly Message ModuleTitleInfo = new Message(
@@ -44,25 +43,10 @@ public sealed class ModuleKISItemBomb : ModuleKISItem,
   bool showSetup;
   public Rect guiWindowPos;
 
-  #region IModuleInfo implementation
+  #region ModuleKISItem overrides
   /// <inheritdoc/>
-  public string GetModuleTitle() {
+  public override string GetModuleTitle() {
     return ModuleTitleInfo;
-  }
-
-  /// <inheritdoc/>
-  public Callback<Rect> GetDrawModulePanelCallback() {
-    return null;
-  }
-
-  /// <inheritdoc/>
-  public string GetPrimaryField() {
-    return ExplosionRadiusInfo.Format(maxRadius);
-  }
-
-  /// <inheritdoc/>
-  public override string GetInfo() {
-    return ExplosionRadiusInfo.Format(maxRadius);
   }
   #endregion
 
@@ -209,6 +193,15 @@ public sealed class ModuleKISItemBomb : ModuleKISItem,
     guiWindowPos =
         new Rect(Input.mousePosition.x, (Screen.height - Input.mousePosition.y), 200, 100);
     showSetup = !showSetup;
+  }
+  #endregion
+
+  #region Inheritable & customization methods
+  /// <inheritdoc/>
+  protected override IEnumerable<string> GetParamInfo() {
+    return base.GetParamInfo().Concat(new[] {
+        ExplosionRadiusInfo.Format(maxRadius),
+    });
   }
   #endregion
 }
