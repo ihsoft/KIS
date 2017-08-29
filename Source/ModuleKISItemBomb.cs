@@ -114,9 +114,10 @@ public sealed class ModuleKISItemBomb : ModuleKISItem,
   public override void OnUpdate() {
     base.OnUpdate();
     if (showSetup) {
-      var distToPart = Vector3.Distance(FlightGlobals.ActiveVessel.transform.position,
-                                        part.transform.position);
-      if (distToPart > 2) {
+      var distToPart = Vector3.Distance(
+          FlightGlobals.ActiveVessel.transform.position, part.transform.position);
+      var setupEvent = PartModuleUtils.GetEvent(this, Setup);
+      if (setupEvent == null || distToPart > setupEvent.unfocusedRange) {
         showSetup = false;
       }
     }
