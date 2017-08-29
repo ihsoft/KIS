@@ -4,6 +4,7 @@
 // License: Public Domain
 
 using KSPDev.GUIUtils;
+using KSPDev.ResourceUtils;
 using System;
 using System.Linq;
 
@@ -54,10 +55,6 @@ public class ModuleKISItemEvaPropellant : ModuleKISItem {
   public string refuelSndPath = "KIS/Sounds/refuelEva";
   #endregion
 
-  /// <summary>Name of the propellant resource in the canister part.</summary>
-  /// <remarks>It dopesn't need to match EVA pack propellant name.</remarks>
-  public const string EvaPropellantResourceName = "EVA Propellant";
-
   #region PartModule overrides
   /// <inheritdoc/>
   public override string GetModuleDisplayName() {
@@ -82,7 +79,7 @@ public class ModuleKISItemEvaPropellant : ModuleKISItem {
   /// <summary>Fills up canister to the maximum capacity.</summary>
   /// <param name="item">Item to refill.</param>
   protected virtual void RefillCanister(KIS_Item item) {
-    item.SetResource(EvaPropellantResourceName, GetCanisterFuelResource(item).maxAmount);
+    item.SetResource(StockResourceNames.EvaPropellant, GetCanisterFuelResource(item).maxAmount);
     ScreenMessaging.ShowPriorityScreenMessage(CanisterRefilledMsg);
     UISoundPlayer.instance.Play(refuelSndPath);
   }
@@ -104,7 +101,7 @@ public class ModuleKISItemEvaPropellant : ModuleKISItem {
         UISounds.PlayBipWrong();
       } else {
         var canRefuel = Math.Min(needsFuel, canisterFuelResource.amount);
-        item.SetResource(EvaPropellantResourceName, canisterFuelResource.amount - canRefuel);
+        item.SetResource(StockResourceNames.EvaPropellant, canisterFuelResource.amount - canRefuel);
         evaFuelResource.amount += canRefuel;
         if (canRefuel < needsFuel) {
           ScreenMessaging.ShowPriorityScreenMessage(NotEnoughPropellantMsg);
@@ -120,7 +117,7 @@ public class ModuleKISItemEvaPropellant : ModuleKISItem {
   /// <param name="item">Item to get resource for.</param>
   /// <returns>Resource description.</returns>
   protected static KIS_Item.ResourceInfo GetCanisterFuelResource(KIS_Item item) {
-    return item.GetResources().First(x => x.resourceName == EvaPropellantResourceName);
+    return item.GetResources().First(x => x.resourceName == StockResourceNames.EvaPropellant);
   }
   #endregion
 }
