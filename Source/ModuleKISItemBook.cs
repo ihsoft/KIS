@@ -23,13 +23,15 @@ public sealed class ModuleKISItemBook: ModuleKISItem {
   [KSPField]
   public string bookCloseSndPath = "KIS/Sounds/bookClose";
 
-  private int pageIndex = 0;
-  private int pageTotal = 0;
-  private List<string> pageList = new List<string>();
-  private bool showPage = false;
-  private Texture2D pageTexture;
-  public Rect guiWindowPos;
-  private KIS_Item currentItem;
+  #region Local fields
+  int pageIndex = 0;
+  int pageTotal = 0;
+  List<string> pageList = new List<string>();
+  bool showPage = false;
+  Texture2D pageTexture;
+  Rect guiWindowPos;
+  KIS_Item currentItem;
+  #endregion
 
   public override void OnItemUse(KIS_Item item, KIS_Item.UseFrom useFrom) {
     pageList.Clear();
@@ -56,7 +58,8 @@ public sealed class ModuleKISItemBook: ModuleKISItem {
     }
   }
 
-  private void GuiReader(int windowID) {
+  #region Local utility methods
+  void GuiReader(int windowID) {
     GUILayout.Box("", GUILayout.Width(pageWidth), GUILayout.Height(pageHeight));
     Rect textureRect = GUILayoutUtility.GetLastRect();
     GUI.DrawTexture(textureRect, pageTexture, ScaleMode.ScaleToFit);
@@ -85,6 +88,7 @@ public sealed class ModuleKISItemBook: ModuleKISItem {
     }
     GUI.DragWindow();
   }
+  #endregion
 }
 
 }  // namespace
