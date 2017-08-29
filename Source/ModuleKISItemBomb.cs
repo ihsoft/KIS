@@ -7,6 +7,7 @@ using KSPDev.GUIUtils;
 using KSPDev.PartUtils;
 using KSPDev.SoundsUtils;
 using KSPDev.KSPInterfaces;
+using KSPDev.ModelUtils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -250,7 +251,8 @@ public sealed class ModuleKISItemBomb : ModuleKISItem,
   }
 
   void Explode(Vector3 pos) {
-    var nearestColliders = new List<Collider>(Physics.OverlapSphere(pos, radius, 557059));
+    var nearestColliders = new List<Collider>(Physics.OverlapSphere(
+        pos, radius, (int)(KspLayerMask.Part | KspLayerMask.Kerbal)));
     foreach (var col in nearestColliders) {
       // Check if if the collider have a rigidbody
       if (!col.attachedRigidbody) {
