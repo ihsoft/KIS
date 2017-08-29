@@ -4,6 +4,7 @@
 // License: Restricted
 
 using KSPDev.GUIUtils;
+using KSPDev.KSPInterfaces;
 using System;
 using System.Linq;
 using System.Collections.Generic;
@@ -11,7 +12,10 @@ using UnityEngine;
 
 namespace KIS {
 
-public sealed class ModuleKISItemBook: ModuleKISItem {
+public sealed class ModuleKISItemBook: ModuleKISItem,
+    // KSPDEV sugar interfaces.
+    IPartModule {
+  #region Part's config fields
   [KSPField]
   public int pageWidth = 800;
   [KSPField]
@@ -22,6 +26,7 @@ public sealed class ModuleKISItemBook: ModuleKISItem {
   public string bookPageSndPath = "KIS/Sounds/bookPage";
   [KSPField]
   public string bookCloseSndPath = "KIS/Sounds/bookClose";
+  #endregion
 
   #region Local fields
   int pageIndex = 0;
@@ -33,9 +38,11 @@ public sealed class ModuleKISItemBook: ModuleKISItem {
   KIS_Item currentItem;
   #endregion
 
+  #region ModuleKISItem overrides
+  /// <inheritdoc/>
   public override void OnItemUse(KIS_Item item, KIS_Item.UseFrom useFrom) {
     pageList.Clear();
-    ConfigNode node = KIS_Shared.GetBaseConfigNode(this);
+    var node = KIS_Shared.GetBaseConfigNode(this);
     foreach (string page in node.GetValues("page")) {
       pageList.Add(page);
     }
@@ -50,6 +57,7 @@ public sealed class ModuleKISItemBook: ModuleKISItem {
     }      
   }
 
+  /// <inheritdoc/>
   public override void OnItemGUI(KIS_Item item) {
     if (showPage) {
       GUI.skin = HighLogic.Skin;
@@ -57,6 +65,7 @@ public sealed class ModuleKISItemBook: ModuleKISItem {
       guiWindowPos = GUILayout.Window(GetInstanceID(), guiWindowPos, GuiReader, "Reader");
     }
   }
+  #endregion
 
   #region Local utility methods
   void GuiReader(int windowID) {
