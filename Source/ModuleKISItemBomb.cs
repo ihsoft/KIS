@@ -6,6 +6,7 @@
 using KSPDev.GUIUtils;
 using KSPDev.PartUtils;
 using KSPDev.SoundsUtils;
+using KSPDev.KSPInterfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,7 +17,7 @@ namespace KIS {
 // Next localization ID: #kisLOC_05011.
 public sealed class ModuleKISItemBomb : ModuleKISItem,
     // KSPDEV sugar interfaces.
-    IHasGUI {
+    IHasGUI, IPartModule {
 
   #region Localizable GUI strings.
   static readonly Message ModuleTitleInfo = new Message(
@@ -71,6 +72,7 @@ public sealed class ModuleKISItemBomb : ModuleKISItem,
       + " timer");
   #endregion
 
+  #region Part's config fields
   [KSPField]
   public float delay = 5f;
   [KSPField]
@@ -81,6 +83,7 @@ public sealed class ModuleKISItemBomb : ModuleKISItem,
   public string timeLoopSndPath = "KIS/Sounds/timeBombLoop";
   [KSPField]
   public string timeEndSndPath = "KIS/Sounds/timeBombEnd";
+  #endregion
 
   AudioSource sndTimeStart;
   AudioSource sndTimeLoop;
@@ -90,13 +93,13 @@ public sealed class ModuleKISItemBomb : ModuleKISItem,
   bool showSetup;
   Rect guiWindowPos;
 
-  #region ModuleKISItem overrides
+  #region PartModule overrides
   /// <inheritdoc/>
-  public override string GetModuleTitle() {
+  public override string GetModuleDisplayName() {
     return ModuleTitleInfo;
   }
-  #endregion
 
+  /// <inheritdoc/>
   public override void OnStart(StartState state) {
     base.OnStart(state);
     if (state == StartState.Editor || state == StartState.None) {
@@ -107,6 +110,7 @@ public sealed class ModuleKISItemBomb : ModuleKISItem,
     sndTimeLoop = SpatialSounds.Create3dSound(gameObject, timeLoopSndPath, loop: true);
   }
 
+  /// <inheritdoc/>
   public override void OnUpdate() {
     base.OnUpdate();
     if (showSetup) {
@@ -128,6 +132,7 @@ public sealed class ModuleKISItemBomb : ModuleKISItem,
       }
     }
   }
+  #endregion
 
   public void Explode(Vector3 pos, float radius) {
     var nearestColliders = new List<Collider>(Physics.OverlapSphere(pos, radius, 557059));
