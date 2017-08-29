@@ -163,54 +163,54 @@ public sealed class ModuleKISItemBomb : ModuleKISItem,
     centeredStyle.wordWrap = false;
     // TIMER
     GUILayout.Label(TimerSettingsSectionTxt, centeredStyle);
-    GUILayout.BeginHorizontal();
-    if (GUILayout.Button(" -- ", GUILayout.Width(30))) {
-      if (delay > 10) {
-        delay = delay - 10;
+    using (new GUILayout.HorizontalScope()) {
+      if (GUILayout.Button(" -- ", GUILayout.Width(30))) {
+        if (delay > 10) {
+          delay = delay - 10;
+        }
+      }
+      if (GUILayout.Button(" - ", GUILayout.Width(30))) {
+        if (delay > 0) {
+          delay--;
+        }
+      }
+      GUILayout.Label(
+          TimerDelayInSecondsTxt.Format((int)delay), centeredStyle, GUILayout.ExpandWidth(true));
+      if (GUILayout.Button(" + ", GUILayout.Width(30))) {
+        delay++;
+      }
+      if (GUILayout.Button(" ++ ", GUILayout.Width(30))) {
+        delay = delay + 10;
       }
     }
-    if (GUILayout.Button(" - ", GUILayout.Width(30))) {
-      if (delay > 0) {
-        delay--;
-      }
-    }
-    GUILayout.Label(
-        TimerDelayInSecondsTxt.Format((int)delay), centeredStyle, GUILayout.ExpandWidth(true));
-    if (GUILayout.Button(" + ", GUILayout.Width(30))) {
-      delay++;
-    }
-    if (GUILayout.Button(" ++ ", GUILayout.Width(30))) {
-      delay = delay + 10;
-    }
-    GUILayout.EndHorizontal();
 
     GUILayout.Space(5);
 
     // Explosion radius
     GUILayout.Label(RadiusSettingsSectionTxt, centeredStyle);
-    GUILayout.BeginHorizontal();
-    if (GUILayout.Button(" -- ", GUILayout.Width(30))) {
-      if (radius > 1f) {
-        radius = radius - 1f;
+    using (new GUILayout.HorizontalScope()) {
+      if (GUILayout.Button(" -- ", GUILayout.Width(30))) {
+        if (radius > 1f) {
+          radius = radius - 1f;
+        }
+      }
+      if (GUILayout.Button(" - ", GUILayout.Width(30))) {
+        if (radius > 0.5f) {
+          radius = radius - 0.5f;
+        }
+      }
+      GUILayout.Label(ExplosionRadiusTxt.Format(radius, maxRadius), centeredStyle);
+      if (GUILayout.Button(" + ", GUILayout.Width(30))) {
+        if ((radius + 0.5f) <= maxRadius) {
+          radius = radius + 0.5f;
+        }
+      }
+      if (GUILayout.Button(" ++ ", GUILayout.Width(30))) {
+        if ((radius + 1f) <= maxRadius) {
+          radius = radius + 1f;
+        }
       }
     }
-    if (GUILayout.Button(" - ", GUILayout.Width(30))) {
-      if (radius > 0.5f) {
-        radius = radius - 0.5f;
-      }
-    }
-    GUILayout.Label(ExplosionRadiusTxt.Format(radius, maxRadius), centeredStyle);
-    if (GUILayout.Button(" + ", GUILayout.Width(30))) {
-      if ((radius + 0.5f) <= maxRadius) {
-        radius = radius + 0.5f;
-      }
-    }
-    if (GUILayout.Button(" ++ ", GUILayout.Width(30))) {
-      if ((radius + 1f) <= maxRadius) {
-        radius = radius + 1f;
-      }
-    }
-    GUILayout.EndHorizontal();
 
     if (GUILayout.Button(ActivateExplosionDialogTxt)) {
       Activate();
