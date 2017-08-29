@@ -9,14 +9,43 @@ using System.Linq;
 
 namespace KIS {
 
+// Next localization ID: kisLOC_08006.
 public class ModuleKISItemEvaPropellant : ModuleKISItem {
   #region Localizable GUI strings
-  protected readonly Message NoNeedToRefillMsg = "EVA tank is full. No need to refill";
-  protected readonly Message CanisterIsEmptyMsg = "The tank is empty! Cannot refuel EVA pack";
-  protected readonly Message CanisterRefilledMsg = "Fuel tank refilled";
-  protected readonly Message NotEnoughPropellantMsg =
-      "Not enough propellant in the tank. EVA pack partially refueled";
-  protected readonly Message EvaPackRefueledMsg = "EVA pack fully refueled";
+  static readonly Message ModuleTitleInfo = new Message(
+      "#kisLOC_08000",
+      defaultTemplate: "KIS Bomb",
+      description: "The title of the module to present in the editor details window.");
+
+  static readonly Message NoNeedToRefillMsg = new Message(
+      "#kisLOC_08001",
+      defaultTemplate: "EVA tank is full. No need to refill",
+      description: "The message to present when the tank is attempted to be refilled, but its'"
+      + " already full.");
+
+  static readonly Message CanisterIsEmptyMsg = new Message(
+      "#kisLOC_08002",
+      defaultTemplate: "The tank is empty! Cannot refuel EVA pack",
+      description: "The message to present when the EVA kerbals has attempted to refill the"
+      + " jetpack, but the tank is empty.");
+
+  static readonly Message CanisterRefilledMsg = new Message(
+      "#kisLOC_08003",
+      defaultTemplate: "Fuel tank refilled",
+      description: "The message to present when a non-full tank has successfully refilled from the"
+      + " pod's resource.");
+
+  static readonly Message NotEnoughPropellantMsg = new Message(
+      "#kisLOC_08004",
+      defaultTemplate: "Not enough propellant in the tank. EVA pack partially refueled",
+      description: "The message to present when the EVA kerbals has attempted to refill the"
+      + " jetpack, but the tank didn't have enough fuel to fill the jetpack to full.");
+
+  static readonly Message EvaPackRefueledMsg = new Message(
+      "#kisLOC_08005",
+      defaultTemplate: "EVA pack fully refueled",
+      description: "The message to present when the EVA kerbals has attempted to refill the"
+      + " jetpack, and the jetpack has successfully refilled to full.");
   #endregion
 
   #region Part's config fields
@@ -28,6 +57,13 @@ public class ModuleKISItemEvaPropellant : ModuleKISItem {
   /// <summary>Name of the propellant resource in the canister part.</summary>
   /// <remarks>It dopesn't need to match EVA pack propellant name.</remarks>
   public const string EvaPropellantResourceName = "EVA Propellant";
+
+  #region PartModule overrides
+  /// <inheritdoc/>
+  public override string GetModuleDisplayName() {
+    return ModuleTitleInfo;
+  }
+  #endregion
 
   #region ModuleKISItem overrides
   /// <inheritdoc/>
