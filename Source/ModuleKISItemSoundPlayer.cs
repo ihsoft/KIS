@@ -62,8 +62,13 @@ public sealed class ModuleKISItemSoundPlayer : ModuleKISItem,
 
   #region ModuleKISItem overrides
   public override void OnItemUse(KIS_Item item, KIS_Item.UseFrom useFrom) {
-    if (useFrom != KIS_Item.UseFrom.KeyUp) {
-      TogglePlayStateEvent();
+    if (useFrom != KIS_Item.UseFrom.KeyUp && item.equippedPart != null) {
+      // Only play if the item is equipped, since we need a real part for this to work.
+      // Multiple modules are not supported!
+      var soundPlayerModule = item.equippedPart.GetComponent<ModuleKISItemSoundPlayer>();
+      if (soundPlayerModule != null) {
+        soundPlayerModule.TogglePlayStateEvent();
+      }
     }
   }
   #endregion
