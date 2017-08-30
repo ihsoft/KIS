@@ -79,7 +79,7 @@ public class ModuleKISItem : PartModule,
 
   static readonly Message AttachesToPartsWithoutToolsInfo = new Message(
       "#kisLOC_06008",
-      defaultTemplate: "Attaches to a part without a tool",
+      defaultTemplate: "Attaches to the parts without a tool",
       description: "The info string to show in the editor to state that the item can be attached"
       + " to another part without a need of any attach tool.");
 
