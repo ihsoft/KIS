@@ -4,6 +4,7 @@
 // License: Restricted
 
 using KSPDev.GUIUtils;
+using KSPDev.KSPInterfaces;
 using KSPDev.SoundsUtils;
 using KSPDev.PartUtils;
 using System;
@@ -15,7 +16,10 @@ namespace KIS {
 
 public class ModuleKISPartMount : PartModule,
     // KSPDev interfaces.
-    IHasContextMenu {
+    IHasContextMenu,
+    // KSPDev sugar interfaces.
+    IPartModule {
+
   #region Part's config fields
   [KSPField]
   public string sndStorePath = "KIS/Sounds/containerMount";
