@@ -42,7 +42,7 @@ public class ModuleKISItemEvaPropellant : ModuleKISItem {
       description: "The message to present when the EVA kerbals has attempted to refill the"
       + " jetpack, but the tank didn't have enough fuel to fill the jetpack to full.");
 
-  static readonly Message EvaPackRefueledMsg = new Message(
+  static readonly Message JetpackRefueledMsg = new Message(
       "#kisLOC_08005",
       defaultTemplate: "EVA pack fully refueled",
       description: "The message to present when the EVA kerbals has attempted to refill the"
@@ -106,7 +106,7 @@ public class ModuleKISItemEvaPropellant : ModuleKISItem {
         if (canRefuel < needsFuel) {
           ScreenMessaging.ShowPriorityScreenMessage(NotEnoughPropellantMsg);
         } else {
-          ScreenMessaging.ShowPriorityScreenMessage(EvaPackRefueledMsg);
+          ScreenMessaging.ShowPriorityScreenMessage(JetpackRefueledMsg);
         }
         UISoundPlayer.instance.Play(refuelSndPath);
       }
