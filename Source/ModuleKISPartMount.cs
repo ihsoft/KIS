@@ -22,6 +22,25 @@ public class ModuleKISPartMount : PartModule {
 
   public FXGroup sndFxStore;
 
+  #region KSP events and actions
+  [KSPEvent(name = "ContextMenuRelease", active = true, guiActive = true, guiActiveUnfocused = true,
+            guiName = "Release")]
+  public void ContextMenuRelease() {
+    foreach (KeyValuePair<AttachNode, List<string>> mount in GetMounts()) {
+      if (mount.Key.attachedPart) {
+        mount.Key.attachedPart.decouple();
+      }
+    }
+  }
+
+  [KSPAction("Release")]
+  public void ActionGroupRelease(KSPActionParam param) {
+    if (!part.packed) {
+      ContextMenuRelease();
+    }
+  }
+  #endregion
+
   #region PartModule overrides
   public override void OnStart(StartState state) {
     base.OnStart(state);
@@ -85,25 +104,6 @@ public class ModuleKISPartMount : PartModule {
       }
     }
     return mounts;
-  }
-  #endregion
-
-  #region KSP events and actions
-  [KSPEvent(name = "ContextMenuRelease", active = true, guiActive = true, guiActiveUnfocused = true,
-            guiName = "Release")]
-  public void ContextMenuRelease() {
-    foreach (KeyValuePair<AttachNode, List<string>> mount in GetMounts()) {
-      if (mount.Key.attachedPart) {
-        mount.Key.attachedPart.decouple();
-      }
-    }
-  }
-
-  [KSPAction("Release")]
-  public void ActionGroupRelease(KSPActionParam param) {
-    if (!part.packed) {
-      ContextMenuRelease();
-    }
   }
   #endregion
 }
