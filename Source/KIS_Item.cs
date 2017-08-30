@@ -5,6 +5,7 @@
 
 using KIS.GUIUtils;
 using KSPDev.GUIUtils;
+using KSPDev.ProcessingUtils;
 using System;
 using System.Linq;
 using System.Collections.Generic;
@@ -532,7 +533,17 @@ public sealed class KIS_Item {
       if (alreadyEquippedPart) {
         Debug.LogFormat("Part {0} already found on eva, use it as the item", availablePart.name);
         equippedPart = alreadyEquippedPart;
-        OnEquippedPartReady(equippedPart);
+        // This magic is copied from the KervalEVA.OnVesselGoOffRails() method.
+        // There must be at least 3 fixed frames delay before updating the colliders.
+        AsyncCall.WaitForPhysics(
+            equippedPart, 3, () => false,
+            failure: () => OnEquippedPartReady(equippedPart));
+        if (equipMode == EquipMode.Part) {
+          // Ensure the part doesn't have rigidbody and is not affected by physics.
+          // The part may not like it.
+          equippedPart.PhysicsSignificance = 1;  // Disable physics on the part.
+          UnityEngine.Object.Destroy(equippedPart.rb);
+        }
       } else {
         Vector3 equipPos = evaTransform.TransformPoint(prefabModule.equipPos);
         Quaternion equipRot = evaTransform.rotation * Quaternion.Euler(prefabModule.equipDir);
