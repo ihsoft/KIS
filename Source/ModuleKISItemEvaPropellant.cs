@@ -1,7 +1,7 @@
-﻿// Kerbal Attachment System
+﻿// Kerbal Inventory System
 // Mod's author: KospY (http://forum.kerbalspaceprogram.com/index.php?/profile/33868-kospy/)
-// Module author: igor.zavoychinskiy@gmail.com
-// License: Public Domain
+// Module authors: KospY, igor.zavoychinskiy@gmail.com
+// License: Restricted
 
 using KSPDev.GUIUtils;
 using KSPDev.ResourceUtils;
