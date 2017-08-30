@@ -27,5 +27,6 @@ not use the same namespace as the parent. No modules are allowed to define own v
 | ModuleKISItemBook          | 7      | #kisLOC_07000   | #kisLOC_07999 |
 | ModuleKISItemEvaPropellant | 8      | #kisLOC_08000   | #kisLOC_08999 |
 | ModuleKISItemSoundPlayer   | 9      | #kisLOC_09000   | #kisLOC_09999 |
+| ModuleKISPartMount         | 10     | #kasLOC_10000   | #kisLOC_10999 |
 | Specail classes            | 99     | #kisLOC_99000   | #kisLOC_99999 |
-| _Next available value_     | 10     | #kasLOC_10000   | #kisLOC_10999 |
+| _Next available value_     | 11     | #kasLOC_11000   | #kisLOC_11999 |

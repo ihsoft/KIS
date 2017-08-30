@@ -14,6 +14,7 @@ using UnityEngine;
 
 namespace KIS {
 
+// Next localization ID: #kasLOC_10002.
 public class ModuleKISPartMount : PartModule,
     // KSPDev interfaces.
     IHasContextMenu,
@@ -32,7 +33,11 @@ public class ModuleKISPartMount : PartModule,
   AudioSource sndAttach;
 
   #region KSP events and actions
-  [KSPEvent(guiActive = true, guiActiveUnfocused = true, guiName = "Release")]
+  [KSPEvent(guiActive = true, guiActiveUnfocused = true)]
+  [LocalizableItem(
+      tag = "#kasLOC_10000",
+      defaultTemplate = "Release",
+      description = "The name of the context menu item to release the mounted part.")]
   public void ReleaseEvent() {
     foreach (KeyValuePair<AttachNode, List<string>> mount in GetMounts()) {
       if (mount.Key.attachedPart) {
@@ -43,6 +48,10 @@ public class ModuleKISPartMount : PartModule,
   }
 
   [KSPAction("Release")]
+  [LocalizableItem(
+      tag = "#kasLOC_10001",
+      defaultTemplate = "Release",
+      description = "The name of the action to release the mounted part.")]
   public void ActionGroupRelease(KSPActionParam param) {
     if (!part.packed) {
       ReleaseEvent();
