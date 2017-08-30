@@ -5,6 +5,7 @@
 
 using KSPDev.GUIUtils;
 using KSPDev.ProcessingUtils;
+using KSPDev.ModelUtils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -291,8 +292,9 @@ sealed class KISAddonPointer : MonoBehaviour {
     if (isRunning) {
       //Cast ray
       Ray ray = FlightCamera.fetch.mainCamera.ScreenPointToRay(Input.mousePosition);
-      var colliderHit =
-          Physics.Raycast(ray, out hit, maxDistance: 500, layerMask: (int)KspLayers.COMMON);
+      var colliderHit = Physics.Raycast(
+          ray, out hit, maxDistance: 500,
+          layerMask: (int)(KspLayerMask.Part | KspLayerMask.Kerbal | KspLayerMask.SurfaceCollider));
       if (!colliderHit) {
         pointerTarget = PointerTarget.Nothing;
         ResetMouseOver();
