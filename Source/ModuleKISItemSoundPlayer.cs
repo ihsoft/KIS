@@ -13,11 +13,25 @@ using UnityEngine;
 
 namespace KIS {
 
+// Next localization ID: #kisLOC_09002.
 public sealed class ModuleKISItemSoundPlayer : ModuleKISItem,
     // KSPDEV interfaces.
     IHasContextMenu,
     // KSPDEV sugar interfaces.
     IPartModule {
+
+  #region Localizable GUI strings.
+  static readonly Message PlayMenuTxt = new Message(
+      "#kisLOC_09000",
+      defaultTemplate: "Play",
+      description: "The name of the context menu item to start the playback.");
+
+  static readonly Message StopMenuTxt = new Message(
+      "#kisLOC_09001",
+      defaultTemplate: "Stop",
+      description: "The name of the context menu item to stop the playback.");
+  #endregion
+
   #region Part's config fields
   [KSPField]
   public string sndPath = "KIS/Sounds/guitar";
@@ -31,6 +45,10 @@ public sealed class ModuleKISItemSoundPlayer : ModuleKISItem,
 
   #region IHasContextMenu implementation
   public void UpdateContextMenu() {
+    PartModuleUtils.SetupEvent(
+        this, TogglePlayStateEvent,
+        x => x.guiName =
+            sndMainTune == null || !sndMainTune.isPlaying ? PlayMenuTxt : StopMenuTxt);
   }
   #endregion
 
