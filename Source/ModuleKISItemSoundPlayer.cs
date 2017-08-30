@@ -41,7 +41,26 @@ public sealed class ModuleKISItemSoundPlayer : ModuleKISItem,
   public bool loop;
   #endregion
 
-  public AudioSource sndMainTune;
+  AudioSource sndMainTune;
+
+  #region KSP events and actions
+  [KSPEvent(guiActive = true, guiActiveUnfocused = true)]
+  public void TogglePlayStateEvent() {
+    if (sndMainTune == null) {
+      sndMainTune = SpatialSounds.Create3dSound(
+          gameObject, sndPath, loop: loop, maxDistance: sndMaxDistance);
+    }
+    if (sndMainTune.isPlaying) {
+      sndMainTune.Stop();
+    } else {
+      sndMainTune.Play();
+      if (!loop) {
+        StartCoroutine(DetectEndOfClip());
+      }
+    }
+    UpdateContextMenu();
+  }
+  #endregion
 
   #region IHasContextMenu implementation
   public void UpdateContextMenu() {
@@ -73,25 +92,6 @@ public sealed class ModuleKISItemSoundPlayer : ModuleKISItem,
   }
   #endregion
   
-  #region KSP events and actions
-  [KSPEvent(guiActive = true, guiActiveUnfocused = true)]
-  public void TogglePlayStateEvent() {
-    if (sndMainTune == null) {
-      sndMainTune = SpatialSounds.Create3dSound(
-          gameObject, sndPath, loop: loop, maxDistance: sndMaxDistance);
-    }
-    if (sndMainTune.isPlaying) {
-      sndMainTune.Stop();
-    } else {
-      sndMainTune.Play();
-      if (!loop) {
-        StartCoroutine(DetectEndOfClip());
-      }
-    }
-    UpdateContextMenu();
-  }
-  #endregion
-
   IEnumerator DetectEndOfClip() {
     yield return new WaitWhile(() => sndMainTune != null && sndMainTune.isPlaying);
     UpdateContextMenu();
