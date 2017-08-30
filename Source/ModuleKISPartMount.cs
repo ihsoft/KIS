@@ -3,7 +3,9 @@
 // Module authors: KospY, igor.zavoychinskiy@gmail.com
 // License: Restricted
 
+using KSPDev.GUIUtils;
 using KSPDev.SoundsUtils;
+using KSPDev.PartUtils;
 using System;
 using System.Linq;
 using System.Collections.Generic;
@@ -11,7 +13,9 @@ using UnityEngine;
 
 namespace KIS {
 
-public class ModuleKISPartMount : PartModule {
+public class ModuleKISPartMount : PartModule,
+    // KSPDev interfaces.
+    IHasContextMenu {
   #region Part's config fields
   [KSPField]
   public string sndStorePath = "KIS/Sounds/containerMount";
@@ -42,22 +46,19 @@ public class ModuleKISPartMount : PartModule {
   }
   #endregion
 
+  #region IHasContextMenu implementation
+  /// <inheritdoc/>
+  public void UpdateContextMenu() {
+    PartModuleUtils.SetupEvent(this, ReleaseEvent, x => x.active = allowRelease);
+    PartModuleUtils.SetupAction(this, ActionGroupRelease, x => x.active = allowRelease);
+  }
+  #endregion
+
   #region PartModule overrides
   /// <inheritdoc/>
   public override void OnStart(StartState state) {
     base.OnStart(state);
-    if (state != StartState.None) {
-      if (allowRelease) {
-        Actions["ActionGroupRelease"].active = true;
-        Events["ContextMenuRelease"].guiActive = true;
-        Events["ContextMenuRelease"].guiActiveUnfocused = true;
-      } else {
-        Actions["ActionGroupRelease"].active = false;
-        Events["ContextMenuRelease"].guiActive = false;
-        Events["ContextMenuRelease"].guiActiveUnfocused = false;
-      }
-    }
-
+    UpdateContextMenu();
     if (HighLogic.LoadedSceneIsFlight) {
       sndAttach = SpatialSounds.Create3dSound(gameObject, sndStorePath, maxDistance: 10);
     }
