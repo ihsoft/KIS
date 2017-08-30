@@ -4,6 +4,7 @@
 // License: Restricted
 
 using KSPDev.GUIUtils;
+using KSPDev.KSPInterfaces;
 using KSPDev.PartUtils;
 using KSPDev.SoundsUtils;
 using System;
@@ -14,7 +15,9 @@ namespace KIS {
 
 public sealed class ModuleKISItemSoundPlayer : ModuleKISItem,
     // KSPDEV interfaces.
-    IHasContextMenu {
+    IHasContextMenu,
+    // KSPDEV sugar interfaces.
+    IPartModule {
   #region Part's config fields
   [KSPField]
   public string sndPath = "KIS/Sounds/guitar";
