@@ -24,12 +24,12 @@ public class ModuleKISPartMount : PartModule {
   AudioSource sndAttach;
 
   #region KSP events and actions
-  [KSPEvent(name = "ContextMenuRelease", active = true, guiActive = true, guiActiveUnfocused = true,
-            guiName = "Release")]
-  public void ContextMenuRelease() {
+  [KSPEvent(guiActive = true, guiActiveUnfocused = true, guiName = "Release")]
+  public void ReleaseEvent() {
     foreach (KeyValuePair<AttachNode, List<string>> mount in GetMounts()) {
       if (mount.Key.attachedPart) {
         mount.Key.attachedPart.decouple();
+        break;
       }
     }
   }
@@ -37,12 +37,13 @@ public class ModuleKISPartMount : PartModule {
   [KSPAction("Release")]
   public void ActionGroupRelease(KSPActionParam param) {
     if (!part.packed) {
-      ContextMenuRelease();
+      ReleaseEvent();
     }
   }
   #endregion
 
   #region PartModule overrides
+  /// <inheritdoc/>
   public override void OnStart(StartState state) {
     base.OnStart(state);
     if (state != StartState.None) {
@@ -57,11 +58,9 @@ public class ModuleKISPartMount : PartModule {
       }
     }
 
-    if (state == StartState.Editor || state == StartState.None) {
-      return;
+    if (HighLogic.LoadedSceneIsFlight) {
+      sndAttach = SpatialSounds.Create3dSound(gameObject, sndStorePath, maxDistance: 10);
     }
-
-    sndAttach = SpatialSounds.Create3dSound(gameObject, sndStorePath, maxDistance: 10);
   }
   #endregion
 
