@@ -4,14 +4,17 @@
 // License: Restricted
 
 using KSPDev.GUIUtils;
+using KSPDev.PartUtils;
 using KSPDev.SoundsUtils;
 using System;
-using System.Linq;
+using System.Collections;
 using UnityEngine;
 
 namespace KIS {
 
-public sealed class ModuleKISItemSoundPlayer : ModuleKISItem {
+public sealed class ModuleKISItemSoundPlayer : ModuleKISItem,
+    // KSPDEV interfaces.
+    IHasContextMenu {
   #region Part's config fields
   [KSPField]
   public string sndPath = "KIS/Sounds/guitar";
@@ -23,33 +26,50 @@ public sealed class ModuleKISItemSoundPlayer : ModuleKISItem {
 
   public AudioSource sndMainTune;
 
+  #region IHasContextMenu implementation
+  public void UpdateContextMenu() {
+  }
+  #endregion
+
+  #region PartModule overrides
+  /// <inheritdoc/>
   public override void OnStart(StartState state) {
     base.OnStart(state);
-    if (state != StartState.None && HighLogic.LoadedSceneIsFlight) {
+    UpdateContextMenu();
+  }
+  #endregion
+
+  #region ModuleKISItem overrides
+  public override void OnItemUse(KIS_Item item, KIS_Item.UseFrom useFrom) {
+    if (useFrom != KIS_Item.UseFrom.KeyUp) {
+      TogglePlayStateEvent();
+    }
+  }
+  #endregion
+  
+  #region KSP events and actions
+  [KSPEvent(guiActive = true, guiActiveUnfocused = true)]
+  public void TogglePlayStateEvent() {
+    if (sndMainTune == null) {
       sndMainTune = SpatialSounds.Create3dSound(
           gameObject, sndPath, loop: loop, maxDistance: sndMaxDistance);
     }
-  }
-
-  public override void OnItemUse(KIS_Item item, KIS_Item.UseFrom useFrom) {
-    if (useFrom != KIS_Item.UseFrom.KeyUp) {
-      if (sndMainTune.isPlaying) {
-        sndMainTune.Stop();
-      } else {
-        sndMainTune.Play();
-      }
-    }
-  }
-
-  [KSPEvent(name = "ContextMenuPlay", guiActiveEditor = false, active = true, guiActive = true,
-            guiActiveUnfocused = true, guiName = "Play")]
-  public void Play() {
     if (sndMainTune.isPlaying) {
       sndMainTune.Stop();
     } else {
       sndMainTune.Play();
+      if (!loop) {
+        StartCoroutine(DetectEndOfClip());
+      }
     }
+    UpdateContextMenu();
   }
+
+  IEnumerator DetectEndOfClip() {
+    yield return new WaitWhile(() => sndMainTune != null && sndMainTune.isPlaying);
+    UpdateContextMenu();
+  }
+  #endregion
 }
 
 }
