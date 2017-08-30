@@ -11,14 +11,18 @@ using UnityEngine;
 namespace KIS {
 
 public class ModuleKISPartMount : PartModule {
+  #region Part's config fields
   [KSPField]
   public string sndStorePath = "KIS/Sounds/containerMount";
   [KSPField]
   public string mountedPartNode = AttachNodeId.Bottom;
   [KSPField]
   public bool allowRelease = true;
+  #endregion
+
   public FXGroup sndFxStore;
 
+  #region PartModule overrides
   public override void OnStart(StartState state) {
     base.OnStart(state);
     if (state != StartState.None) {
@@ -47,7 +51,9 @@ public class ModuleKISPartMount : PartModule {
     sndFxStore.audio.playOnAwake = false;
     sndFxStore.audio.clip = GameDatabase.Instance.GetAudioClip(sndStorePath);
   }
+  #endregion
 
+  #region IPartMount interface candidates
   public bool PartIsMounted(Part mountedPart) {
     foreach (KeyValuePair<AttachNode, List<string>> mount in GetMounts()) {
       if (mount.Key.attachedPart) {
@@ -80,7 +86,9 @@ public class ModuleKISPartMount : PartModule {
     }
     return mounts;
   }
+  #endregion
 
+  #region KSP events and actions
   [KSPEvent(name = "ContextMenuRelease", active = true, guiActive = true, guiActiveUnfocused = true,
             guiName = "Release")]
   public void ContextMenuRelease() {
@@ -93,10 +101,11 @@ public class ModuleKISPartMount : PartModule {
 
   [KSPAction("Release")]
   public void ActionGroupRelease(KSPActionParam param) {
-    if (!this.part.packed) {
+    if (!part.packed) {
       ContextMenuRelease();
     }
   }
+  #endregion
 }
 
 }  // namespace
