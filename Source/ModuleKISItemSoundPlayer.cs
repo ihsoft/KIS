@@ -11,12 +11,15 @@ using UnityEngine;
 namespace KIS {
 
 public sealed class ModuleKISItemSoundPlayer : ModuleKISItem {
+  #region Part's config fields
   [KSPField]
   public string sndPath = "KIS/Sounds/guitar";
   [KSPField]
   public float sndMaxDistance = 10;
-  public bool loop = false;
   public FXGroup sndFx;
+  [KSPField]
+  public bool loop;
+  #endregion
 
   public override void OnStart(StartState state) {
     base.OnStart(state);
