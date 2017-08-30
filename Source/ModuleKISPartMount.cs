@@ -82,7 +82,7 @@ public class ModuleKISPartMount : PartModule {
     foreach (ConfigNode mountNode in node.GetNodes("MOUNT")) {
       if (mountNode.HasValue("attachNode") && mountNode.HasValue("allowedPartName")) {
         string attachNodeName = mountNode.GetValue("attachNode");
-        AttachNode an = this.part.FindAttachNode(attachNodeName);
+        AttachNode an = part.FindAttachNode(attachNodeName);
         if (an == null) {
           Debug.LogErrorFormat("GetMountNodes - Node : {0} not found !", attachNodeName);
           continue;
