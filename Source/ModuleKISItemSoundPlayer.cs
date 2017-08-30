@@ -64,12 +64,12 @@ public sealed class ModuleKISItemSoundPlayer : ModuleKISItem,
     }
     UpdateContextMenu();
   }
+  #endregion
 
   IEnumerator DetectEndOfClip() {
     yield return new WaitWhile(() => sndMainTune != null && sndMainTune.isPlaying);
     UpdateContextMenu();
   }
-  #endregion
 }
 
 }
