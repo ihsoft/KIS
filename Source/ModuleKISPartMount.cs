@@ -3,6 +3,7 @@
 // Module authors: KospY, igor.zavoychinskiy@gmail.com
 // License: Restricted
 
+using KSPDev.SoundsUtils;
 using System;
 using System.Linq;
 using System.Collections.Generic;
@@ -20,7 +21,7 @@ public class ModuleKISPartMount : PartModule {
   public bool allowRelease = true;
   #endregion
 
-  public FXGroup sndFxStore;
+  AudioSource sndAttach;
 
   #region KSP events and actions
   [KSPEvent(name = "ContextMenuRelease", active = true, guiActive = true, guiActiveUnfocused = true,
@@ -60,15 +61,7 @@ public class ModuleKISPartMount : PartModule {
       return;
     }
 
-    sndFxStore.audio = part.gameObject.AddComponent<AudioSource>();
-    sndFxStore.audio.volume = GameSettings.SHIP_VOLUME;
-    sndFxStore.audio.rolloffMode = AudioRolloffMode.Linear;
-    sndFxStore.audio.dopplerLevel = 0f;
-    sndFxStore.audio.spatialBlend = 1f;
-    sndFxStore.audio.maxDistance = 10;
-    sndFxStore.audio.loop = false;
-    sndFxStore.audio.playOnAwake = false;
-    sndFxStore.audio.clip = GameDatabase.Instance.GetAudioClip(sndStorePath);
+    sndAttach = SpatialSounds.Create3dSound(gameObject, sndStorePath, maxDistance: 10);
   }
   #endregion
 
@@ -104,6 +97,10 @@ public class ModuleKISPartMount : PartModule {
       }
     }
     return mounts;
+  }
+
+  public void OnPartMounted() {
+    sndAttach.Play();
   }
   #endregion
 }

@@ -1170,7 +1170,7 @@ sealed class KISAddonPickup : MonoBehaviour {
       }
       ModuleKISPartMount pMount = tgtPart.GetComponent<ModuleKISPartMount>();
       if (pMount) {
-        pMount.sndFxStore.audio.Play();
+        pMount.OnPartMounted();
       }
     }
 
