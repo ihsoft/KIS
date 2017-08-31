@@ -34,7 +34,6 @@ public static class KIS_Shared {
   /// or higher value. Otherwise, the part's highliting will overwrite the output.</remarks>
   public const int HighlighedPartRenderQueue = 4000;  // As of KSP 1.1.1230
 
-  public static string bipWrongSndPath = "KIS/Sounds/bipwrong";
   public delegate void OnPartReady(Part affectedPart);
 
   public enum MessageAction {
