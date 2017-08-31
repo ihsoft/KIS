@@ -84,9 +84,6 @@ sealed class KISAddonPointer : MonoBehaviour {
       + " the source part has only one node");
   #endregion
 
-  public GameObject audioGo = null;
-  public AudioSource audioBipWrong = null;
-
   // Pointer parameters
   public static bool allowPart = false;
   public static bool allowEva = false;
@@ -215,20 +212,6 @@ sealed class KISAddonPointer : MonoBehaviour {
 
   public static bool isRunning {
     get { return running; }
-  }
-
-  // Called once when script is loaded; use to initialize variables and state
-  void Awake() {
-    audioGo = new GameObject();
-    audioBipWrong = audioGo.AddComponent<AudioSource>();
-    audioBipWrong.volume = GameSettings.UI_VOLUME;
-    audioBipWrong.spatialBlend = 0;  //set as 2D audiosource
-
-    if (GameDatabase.Instance.ExistsAudioClip(KIS_Shared.bipWrongSndPath)) {
-      audioBipWrong.clip = GameDatabase.Instance.GetAudioClip(KIS_Shared.bipWrongSndPath);
-    } else {
-      Debug.LogError("Awake(AttachPointer) Bip wrong sound not found in the game database !");
-    }
   }
 
   public static void StartPointer(Part partToMoveAndAttach, OnPointerClick pClick,
@@ -607,29 +590,29 @@ sealed class KISAddonPointer : MonoBehaviour {
     if (Input.GetMouseButtonDown(0)) {
       if (invalidTarget) {
         ScreenMessaging.ShowInfoScreenMessage(TargetObjectNotAllowedMsg);
-        audioBipWrong.Play();
+        UISounds.PlayBipWrong();
       } else if (itselfIsInvalid) {
         ScreenMessaging.ShowInfoScreenMessage(CannotAttachOnItselfMsg);
-        audioBipWrong.Play();
+        UISounds.PlayBipWrong();
       } else if (notAllowedOnMount) {
         ScreenMessaging.ShowInfoScreenMessage(NotAllowedOnTheMountMsg);
-        audioBipWrong.Play();
+        UISounds.PlayBipWrong();
       } else if (cannotSurfaceAttach) {
         ScreenMessaging.ShowInfoScreenMessage(TargetDoesntAllowSurfaceAttachMsg);
-        audioBipWrong.Play();
+        UISounds.PlayBipWrong();
       } else if (invalidCurrentNode) {
         ScreenMessaging.ShowInfoScreenMessage(NodeNotForSurfaceAttachMsg);
-        audioBipWrong.Play();
+        UISounds.PlayBipWrong();
       } else if (sourceDist > maxDist) {
         ScreenMessaging.ShowInfoScreenMessage(TooFarFromSourceMsg.Format(sourceDist, maxDist));
-        audioBipWrong.Play();
+        UISounds.PlayBipWrong();
       } else if (targetDist > maxDist) {
         ScreenMessaging.ShowInfoScreenMessage(TooFarFromTargetMsg.Format(targetDist, maxDist));
-        audioBipWrong.Play();
+        UISounds.PlayBipWrong();
       } else if (restrictedPart) {
         ScreenMessaging.ShowInfoScreenMessage(
             CannotAttachToPartMsg.Format(hoveredPart.partInfo.title));
-        audioBipWrong.Play();
+        UISounds.PlayBipWrong();
       } else {
         SendPointerClick(pointerTarget, pointer.transform.position, pointer.transform.rotation,
                          hoveredPart, GetCurrentAttachNode().id, hoveredNode);
@@ -659,7 +642,7 @@ sealed class KISAddonPointer : MonoBehaviour {
           SendPointerState(pointerTarget, PointerState.OnChangeAttachNode, null, null);
         } else {
           ScreenMessaging.ShowInfoScreenMessage(OnlyOneAttachNodeMsg);
-          audioBipWrong.Play();
+          UISounds.PlayBipWrong();
         }
       }
     }
