@@ -60,9 +60,9 @@ public class ModuleKISItemAttachTool : ModuleKISItem,
   bool orgToolStaticAttach;
   bool orgToolPartStack;
 
-  #region IPartInfo interface
+  #region PartModule overrides
   /// <inheritdoc/>
-  public override string GetModuleTitle() {
+  public override string GetModuleDisplayName() {
     return ModuleTitleInfo;
   }
   #endregion
