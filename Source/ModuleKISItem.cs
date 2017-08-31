@@ -39,7 +39,7 @@ public class ModuleKISItem : PartModule,
 
   static readonly Message<string> CarriableInfo = new Message<string>(
       "#kisLOC_06002",
-      defaultTemplate: "Carried on: <<1>>",
+      defaultTemplate: "Worn on: <<1>>",
       description: "The info string to show in the editor to state that the item can be carried"
       + " by the kerbal at the designated equip slot."
       + "\nArgument <<1>> is a the slot name.");
@@ -89,7 +89,7 @@ public class ModuleKISItem : PartModule,
       description: "The info string to show in the editor to state that the item CANNOT be attached"
       + " to another part.");
 
-  static readonly Message AttachToSurfaceWithoutToolsInfo = new Message(
+  static readonly Message AttachesToSurfaceWithoutToolsInfo = new Message(
       "#kisLOC_06010",
       defaultTemplate: "Attaches to the surface without a tool",
       description: "The info string to show in the editor to state that the item can be attached"
@@ -354,9 +354,9 @@ public class ModuleKISItem : PartModule,
         allowPartAttach == ItemAttachMode.Disabled
             ? DoesntAttachToPartsInfo.Format() : null,
         allowPartAttach == ItemAttachMode.AllowedAlways
-            ?  AttachesToPartsWithoutToolsInfo.Format() : null,
+            ? AttachesToPartsWithoutToolsInfo.Format() : null,
         allowStaticAttach == ItemAttachMode.AllowedAlways
-            ? AttachToSurfaceWithoutToolsInfo.Format() : null,
+            ? AttachesToSurfaceWithoutToolsInfo.Format() : null,
     };
   }
   #endregion
