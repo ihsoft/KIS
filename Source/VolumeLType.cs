@@ -19,7 +19,7 @@ namespace KIS.GUIUtils {
 public sealed class VolumeLType {
   /// <summary>Localized suffix for the "liter" untis. Scale x1.</summary>
   public static readonly Message liter = new Message(
-      "#kisLOC_990000", defaultTemplate: " L", description: "Liter unit for a volume value");
+      "#kisLOC_99000", defaultTemplate: "\u00a0L", description: "Liter unit for a volume value");
 
   /// <summary>A wrapped numeric value.</summary>
   /// <remarks>This is the original non-rounded and unscaled value.</remarks>
