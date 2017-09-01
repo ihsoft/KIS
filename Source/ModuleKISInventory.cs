@@ -630,6 +630,10 @@ public class ModuleKISInventory : PartModule,
 
   /// <inheritdoc/>
   public override string GetInfo() {
+    if (invType == InventoryType.Pod) {
+      // Such inventories are added after the DB is loaded, so the info string is not visible.
+      return "";
+    }
     var sb = new StringBuilder();
     sb.AppendLine(MaxVolumePartInfo.Format(maxVolume));
     sb.AppendLine();
