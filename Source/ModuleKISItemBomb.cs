@@ -43,7 +43,7 @@ public sealed class ModuleKISItemBomb : ModuleKISItem,
       defaultTemplate: "Timer",
       description: "The GUI section title for settig up the explosion timer.");
 
-  Message<int> TimerDelayInSecondsTxt = new Message<int>(
+  static readonly Message<int> TimerDelayInSecondsTxt = new Message<int>(
       "#kisLOC_05004",
       defaultTemplate: "<<1>> s",
       description: "The string that displays number of seconds till the bomb trigger.");
@@ -72,7 +72,7 @@ public sealed class ModuleKISItemBomb : ModuleKISItem,
       description: "The caption on the button that closes the setup menu without starting the"
       + " timer");
 
-  Message<int> TimeToEscapeMsg = new Message<int>(
+  static readonly Message<int> TimeToEscapeMsg = new Message<int>(
       "#kisLOC_05011",
       defaultTemplate: "You have <<1>> seconds to escape!",
       description: "The mesasge to display when the bomb is activated. It's show nonly once and"
