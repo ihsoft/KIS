@@ -129,7 +129,8 @@ public class ModuleKISItem : PartModule,
     /// attach to stack nodes.</remarks>
     AllowedWithKisTool = 2
   }
-  
+
+  #region Part's config fields
   [KSPField]
   public string moveSndPath = "KIS/Sounds/itemMove";
   [KSPField]
@@ -182,6 +183,7 @@ public class ModuleKISItem : PartModule,
   public float staticAttachBreakForce = 10;
   [KSPField(isPersistant = true)]
   public bool staticAttached;
+  #endregion
 
   FixedJoint staticAttachJoint;
 
