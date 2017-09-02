@@ -15,7 +15,7 @@ using UnityEngine;
 
 namespace KIS {
 
-// Next localization ID: #kisLOC_06014.
+// Next localization ID: #kisLOC_06015.
 public class ModuleKISItem : PartModule,
     // KSP interfaces.
     IModuleInfo,
@@ -39,7 +39,7 @@ public class ModuleKISItem : PartModule,
 
   static readonly Message<string> CarriableInfo = new Message<string>(
       "#kisLOC_06002",
-      defaultTemplate: "Worn on: <<1>>",
+      defaultTemplate: "Carried on: <<1>>",
       description: "The info string to show in the editor to state that the item can be carried"
       + " by the kerbal at the designated equip slot."
       + "\nArgument <<1>> is a the slot name.");
@@ -109,10 +109,16 @@ public class ModuleKISItem : PartModule,
 
   static readonly Message CanBeCarriedInfo = new Message(
       "#kisLOC_06013",
-      defaultTemplate: "Worn on the kerbal",
+      defaultTemplate: "Carrried by the kerbal",
       description: "The info string to show in the editor to state that the item can be carried"
       + " by the kerbal. I.e. it attaches on the kerbal's model and doesn't take space in the"
       + " personal inventory.");
+
+  static readonly Message CanBeEquippedInfo = new Message(
+      "#kisLOC_06014",
+      defaultTemplate: "Equippable item",
+      description: "The info string to show in the editor to state that the item can be eqipped"
+      + " by the kerbal. I.e. it attaches on the kerbal's model and reacts to the 'use' hotkey.");
   #endregion
 
   /// <summary>Specifies how item can be attached.</summary>
@@ -361,6 +367,7 @@ public class ModuleKISItem : PartModule,
   protected virtual IEnumerable<string> GetPrimaryFieldInfo() {
     return new[] {
         carriable ? CanBeCarriedInfo.Format() : null,
+        equipable ? CanBeEquippedInfo.Format() : null,
         allowPartAttach == ItemAttachMode.Disabled
             ? DoesntAttachToPartsInfo.Format() : null,
         allowPartAttach == ItemAttachMode.AllowedAlways
