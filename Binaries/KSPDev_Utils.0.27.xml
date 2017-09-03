@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <doc>
     <assembly>
-        <name>KSPDev_Utils.0.27-pre</name>
+        <name>KSPDev_Utils.0.27</name>
     </assembly>
     <members>
         <member name="T:KSPDev.ConfigUtils.AbstractCollectionTypeProto">
@@ -1405,7 +1405,8 @@
             <para>
             The method implemenation must expect to be called at any arbitrary moment of the module's
             life. If there are members that can be null, then they must be checked in this method to not
-            throw an NPE.
+            throw an NPE. A special attention should be paid in the implementations that depend on the
+            other modules since this method can get called when they are not initialized or created yet.
             </para>
             <para>
             Unless the implementing class is <i>sealed</i>, the method must be declared as <i>virtual</i>.
@@ -1964,7 +1965,7 @@
             <example><code source="Examples/GUIUtils/Message-Examples.cs" region="Message1Demo"/></example>
             <seealso cref="T:KSPDev.GUIUtils.Message"/>
             <seealso cref="T:KSPDev.GUIUtils.Message`1"/><seealso cref="T:KSPDev.GUIUtils.Message`2"/><seealso cref="T:KSPDev.GUIUtils.Message`3"/><seealso cref="T:KSPDev.GUIUtils.Message`4"/><seealso cref="T:KSPDev.GUIUtils.Message`5"/><seealso cref="T:KSPDev.GUIUtils.MessageLookup`1"/>
-            <seealso cref="T:KSPDev.GUIUtils.AngleType"/><seealso cref="T:KSPDev.GUIUtils.DistanceType"/><seealso cref="T:KSPDev.GUIUtils.ForceType"/><seealso cref="T:KSPDev.GUIUtils.PercentType"/><seealso cref="T:KSPDev.GUIUtils.MassType"/>
+            <seealso cref="T:KSPDev.GUIUtils.AngleType"/><seealso cref="T:KSPDev.GUIUtils.CompactNumberType"/><seealso cref="T:KSPDev.GUIUtils.CostType"/><seealso cref="T:KSPDev.GUIUtils.DistanceType"/><seealso cref="T:KSPDev.GUIUtils.ForceType"/><seealso cref="T:KSPDev.GUIUtils.KeyboardEventType"/><seealso cref="T:KSPDev.GUIUtils.MassType"/><seealso cref="T:KSPDev.GUIUtils.PercentType"/><seealso cref="T:KSPDev.GUIUtils.PressureType"/><seealso cref="T:KSPDev.GUIUtils.ResourceShortType"/><seealso cref="T:KSPDev.GUIUtils.MassType"/><seealso cref="T:KSPDev.GUIUtils.ResourceType"/>
             <seealso href="http://lingoona.com/cgi-bin/grammar#l=en&amp;oh=1">Lingoona Grammar help</seealso>
         </member>
         <member name="M:KSPDev.GUIUtils.Message`1.#ctor(System.String,System.String,System.String,System.String)">
@@ -2011,7 +2012,7 @@
             <example><code source="Examples/GUIUtils/Message-Examples.cs" region="Message2Demo"/></example>
             <seealso cref="T:KSPDev.GUIUtils.Message"/>
             <seealso cref="T:KSPDev.GUIUtils.Message`1"/><seealso cref="T:KSPDev.GUIUtils.Message`2"/><seealso cref="T:KSPDev.GUIUtils.Message`3"/><seealso cref="T:KSPDev.GUIUtils.Message`4"/><seealso cref="T:KSPDev.GUIUtils.Message`5"/><seealso cref="T:KSPDev.GUIUtils.MessageLookup`1"/>
-            <seealso cref="T:KSPDev.GUIUtils.AngleType"/><seealso cref="T:KSPDev.GUIUtils.DistanceType"/><seealso cref="T:KSPDev.GUIUtils.ForceType"/><seealso cref="T:KSPDev.GUIUtils.PercentType"/><seealso cref="T:KSPDev.GUIUtils.MassType"/>
+            <seealso cref="T:KSPDev.GUIUtils.AngleType"/><seealso cref="T:KSPDev.GUIUtils.CompactNumberType"/><seealso cref="T:KSPDev.GUIUtils.CostType"/><seealso cref="T:KSPDev.GUIUtils.DistanceType"/><seealso cref="T:KSPDev.GUIUtils.ForceType"/><seealso cref="T:KSPDev.GUIUtils.KeyboardEventType"/><seealso cref="T:KSPDev.GUIUtils.MassType"/><seealso cref="T:KSPDev.GUIUtils.PercentType"/><seealso cref="T:KSPDev.GUIUtils.PressureType"/><seealso cref="T:KSPDev.GUIUtils.ResourceShortType"/><seealso cref="T:KSPDev.GUIUtils.MassType"/><seealso cref="T:KSPDev.GUIUtils.ResourceType"/>
             <seealso href="http://lingoona.com/cgi-bin/grammar#l=en&amp;oh=1">Lingoona Grammar help</seealso>
         </member>
         <member name="M:KSPDev.GUIUtils.Message`2.#ctor(System.String,System.String,System.String,System.String)">
@@ -2060,7 +2061,7 @@
             <example><code source="Examples/GUIUtils/Message-Examples.cs" region="Message3Demo"/></example>
             <seealso cref="T:KSPDev.GUIUtils.Message"/>
             <seealso cref="T:KSPDev.GUIUtils.Message`1"/><seealso cref="T:KSPDev.GUIUtils.Message`2"/><seealso cref="T:KSPDev.GUIUtils.Message`3"/><seealso cref="T:KSPDev.GUIUtils.Message`4"/><seealso cref="T:KSPDev.GUIUtils.Message`5"/><seealso cref="T:KSPDev.GUIUtils.MessageLookup`1"/>
-            <seealso cref="T:KSPDev.GUIUtils.AngleType"/><seealso cref="T:KSPDev.GUIUtils.DistanceType"/><seealso cref="T:KSPDev.GUIUtils.ForceType"/><seealso cref="T:KSPDev.GUIUtils.PercentType"/><seealso cref="T:KSPDev.GUIUtils.MassType"/>
+            <seealso cref="T:KSPDev.GUIUtils.AngleType"/><seealso cref="T:KSPDev.GUIUtils.CompactNumberType"/><seealso cref="T:KSPDev.GUIUtils.CostType"/><seealso cref="T:KSPDev.GUIUtils.DistanceType"/><seealso cref="T:KSPDev.GUIUtils.ForceType"/><seealso cref="T:KSPDev.GUIUtils.KeyboardEventType"/><seealso cref="T:KSPDev.GUIUtils.MassType"/><seealso cref="T:KSPDev.GUIUtils.PercentType"/><seealso cref="T:KSPDev.GUIUtils.PressureType"/><seealso cref="T:KSPDev.GUIUtils.ResourceShortType"/><seealso cref="T:KSPDev.GUIUtils.MassType"/><seealso cref="T:KSPDev.GUIUtils.ResourceType"/>
             <seealso href="http://lingoona.com/cgi-bin/grammar#l=en&amp;oh=1">Lingoona Grammar help</seealso>
         </member>
         <member name="M:KSPDev.GUIUtils.Message`3.#ctor(System.String,System.String,System.String,System.String)">
@@ -2111,7 +2112,7 @@
             <example><code source="Examples/GUIUtils/Message-Examples.cs" region="Message4Demo"/></example>
             <seealso cref="T:KSPDev.GUIUtils.Message"/>
             <seealso cref="T:KSPDev.GUIUtils.Message`1"/><seealso cref="T:KSPDev.GUIUtils.Message`2"/><seealso cref="T:KSPDev.GUIUtils.Message`3"/><seealso cref="T:KSPDev.GUIUtils.Message`4"/><seealso cref="T:KSPDev.GUIUtils.Message`5"/><seealso cref="T:KSPDev.GUIUtils.MessageLookup`1"/>
-            <seealso cref="T:KSPDev.GUIUtils.AngleType"/><seealso cref="T:KSPDev.GUIUtils.DistanceType"/><seealso cref="T:KSPDev.GUIUtils.ForceType"/><seealso cref="T:KSPDev.GUIUtils.PercentType"/><seealso cref="T:KSPDev.GUIUtils.MassType"/>
+            <seealso cref="T:KSPDev.GUIUtils.AngleType"/><seealso cref="T:KSPDev.GUIUtils.CompactNumberType"/><seealso cref="T:KSPDev.GUIUtils.CostType"/><seealso cref="T:KSPDev.GUIUtils.DistanceType"/><seealso cref="T:KSPDev.GUIUtils.ForceType"/><seealso cref="T:KSPDev.GUIUtils.KeyboardEventType"/><seealso cref="T:KSPDev.GUIUtils.MassType"/><seealso cref="T:KSPDev.GUIUtils.PercentType"/><seealso cref="T:KSPDev.GUIUtils.PressureType"/><seealso cref="T:KSPDev.GUIUtils.ResourceShortType"/><seealso cref="T:KSPDev.GUIUtils.MassType"/><seealso cref="T:KSPDev.GUIUtils.ResourceType"/>
             <seealso href="http://lingoona.com/cgi-bin/grammar#l=en&amp;oh=1">Lingoona Grammar help</seealso>
         </member>
         <member name="M:KSPDev.GUIUtils.Message`4.#ctor(System.String,System.String,System.String,System.String)">
@@ -2164,7 +2165,7 @@
             <example><code source="Examples/GUIUtils/Message-Examples.cs" region="Message5Demo"/></example>
             <seealso cref="T:KSPDev.GUIUtils.Message"/>
             <seealso cref="T:KSPDev.GUIUtils.Message`1"/><seealso cref="T:KSPDev.GUIUtils.Message`2"/><seealso cref="T:KSPDev.GUIUtils.Message`3"/><seealso cref="T:KSPDev.GUIUtils.Message`4"/><seealso cref="T:KSPDev.GUIUtils.Message`5"/><seealso cref="T:KSPDev.GUIUtils.MessageLookup`1"/>
-            <seealso cref="T:KSPDev.GUIUtils.AngleType"/><seealso cref="T:KSPDev.GUIUtils.DistanceType"/><seealso cref="T:KSPDev.GUIUtils.ForceType"/><seealso cref="T:KSPDev.GUIUtils.PercentType"/><seealso cref="T:KSPDev.GUIUtils.MassType"/>
+            <seealso cref="T:KSPDev.GUIUtils.AngleType"/><seealso cref="T:KSPDev.GUIUtils.CompactNumberType"/><seealso cref="T:KSPDev.GUIUtils.CostType"/><seealso cref="T:KSPDev.GUIUtils.DistanceType"/><seealso cref="T:KSPDev.GUIUtils.ForceType"/><seealso cref="T:KSPDev.GUIUtils.KeyboardEventType"/><seealso cref="T:KSPDev.GUIUtils.MassType"/><seealso cref="T:KSPDev.GUIUtils.PercentType"/><seealso cref="T:KSPDev.GUIUtils.PressureType"/><seealso cref="T:KSPDev.GUIUtils.ResourceShortType"/><seealso cref="T:KSPDev.GUIUtils.MassType"/><seealso cref="T:KSPDev.GUIUtils.ResourceType"/>
             <seealso href="http://lingoona.com/cgi-bin/grammar#l=en&amp;oh=1">Lingoona Grammar help</seealso>
         </member>
         <member name="M:KSPDev.GUIUtils.Message`5.#ctor(System.String,System.String,System.String,System.String)">
@@ -2264,10 +2265,10 @@
             Use it as a generic parameter when creating a <see cref="T:KSPDev.GUIUtils.LocalizableMessage"/> descendants.
             </remarks>
             <seealso cref="T:KSPDev.GUIUtils.Message`1"/><seealso cref="T:KSPDev.GUIUtils.Message`2"/><seealso cref="T:KSPDev.GUIUtils.Message`3"/><seealso cref="T:KSPDev.GUIUtils.Message`4"/><seealso cref="T:KSPDev.GUIUtils.Message`5"/><seealso cref="T:KSPDev.GUIUtils.MessageLookup`1"/>
-            <seealso cref="T:KSPDev.GUIUtils.AngleType"/><seealso cref="T:KSPDev.GUIUtils.DistanceType"/><seealso cref="T:KSPDev.GUIUtils.ForceType"/><seealso cref="T:KSPDev.GUIUtils.PercentType"/><seealso cref="T:KSPDev.GUIUtils.MassType"/>
-            <example><code source="Examples/GUIUtils/AngleType-Examples.cs" region="AngleTypeDemo1"/></example>
-            <example><code source="Examples/GUIUtils/AngleType-Examples.cs" region="AngleTypeDemo2_FormatDefault"/></example>
-            <example><code source="Examples/GUIUtils/AngleType-Examples.cs" region="AngleTypeDemo2_FormatFixed"/></example>
+            <seealso cref="T:KSPDev.GUIUtils.AngleType"/><seealso cref="T:KSPDev.GUIUtils.CompactNumberType"/><seealso cref="T:KSPDev.GUIUtils.CostType"/><seealso cref="T:KSPDev.GUIUtils.DistanceType"/><seealso cref="T:KSPDev.GUIUtils.ForceType"/><seealso cref="T:KSPDev.GUIUtils.KeyboardEventType"/><seealso cref="T:KSPDev.GUIUtils.MassType"/><seealso cref="T:KSPDev.GUIUtils.PercentType"/><seealso cref="T:KSPDev.GUIUtils.PressureType"/><seealso cref="T:KSPDev.GUIUtils.ResourceShortType"/><seealso cref="T:KSPDev.GUIUtils.MassType"/><seealso cref="T:KSPDev.GUIUtils.ResourceType"/>
+            <example><code source="Examples/GUIUtils/TypeFormatters/AngleType-Examples.cs" region="AngleTypeDemo1"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/AngleType-Examples.cs" region="AngleTypeDemo2_FormatDefault"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/AngleType-Examples.cs" region="AngleTypeDemo2_FormatFixed"/></example>
         </member>
         <member name="F:KSPDev.GUIUtils.AngleType.unitName">
             <summary>Suffix for the "angle" units (degrees).</summary>
@@ -2280,9 +2281,9 @@
             <summary>Constructs an angle type object.</summary>
             <param name="value">The numeric value in degrees.</param>
             <seealso cref="M:KSPDev.GUIUtils.AngleType.Format(System.Double,System.String)"/>
-            <example><code source="Examples/GUIUtils/AngleType-Examples.cs" region="AngleTypeDemo1"/></example>
-            <example><code source="Examples/GUIUtils/AngleType-Examples.cs" region="AngleTypeDemo2_FormatDefault"/></example>
-            <example><code source="Examples/GUIUtils/AngleType-Examples.cs" region="AngleTypeDemo2_FormatFixed"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/AngleType-Examples.cs" region="AngleTypeDemo1"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/AngleType-Examples.cs" region="AngleTypeDemo2_FormatDefault"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/AngleType-Examples.cs" region="AngleTypeDemo2_FormatFixed"/></example>
         </member>
         <member name="M:KSPDev.GUIUtils.AngleType.op_Implicit(System.Double)~KSPDev.GUIUtils.AngleType">
             <summary>Coverts a numeric value into a type object.</summary>
@@ -2306,8 +2307,8 @@
             basing on the value.
             </param>
             <returns>A formatted and localized string</returns>
-            <example><code source="Examples/GUIUtils/AngleType-Examples.cs" region="AngleTypeDemo2_FormatDefault"/></example>
-            <example><code source="Examples/GUIUtils/AngleType-Examples.cs" region="AngleTypeDemo2_FormatFixed"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/AngleType-Examples.cs" region="AngleTypeDemo2_FormatDefault"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/AngleType-Examples.cs" region="AngleTypeDemo2_FormatFixed"/></example>
         </member>
         <member name="M:KSPDev.GUIUtils.AngleType.ToString">
             <summary>Returns a string formatted as a human friendly angle specification.</summary>
@@ -2325,10 +2326,10 @@
             </para>
             </remarks>
             <seealso cref="T:KSPDev.GUIUtils.Message`1"/><seealso cref="T:KSPDev.GUIUtils.Message`2"/><seealso cref="T:KSPDev.GUIUtils.Message`3"/><seealso cref="T:KSPDev.GUIUtils.Message`4"/><seealso cref="T:KSPDev.GUIUtils.Message`5"/><seealso cref="T:KSPDev.GUIUtils.MessageLookup`1"/>
-            <seealso cref="T:KSPDev.GUIUtils.AngleType"/><seealso cref="T:KSPDev.GUIUtils.DistanceType"/><seealso cref="T:KSPDev.GUIUtils.ForceType"/><seealso cref="T:KSPDev.GUIUtils.PercentType"/><seealso cref="T:KSPDev.GUIUtils.MassType"/>
-            <example><code source="Examples/GUIUtils/CompactNumberType-Examples.cs" region="CompactNumberType1"/></example>
-            <example><code source="Examples/GUIUtils/CompactNumberType-Examples.cs" region="CompactNumberType2_FormatDefault"/></example>
-            <example><code source="Examples/GUIUtils/CompactNumberType-Examples.cs" region="CompactNumberType2_FormatFixed"/></example>
+            <seealso cref="T:KSPDev.GUIUtils.AngleType"/><seealso cref="T:KSPDev.GUIUtils.CompactNumberType"/><seealso cref="T:KSPDev.GUIUtils.CostType"/><seealso cref="T:KSPDev.GUIUtils.DistanceType"/><seealso cref="T:KSPDev.GUIUtils.ForceType"/><seealso cref="T:KSPDev.GUIUtils.KeyboardEventType"/><seealso cref="T:KSPDev.GUIUtils.MassType"/><seealso cref="T:KSPDev.GUIUtils.PercentType"/><seealso cref="T:KSPDev.GUIUtils.PressureType"/><seealso cref="T:KSPDev.GUIUtils.ResourceShortType"/><seealso cref="T:KSPDev.GUIUtils.MassType"/><seealso cref="T:KSPDev.GUIUtils.ResourceType"/>
+            <example><code source="Examples/GUIUtils/TypeFormatters/CompactNumberType-Examples.cs" region="CompactNumberType1"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/CompactNumberType-Examples.cs" region="CompactNumberType2_FormatDefault"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/CompactNumberType-Examples.cs" region="CompactNumberType2_FormatFixed"/></example>
         </member>
         <member name="F:KSPDev.GUIUtils.CompactNumberType.value">
             <summary>A wrapped numeric value.</summary>
@@ -2338,9 +2339,9 @@
             <summary>Constructs an object from a numeric value.</summary>
             <param name="value">The numeric value in the base units.</param>
             <seealso cref="M:KSPDev.GUIUtils.CompactNumberType.Format(System.Double,System.String)"/>
-            <example><code source="Examples/GUIUtils/CompactNumberType-Examples.cs" region="CompactNumberType1"/></example>
-            <example><code source="Examples/GUIUtils/CompactNumberType-Examples.cs" region="CompactNumberType2_FormatDefault"/></example>
-            <example><code source="Examples/GUIUtils/CompactNumberType-Examples.cs" region="CompactNumberType2_FormatFixed"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/CompactNumberType-Examples.cs" region="CompactNumberType1"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/CompactNumberType-Examples.cs" region="CompactNumberType2_FormatDefault"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/CompactNumberType-Examples.cs" region="CompactNumberType2_FormatFixed"/></example>
         </member>
         <member name="M:KSPDev.GUIUtils.CompactNumberType.op_Implicit(System.Double)~KSPDev.GUIUtils.CompactNumberType">
             <summary>Converts a numeric value into a type object.</summary>
@@ -2365,8 +2366,8 @@
             basing on the value.
             </param>
             <returns>A formatted and localized string</returns>
-            <example><code source="Examples/GUIUtils/CompactNumberType-Examples.cs" region="CompactNumberType2_FormatDefault"/></example>
-            <example><code source="Examples/GUIUtils/CompactNumberType-Examples.cs" region="CompactNumberType2_FormatFixed"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/CompactNumberType-Examples.cs" region="CompactNumberType2_FormatDefault"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/CompactNumberType-Examples.cs" region="CompactNumberType2_FormatFixed"/></example>
         </member>
         <member name="M:KSPDev.GUIUtils.CompactNumberType.ToString">
             <summary>Returns a string formatted as a human friendly distance specification.</summary>
@@ -2384,10 +2385,10 @@
             </para>
             </remarks>
             <seealso cref="T:KSPDev.GUIUtils.Message`1"/><seealso cref="T:KSPDev.GUIUtils.Message`2"/><seealso cref="T:KSPDev.GUIUtils.Message`3"/><seealso cref="T:KSPDev.GUIUtils.Message`4"/><seealso cref="T:KSPDev.GUIUtils.Message`5"/><seealso cref="T:KSPDev.GUIUtils.MessageLookup`1"/>
-            <seealso cref="T:KSPDev.GUIUtils.AngleType"/><seealso cref="T:KSPDev.GUIUtils.DistanceType"/><seealso cref="T:KSPDev.GUIUtils.ForceType"/><seealso cref="T:KSPDev.GUIUtils.PercentType"/><seealso cref="T:KSPDev.GUIUtils.MassType"/>
-            <example><code source="Examples/GUIUtils/CostType-Examples.cs" region="CostTypeDemo1"/></example>
-            <example><code source="Examples/GUIUtils/CostType-Examples.cs" region="CostTypeDemo2_FormatDefault"/></example>
-            <example><code source="Examples/GUIUtils/CostType-Examples.cs" region="CostTypeDemo2_FormatFixed"/></example>
+            <seealso cref="T:KSPDev.GUIUtils.AngleType"/><seealso cref="T:KSPDev.GUIUtils.CompactNumberType"/><seealso cref="T:KSPDev.GUIUtils.CostType"/><seealso cref="T:KSPDev.GUIUtils.DistanceType"/><seealso cref="T:KSPDev.GUIUtils.ForceType"/><seealso cref="T:KSPDev.GUIUtils.KeyboardEventType"/><seealso cref="T:KSPDev.GUIUtils.MassType"/><seealso cref="T:KSPDev.GUIUtils.PercentType"/><seealso cref="T:KSPDev.GUIUtils.PressureType"/><seealso cref="T:KSPDev.GUIUtils.ResourceShortType"/><seealso cref="T:KSPDev.GUIUtils.MassType"/><seealso cref="T:KSPDev.GUIUtils.ResourceType"/>
+            <example><code source="Examples/GUIUtils/TypeFormatters/CostType-Examples.cs" region="CostTypeDemo1"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/CostType-Examples.cs" region="CostTypeDemo2_FormatDefault"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/CostType-Examples.cs" region="CostTypeDemo2_FormatFixed"/></example>
         </member>
         <member name="F:KSPDev.GUIUtils.CostType.value">
             <summary>A wrapped numeric value.</summary>
@@ -2397,9 +2398,9 @@
             <summary>Constructs an object from a numeric value.</summary>
             <param name="value">The numeric value in the base units.</param>
             <seealso cref="M:KSPDev.GUIUtils.CostType.Format(System.Double,System.String)"/>
-            <example><code source="Examples/GUIUtils/CostType-Examples.cs" region="CostTypeDemo1"/></example>
-            <example><code source="Examples/GUIUtils/CostType-Examples.cs" region="CostTypeDemo2_FormatDefault"/></example>
-            <example><code source="Examples/GUIUtils/CostType-Examples.cs" region="CostTypeDemo2_FormatFixed"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/CostType-Examples.cs" region="CostTypeDemo1"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/CostType-Examples.cs" region="CostTypeDemo2_FormatDefault"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/CostType-Examples.cs" region="CostTypeDemo2_FormatFixed"/></example>
         </member>
         <member name="M:KSPDev.GUIUtils.CostType.op_Implicit(System.Double)~KSPDev.GUIUtils.CostType">
             <summary>Coverts a numeric value into a type object.</summary>
@@ -2431,8 +2432,8 @@
             basing on the value.
             </param>
             <returns>A formatted and localized string</returns>
-            <example><code source="Examples/GUIUtils/CostType-Examples.cs" region="CostTypeDemo2_FormatDefault"/></example>
-            <example><code source="Examples/GUIUtils/CostType-Examples.cs" region="CostTypeDemo2_FormatFixed"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/CostType-Examples.cs" region="CostTypeDemo2_FormatDefault"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/CostType-Examples.cs" region="CostTypeDemo2_FormatFixed"/></example>
         </member>
         <member name="M:KSPDev.GUIUtils.CostType.ToString">
             <summary>Returns a string formatted as a human friendly volume specification.</summary>
@@ -2455,11 +2456,11 @@
             </para>
             </remarks>
             <seealso cref="T:KSPDev.GUIUtils.Message`1"/><seealso cref="T:KSPDev.GUIUtils.Message`2"/><seealso cref="T:KSPDev.GUIUtils.Message`3"/><seealso cref="T:KSPDev.GUIUtils.Message`4"/><seealso cref="T:KSPDev.GUIUtils.Message`5"/><seealso cref="T:KSPDev.GUIUtils.MessageLookup`1"/>
-            <seealso cref="T:KSPDev.GUIUtils.AngleType"/><seealso cref="T:KSPDev.GUIUtils.DistanceType"/><seealso cref="T:KSPDev.GUIUtils.ForceType"/><seealso cref="T:KSPDev.GUIUtils.PercentType"/><seealso cref="T:KSPDev.GUIUtils.MassType"/>
-            <example><code source="Examples/GUIUtils/DistanceType-Examples.cs" region="DistanceTypeDemo1"/></example>
-            <example><code source="Examples/GUIUtils/DistanceType-Examples.cs" region="DistanceTypeDemo2_FormatDefault"/></example>
-            <example><code source="Examples/GUIUtils/DistanceType-Examples.cs" region="DistanceTypeDemo2_FormatWithScale"/></example>
-            <example><code source="Examples/GUIUtils/DistanceType-Examples.cs" region="DistanceTypeDemo2_FormatFixed"/></example>
+            <seealso cref="T:KSPDev.GUIUtils.AngleType"/><seealso cref="T:KSPDev.GUIUtils.CompactNumberType"/><seealso cref="T:KSPDev.GUIUtils.CostType"/><seealso cref="T:KSPDev.GUIUtils.DistanceType"/><seealso cref="T:KSPDev.GUIUtils.ForceType"/><seealso cref="T:KSPDev.GUIUtils.KeyboardEventType"/><seealso cref="T:KSPDev.GUIUtils.MassType"/><seealso cref="T:KSPDev.GUIUtils.PercentType"/><seealso cref="T:KSPDev.GUIUtils.PressureType"/><seealso cref="T:KSPDev.GUIUtils.ResourceShortType"/><seealso cref="T:KSPDev.GUIUtils.MassType"/><seealso cref="T:KSPDev.GUIUtils.ResourceType"/>
+            <example><code source="Examples/GUIUtils/TypeFormatters/DistanceType-Examples.cs" region="DistanceTypeDemo1"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/DistanceType-Examples.cs" region="DistanceTypeDemo2_FormatDefault"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/DistanceType-Examples.cs" region="DistanceTypeDemo2_FormatWithScale"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/DistanceType-Examples.cs" region="DistanceTypeDemo2_FormatFixed"/></example>
         </member>
         <member name="F:KSPDev.GUIUtils.DistanceType.meter">
             <summary>Localized suffix for the "meter" units. Scale x1.</summary>
@@ -2475,10 +2476,10 @@
             <summary>Constructs an object from a numeric value.</summary>
             <param name="value">The numeric value in meters.</param>
             <seealso cref="M:KSPDev.GUIUtils.DistanceType.Format(System.Double,System.Nullable{System.Double},System.String)"/>
-            <example><code source="Examples/GUIUtils/DistanceType-Examples.cs" region="DistanceTypeDemo1"/></example>
-            <example><code source="Examples/GUIUtils/DistanceType-Examples.cs" region="DistanceTypeDemo2_FormatDefault"/></example>
-            <example><code source="Examples/GUIUtils/DistanceType-Examples.cs" region="DistanceTypeDemo2_FormatWithScale"/></example>
-            <example><code source="Examples/GUIUtils/DistanceType-Examples.cs" region="DistanceTypeDemo2_FormatFixed"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/DistanceType-Examples.cs" region="DistanceTypeDemo1"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/DistanceType-Examples.cs" region="DistanceTypeDemo2_FormatDefault"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/DistanceType-Examples.cs" region="DistanceTypeDemo2_FormatWithScale"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/DistanceType-Examples.cs" region="DistanceTypeDemo2_FormatFixed"/></example>
         </member>
         <member name="M:KSPDev.GUIUtils.DistanceType.op_Implicit(System.Double)~KSPDev.GUIUtils.DistanceType">
             <summary>Coverts a numeric value into a type object.</summary>
@@ -2516,9 +2517,9 @@
             specified, then it's choosen basing on the scale.
             </param>
             <returns>A formatted and localized string</returns>
-            <example><code source="Examples/GUIUtils/DistanceType-Examples.cs" region="DistanceTypeDemo2_FormatDefault"/></example>
-            <example><code source="Examples/GUIUtils/DistanceType-Examples.cs" region="DistanceTypeDemo2_FormatWithScale"/></example>
-            <example><code source="Examples/GUIUtils/DistanceType-Examples.cs" region="DistanceTypeDemo2_FormatFixed"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/DistanceType-Examples.cs" region="DistanceTypeDemo2_FormatDefault"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/DistanceType-Examples.cs" region="DistanceTypeDemo2_FormatWithScale"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/DistanceType-Examples.cs" region="DistanceTypeDemo2_FormatFixed"/></example>
         </member>
         <member name="M:KSPDev.GUIUtils.DistanceType.ToString">
             <summary>Returns a string formatted as a human friendly distance specification.</summary>
@@ -2541,10 +2542,10 @@
             </para>
             </remarks>
             <seealso cref="T:KSPDev.GUIUtils.Message`1"/><seealso cref="T:KSPDev.GUIUtils.Message`2"/><seealso cref="T:KSPDev.GUIUtils.Message`3"/><seealso cref="T:KSPDev.GUIUtils.Message`4"/><seealso cref="T:KSPDev.GUIUtils.Message`5"/><seealso cref="T:KSPDev.GUIUtils.MessageLookup`1"/>
-            <seealso cref="T:KSPDev.GUIUtils.AngleType"/><seealso cref="T:KSPDev.GUIUtils.DistanceType"/><seealso cref="T:KSPDev.GUIUtils.ForceType"/><seealso cref="T:KSPDev.GUIUtils.PercentType"/><seealso cref="T:KSPDev.GUIUtils.MassType"/>
-            <example><code source="Examples/GUIUtils/ForceType-Examples.cs" region="ForceTypeDemo1"/></example>
-            <example><code source="Examples/GUIUtils/ForceType-Examples.cs" region="ForceTypeDemo2_FormatDefault"/></example>
-            <example><code source="Examples/GUIUtils/ForceType-Examples.cs" region="ForceTypeDemo2_FormatFixed"/></example>
+            <seealso cref="T:KSPDev.GUIUtils.AngleType"/><seealso cref="T:KSPDev.GUIUtils.CompactNumberType"/><seealso cref="T:KSPDev.GUIUtils.CostType"/><seealso cref="T:KSPDev.GUIUtils.DistanceType"/><seealso cref="T:KSPDev.GUIUtils.ForceType"/><seealso cref="T:KSPDev.GUIUtils.KeyboardEventType"/><seealso cref="T:KSPDev.GUIUtils.MassType"/><seealso cref="T:KSPDev.GUIUtils.PercentType"/><seealso cref="T:KSPDev.GUIUtils.PressureType"/><seealso cref="T:KSPDev.GUIUtils.ResourceShortType"/><seealso cref="T:KSPDev.GUIUtils.MassType"/><seealso cref="T:KSPDev.GUIUtils.ResourceType"/>
+            <example><code source="Examples/GUIUtils/TypeFormatters/ForceType-Examples.cs" region="ForceTypeDemo1"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/ForceType-Examples.cs" region="ForceTypeDemo2_FormatDefault"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/ForceType-Examples.cs" region="ForceTypeDemo2_FormatFixed"/></example>
         </member>
         <member name="F:KSPDev.GUIUtils.ForceType.kiloNewton">
             <summary>Localized suffix for the "kilonewton" untis. Scale x1.</summary>
@@ -2557,9 +2558,9 @@
             <summary>Constructs an object from a numeric value.</summary>
             <param name="value">The numeric value in kilonewtons.</param>
             <seealso cref="M:KSPDev.GUIUtils.ForceType.Format(System.Double,System.String)"/>
-            <example><code source="Examples/GUIUtils/ForceType-Examples.cs" region="ForceTypeDemo1"/></example>
-            <example><code source="Examples/GUIUtils/ForceType-Examples.cs" region="ForceTypeDemo2_FormatDefault"/></example>
-            <example><code source="Examples/GUIUtils/ForceType-Examples.cs" region="ForceTypeDemo2_FormatFixed"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/ForceType-Examples.cs" region="ForceTypeDemo1"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/ForceType-Examples.cs" region="ForceTypeDemo2_FormatDefault"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/ForceType-Examples.cs" region="ForceTypeDemo2_FormatFixed"/></example>
         </member>
         <member name="M:KSPDev.GUIUtils.ForceType.op_Implicit(System.Double)~KSPDev.GUIUtils.ForceType">
             <summary>Coverts a numeric value into a type object.</summary>
@@ -2589,8 +2590,8 @@
             basing on the value.
             </param>
             <returns>A formatted and localized string</returns>
-            <example><code source="Examples/GUIUtils/ForceType-Examples.cs" region="ForceTypeDemo2_FormatDefault"/></example>
-            <example><code source="Examples/GUIUtils/ForceType-Examples.cs" region="ForceTypeDemo2_FormatFixed"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/ForceType-Examples.cs" region="ForceTypeDemo2_FormatDefault"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/ForceType-Examples.cs" region="ForceTypeDemo2_FormatFixed"/></example>
         </member>
         <member name="M:KSPDev.GUIUtils.ForceType.ToString">
             <summary>Returns a string formatted as a human friendly force specification.</summary>
@@ -2603,8 +2604,8 @@
             Use it as a generic parameter when creating a <see cref="T:KSPDev.GUIUtils.LocalizableMessage"/> descendants.
             </remarks>
             <seealso cref="T:KSPDev.GUIUtils.Message`1"/><seealso cref="T:KSPDev.GUIUtils.Message`2"/><seealso cref="T:KSPDev.GUIUtils.Message`3"/><seealso cref="T:KSPDev.GUIUtils.Message`4"/><seealso cref="T:KSPDev.GUIUtils.Message`5"/><seealso cref="T:KSPDev.GUIUtils.MessageLookup`1"/>
-            <seealso cref="T:KSPDev.GUIUtils.AngleType"/><seealso cref="T:KSPDev.GUIUtils.DistanceType"/><seealso cref="T:KSPDev.GUIUtils.ForceType"/><seealso cref="T:KSPDev.GUIUtils.PercentType"/><seealso cref="T:KSPDev.GUIUtils.MassType"/>
-            <example><code source="Examples/GUIUtils/KeyboardEventType-Examples.cs" region="KeyboardEventTypeDemo1"/></example>
+            <seealso cref="T:KSPDev.GUIUtils.AngleType"/><seealso cref="T:KSPDev.GUIUtils.CompactNumberType"/><seealso cref="T:KSPDev.GUIUtils.CostType"/><seealso cref="T:KSPDev.GUIUtils.DistanceType"/><seealso cref="T:KSPDev.GUIUtils.ForceType"/><seealso cref="T:KSPDev.GUIUtils.KeyboardEventType"/><seealso cref="T:KSPDev.GUIUtils.MassType"/><seealso cref="T:KSPDev.GUIUtils.PercentType"/><seealso cref="T:KSPDev.GUIUtils.PressureType"/><seealso cref="T:KSPDev.GUIUtils.ResourceShortType"/><seealso cref="T:KSPDev.GUIUtils.MassType"/><seealso cref="T:KSPDev.GUIUtils.ResourceType"/>
+            <example><code source="Examples/GUIUtils/TypeFormatters/KeyboardEventType-Examples.cs" region="KeyboardEventTypeDemo1"/></example>
         </member>
         <member name="F:KSPDev.GUIUtils.KeyboardEventType.value">
             <summary>A wrapped event value.</summary>
@@ -2613,7 +2614,7 @@
             <summary>Constructs an object from an event.</summary>
             <param name="value">The keyboard event.</param>
             <seealso cref="M:KSPDev.GUIUtils.KeyboardEventType.Format(UnityEngine.Event)"/>
-            <example><code source="Examples/GUIUtils/KeyboardEventType-Examples.cs" region="KeyboardEventTypeDemo1"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/KeyboardEventType-Examples.cs" region="KeyboardEventTypeDemo1"/></example>
         </member>
         <member name="M:KSPDev.GUIUtils.KeyboardEventType.op_Implicit(UnityEngine.Event)~KSPDev.GUIUtils.KeyboardEventType">
             <summary>Converts a numeric value into a type object.</summary>
@@ -2629,7 +2630,7 @@
             <summary>Formats the value into a human friendly string.</summary>
             <param name="value">The keyboard event value to format.</param>
             <returns>A formatted and localized string</returns>
-            <example><code source="Examples/GUIUtils/KeyboardEventType-Examples.cs" region="KeyboardEventTypeDemo1"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/KeyboardEventType-Examples.cs" region="KeyboardEventTypeDemo1"/></example>
         </member>
         <member name="M:KSPDev.GUIUtils.KeyboardEventType.ToString">
             <summary>Returns a string formatted as a human friendly key specification.</summary>
@@ -2652,11 +2653,11 @@
             </para>
             </remarks>
             <seealso cref="T:KSPDev.GUIUtils.Message`1"/><seealso cref="T:KSPDev.GUIUtils.Message`2"/><seealso cref="T:KSPDev.GUIUtils.Message`3"/><seealso cref="T:KSPDev.GUIUtils.Message`4"/><seealso cref="T:KSPDev.GUIUtils.Message`5"/><seealso cref="T:KSPDev.GUIUtils.MessageLookup`1"/>
-            <seealso cref="T:KSPDev.GUIUtils.AngleType"/><seealso cref="T:KSPDev.GUIUtils.DistanceType"/><seealso cref="T:KSPDev.GUIUtils.ForceType"/><seealso cref="T:KSPDev.GUIUtils.PercentType"/><seealso cref="T:KSPDev.GUIUtils.MassType"/>
-            <example><code source="Examples/GUIUtils/MassType-Examples.cs" region="MassTypeDemo1"/></example>
-            <example><code source="Examples/GUIUtils/MassType-Examples.cs" region="MassTypeDemo2_FormatDefault"/></example>
-            <example><code source="Examples/GUIUtils/MassType-Examples.cs" region="MassTypeDemo2_FormatWithScale"/></example>
-            <example><code source="Examples/GUIUtils/MassType-Examples.cs" region="MassTypeDemo2_FormatFixed"/></example>
+            <seealso cref="T:KSPDev.GUIUtils.AngleType"/><seealso cref="T:KSPDev.GUIUtils.CompactNumberType"/><seealso cref="T:KSPDev.GUIUtils.CostType"/><seealso cref="T:KSPDev.GUIUtils.DistanceType"/><seealso cref="T:KSPDev.GUIUtils.ForceType"/><seealso cref="T:KSPDev.GUIUtils.KeyboardEventType"/><seealso cref="T:KSPDev.GUIUtils.MassType"/><seealso cref="T:KSPDev.GUIUtils.PercentType"/><seealso cref="T:KSPDev.GUIUtils.PressureType"/><seealso cref="T:KSPDev.GUIUtils.ResourceShortType"/><seealso cref="T:KSPDev.GUIUtils.MassType"/><seealso cref="T:KSPDev.GUIUtils.ResourceType"/>
+            <example><code source="Examples/GUIUtils/TypeFormatters/MassType-Examples.cs" region="MassTypeDemo1"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/MassType-Examples.cs" region="MassTypeDemo2_FormatDefault"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/MassType-Examples.cs" region="MassTypeDemo2_FormatWithScale"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/MassType-Examples.cs" region="MassTypeDemo2_FormatFixed"/></example>
         </member>
         <member name="F:KSPDev.GUIUtils.MassType.gram">
             <summary>Localized suffix for the "gram" units. Scale <c>0.000001</c>.</summary>
@@ -2675,10 +2676,10 @@
             <summary>Constructs an object from a numeric value.</summary>
             <param name="value">The numeric value in meters.</param>
             <seealso cref="M:KSPDev.GUIUtils.MassType.Format(System.Double,System.Nullable{System.Double},System.String)"/>
-            <example><code source="Examples/GUIUtils/MassType-Examples.cs" region="MassTypeDemo1"/></example>
-            <example><code source="Examples/GUIUtils/MassType-Examples.cs" region="MassTypeDemo2_FormatDefault"/></example>
-            <example><code source="Examples/GUIUtils/MassType-Examples.cs" region="MassTypeDemo2_FormatWithScale"/></example>
-            <example><code source="Examples/GUIUtils/MassType-Examples.cs" region="MassTypeDemo2_FormatFixed"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/MassType-Examples.cs" region="MassTypeDemo1"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/MassType-Examples.cs" region="MassTypeDemo2_FormatDefault"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/MassType-Examples.cs" region="MassTypeDemo2_FormatWithScale"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/MassType-Examples.cs" region="MassTypeDemo2_FormatFixed"/></example>
         </member>
         <member name="M:KSPDev.GUIUtils.MassType.op_Implicit(System.Double)~KSPDev.GUIUtils.MassType">
             <summary>Converts a numeric value into a type object.</summary>
@@ -2717,9 +2718,9 @@
             specified, then it's choosen basing on the scale.
             </param>
             <returns>A formatted and localized string</returns>
-            <example><code source="Examples/GUIUtils/MassType-Examples.cs" region="MassTypeDemo2_FormatDefault"/></example>
-            <example><code source="Examples/GUIUtils/MassType-Examples.cs" region="MassTypeDemo2_FormatWithScale"/></example>
-            <example><code source="Examples/GUIUtils/MassType-Examples.cs" region="MassTypeDemo2_FormatFixed"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/MassType-Examples.cs" region="MassTypeDemo2_FormatDefault"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/MassType-Examples.cs" region="MassTypeDemo2_FormatWithScale"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/MassType-Examples.cs" region="MassTypeDemo2_FormatFixed"/></example>
         </member>
         <member name="M:KSPDev.GUIUtils.MassType.ToString">
             <summary>Returns a string formatted as a human friendly distance specification.</summary>
@@ -2735,10 +2736,10 @@
             Use it as a generic parameter when creating a <see cref="T:KSPDev.GUIUtils.LocalizableMessage"/> descendants.
             </remarks>
             <seealso cref="T:KSPDev.GUIUtils.Message`1"/><seealso cref="T:KSPDev.GUIUtils.Message`2"/><seealso cref="T:KSPDev.GUIUtils.Message`3"/><seealso cref="T:KSPDev.GUIUtils.Message`4"/><seealso cref="T:KSPDev.GUIUtils.Message`5"/><seealso cref="T:KSPDev.GUIUtils.MessageLookup`1"/>
-            <seealso cref="T:KSPDev.GUIUtils.AngleType"/><seealso cref="T:KSPDev.GUIUtils.DistanceType"/><seealso cref="T:KSPDev.GUIUtils.ForceType"/><seealso cref="T:KSPDev.GUIUtils.PercentType"/><seealso cref="T:KSPDev.GUIUtils.MassType"/>
-            <example><code source="Examples/GUIUtils/PercentType-Examples.cs" region="PercentTypeDemo1"/></example>
-            <example><code source="Examples/GUIUtils/PercentType-Examples.cs" region="PercentTypeDemo2_FormatDefault"/></example>
-            <example><code source="Examples/GUIUtils/PercentType-Examples.cs" region="PercentTypeDemo2_FormatFixed"/></example>
+            <seealso cref="T:KSPDev.GUIUtils.AngleType"/><seealso cref="T:KSPDev.GUIUtils.CompactNumberType"/><seealso cref="T:KSPDev.GUIUtils.CostType"/><seealso cref="T:KSPDev.GUIUtils.DistanceType"/><seealso cref="T:KSPDev.GUIUtils.ForceType"/><seealso cref="T:KSPDev.GUIUtils.KeyboardEventType"/><seealso cref="T:KSPDev.GUIUtils.MassType"/><seealso cref="T:KSPDev.GUIUtils.PercentType"/><seealso cref="T:KSPDev.GUIUtils.PressureType"/><seealso cref="T:KSPDev.GUIUtils.ResourceShortType"/><seealso cref="T:KSPDev.GUIUtils.MassType"/><seealso cref="T:KSPDev.GUIUtils.ResourceType"/>
+            <example><code source="Examples/GUIUtils/TypeFormatters/PercentType-Examples.cs" region="PercentTypeDemo1"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/PercentType-Examples.cs" region="PercentTypeDemo2_FormatDefault"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/PercentType-Examples.cs" region="PercentTypeDemo2_FormatFixed"/></example>
         </member>
         <member name="F:KSPDev.GUIUtils.PercentType.unitName">
             <summary>Suffix for the "percent" units (%).</summary>
@@ -2753,9 +2754,9 @@
             The numeric value which defines the ratio. Value <c>0.0</c> is <c>100%</c>.
             </param>
             <seealso cref="M:KSPDev.GUIUtils.PercentType.Format(System.Double,System.String)"/>
-            <example><code source="Examples/GUIUtils/PercentType-Examples.cs" region="PercentTypeDemo1"/></example>
-            <example><code source="Examples/GUIUtils/PercentType-Examples.cs" region="PercentTypeDemo2_FormatDefault"/></example>
-            <example><code source="Examples/GUIUtils/PercentType-Examples.cs" region="PercentTypeDemo2_FormatFixed"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/PercentType-Examples.cs" region="PercentTypeDemo1"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/PercentType-Examples.cs" region="PercentTypeDemo2_FormatDefault"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/PercentType-Examples.cs" region="PercentTypeDemo2_FormatFixed"/></example>
         </member>
         <member name="M:KSPDev.GUIUtils.PercentType.op_Implicit(System.Double)~KSPDev.GUIUtils.PercentType">
             <summary>Coverts a numeric value into a type object.</summary>
@@ -2780,8 +2781,8 @@
             before formatting. 
             </param>
             <returns>A formatted and localized string</returns>
-            <example><code source="Examples/GUIUtils/PercentType-Examples.cs" region="PercentTypeDemo2_FormatDefault"/></example>
-            <example><code source="Examples/GUIUtils/PercentType-Examples.cs" region="PercentTypeDemo2_FormatFixed"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/PercentType-Examples.cs" region="PercentTypeDemo2_FormatDefault"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/PercentType-Examples.cs" region="PercentTypeDemo2_FormatFixed"/></example>
         </member>
         <member name="M:KSPDev.GUIUtils.PercentType.ToString">
             <summary>Returns a string formatted as a human friendly percentage specification.</summary>
@@ -2804,10 +2805,10 @@
             </para>
             </remarks>
             <seealso cref="T:KSPDev.GUIUtils.Message`1"/><seealso cref="T:KSPDev.GUIUtils.Message`2"/><seealso cref="T:KSPDev.GUIUtils.Message`3"/><seealso cref="T:KSPDev.GUIUtils.Message`4"/><seealso cref="T:KSPDev.GUIUtils.Message`5"/><seealso cref="T:KSPDev.GUIUtils.MessageLookup`1"/>
-            <seealso cref="T:KSPDev.GUIUtils.AngleType"/><seealso cref="T:KSPDev.GUIUtils.DistanceType"/><seealso cref="T:KSPDev.GUIUtils.ForceType"/><seealso cref="T:KSPDev.GUIUtils.PercentType"/><seealso cref="T:KSPDev.GUIUtils.MassType"/>
-            <example><code source="Examples/GUIUtils/PressureType-Examples.cs" region="PressureTypeDemo1"/></example>
-            <example><code source="Examples/GUIUtils/PressureType-Examples.cs" region="PressureTypeDemo2_FormatDefault"/></example>
-            <example><code source="Examples/GUIUtils/PressureType-Examples.cs" region="PressureTypeDemo2_FormatFixed"/></example>
+            <seealso cref="T:KSPDev.GUIUtils.AngleType"/><seealso cref="T:KSPDev.GUIUtils.CompactNumberType"/><seealso cref="T:KSPDev.GUIUtils.CostType"/><seealso cref="T:KSPDev.GUIUtils.DistanceType"/><seealso cref="T:KSPDev.GUIUtils.ForceType"/><seealso cref="T:KSPDev.GUIUtils.KeyboardEventType"/><seealso cref="T:KSPDev.GUIUtils.MassType"/><seealso cref="T:KSPDev.GUIUtils.PercentType"/><seealso cref="T:KSPDev.GUIUtils.PressureType"/><seealso cref="T:KSPDev.GUIUtils.ResourceShortType"/><seealso cref="T:KSPDev.GUIUtils.MassType"/><seealso cref="T:KSPDev.GUIUtils.ResourceType"/>
+            <example><code source="Examples/GUIUtils/TypeFormatters/PressureType-Examples.cs" region="PressureTypeDemo1"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/PressureType-Examples.cs" region="PressureTypeDemo2_FormatDefault"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/PressureType-Examples.cs" region="PressureTypeDemo2_FormatFixed"/></example>
         </member>
         <member name="F:KSPDev.GUIUtils.PressureType.kiloPascal">
             <summary>Localized suffix for the "kilopascal" units. Scale x1.</summary>
@@ -2820,9 +2821,9 @@
             <summary>Constructs an object from a numeric value.</summary>
             <param name="value">The numeric value in the base units.</param>
             <seealso cref="M:KSPDev.GUIUtils.PressureType.Format(System.Double,System.String)"/>
-            <example><code source="Examples/GUIUtils/PressureType-Examples.cs" region="PressureTypeDemo1"/></example>
-            <example><code source="Examples/GUIUtils/PressureType-Examples.cs" region="PressureTypeDemo2_FormatDefault"/></example>
-            <example><code source="Examples/GUIUtils/PressureType-Examples.cs" region="PressureTypeDemo2_FormatFixed"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/PressureType-Examples.cs" region="PressureTypeDemo1"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/PressureType-Examples.cs" region="PressureTypeDemo2_FormatDefault"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/PressureType-Examples.cs" region="PressureTypeDemo2_FormatFixed"/></example>
         </member>
         <member name="M:KSPDev.GUIUtils.PressureType.op_Implicit(System.Double)~KSPDev.GUIUtils.PressureType">
             <summary>Coverts a numeric value into a type object.</summary>
@@ -2852,8 +2853,8 @@
             basing on the value.
             </param>
             <returns>A formatted and localized string</returns>
-            <example><code source="Examples/GUIUtils/PressureType-Examples.cs" region="PressureTypeDemo2_FormatDefault"/></example>
-            <example><code source="Examples/GUIUtils/PressureType-Examples.cs" region="PressureTypeDemo2_FormatFixed"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/PressureType-Examples.cs" region="PressureTypeDemo2_FormatDefault"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/PressureType-Examples.cs" region="PressureTypeDemo2_FormatFixed"/></example>
         </member>
         <member name="M:KSPDev.GUIUtils.PressureType.ToString">
             <summary>Returns a string formatted as a human friendly pressure specification.</summary>
@@ -2875,9 +2876,9 @@
             </para>
             </remarks>
             <seealso cref="T:KSPDev.GUIUtils.Message`1"/><seealso cref="T:KSPDev.GUIUtils.Message`2"/><seealso cref="T:KSPDev.GUIUtils.Message`3"/><seealso cref="T:KSPDev.GUIUtils.Message`4"/><seealso cref="T:KSPDev.GUIUtils.Message`5"/><seealso cref="T:KSPDev.GUIUtils.MessageLookup`1"/>
-            <seealso cref="T:KSPDev.GUIUtils.AngleType"/><seealso cref="T:KSPDev.GUIUtils.DistanceType"/><seealso cref="T:KSPDev.GUIUtils.ForceType"/><seealso cref="T:KSPDev.GUIUtils.PercentType"/><seealso cref="T:KSPDev.GUIUtils.MassType"/>
-            <example><code source="Examples/GUIUtils/ResourceShortType-Examples.cs" region="ResourceShortTypeDemo1"/></example>
-            <example><code source="Examples/GUIUtils/ResourceShortType-Examples.cs" region="ResourceShortTypeDemo2_FormatDefault"/></example>
+            <seealso cref="T:KSPDev.GUIUtils.AngleType"/><seealso cref="T:KSPDev.GUIUtils.CompactNumberType"/><seealso cref="T:KSPDev.GUIUtils.CostType"/><seealso cref="T:KSPDev.GUIUtils.DistanceType"/><seealso cref="T:KSPDev.GUIUtils.ForceType"/><seealso cref="T:KSPDev.GUIUtils.KeyboardEventType"/><seealso cref="T:KSPDev.GUIUtils.MassType"/><seealso cref="T:KSPDev.GUIUtils.PercentType"/><seealso cref="T:KSPDev.GUIUtils.PressureType"/><seealso cref="T:KSPDev.GUIUtils.ResourceShortType"/><seealso cref="T:KSPDev.GUIUtils.MassType"/><seealso cref="T:KSPDev.GUIUtils.ResourceType"/>
+            <example><code source="Examples/GUIUtils/TypeFormatters/ResourceShortType-Examples.cs" region="ResourceShortTypeDemo1"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/ResourceShortType-Examples.cs" region="ResourceShortTypeDemo2_FormatDefault"/></example>
         </member>
         <member name="F:KSPDev.GUIUtils.ResourceShortType.resourceId">
             <summary>A wrapped resource ID value.</summary>
@@ -2887,16 +2888,16 @@
             <param name="resourceName">The resource type name.</param>
             <seealso cref="M:KSPDev.GUIUtils.ResourceShortType.Format(System.String)"/>
             <seealso cref="M:KSPDev.GUIUtils.ResourceShortType.Format(System.Int32)"/>
-            <example><code source="Examples/GUIUtils/ResourceShortType-Examples.cs" region="ResourceShortTypeDemo1"/></example>
-            <example><code source="Examples/GUIUtils/ResourceShortType-Examples.cs" region="ResourceShortTypeDemo2_FormatDefault"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/ResourceShortType-Examples.cs" region="ResourceShortTypeDemo1"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/ResourceShortType-Examples.cs" region="ResourceShortTypeDemo2_FormatDefault"/></example>
         </member>
         <member name="M:KSPDev.GUIUtils.ResourceShortType.#ctor(System.Int32)">
             <summary>Constructs an object from a resource ID.</summary>
             <param name="resourceId">The resource ID.</param>
             <seealso cref="M:KSPDev.GUIUtils.ResourceShortType.Format(System.String)"/>
             <seealso cref="M:KSPDev.GUIUtils.ResourceShortType.Format(System.Int32)"/>
-            <example><code source="Examples/GUIUtils/ResourceShortType-Examples.cs" region="ResourceShortTypeDemo1"/></example>
-            <example><code source="Examples/GUIUtils/ResourceShortType-Examples.cs" region="ResourceShortTypeDemo2_FormatDefault"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/ResourceShortType-Examples.cs" region="ResourceShortTypeDemo1"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/ResourceShortType-Examples.cs" region="ResourceShortTypeDemo2_FormatDefault"/></example>
         </member>
         <member name="M:KSPDev.GUIUtils.ResourceShortType.op_Implicit(System.String)~KSPDev.GUIUtils.ResourceShortType">
             <summary>Coverts a resource name value into a type object.</summary>
@@ -2922,13 +2923,13 @@
             <summary>Formats the value into a human friendly localized string.</summary>
             <param name="resourceName">The name of the resource to format.</param>
             <returns>A formatted and localized string.</returns>
-            <example><code source="Examples/GUIUtils/ResourceShortType-Examples.cs" region="ResourceShortTypeDemo2_FormatDefault"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/ResourceShortType-Examples.cs" region="ResourceShortTypeDemo2_FormatDefault"/></example>
         </member>
         <member name="M:KSPDev.GUIUtils.ResourceShortType.Format(System.Int32)">
             <summary>Formats the value into a human friendly localized string.</summary>
             <param name="resourceId">The ID of the resource to format.</param>
             <returns>A formatted and localized string.</returns>
-            <example><code source="Examples/GUIUtils/ResourceShortType-Examples.cs" region="ResourceShortTypeDemo2_FormatDefault"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/ResourceShortType-Examples.cs" region="ResourceShortTypeDemo2_FormatDefault"/></example>
         </member>
         <member name="M:KSPDev.GUIUtils.ResourceShortType.ToString">
             <summary>Returns a string formatted as a human friendly resource name.</summary>
@@ -2946,10 +2947,10 @@
             </para>
             </remarks>
             <seealso cref="T:KSPDev.GUIUtils.Message`1"/><seealso cref="T:KSPDev.GUIUtils.Message`2"/><seealso cref="T:KSPDev.GUIUtils.Message`3"/><seealso cref="T:KSPDev.GUIUtils.Message`4"/><seealso cref="T:KSPDev.GUIUtils.Message`5"/><seealso cref="T:KSPDev.GUIUtils.MessageLookup`1"/>
-            <seealso cref="T:KSPDev.GUIUtils.AngleType"/><seealso cref="T:KSPDev.GUIUtils.DistanceType"/><seealso cref="T:KSPDev.GUIUtils.ForceType"/><seealso cref="T:KSPDev.GUIUtils.PercentType"/><seealso cref="T:KSPDev.GUIUtils.MassType"/>
+            <seealso cref="T:KSPDev.GUIUtils.AngleType"/><seealso cref="T:KSPDev.GUIUtils.CompactNumberType"/><seealso cref="T:KSPDev.GUIUtils.CostType"/><seealso cref="T:KSPDev.GUIUtils.DistanceType"/><seealso cref="T:KSPDev.GUIUtils.ForceType"/><seealso cref="T:KSPDev.GUIUtils.KeyboardEventType"/><seealso cref="T:KSPDev.GUIUtils.MassType"/><seealso cref="T:KSPDev.GUIUtils.PercentType"/><seealso cref="T:KSPDev.GUIUtils.PressureType"/><seealso cref="T:KSPDev.GUIUtils.ResourceShortType"/><seealso cref="T:KSPDev.GUIUtils.MassType"/><seealso cref="T:KSPDev.GUIUtils.ResourceType"/>
             <seealso cref="T:KSPDev.ResourceUtils.StockResourceNames"/>
-            <example><code source="Examples/GUIUtils/ResourceType-Examples.cs" region="ResourceTypeDemo1"/></example>
-            <example><code source="Examples/GUIUtils/ResourceType-Examples.cs" region="ResourceTypeDemo2_FormatDefault"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/ResourceType-Examples.cs" region="ResourceTypeDemo1"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/ResourceType-Examples.cs" region="ResourceTypeDemo2_FormatDefault"/></example>
         </member>
         <member name="F:KSPDev.GUIUtils.ResourceType.resourceId">
             <summary>A wrapped resource ID value.</summary>
@@ -2960,8 +2961,8 @@
             <seealso cref="M:KSPDev.GUIUtils.ResourceType.Format(System.Int32)"/>
             <seealso cref="M:KSPDev.GUIUtils.ResourceType.Format(System.String)"/>
             <seealso cref="T:KSPDev.ResourceUtils.StockResourceNames"/>
-            <example><code source="Examples/GUIUtils/ResourceType-Examples.cs" region="ResourceTypeDemo1"/></example>
-            <example><code source="Examples/GUIUtils/ResourceType-Examples.cs" region="ResourceTypeDemo2_FormatDefault"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/ResourceType-Examples.cs" region="ResourceTypeDemo1"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/ResourceType-Examples.cs" region="ResourceTypeDemo2_FormatDefault"/></example>
         </member>
         <member name="M:KSPDev.GUIUtils.ResourceType.#ctor(System.Int32)">
             <summary>Constructs an object from a resource ID.</summary>
@@ -2969,8 +2970,8 @@
             <seealso cref="M:KSPDev.GUIUtils.ResourceType.Format(System.Int32)"/>
             <seealso cref="M:KSPDev.GUIUtils.ResourceType.Format(System.String)"/>
             <seealso cref="T:KSPDev.ResourceUtils.StockResourceNames"/>
-            <example><code source="Examples/GUIUtils/ResourceType-Examples.cs" region="ResourceTypeDemo1"/></example>
-            <example><code source="Examples/GUIUtils/ResourceType-Examples.cs" region="ResourceTypeDemo2_FormatDefault"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/ResourceType-Examples.cs" region="ResourceTypeDemo1"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/ResourceType-Examples.cs" region="ResourceTypeDemo2_FormatDefault"/></example>
         </member>
         <member name="M:KSPDev.GUIUtils.ResourceType.op_Implicit(System.String)~KSPDev.GUIUtils.ResourceType">
             <summary>Coverts a resource name value into a type object.</summary>
@@ -2999,14 +3000,14 @@
             <param name="resourceName">The name of the resource to format.</param>
             <returns>A formatted and localized string.</returns>
             <seealso cref="T:KSPDev.ResourceUtils.StockResourceNames"/>
-            <example><code source="Examples/GUIUtils/ResourceType-Examples.cs" region="ResourceTypeDemo2_FormatDefault"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/ResourceType-Examples.cs" region="ResourceTypeDemo2_FormatDefault"/></example>
         </member>
         <member name="M:KSPDev.GUIUtils.ResourceType.Format(System.Int32)">
             <summary>Formats the value into a human friendly localized string.</summary>
             <param name="resourceId">The ID of the resource to format.</param>
             <returns>A formatted and localized string.</returns>
             <seealso cref="T:KSPDev.ResourceUtils.StockResourceNames"/>
-            <example><code source="Examples/GUIUtils/ResourceType-Examples.cs" region="ResourceTypeDemo2_FormatDefault"/></example>
+            <example><code source="Examples/GUIUtils/TypeFormatters/ResourceType-Examples.cs" region="ResourceTypeDemo2_FormatDefault"/></example>
         </member>
         <member name="M:KSPDev.GUIUtils.ResourceType.ToString">
             <summary>Returns a string formatted as a human friendly resource name.</summary>
@@ -4560,6 +4561,31 @@
             <seealso cref="M:KSPDev.PartUtils.PartModuleUtils.GetEvent(PartModule,System.Action)"/>
             <example><code source="Examples/PartUtils/PartModuleUtils-Examples.cs" region="PartModuleUtils_SetupEvent"/></example>
         </member>
+        <member name="M:KSPDev.PartUtils.PartModuleUtils.GetAction(PartModule,System.Action{KSPActionParam})">
+            <summary>Returns an action for the requested method.</summary>
+            <remarks>
+            This method requests a KPS action of the part's module by its signature instead of a string
+            literal name. The same result could be achieved by accessing the <c>Actions</c> field of the
+            <c>PartModule</c> object. However, in case of using a string literal the refactoring and the
+            source tracking tools won't be able to track the reference. The main goal of this method is to
+            provide a compile time checking mechanism for the cases when the exact method is known at the
+            compile time (e.g. in the class descendants).
+            </remarks>
+            <param name="partModule">The module to find the action in.</param>
+            <param name="actionFn">The actions's method signature.</param>
+            <returns>An action, or <c>null</c> if nothing found for the method provided.</returns>
+            <seealso cref="M:KSPDev.PartUtils.PartModuleUtils.SetupAction(PartModule,System.Action{KSPActionParam},System.Action{BaseAction})"/>
+        </member>
+        <member name="M:KSPDev.PartUtils.PartModuleUtils.SetupAction(PartModule,System.Action{KSPActionParam},System.Action{BaseAction})">
+            <summary>Applies a setup function on a KSP part module action.</summary>
+            <param name="partModule">The module to find the action in.</param>
+            <param name="actionFn">The actions's method signature.</param>
+            <param name="setupFn">The function to apply to the action if the one is found.</param>
+            <returns>
+            <c>true</c> if the action was found and the function was applied, <c>false</c> otherwise.
+            </returns>
+            <seealso cref="M:KSPDev.PartUtils.PartModuleUtils.GetAction(PartModule,System.Action{KSPActionParam})"/>
+        </member>
         <member name="T:KSPDev.ProcessingUtils.AsyncCall">
             <summary>Set of tools to execute a delayed code.</summary>
             <remarks>
@@ -4920,7 +4946,7 @@
             A helper class that holds string and ID defintions for all the game stock resources. 
             </summary>
             <seealso href="http://wiki.kerbalspaceprogram.com/wiki/Resource">KSP Wiki: Resource</seealso>
-            <code source="Examples/Extensions/SimpleStateMachine-Examples.cs" region="StockResourceNames1"/>
+            <code source="Examples/ResourceUtils/StockResourceNames-Examples.cs" region="StockResourceNames1"/>
         </member>
         <member name="F:KSPDev.ResourceUtils.StockResourceNames.ElectricCharge">
             <summary>Electric charge resource name.</summary>
@@ -4978,19 +5004,19 @@
             <remarks>This ID can be used in the methods that can only work with IDs.</remarks>
             <param name="resourceName">The name of the stock resource.</param>
             <returns>An ID of the resource.</returns>
-            <code source="Examples/Extensions/SimpleStateMachine-Examples.cs" region="StockResourceNames1"/>
+            <code source="Examples/ResourceUtils/StockResourceNames-Examples.cs" region="StockResourceNames1"/>
         </member>
         <member name="M:KSPDev.ResourceUtils.StockResourceNames.GetResourceTitle(System.String)">
             <summary>Returns a user friendly name of the resource.</summary>
             <param name="resourceName">The resource common name.</param>
             <returns>A user friendly string that identifies the resource.</returns>
-            <code source="Examples/Extensions/SimpleStateMachine-Examples.cs" region="StockResourceNames1"/>
+            <code source="Examples/ResourceUtils/StockResourceNames-Examples.cs" region="StockResourceNames1"/>
         </member>
         <member name="M:KSPDev.ResourceUtils.StockResourceNames.GetResourceTitle(System.Int32)">
             <summary>Returns a user friendly name of the resource.</summary>
             <param name="resourceId">The resource ID.</param>
             <returns>A user friendly string that identifies the resource.</returns>
-            <code source="Examples/Extensions/SimpleStateMachine-Examples.cs" region="StockResourceNames1"/>
+            <code source="Examples/ResourceUtils/StockResourceNames-Examples.cs" region="StockResourceNames1"/>
         </member>
         <member name="M:KSPDev.ResourceUtils.StockResourceNames.GetResourceAbbreviation(System.String)">
             <summary>Returns a user friendly name of the resource bsort name (abbreviation).</summary>
@@ -5000,7 +5026,7 @@
             </remarks>
             <param name="resourceName">The resource common name.</param>
             <returns>A user friendly string that identifies the resource.</returns>
-            <code source="Examples/Extensions/SimpleStateMachine-Examples.cs" region="StockResourceNames1"/>
+            <code source="Examples/ResourceUtils/StockResourceNames-Examples.cs" region="StockResourceNames1"/>
         </member>
         <member name="M:KSPDev.ResourceUtils.StockResourceNames.GetResourceAbbreviation(System.Int32)">
             <summary>Returns a user friendly name of the resource bsort name (abbreviation).</summary>
@@ -5010,7 +5036,7 @@
             </remarks>
             <param name="resourceId">The resource ID.</param>
             <returns>A user friendly string that identifies the resource.</returns>
-            <code source="Examples/Extensions/SimpleStateMachine-Examples.cs" region="StockResourceNames1"/>
+            <code source="Examples/ResourceUtils/StockResourceNames-Examples.cs" region="StockResourceNames1"/>
         </member>
         <member name="T:KSPDev.SoundsUtils.SpatialSounds">
             <summary>Helper class to deal with the sounds attached to a game object.</summary>
