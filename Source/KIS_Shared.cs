@@ -1361,7 +1361,9 @@ public static class KIS_Shared {
   /// <remarks>Initially the part must belong to some vessel.</remarks>
   static IEnumerator WaitAndMakeLonePart(Part newPart, OnPartReady onPartReady) {
     Debug.LogFormat("Create lone part vessel for {0}", DbgFormatter.PartId(newPart));
+    newPart.physicalSignificance = Part.PhysicalSignificance.NONE;
     newPart.PromoteToPhysicalPart();
+    newPart.Unpack();
     newPart.disconnect(true);
     Vessel newVessel = newPart.gameObject.AddComponent<Vessel>();
     newVessel.id = Guid.NewGuid();
@@ -1377,8 +1379,6 @@ public static class KIS_Shared {
       Debug.LogWarningFormat("Part {0} has died before fully instantiating", newPart.name);
       yield break;
     }
-    newPart.Unpack();
-    newPart.InitializeModules();
 
     if (onPartReady != null) {
       onPartReady(newPart);
