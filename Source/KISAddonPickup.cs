@@ -110,7 +110,7 @@ sealed class KISAddonPickup : MonoBehaviour {
   static readonly Message RootPartStatusTooltipTxt = new Message(
       "#kisLOC_01014",
       defaultTemplate: "Root part",
-      description: "The action status to show in the tooltip when a rot part of the vessel is"
+      description: "The action status to show in the tooltip when a root part of the vessel is"
       + " targeted for an action.");
 
   static readonly Message<string> DropActionStatusTooltipTxt = new Message<string>(

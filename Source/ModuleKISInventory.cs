@@ -236,7 +236,7 @@ public class ModuleKISInventory : PartModule,
       "#kisLOC_00030",
       defaultTemplate: "<<1>>`s inventory",
       description: "The name of the part's menu item that opens the inventory of a specific kerbal."
-      + "\nArgument <<1>> is the name of the first of the kerbal.");
+      + "\nArgument <<1>> is the first name of the kerbal.");
 
   static readonly Message PartInventoryMenuTxt = new Message(
       "#kisLOC_00031",
