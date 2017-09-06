@@ -367,13 +367,6 @@ public class ModuleKISInventory : PartModule,
       defaultTemplate: "Part has no resources",
       description: "The message to present in the tooltip window when the item has no resources.");
 
-  static readonly Message<string> EquipItemSlotTootltipInfo = new Message<string>(
-      "#kisLOC_00050",
-      defaultTemplate: "Equip slot: <<1>>",
-      description: "The information for the equippable slot of the item. It's presented in a"
-      + " tooltip window."
-      + "\nArgument <<1>> is the string name of the slot. E.g. \"rightHand\".");
-
   static readonly Message<string> EquipItemKeyTootltipInfo = new Message<string>(
       "#kisLOC_00051",
       defaultTemplate: "Press [<<1>>] to use (equipped)",
@@ -1595,7 +1588,7 @@ public class ModuleKISInventory : PartModule,
       sb.AppendLine(ItemContentsMassTooltipInfo.Format(tooltipItem.contentMass));
     }
     if (tooltipItem.equipSlot != null) {
-      sb.AppendLine(EquipItemSlotTootltipInfo.Format(tooltipItem.equipSlot));
+      sb.AppendLine(tooltipItem.prefabModule.GetEqipSlotString());
       if (tooltipItem.equipSlot == "rightHand") {
         sb.AppendLine(EquipItemKeyTootltipInfo.Format(evaRightHandKey));
       }

@@ -318,6 +318,23 @@ public class ModuleKISItem : PartModule,
     }
   }
 
+  /// <summary>
+  /// Returns a localized message that describes how the item can be equipped/carried. 
+  /// </summary>
+  /// <returns>The localized string.</returns>
+  public string GetEqipSlotString() {
+    var slotName = EquipSlotsLookup.ContainsKey(equipSlot)
+        ? EquipSlotsLookup[equipSlot].Format()
+        : equipSlot;
+    if (equipable) {
+      return EquippableInfo.Format(slotName);
+    }
+    if (carriable) {
+      return CarriableInfo.Format(slotName);
+    }
+    return null;
+  }
+
   #region Inheritable & customization methods
   /// <summary>Returns parameterized info strings.</summary>
   /// <remarks>
