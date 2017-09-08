@@ -1105,6 +1105,9 @@ sealed class KISAddonPickup : MonoBehaviour {
 
   private void OnGUI() {
     if (draggedPart) {
+      if (Event.current.type == EventType.mouseDrag) {
+        Event.current.Use();
+      }
       GUI.depth = 0;
       GUI.DrawTexture(new Rect(Event.current.mousePosition.x - (draggedIconSize / 2),
                                Event.current.mousePosition.y - (draggedIconSize / 2),
