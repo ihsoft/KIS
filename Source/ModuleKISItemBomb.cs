@@ -17,6 +17,8 @@ namespace KIS {
 
 // Next localization ID: #kisLOC_05012.
 public sealed class ModuleKISItemBomb : ModuleKISItem,
+    // KSPDEV interfaces.
+    IsLocalizableModule,
     // KSPDEV sugar interfaces.
     IHasGUI, IPartModule {
 
@@ -132,10 +134,22 @@ public sealed class ModuleKISItemBomb : ModuleKISItem,
   }
   #endregion
 
+  #region IsLocalizableModule implementation
+  public void LocalizeModule() {
+    LocalizationLoader.LoadItemsInModule(this);
+  }
+  #endregion
+
   #region PartModule overrides
   /// <inheritdoc/>
   public override string GetModuleDisplayName() {
     return ModuleTitleInfo;
+  }
+
+  /// <inheritdoc/>
+  public override void OnAwake() {
+    base.OnAwake();
+    LocalizeModule();
   }
 
   /// <inheritdoc/>

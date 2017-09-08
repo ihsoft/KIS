@@ -17,7 +17,7 @@ namespace KIS {
 // Next localization ID: #kasLOC_10002.
 public class ModuleKISPartMount : PartModule,
     // KSPDev interfaces.
-    IHasContextMenu,
+    IHasContextMenu, IsLocalizableModule,
     // KSPDev sugar interfaces.
     IPartModule {
 
@@ -62,12 +62,25 @@ public class ModuleKISPartMount : PartModule,
   #region IHasContextMenu implementation
   /// <inheritdoc/>
   public void UpdateContextMenu() {
+    // FIXME: Consider the mounted state. 
     PartModuleUtils.SetupEvent(this, ReleaseEvent, x => x.active = allowRelease);
     PartModuleUtils.SetupAction(this, ActionGroupRelease, x => x.active = allowRelease);
   }
   #endregion
 
+  #region IsLocalizableModule implementation
+  public void LocalizeModule() {
+    LocalizationLoader.LoadItemsInModule(this);
+  }
+  #endregion
+
   #region PartModule overrides
+  /// <inheritdoc/>
+  public override void OnAwake() {
+    base.OnAwake();
+    LocalizeModule();
+  }
+
   /// <inheritdoc/>
   public override void OnStart(StartState state) {
     base.OnStart(state);
