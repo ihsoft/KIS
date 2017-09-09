@@ -85,7 +85,7 @@ public class ModuleKISItem : PartModule,
 
   static readonly Message DoesntAttachToPartsInfo = new Message(
       "#kisLOC_06009",
-      defaultTemplate: "<color=orange>Doesn't attach to the parts</color>",
+      defaultTemplate: "<color=orange>Cannot be attached to the parts</color>",
       description: "The info string to show in the editor to state that the item CANNOT be attached"
       + " to another part.");
 

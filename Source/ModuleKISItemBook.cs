@@ -25,7 +25,7 @@ public sealed class ModuleKISItemBook: ModuleKISItem,
   
   static readonly Message PrimaryBookField = new Message(
       "#kisLOC_07001",
-      defaultTemplate: "KIS for Dummers",
+      defaultTemplate: "The last resort manual",
       description: "The info message to present in the editor's details window to designate the"
       + " fact that this item is for the learning purposes only.");
 
