@@ -32,7 +32,7 @@ public class ModuleKISItemAttachTool : ModuleKISItem,
 
   static readonly Message OnlySurfaceAttachModeInfo = new Message(
       "#kisLOC_04002",
-      defaultTemplate: "<color=#FFA500>Can only attach to the part's surface</color>",
+      defaultTemplate: "<color=orange>Can only attach to the part's surface</color>",
       description: "The info message to present in the editor's details window to denote that this"
       + " tool can attach the parts at the surface of another part, but not at the stack nodes.");
   #endregion
