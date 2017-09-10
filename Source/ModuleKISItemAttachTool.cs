@@ -121,12 +121,6 @@ public class ModuleKISItemAttachTool : ModuleKISItem,
   protected override IEnumerable<string> GetPropInfo() {
     return base.GetPropInfo().Concat(new[] {
         toolPartStack ? AllowNodeAttachModeInfo.Format() : null,
-    });
-  }
-
-  /// <inheritdoc/>
-  protected override IEnumerable<string> GetPrimaryFieldInfo() {
-    return base.GetPrimaryFieldInfo().Concat(new[] {
         !toolPartStack ? OnlySurfaceAttachModeInfo.Format() : null,
     });
   }

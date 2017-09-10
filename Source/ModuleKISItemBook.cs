@@ -118,8 +118,8 @@ public sealed class ModuleKISItemBook: ModuleKISItem,
   
   #region Inheritable & customization methods
   /// <inheritdoc/>
-  protected override IEnumerable<string> GetPrimaryFieldInfo() {
-    return base.GetPrimaryFieldInfo().Concat(new[] {
+  protected override IEnumerable<string> GetPropInfo() {
+    return base.GetPropInfo().Concat(new[] {
         PrimaryBookField.Format(),
     });
   }
