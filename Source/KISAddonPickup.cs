@@ -1223,8 +1223,10 @@ sealed class KISAddonPickup : MonoBehaviour {
           GameDatabase.Instance.GetAudioClip(modulePickup.dropSndPath), pos);
     }
     KIS_Shared.DecoupleAssembly(movingPart);
-    movingPart.vessel.SetPosition(pos);
-    movingPart.vessel.SetRotation(rot);
+    var refVessel = tgtPart != null
+        ? tgtPart.vessel
+        : modulePickup != null ? modulePickup.vessel : null;
+    PlaceVessel(movingPart.vessel, pos, rot, refVessel);
     KIS_Shared.SendKISMessage(movingPart, KIS_Shared.MessageAction.DropEnd,
                               KISAddonPointer.GetCurrentAttachNode(), tgtPart);
     KISAddonPointer.StopPointer();
@@ -1235,8 +1237,14 @@ sealed class KISAddonPickup : MonoBehaviour {
     Debug.Log("Create & drop part");
     ModuleKISPickup modulePickup = GetActivePickupNearest(pos);
     draggedItem.StackRemove(1);
-    Part newPart =
-        KIS_Shared.CreatePart(draggedItem.partNode, pos, rot, draggedItem.inventory.part);
+    var refVessel = tgtPart != null
+        ? tgtPart.vessel
+        : modulePickup != null ? modulePickup.vessel : null;
+    Part newPart = KIS_Shared.CreatePart(
+        draggedItem.partNode, pos, rot, draggedItem.inventory.part,
+        onPartReady: p => PlaceVessel(
+            p.vessel, p.vessel.vesselTransform.position, p.vessel.vesselTransform.rotation,
+            refVessel));
     KIS_Shared.SendKISMessage(newPart, KIS_Shared.MessageAction.DropEnd,
                               KISAddonPointer.GetCurrentAttachNode(), tgtPart);
     KISAddonPointer.StopPointer();
@@ -1593,6 +1601,30 @@ sealed class KISAddonPickup : MonoBehaviour {
       UISounds.PlayBipWrong();
     } else {
       KISAddonCursor.CursorEnable(cursorIcon, error, reason);
+    }
+  }
+
+  /// <summary>Places the vessel at the new position and resets momentum on it.</summary>
+  /// <param name="movingVessel">The vessel to place.</param>
+  /// <param name="newPosition">The new possition of the vessel.</param>
+  /// <param name="newRotation">The new rotation of the vessel.</param>
+  /// <param name="refVessel">
+  /// The vessel to alignt velocities with. If it's <c>null</c>, then the velocities on the moving
+  /// vessel will just be zeroed.
+  /// </param>
+  static void PlaceVessel(Vessel movingVessel, Vector3 newPosition, Quaternion newRotation,
+                          Vessel refVessel) {
+    movingVessel.SetPosition(newPosition, usePristineCoords: true);
+    movingVessel.SetRotation(newRotation);
+    var refVelocity = Vector3.zero;
+    var refAngularVelocity = Vector3.zero;
+    if (refVessel != null) {
+      refVelocity = refVessel.rootPart.Rigidbody.velocity;
+      refAngularVelocity = refVessel.rootPart.Rigidbody.angularVelocity;
+    }
+    foreach (var p in movingVessel.parts.Where(p => p.rb != null)) {
+      p.rb.velocity = refVelocity;
+      p.rb.angularVelocity = refAngularVelocity;
     }
   }
 }
