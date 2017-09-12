@@ -1,4 +1,5 @@
 # 1.6 (pre-release):
+* [Enhancement] Improve the attach nodes of the KIS items (including the fun parts) to reduce the physics effects on drop.
 * [Fix #219] Inventory GUI spontaneously closes in the editor.
 * [Fix #130] Crew transfer leaves ghost pod's inventory open.
 * [Fix #220] Equipped parts trigger physics.
