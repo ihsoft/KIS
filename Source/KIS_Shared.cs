@@ -772,6 +772,12 @@ public static class KIS_Shared {
                                                          Part ignoreAttachedPart = null,
                                                          bool needSrf = true) {
     var result = new List<AttachNode>();
+    var moduleItem = p.GetComponent<ModuleKISItem>();
+    if (moduleItem != null && moduleItem.allowPartAttach == ModuleKISItem.ItemAttachMode.Disabled) {
+      // The equippable items and the surface-only parts won't allow any attachment rule.
+      result.Add(p.srfAttachNode);  // This the only node they have.
+      return result;
+    }
     var srfNode = p.attachRules.srfAttach ? p.srfAttachNode : null;
     bool srfHasPart = (srfNode != null && srfNode.attachedPart != null
                        && srfNode.attachedPart != ignoreAttachedPart);
