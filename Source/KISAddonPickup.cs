@@ -361,7 +361,7 @@ sealed class KISAddonPickup : MonoBehaviour {
   private bool jetpackLock = false;
   private bool delayedButtonUp = false;
 
-  /// <summary>A number of parts inthe currently grabbed assembly.</summary>
+  /// <summary>A number of parts in the currently grabbed assembly.</summary>
   public static int grabbedPartsCount;
   /// <summary>The total mass of the grabbed assembly. Tons.</summary>
   public static float grabbedMass;
@@ -1292,7 +1292,7 @@ sealed class KISAddonPickup : MonoBehaviour {
   }
 
   /// <summary>Enables mode that allows re-docking a vessel attached to a station.</summary>
-  private void EnableRedockingMode() {
+  void EnableRedockingMode() {
     if (KISAddonPointer.isRunning || cursorMode != CursorMode.Nothing) {
       return;
     }
@@ -1307,7 +1307,7 @@ sealed class KISAddonPickup : MonoBehaviour {
   }
 
   /// <summary>Disables re-docking mode.</summary>
-  private void DisableRedockingMode() {
+  void DisableRedockingMode() {
     if (cursorMode == CursorMode.ReDock) {
       Debug.Log("Disable re-dock mode");
       if (redockTarget) {
@@ -1366,14 +1366,14 @@ sealed class KISAddonPickup : MonoBehaviour {
 
   /// <summary>Grabs re-docking vessel and starts movement.</summary>
   /// <param name="part">Not used.</param>
-  private void OnMouseRedockPartClick(Part part) {
+  void OnMouseRedockPartClick(Part part) {
     if (redockOk) {
       Pickup(redockTarget);
     }
   }
       
   /// <summary>Erases re-docking vessel selection.</summary>
-  private void OnMouseRedockExitPart(Part unusedPart) {
+  void OnMouseRedockExitPart(Part unusedPart) {
     if (cursorMode != CursorMode.ReDock) {
       return;
     }
@@ -1457,7 +1457,7 @@ sealed class KISAddonPickup : MonoBehaviour {
   /// a kerbonaut in range with a tool equipped.</remarks>
   /// <param name="part">A hierarchy root being detached.</param>
   /// <returns><c>true</c> when the hierarchy can be detached.</returns>
-  private bool CheckCanDetach(Part part) {
+  bool CheckCanDetach(Part part) {
     // If part is attached then check if the right tool is equipped to detach it.
     if (!part.parent) {
       return true;  // No parent, no detach needed.
@@ -1550,7 +1550,7 @@ sealed class KISAddonPickup : MonoBehaviour {
   /// root part.
   /// </remarks>
   /// <returns>A complete set of allowed docking ports.</returns>
-  private static HashSet<Part> GetAllowedDockPorts() {
+  static HashSet<Part> GetAllowedDockPorts() {
     var result = new HashSet<Part>();
     var compatiblePorts = redockTarget.vessel.parts.FindAll(p => p.name == redockTarget.name);
     foreach (var port in compatiblePorts) {
