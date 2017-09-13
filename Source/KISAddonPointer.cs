@@ -533,8 +533,7 @@ sealed class KISAddonPointer : MonoBehaviour {
     bool notAllowedOnMount = false;
     bool cannotSurfaceAttach = false;
     bool invalidCurrentNode = false;
-    bool itselfIsInvalid =
-      !allowPartItself && KIS_Shared.IsSameHierarchyChild(partToAttach, hoveredPart);
+    bool itselfIsInvalid = !allowPartItself && partToAttach.hasIndirectChild(hoveredPart);
     bool restrictedPart =
       allowedAttachmentParts != null && !allowedAttachmentParts.Contains(hoveredPart);
     switch (pointerTarget) {

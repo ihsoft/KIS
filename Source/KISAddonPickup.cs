@@ -1562,7 +1562,7 @@ sealed class KISAddonPickup : MonoBehaviour {
     var result = new HashSet<Part>();
     var compatiblePorts = redockTarget.vessel.parts.FindAll(p => p.name == redockTarget.name);
     foreach (var port in compatiblePorts) {
-      if (KIS_Shared.IsSameHierarchyChild(redockTarget, port)) {
+      if (redockTarget.hasIndirectChild(port)) {
         // Skip ports of the moving vessel.
         continue;
       }
