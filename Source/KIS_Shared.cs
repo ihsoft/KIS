@@ -1,5 +1,4 @@
 ﻿using KSPDev.ConfigUtils;
-using KSPDev.GUIUtils;
 using KSPDev.LogUtils;
 using KSPDev.ProcessingUtils;
 using KSPDev.PartUtils;
@@ -1110,7 +1109,7 @@ public static class KIS_Shared {
 
     // Allow one frame update to let other parts know about separation.
     yield return new WaitForFixedUpdate();
-    
+
     // HACK: As of KSP 1.0.5 some parts (e.g docking ports) can be attached by both a
     // surface node and by a stack node which looks like an editor bug in some corner case.
     // In this case decouple() will only clear the surface node leaving the stack one
