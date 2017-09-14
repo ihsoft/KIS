@@ -1246,6 +1246,30 @@ public static class KIS_Shared {
         assemblyRoot, srcAttachNodeId, tgtPart, tgtAttachNode, pos, rot, onReady));
   }
 
+  /// <summary>Places the vessel at the new position and resets momentum on it.</summary>
+  /// <param name="movingVessel">The vessel to place.</param>
+  /// <param name="newPosition">The new possition of the vessel.</param>
+  /// <param name="newRotation">The new rotation of the vessel.</param>
+  /// <param name="refVessel">
+  /// The vessel to alignt velocities with. If it's <c>null</c>, then the velocities on the moving
+  /// vessel will just be zeroed.
+  /// </param>
+  public static void PlaceVessel(
+      Vessel movingVessel, Vector3 newPosition, Quaternion newRotation, Vessel refVessel) {
+    movingVessel.SetPosition(newPosition, usePristineCoords: true);
+    movingVessel.SetRotation(newRotation);
+    var refVelocity = Vector3.zero;
+    var refAngularVelocity = Vector3.zero;
+    if (refVessel != null) {
+      refVelocity = refVessel.rootPart.Rigidbody.velocity;
+      refAngularVelocity = refVessel.rootPart.Rigidbody.angularVelocity;
+    }
+    foreach (var p in movingVessel.parts.Where(p => p.rb != null)) {
+      p.rb.velocity = refVelocity;
+      p.rb.angularVelocity = refAngularVelocity;
+    }
+  }
+
   /// <summary>Couples docking port(s) with parts.</summary>
   /// <remarks>
   /// When docking port reference node is attached to a regular part (or an incompatible docking
