@@ -1131,7 +1131,9 @@ public static class KIS_Shared {
           
     CleanupExternalLinks(oldVessel);
     CleanupExternalLinks(assemblyRoot.vessel);
-    RenameAssemblyVessel(assemblyRoot, sourceVessel: oldVessel);
+    if (!hasPorts) {  // The docking ports manage the vessel name.
+      RenameAssemblyVessel(assemblyRoot, sourceVessel: oldVessel);
+    }
 
     if (onReady != null) {
       onReady(assemblyRoot);
