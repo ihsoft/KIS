@@ -1559,26 +1559,14 @@ sealed class KISAddonPickup : MonoBehaviour {
   /// </remarks>
   /// <returns>A complete set of allowed docking ports.</returns>
   static HashSet<Part> GetAllowedDockPorts() {
-    var result = new HashSet<Part>();
-    var compatiblePorts = redockTarget.vessel.parts.FindAll(p => p.name == redockTarget.name);
-    foreach (var port in compatiblePorts) {
-      if (redockTarget.hasIndirectChild(port)) {
-        // Skip ports of the moving vessel.
-        continue;
-      }
-
-      var usedNodes = 0;
-      if (port.attachRules.srfAttach && port.srfAttachNode.attachedPart != null) {
-        ++usedNodes;
-      }
-      var nodesWithParts = port.attachNodes.FindAll(p => p.attachedPart != null);
-      usedNodes += nodesWithParts.Count();
-      if (usedNodes < 2) {
-        // Usual port has three nodes: one surface and two stacks. When any two of them
-        // are occupied the docking is not possible.
-        result.Add(port);
-      }
-    }
+    var redockNode = redockTarget.GetComponent<ModuleDockingNode>();
+    var result = new HashSet<Part>(redockTarget.vessel.parts
+        .Select(p => p.FindModuleImplementing<ModuleDockingNode>())
+        .Where(dp => dp != null
+             && !redockTarget.hasIndirectChild(dp.part)
+             && !KIS_Shared.IsNodeDocked(dp) && !KIS_Shared.IsNodeCoupled(dp)
+             && KIS_Shared.CheckNodesCompatible(redockNode, dp))
+        .Select(dp => dp.part));
     Debug.LogFormat("Found {0} allowed docking ports", result.Count());
     return result;
   }
