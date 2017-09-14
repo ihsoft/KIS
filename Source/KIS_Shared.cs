@@ -2,6 +2,7 @@
 using KSPDev.GUIUtils;
 using KSPDev.LogUtils;
 using KSPDev.ProcessingUtils;
+using KSPDev.PartUtils;
 using KSP.UI.Screens;
 using System;
 using System.Collections.Generic;
