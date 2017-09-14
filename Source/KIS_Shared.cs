@@ -926,7 +926,7 @@ public static class KIS_Shared {
   }
 
   /// <summary>Tells if two docking nodes can potentially dock.</summary>
-  static bool CheckNodesCompatible(ModuleDockingNode srcNode, ModuleDockingNode tgtNode) {
+  public static bool CheckNodesCompatible(ModuleDockingNode srcNode, ModuleDockingNode tgtNode) {
     return
         srcNode.nodeTypes.Any(tgtNode.nodeTypes.Contains)
         && tgtNode.gendered == srcNode.gendered
