@@ -972,23 +972,24 @@ public static class KIS_Shared {
   /// <param name="dockingNode">Node to reset.</param>
   public static void ResetDockingNode(ModuleDockingNode dockingNode) {
     if (dockingNode.fsm.currentStateName != dockingNode.st_ready.name) {
-      dockingNode.otherNode = null;  // Normally node does it in FixedUpdate().
       if (dockingNode.fsm.CurrentState.IsValid(dockingNode.on_nodeDistance)) {
-        // Reset state politely by simulating nodes distance increase.
-        Debug.LogFormat("Soft reset node {0} from state '{1}' to '{2}'",
-                        DbgFormatter.PartId(dockingNode.part),
-                        dockingNode.fsm.currentStateName, dockingNode.st_ready.name);
+        // Reset the state politely by simulating the nodes distance event.
+        HostedDebugLog.Info(dockingNode, "Soft reset from state '{0}' to '{1}'",
+                            dockingNode.fsm.currentStateName, dockingNode.st_ready.name);
         dockingNode.fsm.RunEvent(dockingNode.on_nodeDistance);
       } else {
-        // Do it a hard way: force the ready state!
-        Debug.LogWarningFormat("Hard reset node {0} from state '{1}' to state '{2}'",
-                               DbgFormatter.PartId(dockingNode.part),
+        // Do it the hard way: force the ready state!
+        HostedDebugLog.Warning(dockingNode, "Hard reset from state '{0}' to state '{1}'",
                                dockingNode.fsm.currentStateName, dockingNode.st_ready.name);
         dockingNode.dockedPartUId = 0;
         dockingNode.dockingNodeModuleIndex = 0;
+        dockingNode.otherNode = null;
         dockingNode.fsm.StartFSM(dockingNode.st_ready.name);
-        dockingNode.state = dockingNode.st_ready.name;
       }
+      // The node state won't update till the next fixed update, but there another state
+      // transition may be triggered. It will result in a state transition loss for the observers.
+      // Our best expectation here is that the state has reset to 'ready'".  
+      dockingNode.state = dockingNode.st_ready.name;
     }
   }
 
