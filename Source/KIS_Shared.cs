@@ -1047,27 +1047,26 @@ public static class KIS_Shared {
         .FirstOrDefault(x => x.referenceAttachNode == nodeId);
   }
 
-  /// <summary>Helper method to properly separate docking nodes.</summary>
-  /// <remarks>Docking nodes must be in state that allows undocking/decoupling.</remarks>
+  /// <summary>Helper method to properly separate the docking nodes.</summary>
+  /// <remarks>The docking nodes must be in a state that allows undocking/decoupling.</remarks>
   /// <returns><c>true</c> if at least one node was undocked/decoupled.</returns>
-  static bool SeparateDockingNodes(Part srcPart, Part tgtPart, bool doUndock = true) {
+  static bool SeparateDockingNodes(Part srcPart, Part tgtPart) {
     var changedNodes = false;
     var nodes = srcPart.FindModulesImplementing<ModuleDockingNode>();
     foreach (var node in nodes) {
+      var undockEvent = PartModuleUtils.GetEvent(node, node.Undock);
+      var decoupleEvent = PartModuleUtils.GetEvent(node, node.Decouple);
       var oldUndockForce = node.undockEjectionForce;
       node.undockEjectionForce = 0;
-      if (IsNodeDocked(node) && node.otherNode.part == tgtPart) {
-        if (!doUndock) {
-          continue;
-        }
-        Debug.LogFormat("Undock docking module on part {0} from part {1}",
-                        DbgFormatter.PartId(node.part), DbgFormatter.PartId(tgtPart));
-        node.Undock();
+      if (undockEvent.active && undockEvent.guiActive
+          && node.otherNode.part == tgtPart) {
+        HostedDebugLog.Info(node, "Undock from: {0}", tgtPart);
+        undockEvent.Invoke();
         changedNodes = true;
-      } else if (IsNodeCoupled(node) && node.referenceNode.attachedPart == tgtPart) {
-        Debug.LogFormat("Decouple docking module on part {0} from part {1}",
-                        DbgFormatter.PartId(node.part), DbgFormatter.PartId(tgtPart));
-        node.Decouple();
+      } else if (decoupleEvent.active && decoupleEvent.guiActive
+                 && node.referenceNode.attachedPart == tgtPart) {
+        HostedDebugLog.Info(node, "Decouple from: {0}", tgtPart);
+        decoupleEvent.Invoke();
         changedNodes = true;
       }
       node.undockEjectionForce = oldUndockForce;
@@ -1101,7 +1100,6 @@ public static class KIS_Shared {
 
     // Properly decouple/undock docking nodes. Only stock module is supported!
     var hasPorts = SeparateDockingNodes(assemblyRoot, formerParent);
-    hasPorts |= SeparateDockingNodes(formerParent, assemblyRoot, doUndock: false);
     if (!hasPorts) {
       Debug.LogFormat("Decouple regular part {0} from regular part {1}",
                       DbgFormatter.PartId(assemblyRoot), DbgFormatter.PartId(formerParent));
