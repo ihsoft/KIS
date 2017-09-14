@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <doc>
     <assembly>
-        <name>KSPDev_Utils.0.27</name>
+        <name>KSPDev_Utils.0.28</name>
     </assembly>
     <members>
         <member name="T:KSPDev.ConfigUtils.AbstractCollectionTypeProto">
@@ -1259,6 +1259,36 @@
             </para>
             </remarks>
         </member>
+        <member name="T:KSPDev.GUIUtils.IsLocalizableModule">
+            <summary>Generic interface for the modules that manage own localizable items.</summary>
+            <remarks>
+            The "item" can be anything. If the module pays special attention to deal with the "items", then
+            it should implement this interface so that the notification could be sent when the language has
+            changed (or updated). Here are some examples of the localizable items:
+            <list type="bullet">
+            <item>
+            KSP events, actions or fields that are attributed with <see cref="T:KSPDev.GUIUtils.LocalizableItemAttribute"/>.
+            The module would want to call the <see cref="M:KSPDev.GUIUtils.LocalizationLoader.LoadItemsInModule(PartModule)"/> method to
+            have the strings updated.
+            </item>
+            <item>Cached strings. The module would want to refresh the cache.</item>
+            <item>
+            Dynamically created part menu items. The module would want to recreate them. If that's the case
+            it's always better to implement <see cref="T:KSPDev.GUIUtils.IHasContextMenu"/>, and then just call the update
+            method.
+            </item>
+            </list>
+            </remarks>
+            <example><code source="Examples/GUIUtils/LocalizationLoader-Examples.cs" region="LocalizationLoaderDemo2"/></example>
+        </member>
+        <member name="M:KSPDev.GUIUtils.IsLocalizableModule.LocalizeModule">
+            <summary>A callback which is called when the localization vesion has changed.</summary>
+            <remarks>
+            Unless the implementing class is <i>sealed</i>, the method must be declared as <i>virtual</i>.
+            The descendants may want to react on the callback as well.
+            </remarks>
+            <example><code source="Examples/GUIUtils/LocalizationLoader-Examples.cs" region="LocalizationLoaderDemo2"/></example>
+        </member>
         <member name="T:KSPDev.GUIUtils.MessageLookup`1">
             <summary>Holds a mapping of a value to a localized message.</summary>
             <typeparam name="T">Type of the key. It must be non-nullable.</typeparam>
@@ -1593,14 +1623,16 @@
             <summary>A utility class to localize the annotated members</summary>
             <remarks>
             <para>
-            It also monitors if a new localizable module is created or loaded, or if the
+            It also monitors if the
             <see cref="F:KSPDev.GUIUtils.LocalizableMessage.systemLocVersion">localization version</see> has changed. If this
-            is the case, then all the modules will be automatically updated.
+            is the case, then all the localizable modules will be notified.
             </para>
             <para>This module is initialized from the KSPDev Utils loader.</para>
             </remarks>
             <seealso cref="T:KSPDev.GUIUtils.LocalizableItemAttribute"/>
+            <seealso cref="T:KSPDev.GUIUtils.IsLocalizableModule"/> 
             <example><code source="Examples/GUIUtils/LocalizationLoader-Examples.cs" region="LocalizationLoaderDemo1"/></example>
+            <example><code source="Examples/GUIUtils/LocalizationLoader-Examples.cs" region="LocalizationLoaderDemo2"/></example>
         </member>
         <member name="F:KSPDev.GUIUtils.LocalizationLoader.KspFieldUnitsSpec">
             <summary>
@@ -1635,18 +1667,14 @@
             </para>
             <para>
             This method can be called at any time during the module's life. However, the
-            <see cref="M:PartModule.OnAwake"/> method looks the most appropriate since it's called each time
-            the module is created. The other methods may be called differently depending on the loaded
-            scene.
-            </para>
-            <para>
-            <i>Note</i>, that this method is automatically called on every new part created in the game.
-            The explicit call is only needed when the module is constructed in runtime.  
+            <see cref="M:KSPDev.GUIUtils.IsLocalizableModule.LocalizeModule"/> method looks the most appropriate.
             </para>
             </remarks>
             <param name="module">The module instance to localize.</param>
             <example><code source="Examples/GUIUtils/LocalizationLoader-Examples.cs" region="LocalizationLoaderDemo1"/></example>
+            <example><code source="Examples/GUIUtils/LocalizationLoader-Examples.cs" region="LocalizationLoaderDemo2"/></example>
             <seealso cref="T:KSPDev.GUIUtils.LocalizableItemAttribute"/>
+            <seealso cref="T:KSPDev.GUIUtils.IsLocalizableModule"/>
             <item name="T:KSPField">
   <seealso href="https://kerbalspaceprogram.com/api/class_k_s_p_field.html">KSP: KSPField</seealso>
 </item>
@@ -1660,51 +1688,9 @@
         <member name="M:KSPDev.GUIUtils.LocalizationLoader.Awake">
             <summary>Installs the event listeners to do the automatic modules localization.</summary>
         </member>
-        <member name="M:KSPDev.GUIUtils.LocalizationLoader.OnEditorStarted">
-            <summary>Reacts on the editor scene load, and updates the loaded vessel if needed.</summary>
-            <remarks>
-            When going back from the launch the normal create/load events are not fired.
-            </remarks>
-        </member>
-        <member name="M:KSPDev.GUIUtils.LocalizationLoader.OnEditorPartEvent(ConstructionEventType,Part)">
-            <summary>Reacts on an editor part event and localizes the part when needed.</summary>
-            <param name="eventType">The type of the event.</param>
-            <param name="part">The part being acted on.</param>
-        </member>
-        <member name="M:KSPDev.GUIUtils.LocalizationLoader.OnEditorLoad(ShipConstruct,KSP.UI.Screens.CraftBrowserDialog.LoadType)">
-            <summary>Localizes a vessel which is laoded in the editor.</summary>
-            <param name="shipConstruct">The ship's parts data.</param>
-            <param name="loadType">Unused.</param>
-        </member>
-        <member name="M:KSPDev.GUIUtils.LocalizationLoader.OnProtoPartSnapshotLoad(GameEvents.FromToAction{ProtoPartSnapshot,ConfigNode})">
-            <summary>Reacts on creating a part from a proto.</summary>
-            <param name="action">The snapshot and node data.</param>
-        </member>
-        <member name="M:KSPDev.GUIUtils.LocalizationLoader.OnCrewEva(GameEvents.FromToAction{Part,Part})">
-            <summary>Reacts on creating an EVA kerbal.</summary>
-            <remarks>
-            Kerbals are created in a different way from a regular vessel. So the regular update events are
-            not fired.
-            </remarks>
-            <param name="action">The source and target parts data.</param>
-        </member>
         <member name="M:KSPDev.GUIUtils.LocalizationLoader.OnUpdateLocalizationVersion">
             <summary>Invalidates all the localization caches and updates the current vessels.</summary>
             <remarks>It updates all the currently loaded vessels.</remarks>
-        </member>
-        <member name="M:KSPDev.GUIUtils.LocalizationLoader.LocalizeKSPField(BaseField)">
-            <summary>Loads the localized string(s) for a KSP field.</summary>
-            <param name="kspField">The field to load localization for.</param>
-        </member>
-        <member name="M:KSPDev.GUIUtils.LocalizationLoader.LocalizeKSPEvent(System.Reflection.ICustomAttributeProvider,BaseEvent)">
-            <summary>Loads the localized string for a KSP event.</summary>
-            <param name="attrs">The attributes on the event.</param>
-            <param name="event">The event to localize.</param>
-        </member>
-        <member name="M:KSPDev.GUIUtils.LocalizationLoader.LocalizeKSPAction(System.Reflection.ICustomAttributeProvider,BaseAction)">
-            <summary>Loads the localized string for a KSP action.</summary>
-            <param name="attrs">The attributes provider on the action.</param>
-            <param name="action">The action to localize.</param>
         </member>
         <member name="M:KSPDev.GUIUtils.LocalizationLoader.UpdateLocalizationInPartHierarchy(Part)">
             <summary>Localizes the modules in the part and in all of its children parts.</summary>
