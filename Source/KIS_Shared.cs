@@ -1331,17 +1331,13 @@ public static class KIS_Shared {
     yield return AsyncCall.AsyncWaitForPhysics(
         10,
         () => IsNodeDocked(srcNode) && IsNodeDocked(tgtNode),
-        update: frame => Debug.LogFormat(
-            "Wait for ports to dock: src={0}, tgt={1}",
-            srcNode.fsm.currentStateName, tgtNode.fsm.currentStateName),
-        success: () => Debug.LogFormat(
-            "Docked ports: {0} <=> {1}",
-            DbgFormatter.PartId(srcNode.part),
-            DbgFormatter.PartId(tgtNode.part)),
-        failure: () => Debug.LogErrorFormat(
-            "FAILED to dock ports: {0} <=> {1}",
-            DbgFormatter.PartId(srcNode.part),
-            DbgFormatter.PartId(tgtNode.part)));
+        update: frame => HostedDebugLog.Info(srcNode,
+            "Wait for docking with {0}. States: self={1}, target={2}",
+            tgtNode, srcNode.fsm.currentStateName, tgtNode.fsm.currentStateName),
+        success: () => HostedDebugLog.Info(
+            srcNode, "Docked to port: {0}", tgtNode),
+        failure: () => HostedDebugLog.Warning(
+            srcNode, "FAILED to dock to port: {0}", tgtNode));
   }
 
   /// <summary>
