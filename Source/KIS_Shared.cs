@@ -1186,8 +1186,7 @@ public static class KIS_Shared {
       Part tgtPart, AttachNode tgtAttachNode, Vector3 pos, Quaternion rot, 
       OnPartReady onReady = null) {
     yield return AsyncDecoupleAssembly(assemblyRoot);
-    assemblyRoot.vessel.SetPosition(pos);
-    assemblyRoot.vessel.SetRotation(rot);
+    PlaceVessel(assemblyRoot.vessel, pos, rot, tgtPart.vessel);
 
     var srcAttachNode = GetAttachNodeById(assemblyRoot, srcAttachNodeId);
     SendKISMessage(assemblyRoot, MessageAction.AttachStart, srcAttachNode, tgtPart, tgtAttachNode);
