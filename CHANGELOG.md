@@ -1,10 +1,13 @@
 # 1.6 (pre-release):
 * [Enhancement] Improve the attach nodes of the KIS items (including the fun parts) to reduce the physics effects on drop.
+* [Enhancement] Implement localization support.
+* [Enhancement] Full localization for the Russian language ("ru" locale).
 * [Fix #219] Inventory GUI spontaneously closes in the editor.
 * [Fix #130] Crew transfer leaves ghost pod's inventory open.
 * [Fix #220] Equipped parts trigger physics.
 * [Fix #222] The equipped screwdriver can be attached to a part.
-* [FIx #217] Align velocities on the dropped part .
+* [FIx #217] Align velocities on the dropped part.
+* [FIx #207] Improve docked nodes detection in ReDock mode.
 
 # 1.5.0 (May 25th, 2017)
 * [Change] `OnKISAction` now accepts a dictionary parameter instead of the deprecated `BaseEventData`.
