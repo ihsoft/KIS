@@ -1,4 +1,4 @@
-# 1.6 (pre-release):
+# 1.6 (September 14th, 2017):
 * [Enhancement] Improve the attach nodes of the KIS items (including the fun parts) to reduce the physics effects on drop.
 * [Enhancement] Implement localization support.
 * [Enhancement] Full localization for the Russian language ("ru" locale).
