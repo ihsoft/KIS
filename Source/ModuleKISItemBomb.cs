@@ -1,74 +1,280 @@
-﻿using System;
+﻿// Kerbal Inventory System
+// Mod's author: KospY (http://forum.kerbalspaceprogram.com/index.php?/profile/33868-kospy/)
+// Module authors: KospY, igor.zavoychinskiy@gmail.com
+// License: Restricted
+
+using KSPDev.GUIUtils;
+using KSPDev.PartUtils;
+using KSPDev.SoundsUtils;
+using KSPDev.KSPInterfaces;
+using KSPDev.ModelUtils;
+using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Linq;
 using UnityEngine;
 
 namespace KIS {
 
-public sealed class ModuleKISItemBomb : ModuleKISItem {
+// Next localization ID: #kisLOC_05012.
+public sealed class ModuleKISItemBomb : ModuleKISItem,
+    // KSPDEV interfaces.
+    IsLocalizableModule,
+    // KSPDEV sugar interfaces.
+    IHasGUI, IPartModule {
+
+  #region Localizable GUI strings.
+  static readonly Message ModuleTitleInfo = new Message(
+      "#kisLOC_05000",
+      defaultTemplate: "KIS Bomb",
+      description: "The title of the module to present in the editor details window.");
+
+  static readonly Message<DistanceType> ExplosionRadiusInfo = new Message<DistanceType>(
+      "#kisLOC_05001",
+      defaultTemplate: "Max explosion radius: <<1>>",
+      description: "The info message to present in the editor's details window for the maximum"
+      + " radius of explosion of the bomb."
+      + "\nArgument <<1>> is the radius. Format: DistanceType.");
+
+  static readonly Message SetupWindowTitle = new Message(
+      "#kisLOC_05002",
+      defaultTemplate: "Explosive - Setup",
+      description: "The title of the GUI window to setup the bomb.");
+
+  static readonly Message TimerSettingsSectionTxt = new Message(
+      "#kisLOC_05003",
+      defaultTemplate: "Timer",
+      description: "The GUI section title for settig up the explosion timer.");
+
+  static readonly Message<int> TimerDelayInSecondsTxt = new Message<int>(
+      "#kisLOC_05004",
+      defaultTemplate: "<<1>> s",
+      description: "The string that displays number of seconds till the bomb trigger.");
+
+  static readonly Message RadiusSettingsSectionTxt = new Message(
+      "#kisLOC_05005",
+      defaultTemplate: "Explosion radius",
+      description: "The GUI section title for settig up the explosion area.");
+
+  static readonly Message<DistanceType, DistanceType> ExplosionRadiusTxt =
+      new Message<DistanceType, DistanceType>(
+      "#kisLOC_05006",
+      defaultTemplate: "<<1>> / <<2>>",
+      description: "The string that displays current setting of the explosion radius."
+      + "\nArgument <<1>> is the current radius. Format: DistanceType."
+      + "\nArgument <<2>> is the maximum allowed radius for the part. Format: DistanceType.");
+
+  static readonly Message ActivateExplosionDialogTxt = new Message(
+      "#kisLOC_05007",
+      defaultTemplate: "ACTIVATE (cannot be undone)",
+      description: "The caption on the button that starts the timer. It cannot be stopped!");
+
+  static readonly Message CloseSetupDialogTxt = new Message(
+      "#kisLOC_05008",
+      defaultTemplate: "Close",
+      description: "The caption on the button that closes the setup menu without starting the"
+      + " timer");
+
+  static readonly Message<int> TimeToEscapeMsg = new Message<int>(
+      "#kisLOC_05011",
+      defaultTemplate: "You have <<1>> seconds to escape!",
+      description: "The mesasge to display when the bomb is activated. It's show nonly once and"
+      + " doesn't update as the bomb is ticking."
+      + "\nArgument <<1>> is the timer setting in seconds.");
+  #endregion
+
+  #region Part's config fields
   [KSPField]
   public float delay = 5f;
   [KSPField]
   public float maxRadius = 10f;
-  [KSPField]
-  public string activateText = "Activate";
   [KSPField]
   public string timeStartSndPath = "KIS/Sounds/timeBombStart";
   [KSPField]
   public string timeLoopSndPath = "KIS/Sounds/timeBombLoop";
   [KSPField]
   public string timeEndSndPath = "KIS/Sounds/timeBombEnd";
+  #endregion
 
-  public FXGroup fxSndTimeStart;
-  public FXGroup fxSndTimeLoop;
-  public FXGroup fxSndTimeEnd;
-  private float radius = 10f;
-  private bool activated = false;
-  private bool showSetup = false;
-  public Rect guiWindowPos;
+  #region Local fields
+  AudioSource sndTimeStart;
+  AudioSource sndTimeLoop;
+  AudioSource sndTimeEnd;
+  float radius = 10f;
+  bool activated;
+  bool showSetup;
+  Rect guiWindowPos;
+  #endregion
 
-  public override string GetInfo() {
-    var sb = new StringBuilder();
-    sb.AppendFormat("<b>Explosion max radius</b>: {0:F0}m", maxRadius);
-    sb.AppendLine();
-    return sb.ToString();
+  #region KSP events and actions
+  [KSPEvent(guiActiveUnfocused = true)]
+  [LocalizableItem(
+      tag = "#kisLOC_05009",
+      defaultTemplate = "Activate",
+      description = "The name of the context menu item to activate the bomb.")]
+  public void ActivateEvent() {
+    if (!activated) {
+      activated = true;
+      sndTimeStart.Play();
+      sndTimeLoop.Play();
+      PartModuleUtils.SetupEvent(this, ActivateEvent, x => x.active = false);
+      PartModuleUtils.SetupEvent(this, SetupEvent, x => x.active = false);
+      ScreenMessaging.ShowPriorityScreenMessage(TimeToEscapeMsg.Format((int)delay));
+    }
   }
 
+  [KSPEvent(guiActiveUnfocused = true)]
+  [LocalizableItem(
+      tag = "#kisLOC_05010",
+      defaultTemplate = "Setup",
+      description = "The name of the context menu item to open the bomb GUI setup window.")]
+  public void SetupEvent() {
+    guiWindowPos =
+        new Rect(Input.mousePosition.x, (Screen.height - Input.mousePosition.y), 0, 0);
+    showSetup = !showSetup;
+  }
+  #endregion
+
+  #region IsLocalizableModule implementation
+  public void LocalizeModule() {
+    LocalizationLoader.LoadItemsInModule(this);
+  }
+  #endregion
+
+  #region PartModule overrides
+  /// <inheritdoc/>
+  public override string GetModuleDisplayName() {
+    return ModuleTitleInfo;
+  }
+
+  /// <inheritdoc/>
+  public override void OnAwake() {
+    base.OnAwake();
+    LocalizeModule();
+  }
+
+  /// <inheritdoc/>
   public override void OnStart(StartState state) {
     base.OnStart(state);
     if (state == StartState.Editor || state == StartState.None) {
       return;
     }
-    Events["Activate"].guiName = activateText;
-    KIS_Shared.createFXSound(this.part, fxSndTimeStart, timeStartSndPath, false);
-    KIS_Shared.createFXSound(this.part, fxSndTimeLoop, timeLoopSndPath, true);
-    KIS_Shared.createFXSound(this.part, fxSndTimeEnd, timeEndSndPath, false);
+    sndTimeStart = SpatialSounds.Create3dSound(gameObject, timeStartSndPath);
+    sndTimeEnd = SpatialSounds.Create3dSound(gameObject, timeEndSndPath);
+    sndTimeLoop = SpatialSounds.Create3dSound(gameObject, timeLoopSndPath, loop: true);
   }
 
+  /// <inheritdoc/>
   public override void OnUpdate() {
     base.OnUpdate();
     if (showSetup) {
-      float distToPart = Vector3.Distance(FlightGlobals.ActiveVessel.transform.position,
-                                          this.part.transform.position);
-      if (distToPart > 2) {
+      var distToPart = Vector3.Distance(
+          FlightGlobals.ActiveVessel.transform.position, part.transform.position);
+      var setupEvent = PartModuleUtils.GetEvent(this, SetupEvent);
+      if (setupEvent == null || distToPart > setupEvent.unfocusedRange) {
         showSetup = false;
       }
     }
     if (activated) {
-      delay += -TimeWarp.deltaTime;
-      if (delay < 1 && !fxSndTimeEnd.audio.isPlaying) {
-        fxSndTimeEnd.audio.Play();
+      delay -= TimeWarp.deltaTime;
+      if (delay < 1 && !sndTimeEnd.isPlaying) {
+        sndTimeEnd.Play();
       }
       if (delay < 0) {
-        fxSndTimeStart.audio.Stop();
-        fxSndTimeLoop.audio.Stop();
-        Explode(this.part.transform.position, radius);
+        sndTimeStart.Stop();
+        sndTimeLoop.Stop();
+        Explode(part.transform.position);
       }
     }
   }
+  #endregion
 
-  public void Explode(Vector3 pos, float radius) {
-    var nearestColliders = new List<Collider>(Physics.OverlapSphere(pos, radius, 557059));
+  #region IHasGUI implementation
+  /// <inheritdoc/>
+  public void OnGUI() {
+    if (showSetup && !activated) {
+      GUI.skin = HighLogic.Skin;
+      guiWindowPos = GUILayout.Window(GetInstanceID(), guiWindowPos, GuiSetup, SetupWindowTitle);
+    }
+  }
+  #endregion
+
+  #region Inheritable & customization methods
+  /// <inheritdoc/>
+  protected override IEnumerable<string> GetParamInfo() {
+    return base.GetParamInfo().Concat(new[] {
+        ExplosionRadiusInfo.Format(maxRadius),
+    });
+  }
+  #endregion
+
+  #region Local utility methods
+  void GuiSetup(int windowID) {
+    GUIStyle centeredStyle = GUI.skin.GetStyle("Label");
+    centeredStyle.alignment = TextAnchor.MiddleCenter;
+    centeredStyle.wordWrap = false;
+    // TIMER
+    GUILayout.Label(TimerSettingsSectionTxt, centeredStyle);
+    using (new GUILayout.HorizontalScope()) {
+      if (GUILayout.Button("--", GUILayout.Width(30))) {
+        if (delay > 10) {
+          delay = delay - 10;
+        }
+      }
+      if (GUILayout.Button("-", GUILayout.Width(30))) {
+        if (delay > 0) {
+          delay--;
+        }
+      }
+      GUILayout.Label(
+          TimerDelayInSecondsTxt.Format((int)delay), centeredStyle, GUILayout.ExpandWidth(true));
+      if (GUILayout.Button("+", GUILayout.Width(30))) {
+        delay++;
+      }
+      if (GUILayout.Button("++", GUILayout.Width(30))) {
+        delay = delay + 10;
+      }
+    }
+
+    GUILayout.Space(5);
+
+    // Explosion radius
+    GUILayout.Label(RadiusSettingsSectionTxt, centeredStyle);
+    using (new GUILayout.HorizontalScope()) {
+      if (GUILayout.Button(" -- ", GUILayout.Width(30))) {
+        if (radius > 1f) {
+          radius = radius - 1f;
+        }
+      }
+      if (GUILayout.Button(" - ", GUILayout.Width(30))) {
+        if (radius > 0.5f) {
+          radius = radius - 0.5f;
+        }
+      }
+      GUILayout.Label(ExplosionRadiusTxt.Format(radius, maxRadius), centeredStyle);
+      if (GUILayout.Button(" + ", GUILayout.Width(30))) {
+        if ((radius + 0.5f) <= maxRadius) {
+          radius = radius + 0.5f;
+        }
+      }
+      if (GUILayout.Button(" ++ ", GUILayout.Width(30))) {
+        if ((radius + 1f) <= maxRadius) {
+          radius = radius + 1f;
+        }
+      }
+    }
+
+    if (GUILayout.Button(ActivateExplosionDialogTxt)) {
+      ActivateEvent();
+    }
+    if (GUILayout.Button(CloseSetupDialogTxt)) {
+      showSetup = false;
+    }
+    GUI.DragWindow();
+  }
+
+  void Explode(Vector3 pos) {
+    var nearestColliders = new List<Collider>(Physics.OverlapSphere(
+        pos, radius, (int)(KspLayerMask.Part | KspLayerMask.Kerbal)));
     foreach (var col in nearestColliders) {
       // Check if if the collider have a rigidbody
       if (!col.attachedRigidbody) {
@@ -84,94 +290,7 @@ public sealed class ModuleKISItemBomb : ModuleKISItem {
       p.Die();
     }
   }
-
-  private void OnGUI() {
-    if (showSetup) {
-      GUI.skin = HighLogic.Skin;
-      guiWindowPos = GUILayout.Window(GetInstanceID(), guiWindowPos, GuiSetup, "Explosive - Setup");
-    }
-  }
-
-  private void GuiSetup(int windowID) {
-    GUIStyle centeredStyle = GUI.skin.GetStyle("Label");
-    centeredStyle.alignment = TextAnchor.MiddleCenter;
-    // TIMER
-    GUILayout.Label("Timer", centeredStyle, GUILayout.Width(200));
-    GUILayout.BeginHorizontal();
-    if (GUILayout.Button(" -- ", GUILayout.Width(30))) {
-      if (delay > 10) {
-        delay = delay - 10;
-      }
-    }
-    if (GUILayout.Button(" - ", GUILayout.Width(30))) {
-      if (delay > 0) {
-        delay--;
-      }
-    }
-    GUILayout.Label(delay + " s", centeredStyle, GUILayout.Width(80));
-    if (GUILayout.Button(" + ", GUILayout.Width(30))) {
-      delay++;
-    }
-    if (GUILayout.Button(" ++ ", GUILayout.Width(30))) {
-      delay = delay + 10;
-    }
-    GUILayout.EndHorizontal();
-
-    GUILayout.Space(5);
-
-    // Explosion radius
-    GUILayout.Label("Explosion radius", centeredStyle, GUILayout.Width(200));
-    GUILayout.BeginHorizontal();
-    if (GUILayout.Button(" -- ", GUILayout.Width(30))) {
-      if (radius > 1f) {
-        radius = radius - 1f;
-      }
-    }
-    if (GUILayout.Button(" - ", GUILayout.Width(30))) {
-      if (radius > 0.5f) {
-        radius = radius - 0.5f;
-      }
-    }
-    GUILayout.Label(radius + " / " + maxRadius + " m", centeredStyle, GUILayout.Width(80));
-    if (GUILayout.Button(" + ", GUILayout.Width(30))) {
-      if ((radius + 0.5f) < maxRadius) {
-        radius = radius + 0.5f;
-      }
-    }
-    if (GUILayout.Button(" ++ ", GUILayout.Width(30))) {
-      if ((radius + 1f) < maxRadius) {
-        radius = radius + 1f;
-      }
-    }
-    GUILayout.EndHorizontal();
-
-    if (GUILayout.Button(" ! Activate !")) {
-      Activate();
-    }
-    if (GUILayout.Button("Close")) {
-      showSetup = false;
-    }
-    GUI.DragWindow();
-  }
-
-  [KSPEvent(name = "Activate", active = true, guiActive = false, guiActiveUnfocused = true,
-            guiName = "Activate")]
-  public void Activate() {
-    if (!activated) {
-      activated = true;
-      fxSndTimeStart.audio.Play();
-      fxSndTimeLoop.audio.Play();
-      Events["Activate"].guiActiveUnfocused = false;
-    }
-  }
-
-  [KSPEvent(name = "Setup", active = true, guiActive = false, guiActiveUnfocused = true,
-            guiName = "Setup")]
-  public void Setup() {
-    guiWindowPos =
-        new Rect(Input.mousePosition.x, (Screen.height - Input.mousePosition.y), 200, 100);
-    showSetup = !showSetup;
-  }
+  #endregion
 }
 
 }  // namespace

@@ -1,4 +1,11 @@
-﻿using KSPDev.GUIUtils;
+﻿// Kerbal Inventory System
+// Mod's author: KospY (http://forum.kerbalspaceprogram.com/index.php?/profile/33868-kospy/)
+// Module authors: KospY, igor.zavoychinskiy@gmail.com
+// License: Restricted
+
+using KIS.GUIUtils;
+using KSPDev.GUIUtils;
+using KSPDev.ProcessingUtils;
 using System;
 using System.Linq;
 using System.Collections.Generic;
@@ -6,10 +13,50 @@ using UnityEngine;
 
 namespace KIS {
 
+// Next localization ID: #kisLOC_02005.
 public sealed class KIS_Item {
+
+  #region Localizable GUI strings.
+  static readonly Message CannotEquipItemStackedMsg = new Message(
+      "#kisLOC_02000",
+      defaultTemplate: "Cannot equip stacked items",
+      description: "The screen message to present when the item was attempted to equip, but the"
+      + " relevant inventory slot has more than one item (stacked).");
+
+  static readonly Message<string, string> CannotEquipAlreadyCarryingMsg =
+      new Message<string, string>(
+          "#kisLOC_02001",
+          defaultTemplate: "Cannot equip item, slot [<<1>>] already used for carrying <<2>>",
+          description: "The screen message to present when the item was attempted to equip, but its"
+          + " equip slot is already taken by a carriable item."
+          + "\nArgument <<1>> is the name of the equip slot of the item."
+          + "\nArgument <<2>> is the name of the item being carried.");
+
+  static readonly Message<string> CannotEquipRestrictedToSkillMsg = new Message<string>(
+      "#kisLOC_02002",
+      defaultTemplate: "This item can only be used by a kerbal with the skill: <<1>>",
+      description: "The screen message to present when the item was attempted to equip, but a"
+      + " specific kerbal trait (skill) is required to handle the item."
+      + "\nArgument <<1>> is the name of the required trait.");
+
+  static readonly Message<VolumeLType> CannotStackMaxVolumeReachedMsg = new Message<VolumeLType>(
+      "#kisLOC_02003",
+      defaultTemplate: "Max destination volume reached (+<<1>>)",
+      description: "The screen message to present when the item was attempted to be added to an"
+      + " existing slot stack, but the resulted inventory volume would exceed the maximum allowed"
+      + " volume."
+      + "\nArgument <<1>> is the excessive volume. Format: VolumeLType.");
+
+  static readonly Message CannotStackItemEquippedMsg = new Message(
+      "#kisLOC_02004",
+      defaultTemplate: "Cannot stack with equipped item",
+      description: "The screen message to present when the item was attempted to be added to an"
+      + " existing slot stack, but the item being added is currently equipped.");
+  #endregion
+
   public ConfigNode partNode;
   public AvailablePart availablePart;
-  public float quantity;
+  public int quantity;
   public KIS_IconViewer icon = null;
   public bool stackable = false;
   public string equipSlot;
@@ -118,7 +165,7 @@ public sealed class KIS_Item {
 
   /// <summary>Creates a new part from save.</summary>
   public KIS_Item(AvailablePart availablePart, ConfigNode itemNode, ModuleKISInventory inventory,
-                  float quantity = 1) {
+                  int quantity = 1) {
     // Get part node
     this.availablePart = availablePart;
     partNode = new ConfigNode();
@@ -143,7 +190,7 @@ public sealed class KIS_Item {
   }
 
   /// <summary>Creates a new part from scene.</summary>
-  public KIS_Item(Part part, ModuleKISInventory inventory, float quantity = 1) {
+  public KIS_Item(Part part, ModuleKISInventory inventory, int quantity = 1) {
     // Get part node
     this.availablePart = PartLoader.getPartInfoByName(part.partInfo.name);
     this.partNode = new ConfigNode();
@@ -162,7 +209,7 @@ public sealed class KIS_Item {
     }
   }
 
-  void InitConfig(AvailablePart availablePart, ModuleKISInventory inventory, float quantity) {
+  void InitConfig(AvailablePart availablePart, ModuleKISInventory inventory, int quantity) {
     this.inventory = inventory;
     this.quantity = quantity;
     prefabModule = availablePart.partPrefab.GetComponent<ModuleKISItem>();
@@ -294,6 +341,7 @@ public sealed class KIS_Item {
     }
   }
 
+  //TODO(ihsoft): It's too expensive to call it for every item.
   public void Update() {
     if (equippedGameObj != null) {
       equippedGameObj.transform.rotation =
@@ -316,20 +364,20 @@ public sealed class KIS_Item {
       return false;
     }
     if (equipped) {
-      ScreenMessaging.ShowPriorityScreenMessage("Cannot stack with equipped item");
+      ScreenMessaging.ShowPriorityScreenMessage(CannotStackItemEquippedMsg);
       UISounds.PlayBipWrong();
       return false;
     }
     float newVolume = inventory.totalVolume + (volume * qty);
     if (checkVolume && newVolume > inventory.maxVolume) {
-      ScreenMessaging.ShowPriorityScreenMessage("Max destination volume reached (+{0:#.####})",
-                                                newVolume - inventory.maxVolume);
+      ScreenMessaging.ShowPriorityScreenMessage(
+          CannotStackMaxVolumeReachedMsg.Format(newVolume - inventory.maxVolume));
       return false;
     }
     return true;
   }
 
-  public bool StackAdd(float qty, bool checkVolume = true) {
+  public bool StackAdd(int qty, bool checkVolume = true) {
     if (CanStackAdd(qty, checkVolume)) {
       quantity += qty;
       inventory.RefreshMassAndVolume();
@@ -338,7 +386,7 @@ public sealed class KIS_Item {
     return false;
   }
 
-  public bool StackRemove(float qty = 1) {
+  public bool StackRemove(int qty = 1) {
     if (qty <= 0) {
       return false;
     }
@@ -391,13 +439,13 @@ public sealed class KIS_Item {
       return;
     }
     if (quantity > 1) {
-      ScreenMessaging.ShowPriorityScreenMessage("Cannot equip stacked items");
+      ScreenMessaging.ShowPriorityScreenMessage(CannotEquipItemStackedMsg);
       UISounds.PlayBipWrong();
       return;
     }
     Debug.LogFormat("Equip item {0} in mode {1}", availablePart.title, equipMode);
 
-    // Check skill if needed. Skip the check in sandbox modes.
+    // Check if the skill is needed. Skip the check in the sandbox modes.
     if (HighLogic.CurrentGame.Mode != Game.Modes.SANDBOX
         && HighLogic.CurrentGame.Mode != Game.Modes.SCIENCE_SANDBOX
         && !String.IsNullOrEmpty(prefabModule.equipSkill)) {
@@ -412,8 +460,7 @@ public sealed class KIS_Item {
       if (!skillFound) {
         if (actorType == ActorType.Player) {
           ScreenMessaging.ShowPriorityScreenMessage(
-              "This item can only be used by a kerbal with the skill : {0}",
-              prefabModule.equipSkill);
+              CannotEquipRestrictedToSkillMsg.Format(prefabModule.equipSkill));
           UISounds.PlayBipWrong();
         }
         return;
@@ -426,8 +473,7 @@ public sealed class KIS_Item {
       if (equippedItem != null) {
         if (equippedItem.carriable && actorType == ActorType.Player) {
           ScreenMessaging.ShowPriorityScreenMessage(
-              "Cannot equip item, slot <{0}> already used for carrying {1}",
-              equipSlot, equippedItem.availablePart.title);
+              CannotEquipAlreadyCarryingMsg.Format(equipSlot, equippedItem.availablePart.title));
           UISounds.PlayBipWrong();
           return;
         }
@@ -487,7 +533,17 @@ public sealed class KIS_Item {
       if (alreadyEquippedPart) {
         Debug.LogFormat("Part {0} already found on eva, use it as the item", availablePart.name);
         equippedPart = alreadyEquippedPart;
-        OnEquippedPartReady(equippedPart);
+        // This magic is copied from the KervalEVA.OnVesselGoOffRails() method.
+        // There must be at least 3 fixed frames delay before updating the colliders.
+        AsyncCall.WaitForPhysics(
+            equippedPart, 3, () => false,
+            failure: () => OnEquippedPartReady(equippedPart));
+        if (equipMode == EquipMode.Part) {
+          // Ensure the part doesn't have rigidbody and is not affected by physics.
+          // The part may not like it.
+          equippedPart.PhysicsSignificance = 1;  // Disable physics on the part.
+          UnityEngine.Object.Destroy(equippedPart.rb);
+        }
       } else {
         Vector3 equipPos = evaTransform.TransformPoint(prefabModule.equipPos);
         Quaternion equipRot = evaTransform.rotation * Quaternion.Euler(prefabModule.equipDir);

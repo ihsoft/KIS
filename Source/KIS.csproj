@@ -40,8 +40,8 @@
       <HintPath>Q:\KSP_Data\Managed\Assembly-CSharp-firstpass.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="KSPDev_Utils.0.23.0">
-      <HintPath>..\Binaries\KSPDev_Utils.0.23.0.dll</HintPath>
+    <Reference Include="KSPDev_Utils.0.28">
+      <HintPath>..\Binaries\KSPDev_Utils.0.28.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -56,8 +56,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="EditorDefaultItemsAdder.cs" />
-    <Compile Include="KSPDev_candidates.cs" />
-    <Compile Include="KspLayers.cs" />
     <Compile Include="KISAddonCursor.cs" />
     <Compile Include="MainScreenTweaker.cs" />
     <Compile Include="ModuleKISItemEvaPropellant.cs" />
@@ -80,12 +78,15 @@
     <Compile Include="KIS_Shared.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UISounds.cs" />
+    <Compile Include="VolumeLType.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="KSPDev_candidates" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>IF EXIST "Q:\GameData\KIS" xcopy "$(TargetPath)" "Q:\GameData\KIS\Plugins\" /Y
-IF EXIST "Q:\GameData\KIS" xcopy "$(ProjectDir)\..\Binaries\KSPDev_Utils.*.dll" "Q:\GameData\KIS\Plugins\" /Y
-</PostBuildEvent>
+IF EXIST "Q:\GameData\KIS" xcopy "$(TargetDir)KSPDev_Utils*.dll" "Q:\GameData\KIS\Plugins\" /Y</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

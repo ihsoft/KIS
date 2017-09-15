@@ -1,13 +1,14 @@
 ﻿using KSPDev.ConfigUtils;
-using KSPDev.GUIUtils;
 using KSPDev.LogUtils;
 using KSPDev.ProcessingUtils;
+using KSPDev.PartUtils;
 using KSP.UI.Screens;
 using System;
 using System.Collections.Generic;
 using System.Collections;
 using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using UnityEngine;
 
 namespace KIS {
@@ -33,7 +34,6 @@ public static class KIS_Shared {
   /// or higher value. Otherwise, the part's highliting will overwrite the output.</remarks>
   public const int HighlighedPartRenderQueue = 4000;  // As of KSP 1.1.1230
 
-  public static string bipWrongSndPath = "KIS/Sounds/bipwrong";
   public delegate void OnPartReady(Part affectedPart);
 
   public enum MessageAction {
@@ -52,12 +52,6 @@ public static class KIS_Shared {
     eventData["targetPart"] = tgtPart;
     eventData["targetNode"] = tgtNode;
     destPart.SendMessage("OnKISAction", eventData, SendMessageOptions.DontRequireReceiver);
-  }
-
-  // TODO: Deprecate the method after June 2016.
-  [ObsoleteAttribute("Use Mouse.HoveredPart instead", true)]
-  public static Part GetPartUnderCursor() {
-    return Mouse.HoveredPart;
   }
 
   public static void PlaySoundAtPoint(string soundPath, Vector3 position) {
@@ -79,8 +73,6 @@ public static class KIS_Shared {
       return true;
     } else {
       Debug.LogError("Sound not found in the game database !");
-      ScreenMessaging.ShowPriorityScreenMessageWithTimeout(
-          10, "Sound file : {0} has not been found, please check your KIS installation !",sndPath);
       return false;
     }
   }
@@ -139,17 +131,27 @@ public static class KIS_Shared {
   /// </list>
   /// Also, vessel's type is reset to <c>VesselType.Unknown</c>.</remarks>
   /// <param name="part">A part of the vessel to get name and vessel from.</param>
-  public static void RenameAssemblyVessel(Part part) {
-    part.vessel.vesselType = VesselType.Unknown;
-    part.vessel.vesselName = part.partInfo.title;
-    ModuleKISInventory inv = part.GetComponent<ModuleKISInventory>();
-    if (inv && inv.invName.Length > 0) {
-      // Add inventory name suffix if any.
-      part.vessel.vesselName += string.Format(" ({0})", inv.invName);
-    }
-    // For assemblies add number of parts.
-    if (part.vessel.parts.Count > 1) {
-      part.vessel.vesselName += string.Format(" with {0} parts", part.vessel.parts.Count - 1);
+  /// <param name="sourceVessel">A vessel from which the new vessel was born.</param>
+  public static void RenameAssemblyVessel(Part part, Vessel sourceVessel = null) {
+    if (sourceVessel == null || part.vessel.parts.Count == 1) {
+      // Make a lone part vessel name.
+      part.vessel.vesselType = VesselType.Unknown;
+      part.vessel.vesselName = part.partInfo.title;
+      ModuleKISInventory inv = part.GetComponent<ModuleKISInventory>();
+      if (inv && inv.invName.Length > 0) {
+        // Add inventory name suffix if any.
+        part.vessel.vesselName += string.Format(" ({0})", inv.invName);
+      }
+    } else {
+      // Inherit the name form the source vessel.
+      part.vessel.vesselType = sourceVessel.vesselType;
+      var match = Regex.Match(sourceVessel.vesselName, @"^(.*?)(\d+)\s*$");
+      if (match.Success) {
+        // The source vessel was a result of split, increment the version.
+        part.vessel.vesselName = match.Groups[1].Value + (int.Parse(match.Groups[2].Value) + 1);
+      } else {
+        part.vessel.vesselName = sourceVessel.vesselName + " 1";
+      }
     }
   }
 
@@ -720,21 +722,6 @@ public static class KIS_Shared {
     return btnPress;
   }
 
-  /// <summary>
-  /// Helper method to verify if part is an indirect children of another part.
-  /// </summary>
-  /// <param name="rootPart">A root part of the hierarchy.</param>
-  /// <param name="child">A part being tested.</param>
-  /// <returns></returns>
-  public static bool IsSameHierarchyChild(object rootPart, Part child) {
-    for (Part part = child; part; part = part.parent) {
-      if (System.Object.ReferenceEquals(rootPart, part)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   /// <summary>Sets highlight status of the entire heierarchy.</summary>
   /// <param name="hierarchyRoot">A root part of the hierarchy.</param>
   /// <param name="isSelected">The status.</param>
@@ -770,6 +757,12 @@ public static class KIS_Shared {
                                                          Part ignoreAttachedPart = null,
                                                          bool needSrf = true) {
     var result = new List<AttachNode>();
+    var moduleItem = p.GetComponent<ModuleKISItem>();
+    if (moduleItem != null && moduleItem.allowPartAttach == ModuleKISItem.ItemAttachMode.Disabled) {
+      // The equippable items and the surface-only parts won't allow any attachment rule.
+      result.Add(p.srfAttachNode);  // This the only node they have.
+      return result;
+    }
     var srfNode = p.attachRules.srfAttach ? p.srfAttachNode : null;
     bool srfHasPart = (srfNode != null && srfNode.attachedPart != null
                        && srfNode.attachedPart != ignoreAttachedPart);
@@ -932,7 +925,7 @@ public static class KIS_Shared {
   }
 
   /// <summary>Tells if two docking nodes can potentially dock.</summary>
-  static bool CheckNodesCompatible(ModuleDockingNode srcNode, ModuleDockingNode tgtNode) {
+  public static bool CheckNodesCompatible(ModuleDockingNode srcNode, ModuleDockingNode tgtNode) {
     return
         srcNode.nodeTypes.Any(tgtNode.nodeTypes.Contains)
         && tgtNode.gendered == srcNode.gendered
@@ -978,23 +971,24 @@ public static class KIS_Shared {
   /// <param name="dockingNode">Node to reset.</param>
   public static void ResetDockingNode(ModuleDockingNode dockingNode) {
     if (dockingNode.fsm.currentStateName != dockingNode.st_ready.name) {
-      dockingNode.otherNode = null;  // Normally node does it in FixedUpdate().
       if (dockingNode.fsm.CurrentState.IsValid(dockingNode.on_nodeDistance)) {
-        // Reset state politely by simulating nodes distance increase.
-        Debug.LogFormat("Soft reset node {0} from state '{1}' to '{2}'",
-                        DbgFormatter.PartId(dockingNode.part),
-                        dockingNode.fsm.currentStateName, dockingNode.st_ready.name);
+        // Reset the state politely by simulating the nodes distance event.
+        HostedDebugLog.Info(dockingNode, "Soft reset from state '{0}' to '{1}'",
+                            dockingNode.fsm.currentStateName, dockingNode.st_ready.name);
         dockingNode.fsm.RunEvent(dockingNode.on_nodeDistance);
       } else {
-        // Do it a hard way: force the ready state!
-        Debug.LogWarningFormat("Hard reset node {0} from state '{1}' to state '{2}'",
-                               DbgFormatter.PartId(dockingNode.part),
+        // Do it the hard way: force the ready state!
+        HostedDebugLog.Warning(dockingNode, "Hard reset from state '{0}' to state '{1}'",
                                dockingNode.fsm.currentStateName, dockingNode.st_ready.name);
         dockingNode.dockedPartUId = 0;
         dockingNode.dockingNodeModuleIndex = 0;
+        dockingNode.otherNode = null;
         dockingNode.fsm.StartFSM(dockingNode.st_ready.name);
-        dockingNode.state = dockingNode.st_ready.name;
       }
+      // The node state won't update till the next fixed update, but there another state
+      // transition may be triggered. It will result in a state transition loss for the observers.
+      // Our best expectation here is that the state has reset to 'ready'".  
+      dockingNode.state = dockingNode.st_ready.name;
     }
   }
 
@@ -1054,27 +1048,26 @@ public static class KIS_Shared {
         .FirstOrDefault(x => x.referenceAttachNode == nodeId);
   }
 
-  /// <summary>Helper method to properly separate docking nodes.</summary>
-  /// <remarks>Docking nodes must be in state that allows undocking/decoupling.</remarks>
+  /// <summary>Helper method to properly separate the docking nodes.</summary>
+  /// <remarks>The docking nodes must be in a state that allows undocking/decoupling.</remarks>
   /// <returns><c>true</c> if at least one node was undocked/decoupled.</returns>
-  static bool SeparateDockingNodes(Part srcPart, Part tgtPart, bool doUndock = true) {
+  static bool SeparateDockingNodes(Part srcPart, Part tgtPart) {
     var changedNodes = false;
     var nodes = srcPart.FindModulesImplementing<ModuleDockingNode>();
     foreach (var node in nodes) {
+      var undockEvent = PartModuleUtils.GetEvent(node, node.Undock);
+      var decoupleEvent = PartModuleUtils.GetEvent(node, node.Decouple);
       var oldUndockForce = node.undockEjectionForce;
       node.undockEjectionForce = 0;
-      if (IsNodeDocked(node) && node.otherNode.part == tgtPart) {
-        if (!doUndock) {
-          continue;
-        }
-        Debug.LogFormat("Undock docking module on part {0} from part {1}",
-                        DbgFormatter.PartId(node.part), DbgFormatter.PartId(tgtPart));
-        node.Undock();
+      if (undockEvent.active && undockEvent.guiActive
+          && node.otherNode.part == tgtPart) {
+        HostedDebugLog.Info(node, "Undock from: {0}", tgtPart);
+        undockEvent.Invoke();
         changedNodes = true;
-      } else if (IsNodeCoupled(node) && node.referenceNode.attachedPart == tgtPart) {
-        Debug.LogFormat("Decouple docking module on part {0} from part {1}",
-                        DbgFormatter.PartId(node.part), DbgFormatter.PartId(tgtPart));
-        node.Decouple();
+      } else if (decoupleEvent.active && decoupleEvent.guiActive
+                 && node.referenceNode.attachedPart == tgtPart) {
+        HostedDebugLog.Info(node, "Decouple from: {0}", tgtPart);
+        decoupleEvent.Invoke();
         changedNodes = true;
       }
       node.undockEjectionForce = oldUndockForce;
@@ -1108,7 +1101,6 @@ public static class KIS_Shared {
 
     // Properly decouple/undock docking nodes. Only stock module is supported!
     var hasPorts = SeparateDockingNodes(assemblyRoot, formerParent);
-    hasPorts |= SeparateDockingNodes(formerParent, assemblyRoot, doUndock: false);
     if (!hasPorts) {
       Debug.LogFormat("Decouple regular part {0} from regular part {1}",
                       DbgFormatter.PartId(assemblyRoot), DbgFormatter.PartId(formerParent));
@@ -1117,7 +1109,7 @@ public static class KIS_Shared {
 
     // Allow one frame update to let other parts know about separation.
     yield return new WaitForFixedUpdate();
-    
+
     // HACK: As of KSP 1.0.5 some parts (e.g docking ports) can be attached by both a
     // surface node and by a stack node which looks like an editor bug in some corner case.
     // In this case decouple() will only clear the surface node leaving the stack one
@@ -1138,7 +1130,9 @@ public static class KIS_Shared {
           
     CleanupExternalLinks(oldVessel);
     CleanupExternalLinks(assemblyRoot.vessel);
-    RenameAssemblyVessel(assemblyRoot);
+    if (!hasPorts) {  // The docking ports manage the vessel name.
+      RenameAssemblyVessel(assemblyRoot, sourceVessel: oldVessel);
+    }
 
     if (onReady != null) {
       onReady(assemblyRoot);
@@ -1193,8 +1187,7 @@ public static class KIS_Shared {
       Part tgtPart, AttachNode tgtAttachNode, Vector3 pos, Quaternion rot, 
       OnPartReady onReady = null) {
     yield return AsyncDecoupleAssembly(assemblyRoot);
-    assemblyRoot.vessel.SetPosition(pos);
-    assemblyRoot.vessel.SetRotation(rot);
+    PlaceVessel(assemblyRoot.vessel, pos, rot, tgtPart.vessel);
 
     var srcAttachNode = GetAttachNodeById(assemblyRoot, srcAttachNodeId);
     SendKISMessage(assemblyRoot, MessageAction.AttachStart, srcAttachNode, tgtPart, tgtAttachNode);
@@ -1251,6 +1244,30 @@ public static class KIS_Shared {
       OnPartReady onReady = null) {
     assemblyRoot.StartCoroutine(AsyncMoveAssembly(
         assemblyRoot, srcAttachNodeId, tgtPart, tgtAttachNode, pos, rot, onReady));
+  }
+
+  /// <summary>Places the vessel at the new position and resets momentum on it.</summary>
+  /// <param name="movingVessel">The vessel to place.</param>
+  /// <param name="newPosition">The new possition of the vessel.</param>
+  /// <param name="newRotation">The new rotation of the vessel.</param>
+  /// <param name="refVessel">
+  /// The vessel to alignt velocities with. If it's <c>null</c>, then the velocities on the moving
+  /// vessel will just be zeroed.
+  /// </param>
+  public static void PlaceVessel(
+      Vessel movingVessel, Vector3 newPosition, Quaternion newRotation, Vessel refVessel) {
+    movingVessel.SetPosition(newPosition, usePristineCoords: true);
+    movingVessel.SetRotation(newRotation);
+    var refVelocity = Vector3.zero;
+    var refAngularVelocity = Vector3.zero;
+    if (refVessel != null) {
+      refVelocity = refVessel.rootPart.Rigidbody.velocity;
+      refAngularVelocity = refVessel.rootPart.Rigidbody.angularVelocity;
+    }
+    foreach (var p in movingVessel.parts.Where(p => p.rb != null)) {
+      p.rb.velocity = refVelocity;
+      p.rb.angularVelocity = refAngularVelocity;
+    }
   }
 
   /// <summary>Couples docking port(s) with parts.</summary>
@@ -1313,17 +1330,13 @@ public static class KIS_Shared {
     yield return AsyncCall.AsyncWaitForPhysics(
         10,
         () => IsNodeDocked(srcNode) && IsNodeDocked(tgtNode),
-        update: frame => Debug.LogFormat(
-            "Wait for ports to dock: src={0}, tgt={1}",
-            srcNode.fsm.currentStateName, tgtNode.fsm.currentStateName),
-        success: () => Debug.LogFormat(
-            "Docked ports: {0} <=> {1}",
-            DbgFormatter.PartId(srcNode.part),
-            DbgFormatter.PartId(tgtNode.part)),
-        failure: () => Debug.LogErrorFormat(
-            "FAILED to dock ports: {0} <=> {1}",
-            DbgFormatter.PartId(srcNode.part),
-            DbgFormatter.PartId(tgtNode.part)));
+        update: frame => HostedDebugLog.Info(srcNode,
+            "Wait for docking with {0}. States: self={1}, target={2}",
+            tgtNode, srcNode.fsm.currentStateName, tgtNode.fsm.currentStateName),
+        success: () => HostedDebugLog.Info(
+            srcNode, "Docked to port: {0}", tgtNode),
+        failure: () => HostedDebugLog.Warning(
+            srcNode, "FAILED to dock to port: {0}", tgtNode));
   }
 
   /// <summary>
@@ -1359,7 +1372,9 @@ public static class KIS_Shared {
   /// <remarks>Initially the part must belong to some vessel.</remarks>
   static IEnumerator WaitAndMakeLonePart(Part newPart, OnPartReady onPartReady) {
     Debug.LogFormat("Create lone part vessel for {0}", DbgFormatter.PartId(newPart));
+    newPart.physicalSignificance = Part.PhysicalSignificance.NONE;
     newPart.PromoteToPhysicalPart();
+    newPart.Unpack();
     newPart.disconnect(true);
     Vessel newVessel = newPart.gameObject.AddComponent<Vessel>();
     newVessel.id = Guid.NewGuid();
@@ -1375,8 +1390,6 @@ public static class KIS_Shared {
       Debug.LogWarningFormat("Part {0} has died before fully instantiating", newPart.name);
       yield break;
     }
-    newPart.Unpack();
-    newPart.InitializeModules();
 
     if (onPartReady != null) {
       onPartReady(newPart);

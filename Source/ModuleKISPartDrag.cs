@@ -3,10 +3,11 @@ using System.Linq;
 
 namespace KIS {
 
+//TODO(ihsoft): Consider dropping this module as it's not used.
 public class ModuleKISPartDrag : PartModule {
   public string dragIconPath = "KIS/Textures/unknow";
-  public string dragText = "Unknow action";
-  public string dragText2 = "Bla bla";
+  public string dragText = "Unknown action";
+  public string dragText2 = "";
 
   public virtual void OnItemDragged(KIS_Item draggedItem) {
   }

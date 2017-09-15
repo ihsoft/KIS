@@ -1,5 +1,11 @@
-﻿using KSPDev.GUIUtils;
+﻿// Kerbal Inventory System
+// Mod's author: KospY (http://forum.kerbalspaceprogram.com/index.php?/profile/33868-kospy/)
+// Module authors: KospY, igor.zavoychinskiy@gmail.com
+// License: Restricted
+
+using KSPDev.GUIUtils;
 using KSPDev.ProcessingUtils;
+using KSPDev.ModelUtils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,10 +14,75 @@ using UnityEngine.Rendering;
 
 namespace KIS {
 
+// Next localization ID: #kisLOC_03009.
 [KSPAddon(KSPAddon.Startup.Flight, false)]
 sealed class KISAddonPointer : MonoBehaviour {
-  public GameObject audioGo = null;
-  public AudioSource audioBipWrong = null;
+  #region Localizable GUI strings.
+  static readonly Message TargetObjectNotAllowedMsg = new Message(
+      "#kisLOC_03000",
+      defaultTemplate: "Target object is not allowed!",
+      description: "The message to present when the selected action cannot be completed given the"
+      + " currently grabbed part/assembly and the target at which the mouse cursor is pointing.");
+
+  static readonly Message CannotAttachOnItselfMsg = new Message(
+      "#kisLOC_03001",
+      defaultTemplate: "Cannot attach on itself!",
+      description: "The message to present when the selected action cannot be completed due to"
+      + " the source and the target are the same objects.");
+
+  static readonly Message NotAllowedOnTheMountMsg = new Message(
+      "#kisLOC_03002",
+      defaultTemplate: "This part is not allowed on the mount!",
+      description: "The message to present when a non-mountable object is attempted to be"
+      + " mounted.");
+
+  static readonly Message TargetDoesntAllowSurfaceAttachMsg = new Message(
+      "#kisLOC_03003",
+      defaultTemplate: "Target part doesn't allow surface attach!",
+      description: "The message to present when the source object is attempted to be attached to"
+      + " the target's surface of a part which doesn't allow this mode.");
+
+  static readonly Message NodeNotForSurfaceAttachMsg = new Message(
+      "#kisLOC_03004",
+      defaultTemplate: "This node cannot be used for surface attach!",
+      description: "The message to present when the source object is attempted to be attached to"
+      + " the target's surface, but the selected node on the soucre is not 'surface'.");
+
+  static readonly Message<DistanceType, DistanceType> TooFarFromSourceMsg =
+      new Message<DistanceType, DistanceType>(
+          "#kisLOC_03005",
+          defaultTemplate:
+          "Too far from source: <<1>> > <<2>>",
+          description: "The message to present when the acting kerbal is too far from the part"
+          + " he's trying to act on (source part)."
+          + "\nArgument <<1>> is the actual distance between the kerbal and the source part."
+          + " Format: DistanceType."
+          + "\nArgument <<2>> is the maximum allowed distance. Format: DistanceType.");
+
+  static readonly Message<DistanceType, DistanceType> TooFarFromTargetMsg =
+      new Message<DistanceType, DistanceType>(
+          "#kisLOC_03006",
+          defaultTemplate: "Too far from target: <<1>> > <<2>>",
+          description: "The message to present when the acting kerbal is too far from the point"
+          + " of the actual action (drop or attach)."
+          + "\nArgument <<1>> is the actual distance between the kerbal and the target part."
+          + " Format: DistanceType."
+          + "\nArgument <<2>> is the maximum allowed distance. Format: DistanceType.");
+
+  static readonly Message<string> CannotAttachToPartMsg = new Message<string>(
+      "#kisLOC_03007",
+      defaultTemplate: "Cannot attach to part: <<1>>",
+      description: "The message to present when a source object is attempted to be attached to a"
+      + " target part which is not allowed for this. This message is shown when the source object"
+      + " can only attach to a very specific set of the vessel's part (e.g. during the re-docking)."
+      + "\nArgument <<1>> is the name of the target part.");
+
+  static readonly Message OnlyOneAttachNodeMsg = new Message(
+      "#kisLOC_03008",
+      defaultTemplate: "This part has only one attach node!",
+      description: "The message to present when a 'change attach node' action is requested, but"
+      + " the source part has only one node");
+  #endregion
 
   // Pointer parameters
   public static bool allowPart = false;
@@ -143,20 +214,6 @@ sealed class KISAddonPointer : MonoBehaviour {
     get { return running; }
   }
 
-  // Called once when script is loaded; use to initialize variables and state
-  void Awake() {
-    audioGo = new GameObject();
-    audioBipWrong = audioGo.AddComponent<AudioSource>();
-    audioBipWrong.volume = GameSettings.UI_VOLUME;
-    audioBipWrong.spatialBlend = 0;  //set as 2D audiosource
-
-    if (GameDatabase.Instance.ExistsAudioClip(KIS_Shared.bipWrongSndPath)) {
-      audioBipWrong.clip = GameDatabase.Instance.GetAudioClip(KIS_Shared.bipWrongSndPath);
-    } else {
-      Debug.LogError("Awake(AttachPointer) Bip wrong sound not found in the game database !");
-    }
-  }
-
   public static void StartPointer(Part partToMoveAndAttach, OnPointerClick pClick,
                                   OnPointerState pState, Transform from = null) {
     if (!running) {
@@ -218,8 +275,9 @@ sealed class KISAddonPointer : MonoBehaviour {
     if (isRunning) {
       //Cast ray
       Ray ray = FlightCamera.fetch.mainCamera.ScreenPointToRay(Input.mousePosition);
-      var colliderHit =
-          Physics.Raycast(ray, out hit, maxDistance: 500, layerMask: (int)KspLayers.COMMON);
+      var colliderHit = Physics.Raycast(
+          ray, out hit, maxDistance: 500,
+          layerMask: (int)(KspLayerMask.Part | KspLayerMask.Kerbal | KspLayerMask.SurfaceCollider));
       if (!colliderHit) {
         pointerTarget = PointerTarget.Nothing;
         ResetMouseOver();
@@ -475,8 +533,7 @@ sealed class KISAddonPointer : MonoBehaviour {
     bool notAllowedOnMount = false;
     bool cannotSurfaceAttach = false;
     bool invalidCurrentNode = false;
-    bool itselfIsInvalid =
-      !allowPartItself && KIS_Shared.IsSameHierarchyChild(partToAttach, hoveredPart);
+    bool itselfIsInvalid = !allowPartItself && partToAttach.hasIndirectChild(hoveredPart);
     bool restrictedPart =
       allowedAttachmentParts != null && !allowedAttachmentParts.Contains(hoveredPart);
     switch (pointerTarget) {
@@ -531,31 +588,30 @@ sealed class KISAddonPointer : MonoBehaviour {
     //On click.
     if (Input.GetMouseButtonDown(0)) {
       if (invalidTarget) {
-        ScreenMessaging.ShowInfoScreenMessage("Target object is not allowed !");
-        audioBipWrong.Play();
+        ScreenMessaging.ShowInfoScreenMessage(TargetObjectNotAllowedMsg);
+        UISounds.PlayBipWrong();
       } else if (itselfIsInvalid) {
-        ScreenMessaging.ShowInfoScreenMessage("Cannot attach on itself !");
-        audioBipWrong.Play();
+        ScreenMessaging.ShowInfoScreenMessage(CannotAttachOnItselfMsg);
+        UISounds.PlayBipWrong();
       } else if (notAllowedOnMount) {
-        ScreenMessaging.ShowInfoScreenMessage("This part is not allowed on the mount !");
-        audioBipWrong.Play();
+        ScreenMessaging.ShowInfoScreenMessage(NotAllowedOnTheMountMsg);
+        UISounds.PlayBipWrong();
       } else if (cannotSurfaceAttach) {
-        ScreenMessaging.ShowInfoScreenMessage("Target part do not allow surface attach !");
-        audioBipWrong.Play();
+        ScreenMessaging.ShowInfoScreenMessage(TargetDoesntAllowSurfaceAttachMsg);
+        UISounds.PlayBipWrong();
       } else if (invalidCurrentNode) {
-        ScreenMessaging.ShowInfoScreenMessage("This node cannot be used for surface attach !");
-        audioBipWrong.Play();
+        ScreenMessaging.ShowInfoScreenMessage(NodeNotForSurfaceAttachMsg);
+        UISounds.PlayBipWrong();
       } else if (sourceDist > maxDist) {
-        ScreenMessaging.ShowInfoScreenMessage("Too far from source: {0:F3}m > {1:F3}m",
-                                              sourceDist, maxDist);
-        audioBipWrong.Play();
+        ScreenMessaging.ShowInfoScreenMessage(TooFarFromSourceMsg.Format(sourceDist, maxDist));
+        UISounds.PlayBipWrong();
       } else if (targetDist > maxDist) {
-        ScreenMessaging.ShowInfoScreenMessage("Too far from target: {0:F3}m > {1:F3}m",
-                                              targetDist, maxDist);
-        audioBipWrong.Play();
+        ScreenMessaging.ShowInfoScreenMessage(TooFarFromTargetMsg.Format(targetDist, maxDist));
+        UISounds.PlayBipWrong();
       } else if (restrictedPart) {
-        ScreenMessaging.ShowInfoScreenMessage("Cannot attach to part: {0}", hoveredPart);
-        audioBipWrong.Play();
+        ScreenMessaging.ShowInfoScreenMessage(
+            CannotAttachToPartMsg.Format(hoveredPart.partInfo.title));
+        UISounds.PlayBipWrong();
       } else {
         SendPointerClick(pointerTarget, pointer.transform.position, pointer.transform.rotation,
                          hoveredPart, GetCurrentAttachNode().id, hoveredNode);
@@ -584,8 +640,8 @@ sealed class KISAddonPointer : MonoBehaviour {
           ResetMouseOver();
           SendPointerState(pointerTarget, PointerState.OnChangeAttachNode, null, null);
         } else {
-          ScreenMessaging.ShowInfoScreenMessage("This part has only one attach node!");
-          audioBipWrong.Play();
+          ScreenMessaging.ShowInfoScreenMessage(OnlyOneAttachNodeMsg);
+          UISounds.PlayBipWrong();
         }
       }
     }

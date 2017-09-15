@@ -1,48 +1,97 @@
-﻿using System;
+﻿// Kerbal Inventory System
+// Mod's author: KospY (http://forum.kerbalspaceprogram.com/index.php?/profile/33868-kospy/)
+// Module authors: KospY, igor.zavoychinskiy@gmail.com
+// License: Restricted
+
+using KSPDev.GUIUtils;
+using KSPDev.KSPInterfaces;
+using KSPDev.SoundsUtils;
+using KSPDev.PartUtils;
+using System;
 using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace KIS {
 
-public class ModuleKISPartMount : PartModule {
+// Next localization ID: #kasLOC_10002.
+public class ModuleKISPartMount : PartModule,
+    // KSPDev interfaces.
+    IHasContextMenu, IsLocalizableModule,
+    // KSPDev sugar interfaces.
+    IPartModule {
+
+  #region Part's config fields
   [KSPField]
   public string sndStorePath = "KIS/Sounds/containerMount";
   [KSPField]
   public string mountedPartNode = AttachNodeId.Bottom;
   [KSPField]
   public bool allowRelease = true;
-  public FXGroup sndFxStore;
+  #endregion
 
-  public override void OnStart(StartState state) {
-    base.OnStart(state);
-    if (state != StartState.None) {
-      if (allowRelease) {
-        Actions["ActionGroupRelease"].active = true;
-        Events["ContextMenuRelease"].guiActive = true;
-        Events["ContextMenuRelease"].guiActiveUnfocused = true;
-      } else {
-        Actions["ActionGroupRelease"].active = false;
-        Events["ContextMenuRelease"].guiActive = false;
-        Events["ContextMenuRelease"].guiActiveUnfocused = false;
+  AudioSource sndAttach;
+
+  #region KSP events and actions
+  [KSPEvent(guiActive = true, guiActiveUnfocused = true)]
+  [LocalizableItem(
+      tag = "#kasLOC_10000",
+      defaultTemplate = "Release",
+      description = "The name of the context menu item to release the mounted part.")]
+  public void ReleaseEvent() {
+    foreach (KeyValuePair<AttachNode, List<string>> mount in GetMounts()) {
+      if (mount.Key.attachedPart) {
+        mount.Key.attachedPart.decouple();
+        break;
       }
     }
-
-    if (state == StartState.Editor || state == StartState.None) {
-      return;
-    }
-
-    sndFxStore.audio = part.gameObject.AddComponent<AudioSource>();
-    sndFxStore.audio.volume = GameSettings.SHIP_VOLUME;
-    sndFxStore.audio.rolloffMode = AudioRolloffMode.Linear;
-    sndFxStore.audio.dopplerLevel = 0f;
-    sndFxStore.audio.spatialBlend = 1f;
-    sndFxStore.audio.maxDistance = 10;
-    sndFxStore.audio.loop = false;
-    sndFxStore.audio.playOnAwake = false;
-    sndFxStore.audio.clip = GameDatabase.Instance.GetAudioClip(sndStorePath);
   }
 
+  [KSPAction("Release")]
+  [LocalizableItem(
+      tag = "#kasLOC_10001",
+      defaultTemplate = "Release",
+      description = "The name of the action to release the mounted part.")]
+  public void ActionGroupRelease(KSPActionParam param) {
+    if (!part.packed) {
+      ReleaseEvent();
+    }
+  }
+  #endregion
+
+  #region IHasContextMenu implementation
+  /// <inheritdoc/>
+  public void UpdateContextMenu() {
+    // FIXME: Consider the mounted state. 
+    PartModuleUtils.SetupEvent(this, ReleaseEvent, x => x.active = allowRelease);
+    PartModuleUtils.SetupAction(this, ActionGroupRelease, x => x.active = allowRelease);
+  }
+  #endregion
+
+  #region IsLocalizableModule implementation
+  public void LocalizeModule() {
+    LocalizationLoader.LoadItemsInModule(this);
+  }
+  #endregion
+
+  #region PartModule overrides
+  /// <inheritdoc/>
+  public override void OnAwake() {
+    base.OnAwake();
+    LocalizeModule();
+  }
+
+  /// <inheritdoc/>
+  public override void OnStart(StartState state) {
+    base.OnStart(state);
+    UpdateContextMenu();
+    if (HighLogic.LoadedSceneIsFlight) {
+      sndAttach = SpatialSounds.Create3dSound(gameObject, sndStorePath, maxDistance: 10);
+    }
+  }
+  #endregion
+
+  #region IPartMount interface candidates
   public bool PartIsMounted(Part mountedPart) {
     foreach (KeyValuePair<AttachNode, List<string>> mount in GetMounts()) {
       if (mount.Key.attachedPart) {
@@ -60,7 +109,7 @@ public class ModuleKISPartMount : PartModule {
     foreach (ConfigNode mountNode in node.GetNodes("MOUNT")) {
       if (mountNode.HasValue("attachNode") && mountNode.HasValue("allowedPartName")) {
         string attachNodeName = mountNode.GetValue("attachNode");
-        AttachNode an = this.part.FindAttachNode(attachNodeName);
+        AttachNode an = part.FindAttachNode(attachNodeName);
         if (an == null) {
           Debug.LogErrorFormat("GetMountNodes - Node : {0} not found !", attachNodeName);
           continue;
@@ -76,22 +125,10 @@ public class ModuleKISPartMount : PartModule {
     return mounts;
   }
 
-  [KSPEvent(name = "ContextMenuRelease", active = true, guiActive = true, guiActiveUnfocused = true,
-            guiName = "Release")]
-  public void ContextMenuRelease() {
-    foreach (KeyValuePair<AttachNode, List<string>> mount in GetMounts()) {
-      if (mount.Key.attachedPart) {
-        mount.Key.attachedPart.decouple();
-      }
-    }
+  public void OnPartMounted() {
+    sndAttach.Play();
   }
-
-  [KSPAction("Release")]
-  public void ActionGroupRelease(KSPActionParam param) {
-    if (!this.part.packed) {
-      ContextMenuRelease();
-    }
-  }
+  #endregion
 }
 
 }  // namespace

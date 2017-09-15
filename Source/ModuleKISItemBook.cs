@@ -1,4 +1,10 @@
-﻿using KSPDev.GUIUtils;
+﻿// Kerbal Inventory System
+// Mod's author: KospY (http://forum.kerbalspaceprogram.com/index.php?/profile/33868-kospy/)
+// Module authors: KospY, igor.zavoychinskiy@gmail.com
+// License: Restricted
+
+using KSPDev.GUIUtils;
+using KSPDev.KSPInterfaces;
 using System;
 using System.Linq;
 using System.Collections.Generic;
@@ -6,7 +12,52 @@ using UnityEngine;
 
 namespace KIS {
 
-public sealed class ModuleKISItemBook: ModuleKISItem {
+// Next localization ID: #kisLOC_07007.
+public sealed class ModuleKISItemBook: ModuleKISItem,
+    // KSPDEV sugar interfaces.
+    IPartModule {
+
+  #region Localizable GUI strings.
+  static readonly Message ModuleTitleInfo = new Message(
+      "#kisLOC_07000",
+      defaultTemplate: "KIS Guide",
+      description: "The title of the module to present in the editor details window.");
+  
+  static readonly Message PrimaryBookField = new Message(
+      "#kisLOC_07001",
+      defaultTemplate: "The last resort manual",
+      description: "The info message to present in the editor's details window to designate the"
+      + " fact that this item is for the learning purposes only.");
+
+  static readonly Message ReaderWindowTitle = new Message(
+      "#kisLOC_07002",
+      defaultTemplate: "Reader",
+      description: "The title for the window that shows the guide pages.");
+
+  static readonly Message PreviousPageBtn = new Message(
+      "#kisLOC_07003",
+      defaultTemplate: "Previous page",
+      description: "The caption on the button that navigates to the previous page.");
+
+  static readonly Message NextPageBtn = new Message(
+      "#kisLOC_07004",
+      defaultTemplate: "Next page",
+      description: "The caption on the button that navigates to the next page.");
+
+  static readonly Message CloseBtn = new Message(
+      "#kisLOC_07005",
+      defaultTemplate: "Close",
+      description: "The caption on the button that closes the guide window.");
+
+  static readonly Message<int, int> CurrentPageTxt = new Message<int, int>(
+      "#kisLOC_07006",
+      defaultTemplate: "Page <<1>> / <<2>>",
+      description: "The string in the reader window that displays the current page number."
+      + "\nArgument <<1>> is the number of the current page."
+      + "\nArgument <<2>> is the total number of the pages.");
+  #endregion
+
+  #region Part's config fields
   [KSPField]
   public int pageWidth = 800;
   [KSPField]
@@ -17,18 +68,30 @@ public sealed class ModuleKISItemBook: ModuleKISItem {
   public string bookPageSndPath = "KIS/Sounds/bookPage";
   [KSPField]
   public string bookCloseSndPath = "KIS/Sounds/bookClose";
+  #endregion
 
-  private int pageIndex = 0;
-  private int pageTotal = 0;
-  private List<string> pageList = new List<string>();
-  private bool showPage = false;
-  private Texture2D pageTexture;
-  public Rect guiWindowPos;
-  private KIS_Item currentItem;
+  #region Local fields
+  int pageIndex = 0;
+  int pageTotal = 0;
+  List<string> pageList = new List<string>();
+  bool showPage = false;
+  Texture2D pageTexture;
+  Rect guiWindowPos;
+  KIS_Item currentItem;
+  #endregion
 
+  #region PartModule overrides
+  /// <inheritdoc/>
+  public override string GetModuleDisplayName() {
+    return ModuleTitleInfo;
+  }
+  #endregion
+
+  #region ModuleKISItem overrides
+  /// <inheritdoc/>
   public override void OnItemUse(KIS_Item item, KIS_Item.UseFrom useFrom) {
     pageList.Clear();
-    ConfigNode node = KIS_Shared.GetBaseConfigNode(this);
+    var node = KIS_Shared.GetBaseConfigNode(this);
     foreach (string page in node.GetValues("page")) {
       pageList.Add(page);
     }
@@ -43,29 +106,41 @@ public sealed class ModuleKISItemBook: ModuleKISItem {
     }      
   }
 
+  /// <inheritdoc/>
   public override void OnItemGUI(KIS_Item item) {
     if (showPage) {
       GUI.skin = HighLogic.Skin;
       currentItem = item;
-      guiWindowPos = GUILayout.Window(GetInstanceID(), guiWindowPos, GuiReader, "Reader");
+      guiWindowPos = GUILayout.Window(GetInstanceID(), guiWindowPos, GuiReader, ReaderWindowTitle);
     }
   }
+  #endregion
+  
+  #region Inheritable & customization methods
+  /// <inheritdoc/>
+  protected override IEnumerable<string> GetPropInfo() {
+    return base.GetPropInfo().Concat(new[] {
+        PrimaryBookField.Format(),
+    });
+  }
+  #endregion
 
-  private void GuiReader(int windowID) {
+  #region Local utility methods
+  void GuiReader(int windowID) {
     GUILayout.Box("", GUILayout.Width(pageWidth), GUILayout.Height(pageHeight));
     Rect textureRect = GUILayoutUtility.GetLastRect();
     GUI.DrawTexture(textureRect, pageTexture, ScaleMode.ScaleToFit);
           
     GUILayout.BeginHorizontal();
-    if (GUILayout.Button("Previous page")) {
+    if (GUILayout.Button(PreviousPageBtn)) {
       if ((pageIndex - 1) >= 0) {
         pageIndex = pageIndex - 1;
         pageTexture = GameDatabase.Instance.GetTexture(pageList[pageIndex], false);
         UISoundPlayer.instance.Play(bookPageSndPath);
       }
     }
-    GUILayout.Label("Page " + (pageIndex + 1) + " / " + pageTotal);
-    if (GUILayout.Button("Next page")) {
+    GUILayout.Label(CurrentPageTxt.Format(pageIndex + 1, pageTotal));
+    if (GUILayout.Button(NextPageBtn)) {
       if ((pageIndex + 1) < pageList.Count) {
         pageIndex = pageIndex + 1;
         pageTexture = GameDatabase.Instance.GetTexture(pageList[pageIndex], false);
@@ -74,12 +149,13 @@ public sealed class ModuleKISItemBook: ModuleKISItem {
     }
     GUILayout.EndHorizontal();
 
-    if (GUILayout.Button("Close")) {
+    if (GUILayout.Button(CloseBtn)) {
       showPage = false;
       UISoundPlayer.instance.Play(bookCloseSndPath);
     }
     GUI.DragWindow();
   }
+  #endregion
 }
 
 }  // namespace

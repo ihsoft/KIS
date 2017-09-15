@@ -117,3 +117,6 @@ Plugins/MiniAVC.xml
 *.sdsettings
 *.local
 KIS_v*.zip
+
+*.wrk.*
+*.wrk

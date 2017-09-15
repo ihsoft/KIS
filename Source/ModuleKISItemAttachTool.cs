@@ -1,16 +1,48 @@
-﻿using System;
+﻿// Kerbal Inventory System
+// Mod's author: KospY (http://forum.kerbalspaceprogram.com/index.php?/profile/33868-kospy/)
+// Module authors: KospY, igor.zavoychinskiy@gmail.com
+// License: Restricted
+
+using KSPDev.GUIUtils;
+using KSPDev.KSPInterfaces;
+using System;
+using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace KIS {
 
-public class ModuleKISItemAttachTool : ModuleKISItem {
+// Next localization ID: #kisLOC_04003.
+public class ModuleKISItemAttachTool : ModuleKISItem,
+    // KSP interfaces.
+    IModuleInfo,
+    // KSPDev sugar interfaces.
+    IKSPDevModuleInfo {
+
+  #region Localizable GUI strings.
+  static readonly Message ModuleTitleInfo = new Message(
+      "#kisLOC_04000",
+      defaultTemplate: "KIS Attach Tool",
+      description: "The title of the module to present in the editor details window.");
+
+  static readonly Message AllowNodeAttachModeInfo = new Message(
+      "#kisLOC_04001",
+      defaultTemplate: "<color=#00FFFF>Can attach to the stack nodes</color>",
+      description: "The info message to present in the editor's details window to denote that this"
+      + " tool can attach parts at the stack nodes.");
+
+  static readonly Message OnlySurfaceAttachModeInfo = new Message(
+      "#kisLOC_04002",
+      defaultTemplate: "<color=orange>Can only attach to the part's surface</color>",
+      description: "The info message to present in the editor's details window to denote that this"
+      + " tool can attach the parts at the surface of another part, but not at the stack nodes.");
+  #endregion
+
   [KSPField]
   public bool toolPartAttach = true;
   [KSPField]
-  public bool toolStaticAttach = false;
+  public bool toolStaticAttach;
   [KSPField]
-  public bool toolPartStack = false;
+  public bool toolPartStack;
   [KSPField]
   public string attachPartSndPath = "KIS/Sounds/attachPart";
   [KSPField]
@@ -20,22 +52,22 @@ public class ModuleKISItemAttachTool : ModuleKISItem {
   [KSPField]
   public string detachStaticSndPath = "KIS/Sounds/detachStatic";
 
-  private string orgAttachPartSndPath;
-  private string orgDetachPartSndPath;
-  private string orgAttachStaticSndPath;
-  private string orgDetachStaticSndPath;
-  private bool orgToolPartAttach;
-  private bool orgToolStaticAttach;
-  private bool orgToolPartStack;
+  string orgAttachPartSndPath;
+  string orgDetachPartSndPath;
+  string orgAttachStaticSndPath;
+  string orgDetachStaticSndPath;
+  bool orgToolPartAttach;
+  bool orgToolStaticAttach;
+  bool orgToolPartStack;
 
-  public override string GetInfo() {
-    var sb = new StringBuilder();
-    if (toolPartStack) {
-      sb.AppendLine("Allow snap attach on stack node");
-    }
-    return sb.ToString();
+  #region PartModule overrides
+  /// <inheritdoc/>
+  public override string GetModuleDisplayName() {
+    return ModuleTitleInfo;
   }
+  #endregion
 
+  #region ModuleKISItem overrides
   public override void OnItemUse(KIS_Item item, KIS_Item.UseFrom useFrom) {
     // Check if grab key is pressed
     if (useFrom == KIS_Item.UseFrom.KeyDown) {
@@ -82,6 +114,17 @@ public class ModuleKISItemAttachTool : ModuleKISItem {
       pickupModule.detachStaticSndPath = orgDetachStaticSndPath;
     }
   }
+  #endregion
+
+  #region Inheritable & customization methods
+  /// <inheritdoc/>
+  protected override IEnumerable<string> GetPropInfo() {
+    return base.GetPropInfo().Concat(new[] {
+        toolPartStack ? AllowNodeAttachModeInfo.Format() : null,
+        !toolPartStack ? OnlySurfaceAttachModeInfo.Format() : null,
+    });
+  }
+  #endregion
 }
   
 }  // namespace
