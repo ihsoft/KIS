@@ -2,6 +2,7 @@
   "JSON_SCHEMA_VERSION": "1.0",
   "PACKAGE_NAME": "KIS",
   "SHELL_COMPILE_BINARY_SCRIPT" : "make_binary.cmd",
+  "RELEASE_NAME_FREE_FORMAT" : "{PACKAGE_NAME}_v{0}.{1}",
   "STRUCTURE" : {
     "/": [
       "/Deps/*",
