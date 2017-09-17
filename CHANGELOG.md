@@ -1,5 +1,6 @@
 # 1.7 (pre-release):
 * [Fix #224] Exception when move&attach a static attach item.
+* [Fix #225] Impossible to move items between the inventories.
 
 # 1.6 (September 14th, 2017):
 * [Enhancement] Improve the attach nodes of the KIS items (including the fun parts) to reduce the physics effects on drop.
