@@ -1555,7 +1555,6 @@ public class ModuleKISInventory : PartModule,
 
     if (contextItem == null) {
       GUI.DragWindow(new Rect(0, 0, 10000, 30));
-      GUI.DragWindow();
     }
     if (closeInv) {
       ToggleInventory();
@@ -1909,7 +1908,6 @@ public class ModuleKISInventory : PartModule,
     // Mouse up on used slot
     if (Event.current.type == EventType.MouseUp && Event.current.button == 0
         && textureRect.Contains(Event.current.mousePosition) && KISAddonPickup.draggedPart) {
-      Event.current.Use();
       if (KISAddonPickup.draggedItem != items[slotIndex]) {
         ModuleKISInventory srcInventory = null;
         if (items[slotIndex].stackable
