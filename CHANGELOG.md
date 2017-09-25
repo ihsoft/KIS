@@ -1,3 +1,5 @@
+# 1.8 (pre-release):
+
 # 1.7 (September 17th, 2017):
 * [Fix #224] Exception when move&attach a static attach item.
 * [Fix #225] Impossible to move items between the inventories.
