@@ -1,5 +1,6 @@
 # 1.8 (pre-release):
 * [Fix #181] Match the part's menu max distance to the inventory grab distance.
+* [Fix] Correct the localization string IDs that were conflicting with KAS.
 
 # 1.7 (September 17th, 2017):
 * [Fix #224] Exception when move&attach a static attach item.
