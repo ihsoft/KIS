@@ -573,7 +573,7 @@ public sealed class KIS_Item {
     if (!prefabModule) {
       return;
     }
-    // This must be firts thing to happen to prevent other handlers to trigger. 
+    // This must be the first thing to happen to prevent the other handlers to trigger. 
     equipped = false;
     if (equipMode == EquipMode.Model) {
       UnityEngine.Object.Destroy(equippedGameObj);
