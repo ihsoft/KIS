@@ -5,6 +5,7 @@
 
 using KSPDev.GUIUtils;
 using KSPDev.ProcessingUtils;
+using KSPDev.LogUtils;
 using KSPDev.ModelUtils;
 using System;
 using System.Collections.Generic;
@@ -217,7 +218,7 @@ sealed class KISAddonPointer : MonoBehaviour {
   public static void StartPointer(Part partToMoveAndAttach, OnPointerClick pClick,
                                   OnPointerState pState, Transform from = null) {
     if (!running) {
-      Debug.Log("StartPointer()");
+      DebugEx.Fine("StartPointer()");
       customRot = Vector3.zero;
       aboveDistance = 0;
       partToAttach = partToMoveAndAttach;
@@ -241,7 +242,7 @@ sealed class KISAddonPointer : MonoBehaviour {
   /// </param>
   /// <seealso cref="UnlockUI"/>
   public static void StopPointer(bool unlockUI = true) {
-    Debug.Log("StopPointer()");
+    DebugEx.Fine("StopPointer()");
     running = false;
     ResetMouseOver();
     SendPointerState(PointerTarget.Nothing, PointerState.OnPointerStopped, null, null);
@@ -255,13 +256,13 @@ sealed class KISAddonPointer : MonoBehaviour {
   /// <summary>Acquires KIS input lock on UI interactions.</summary>
   public static void LockUI() {
     InputLockManager.SetControlLock(ControlTypes.ALLBUTCAMERAS, "KISpointer");
-    Debug.Log("KIS UI lock acquired");
+    DebugEx.Info("KIS UI lock acquired");
   }
 
   /// <summary>Releases KIS input lock on UI interactions.</summary>
   public static void UnlockUI() {
     InputLockManager.RemoveControlLock("KISpointer");
-    Debug.Log("KIS UI lock released");
+    DebugEx.Info("KIS UI lock released");
   }
 
   public void Update() {
@@ -623,7 +624,7 @@ sealed class KISAddonPointer : MonoBehaviour {
   private void UpdateKey() {
     if (isRunning) {
       if (KIS_Shared.IsKeyUp(KeyCode.Escape) || KIS_Shared.IsKeyDown(KeyCode.Return)) {
-        Debug.Log("Cancel key pressed, stop eva attach mode");
+        DebugEx.Fine("Cancel key pressed, stop eva attach mode");
         StopPointer(unlockUI: false);
         SendPointerClick(PointerTarget.Nothing, Vector3.zero, Quaternion.identity, null, null);
         // Delay unlocking to not let ESC be handled by the game.
@@ -635,7 +636,7 @@ sealed class KISAddonPointer : MonoBehaviour {
           if (attachNodeIndex > (attachNodes.Count - 1)) {
             attachNodeIndex = 0;
           }
-          Debug.LogFormat("Attach node index changed to: {0}", attachNodeIndex);
+          DebugEx.Fine("Attach node index changed to: {0}", attachNodeIndex);
           UpdatePointerAttachNode();
           ResetMouseOver();
           SendPointerState(pointerTarget, PointerState.OnChangeAttachNode, null, null);
@@ -667,7 +668,7 @@ sealed class KISAddonPointer : MonoBehaviour {
       mr.enabled = isVisible;
       mr.material.renderQueue = KIS_Shared.HighlighedPartRenderQueue;
     }
-    Debug.LogFormat("Pointer state set to: visibility={0}", isVisible);
+    DebugEx.Fine("Pointer state set to: visibility={0}", isVisible);
   }
 
   /// <summary>Makes a game object to represent currently dragging assembly.</summary>
@@ -689,8 +690,8 @@ sealed class KISAddonPointer : MonoBehaviour {
       // Ideally, the caller should have checked if this part has free nodes. Now the only
       // way is to pick *any* node. The surface one always exists so, it's a good
       // candidate. Though, for many details it may result in a weird representation.
-      Debug.LogErrorFormat("Part {0} has no free nodes, use {1}",
-                           partToAttach, partToAttach.srfAttachNode);
+      DebugEx.Error(
+          "Part {0} has no free nodes, use {1}", partToAttach, partToAttach.srfAttachNode);
       attachNodes.Add(partToAttach.srfAttachNode);
     }
     attachNodeIndex = 0;  // Expect that first node is the best default.
@@ -724,7 +725,7 @@ sealed class KISAddonPointer : MonoBehaviour {
     }
     pointerNodeTransform.parent = pointer.transform;
 
-    Debug.Log("New pointer created");
+    DebugEx.Fine("New pointer created");
   }
 
   /// <summary>Sets pointer origin to the current attachment node</summary>
@@ -756,7 +757,7 @@ sealed class KISAddonPointer : MonoBehaviour {
 
     // On large assemblies memory consumption can be significant. Reclaim it.
     Resources.UnloadUnusedAssets();
-    Debug.Log("Pointer destroyed");
+    DebugEx.Fine("Pointer destroyed");
   }
 
   /// <summary>Goes thru part assembly and collects all meshes in the hierarchy.</summary>
@@ -777,7 +778,7 @@ sealed class KISAddonPointer : MonoBehaviour {
     // Get all meshes from the part's model.
     var meshFilters = assembly.FindModelComponents<MeshFilter>();
     if (meshFilters.Count > 0) {
-      Debug.LogFormat("Found {0} children meshes in: {1}", meshFilters.Count, assembly);
+      DebugEx.Fine("Found {0} children meshes in: {1}", meshFilters.Count, assembly);
       foreach (var meshFilter in meshFilters) {
         var combine = new CombineInstance();
         combine.mesh = meshFilter.sharedMesh;
@@ -790,7 +791,7 @@ sealed class KISAddonPointer : MonoBehaviour {
     // state.
     var skinnedMeshRenderers = assembly.FindModelComponents<SkinnedMeshRenderer>();
     if (skinnedMeshRenderers.Count > 0) {
-      Debug.LogFormat("Found {0} skinned meshes in: {1}", skinnedMeshRenderers.Count, assembly);
+      DebugEx.Fine("Found {0} skinned meshes in: {1}", skinnedMeshRenderers.Count, assembly);
       foreach (var skinnedMeshRenderer in skinnedMeshRenderers) {
         var combine = new CombineInstance();
         combine.mesh = new Mesh();

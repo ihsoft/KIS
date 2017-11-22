@@ -1,8 +1,8 @@
 ﻿using KSPDev.ConfigUtils;
+using KSPDev.LogUtils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using UnityEngine;
 
 namespace KIS {
@@ -28,10 +28,10 @@ sealed class KISAddonConfig : MonoBehaviour {
     ConfigAccessor.ReadFieldsInType(typeof(ModuleKISInventory), instance: null);
 
     // Set inventory module for every eva kerbal
-    Debug.Log("Set KIS config...");
+    DebugEx.Info("Set KIS config...");
     ConfigNode nodeSettings = GameDatabase.Instance.GetConfigNode("KIS/settings/KISConfig");
     if (nodeSettings == null) {
-      Debug.LogError("KIS settings.cfg not found or invalid !");
+      DebugEx.Error("KIS settings.cfg not found or invalid !");
       return;
     }
 
@@ -40,7 +40,7 @@ sealed class KISAddonConfig : MonoBehaviour {
     UpdateEvaPrefab(FemaleKerbalEva, nodeSettings);
 
     // Set inventory module for every pod with crew capacity.
-    Debug.Log("Loading pod inventories...");
+    DebugEx.Info("Loading pod inventories...");
     foreach (AvailablePart avPart in PartLoader.LoadedPartsList) {
       if (avPart.name == MaleKerbalEva || avPart.name == FemaleKerbalEva
           || avPart.name == RdKerbalEva
@@ -48,7 +48,7 @@ sealed class KISAddonConfig : MonoBehaviour {
         continue;
       }
 
-      Debug.LogFormat("Found part with CrewCapacity: {0}", avPart.name);
+      DebugEx.Fine("Found part with CrewCapacity: {0}", avPart.name);
       for (int i = 0; i < avPart.partPrefab.CrewCapacity; i++) {
         try {
           var moduleInventory =
@@ -58,9 +58,9 @@ sealed class KISAddonConfig : MonoBehaviour {
           baseFields.Load(nodeSettings.GetNode("EvaInventory"));
           moduleInventory.podSeat = i;
           moduleInventory.invType = ModuleKISInventory.InventoryType.Pod;
-          Debug.LogFormat("Pod inventory module(s) for seat {0} loaded successfully", i);
+          DebugEx.Fine("Pod inventory module(s) for seat {0} loaded successfully", i);
         } catch {
-          Debug.LogErrorFormat("Pod inventory module(s) for seat {0} can't be loaded!", i);
+          DebugEx.Error("Pod inventory module(s) for seat {0} can't be loaded!", i);
         }
       }
     }
@@ -81,18 +81,17 @@ sealed class KISAddonConfig : MonoBehaviour {
   bool LoadModuleConfig(Part p, Type moduleType, ConfigNode node) {
     var module = p.GetComponent(moduleType);
     if (module == null) {
-      Debug.LogWarningFormat("Config node for module {0} in part {1} is NULL. Nothing to load!",
-                             moduleType, p.name);
+      DebugEx.Warning(
+          "Config node for module {0} in part {1} is NULL. Nothing to load!", moduleType, p);
       return false;
     }
     if (node == null) {
-      Debug.LogWarningFormat("Cannot find module {0} on part {1}. Config not loaded!",
-                             moduleType, p.name);
+      DebugEx.Warning("Cannot find module {0} on part {1}. Config not loaded!", moduleType, p);
       return false;
     }
     var baseFields = new BaseFieldList(module);
     baseFields.Load(node);
-    Debug.LogFormat("Loaded config for {0} on part {1}", moduleType, p.name);
+    DebugEx.Info("Loaded config for {0} on part {1}", moduleType, p);
     return true;
   }
 }

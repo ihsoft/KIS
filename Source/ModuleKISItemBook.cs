@@ -5,6 +5,7 @@
 
 using KSPDev.GUIUtils;
 using KSPDev.KSPInterfaces;
+using KSPDev.LogUtils;
 using System;
 using System.Linq;
 using System.Collections.Generic;
@@ -102,7 +103,7 @@ public sealed class ModuleKISItemBook: ModuleKISItem,
       showPage = true;
       UISoundPlayer.instance.Play(bookOpenSndPath);
     } else {
-      Debug.LogError("The book has no pages configured");
+      DebugEx.Info("The book has no pages configured");
     }      
   }
 

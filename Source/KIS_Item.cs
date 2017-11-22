@@ -5,6 +5,7 @@
 
 using KIS.GUIUtils;
 using KSPDev.GUIUtils;
+using KSPDev.LogUtils;
 using KSPDev.ProcessingUtils;
 using System;
 using System.Linq;
@@ -242,15 +243,15 @@ public sealed class KIS_Item {
       }
     }
     if (nonStackableModule == 0 && GetResources().Count == 0) {
-      Debug.Log(
+      DebugEx.Info(
           "No non-stackable module or a resource found on the part, set the item as stackable");
       stackable = true;
     }
     if (KISAddonConfig.stackableList.Contains(availablePart.name)
         || availablePart.name.IndexOf('.') != -1
         && KISAddonConfig.stackableList.Contains(availablePart.name.Replace('.', '_'))) {
-      Debug.Log("Part name present in settings.cfg (node StackableItemOverride),"
-                + " force item as stackable");
+      DebugEx.Info("Part name present in settings.cfg (node StackableItemOverride),"
+                   + " force item as stackable");
       stackable = true;
     }
   }
@@ -270,7 +271,7 @@ public sealed class KIS_Item {
     // so there is no equipped part.
     if (equipped && equippedPart != null
         && (equipMode == EquipMode.Part || equipMode == EquipMode.Physic)) {
-      Debug.LogFormat("Update config node of equipped part: {0}", availablePart.title);
+      DebugEx.Info("Update config node of equipped part: {0}", availablePart.title);
       partNode.ClearData();
       KIS_Shared.PartSnapshot(equippedPart).CopyTo(partNode);
     }
@@ -435,7 +436,7 @@ public sealed class KIS_Item {
   public void Equip(ActorType actorType = ActorType.API) {
     // Only equip EVA kerbals.
     if (!prefabModule || inventory.invType != ModuleKISInventory.InventoryType.Eva) {
-      Debug.LogWarningFormat("Cannot equip item from inventory type: {0}", inventory.invType);
+      DebugEx.Warning("Cannot equip item from inventory type: {0}", inventory.invType);
       return;
     }
     if (quantity > 1) {
@@ -443,7 +444,7 @@ public sealed class KIS_Item {
       UISounds.PlayBipWrong();
       return;
     }
-    Debug.LogFormat("Equip item {0} in mode {1}", availablePart.title, equipMode);
+    DebugEx.Info("Equip item {0} in mode {1}", availablePart.title, equipMode);
 
     // Check if the skill is needed. Skip the check in the sandbox modes.
     if (HighLogic.CurrentGame.Mode != Game.Modes.SANDBOX
@@ -482,7 +483,7 @@ public sealed class KIS_Item {
     }
 
     if (equipMode == EquipMode.Model) {
-      GameObject modelGo = availablePart.partPrefab.FindModelTransform("model").gameObject;
+      var modelGo = availablePart.partPrefab.FindModelTransform("model").gameObject;
       equippedGameObj = UnityEngine.Object.Instantiate(modelGo);
       foreach (Collider col in equippedGameObj.GetComponentsInChildren<Collider>()) {
         UnityEngine.Object.DestroyImmediate(col);
@@ -503,7 +504,7 @@ public sealed class KIS_Item {
       }
 
       if (!evaTransform) {
-        Debug.LogError("evaTransform not found ! ");
+        DebugEx.Error("evaTransform not found ! ");
         UnityEngine.Object.Destroy(equippedGameObj);
         return;
       }
@@ -525,13 +526,13 @@ public sealed class KIS_Item {
       }
 
       if (!evaTransform) {
-        Debug.LogError("evaTransform not found ! ");
+        DebugEx.Error("evaTransform not found ! ");
         return;
       }
 
       var alreadyEquippedPart = inventory.part.FindChildPart(availablePart.name);
       if (alreadyEquippedPart) {
-        Debug.LogFormat("Part {0} already found on eva, use it as the item", availablePart.name);
+        DebugEx.Info("Part {0} already found on eva, use it as the item", availablePart.name);
         equippedPart = alreadyEquippedPart;
         // This magic is copied from the KervalEVA.OnVesselGoOffRails() method.
         // There must be at least 3 fixed frames delay before updating the colliders.
@@ -581,7 +582,7 @@ public sealed class KIS_Item {
       }
     }
     if (equipMode == EquipMode.Part || equipMode == EquipMode.Physic) {
-      Debug.LogFormat("Update config node of equipped part: {0}", availablePart.title);
+      DebugEx.Info("Update config node of equipped part: {0}", availablePart.title);
       partNode.ClearData();
       KIS_Shared.PartSnapshot(equippedPart).CopyTo(partNode);
       equippedPart.Die();
@@ -606,7 +607,7 @@ public sealed class KIS_Item {
   }
 
   public void Drop(Part fromPart = null) {
-    Debug.Log("Drop item");
+    DebugEx.Info("Drop item");
     if (fromPart == null) {
       fromPart = inventory.part;
     }

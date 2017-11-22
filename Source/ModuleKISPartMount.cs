@@ -5,6 +5,7 @@
 
 using KSPDev.GUIUtils;
 using KSPDev.KSPInterfaces;
+using KSPDev.LogUtils;
 using KSPDev.SoundsUtils;
 using KSPDev.PartUtils;
 using System;
@@ -111,7 +112,7 @@ public class ModuleKISPartMount : PartModule,
         string attachNodeName = mountNode.GetValue("attachNode");
         AttachNode an = part.FindAttachNode(attachNodeName);
         if (an == null) {
-          Debug.LogErrorFormat("GetMountNodes - Node : {0} not found !", attachNodeName);
+          DebugEx.Error("GetMountNodes - Node : {0} not found !", attachNodeName);
           continue;
         }
 

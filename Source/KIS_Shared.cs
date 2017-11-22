@@ -72,7 +72,7 @@ public static class KIS_Shared {
       group.audio.clip = GameDatabase.Instance.GetAudioClip(sndPath);
       return true;
     } else {
-      Debug.LogError("Sound not found in the game database !");
+      DebugEx.Error("Sound not found in the game database !");
       return false;
     }
   }
@@ -110,12 +110,12 @@ public static class KIS_Shared {
   // TODO: Handle KAS and other popular plugins connectors.         
   public static void CleanupExternalLinks(Vessel vessel) {
     var parts = vessel.parts.FindAll(p => p is CompoundPart);
-    Debug.LogFormat("Check {0} compound part(s) in vessel: {1}", parts.Count(), vessel);
+    DebugEx.Fine("Check {0} compound part(s) in vessel: {1}", parts.Count(), vessel);
     foreach (var part in parts) {
       var compoundPart = part as CompoundPart;
       if (compoundPart.target && compoundPart.target.vessel != vessel) {
-        Debug.LogFormat("Destroy compound part '{0}' which links '{1}' to '{2}'",
-                        compoundPart, compoundPart.parent, compoundPart.target);
+        DebugEx.Fine("Destroy compound part '{0}' which links '{1}' to '{2}'",
+                     compoundPart, compoundPart.parent, compoundPart.target);
         compoundPart.Die();
       }
     }
@@ -283,7 +283,7 @@ public static class KIS_Shared {
           || srcAttachNodeId == "srfAttach" && tgtAttachNode != null
           || srcAttachNodeId != "srfAttach"
              && (tgtAttachNode == null || tgtAttachNode.id == "srfAttach")) {
-        Debug.LogWarningFormat(
+        DebugEx.Warning(
             "Wrong parts attach parameters: srcNodeId={0}, tgtNodeId={1}",
             srcAttachNodeId ?? "N/A",
             tgtAttachNode != null ? tgtAttachNode.id : "N/A");
@@ -343,9 +343,9 @@ public static class KIS_Shared {
     }
 
     // Create proper attach nodes.
-    Debug.LogFormat("Attach new part {0} to {1}: srcNodeId={2}, tgtNode={3}",
-                    newPart.name, newPart.vessel,
-                    srcAttachNodeId, tgtAttachNode != null ? tgtAttachNode.id : "N/A");
+    DebugEx.Info("Attach new part {0} to {1}: srcNodeId={2}, tgtNode={3}",
+                 newPart, newPart.vessel,
+                 srcAttachNodeId, tgtAttachNode != null ? tgtAttachNode.id : "N/A");
     var srcAttachNode = GetAttachNodeById(newPart, srcAttachNodeId);
     srcAttachNode.attachedPart = tgtPart;
     srcAttachNode.attachedPartId = tgtPart.flightID;
@@ -362,8 +362,7 @@ public static class KIS_Shared {
       srcDockingNode.state = "PreAttached";
       srcDockingNode.dockedPartUId = 0;
       srcDockingNode.dockingNodeModuleIndex = 0;
-      Debug.LogFormat(
-          "Force new node {0} to state {1}", DbgFormatter.PartId(newPart), srcDockingNode.state);
+      DebugEx.Fine("Force new node {0} to state {1}", newPart, srcDockingNode.state);
     }
     var tgtDockingNode = GetDockingNode(tgtPart, attachNode: tgtAttachNode);
     if (tgtDockingNode != null) {
@@ -371,7 +370,7 @@ public static class KIS_Shared {
     }
     
     // Wait until part is started. Keep it in position till it happen.
-    Debug.LogFormat("Wait for part {0} to get alive...", newPart.name);
+    DebugEx.Fine("Wait for part {0} to get alive...", newPart);
     newPart.transform.parent = tgtPart.transform;
     var relPos = newPart.transform.localPosition;
     var relRot = newPart.transform.localRotation;
@@ -390,9 +389,9 @@ public static class KIS_Shared {
       }
     }
     newPart.transform.parent = newPart.transform;
-    Debug.LogFormat("Part {0} is in state {1}", newPart.name, newPart.State);
+    DebugEx.Fine("Part {0} is in state {1}", newPart, newPart.State);
     if (newPart.State == PartStates.DEAD) {
-      Debug.LogWarningFormat("Part {0} has died before fully instantiating", newPart.name);
+      DebugEx.Warning("Part {0} has died before fully instantiating", newPart);
       yield break;
     }
 
@@ -423,8 +422,7 @@ public static class KIS_Shared {
   public static AttachNode GetAttachNodeById(Part p, string id) {
     var node = id == "srfAttach" ? p.srfAttachNode : p.FindAttachNode(id);
     if (node == null) {
-      Debug.LogWarningFormat(
-          "Cannot find attach node {0} on part {1}. Using srfAttach", id, p.name);
+      DebugEx.Warning("Cannot find attach node {0} on part {1}. Using srfAttach", id, p);
       node = p.srfAttachNode;
     }
     return node;
@@ -456,33 +454,32 @@ public static class KIS_Shared {
     // Node links.
     if (srcAttachNodeId != null) {
       if (srcAttachNodeId == "srfAttach") {
-        Debug.LogFormat("Attach type: {0} | ID : {1}",
-                        srcPart.srfAttachNode.nodeType, srcPart.srfAttachNode.id);
+        DebugEx.Info("Attach type: {0} | ID : {1}",
+                     srcPart.srfAttachNode.nodeType, srcPart.srfAttachNode.id);
         srcPart.attachMode = AttachModes.SRF_ATTACH;
         srcPart.srfAttachNode.attachedPart = tgtPart;
         srcPart.srfAttachNode.attachedPartId = tgtPart.flightID;
       } else {
         AttachNode srcAttachNode = srcPart.FindAttachNode(srcAttachNodeId);
         if (srcAttachNode != null) {
-          Debug.LogFormat("Attach type : {0} | ID : {1}",
-                          srcPart.srfAttachNode.nodeType, srcAttachNode.id);
+          DebugEx.Info("Attach type : {0} | ID : {1}",
+                       srcPart.srfAttachNode.nodeType, srcAttachNode.id);
           srcPart.attachMode = AttachModes.STACK;
           srcAttachNode.attachedPart = tgtPart;
           srcAttachNode.attachedPartId = tgtPart.flightID;
           if (tgtAttachNode != null) {
             tgtAttachNode.attachedPart = srcPart;
           } else {
-            Debug.LogWarning("Target node is null");
+            DebugEx.Warning("Target node is null");
           }
         } else {
-          Debug.LogErrorFormat("Source attach node not found: {0}", srcAttachNodeId);
+          DebugEx.Error("Source attach node not found: {0}", srcAttachNodeId);
         }
       }
     } else {
-      Debug.LogWarning("Missing source attach node !");
+      DebugEx.Warning("Missing source attach node !");
     }
-    Debug.LogFormat(
-        "Couple {0} with {1}", DbgFormatter.PartId(srcPart), DbgFormatter.PartId(tgtPart));
+    DebugEx.Info("Couple {0} with {1}", srcPart, tgtPart);
     srcPart.Couple(tgtPart);
   }
 
@@ -821,9 +818,8 @@ public static class KIS_Shared {
     }
     // Cleanup modules that block KIS. It's a bad thing to do but not working KIS is worse.
     foreach (var moduleToDrop in badModules) {
-      Debug.LogErrorFormat(
-          "Module on part prefab {0} is setup improperly: name={1}, type={2}. Drop it!",
-          part, moduleToDrop.moduleName, moduleToDrop.GetType());
+      DebugEx.Error(
+          "Module on part prefab {0} is setup improperly: name={1}. Drop it!", part, moduleToDrop);
       part.RemoveModule(moduleToDrop);
     }
   }
@@ -836,8 +832,8 @@ public static class KIS_Shared {
     var scienceModule = module as ModuleScienceLab;
     if (scienceModule != null) {
       scienceModule.ExperimentData = new List<string>();
-      Debug.LogWarningFormat(
-          "WORKAROUND. Fix null field in ModuleScienceLab module on part prefab {0}", module.part);
+      DebugEx.Warning(
+          "WORKAROUND. Fix null field in ModuleScienceLab module on the part prefab: {0}", module);
     }
     
     // Ensure the module is awaken. Otherwise, any access to base fields list will result in NRE.
@@ -846,9 +842,8 @@ public static class KIS_Shared {
     try {
       var unused = module.Fields.GetEnumerator();
     } catch {
-      Debug.LogWarningFormat(
-          "WORKAROUND. Module {0} on part prefab {1} is not awaken. Call Awake on it",
-          module.GetType(), module.part);
+      DebugEx.Warning(
+          "WORKAROUND. Module {0} on part prefab is not awaken. Call Awake on it", module);
       AwakePartModule(module);
     }
     foreach (var field in module.Fields) {
@@ -856,10 +851,9 @@ public static class KIS_Shared {
       if (baseField.isPersistant && baseField.GetValue(module) == null) {
         var proto = new StandardOrdinaryTypesProto();
         var defValue = proto.ParseFromString("", baseField.FieldInfo.FieldType);
-        Debug.LogWarningFormat(
-            "WORKAROUND. Found null field {0} in module prefab {1},"
-            + " fixing to default value of type {2}: {3}",
-            baseField.name, module.moduleName, baseField.FieldInfo.FieldType, defValue);
+        DebugEx.Warning("WORKAROUND. Found null field {0} in module prefab {1},"
+                        + " fixing to default value of type {2}: {3}",
+                        baseField.name, module, baseField.FieldInfo.FieldType, defValue);
         baseField.SetValue(defValue, module);
       }
     }
@@ -887,8 +881,7 @@ public static class KIS_Shared {
     if (moduleAwakeMethod != null) {
       moduleAwakeMethod.Invoke(module, new object[] {});
     } else {
-      Debug.LogErrorFormat("Cannot find Awake() method on {0}. Skip awakening of component: {1}",
-                           module.GetType(), module.GetType());
+      DebugEx.Error("Cannot find Awake() method on {0}. Skip awakening", module);
     }
   }
 
@@ -999,15 +992,13 @@ public static class KIS_Shared {
   public static bool CoupleDockingPortWithPart(ModuleDockingNode dockingNode) {
     var tgtPart = dockingNode.referenceNode.attachedPart;
     if (tgtPart == null) {
-      Debug.LogErrorFormat("Node's part {0} is not attached to anything thru the reference node",
-                           DbgFormatter.PartId(dockingNode.part));
+      DebugEx.Error(
+          "Node's part {0} is not attached to anything thru the reference node", dockingNode.part);
       return false;
     }
     if (dockingNode.state != dockingNode.st_ready.name) {
-      Debug.LogWarningFormat(
-          "Hard reset docking node {0} from state '{1}' to '{2}'",
-          DbgFormatter.PartId(dockingNode.part),
-          dockingNode.state, dockingNode.st_ready.name);
+      DebugEx.Warning("Hard reset docking node {0} from state '{1}' to '{2}'",
+                      dockingNode.part, dockingNode.state, dockingNode.st_ready.name);
       dockingNode.dockedPartUId = 0;
       dockingNode.dockingNodeModuleIndex = 0;
       // Target part lived in real world for some time, so its state may be anything.
@@ -1020,15 +1011,12 @@ public static class KIS_Shared {
       // Do nothing. Just wait.
     }
     if (dockingNode.fsm.currentStateName != dockingNode.st_preattached.name) {
-      Debug.LogWarningFormat("Node on {0} is unexpected state '{1}'",
-                             DbgFormatter.PartId(dockingNode.part),
-                             dockingNode.fsm.currentStateName);
+      DebugEx.Warning("Node on {0} is unexpected state '{1}'",
+                      dockingNode.part, dockingNode.fsm.currentStateName);
       return false;
     }
-    Debug.LogFormat(
-        "Successfully set docking node {0} to state {1} with part {2}",
-        DbgFormatter.PartId(dockingNode.part), dockingNode.fsm.currentStateName,
-        DbgFormatter.PartId(tgtPart));
+    DebugEx.Fine("Successfully set docking node {0} to state {1} with part {2}",
+                 dockingNode.part, dockingNode.fsm.currentStateName, tgtPart);
     return true;
   }
 
@@ -1102,8 +1090,7 @@ public static class KIS_Shared {
     // Properly decouple/undock docking nodes. Only stock module is supported!
     var hasPorts = SeparateDockingNodes(assemblyRoot, formerParent);
     if (!hasPorts) {
-      Debug.LogFormat("Decouple regular part {0} from regular part {1}",
-                      DbgFormatter.PartId(assemblyRoot), DbgFormatter.PartId(formerParent));
+      DebugEx.Fine("Decouple regular part {0} from regular part {1}", assemblyRoot, formerParent);
       assemblyRoot.decouple();
     }
 
@@ -1117,13 +1104,12 @@ public static class KIS_Shared {
     // operations on the part. Do a cleanup job here to workaround this bug.
     var orphanNode = assemblyRoot.FindAttachNodeByPart(formerParent);
     if (orphanNode != null) {
-      Debug.LogWarningFormat("KSP BUG: Cleanup orphan node {0} in the assembly", orphanNode.id);
+      DebugEx.Warning("KSP BUG: Cleanup orphan node {0} in the assembly", orphanNode.id);
       orphanNode.attachedPart = null;
       // Also, check that parent is properly cleaned up.
       var parentOrphanNode = formerParent.FindAttachNodeByPart(assemblyRoot);
       if (parentOrphanNode != null) {
-        Debug.LogWarningFormat(
-            "KSP BUG: Cleanup orphan node {0} in the parent", parentOrphanNode.id);
+        DebugEx.Warning("KSP BUG: Cleanup orphan node {0} in the parent", parentOrphanNode.id);
         parentOrphanNode.attachedPart = null;
       }
     }
@@ -1305,17 +1291,15 @@ public static class KIS_Shared {
         10,
         () => (srcNode == null || IsNodeCoupled(srcNode))
                && (tgtNode == null || IsNodeCoupled(tgtNode)),
-        update: frame => Debug.LogFormat(
+        update: frame => DebugEx.Fine(
             "Wait for ports to couple: src={0}, tgt={1}",
             (srcNode != null ? srcNode.state : "N/A"), (tgtNode != null ? tgtNode.state : "N/A")),
-        success: () => Debug.LogFormat(
+        success: () => DebugEx.Info(
             "Coupled {0} (isDockingNode={1}) with {2} (isDockingNode={3})",
-            DbgFormatter.PartId(srcPart), srcNode != null,
-            DbgFormatter.PartId(tgtPart), tgtNode != null),
-        failure: () => Debug.LogErrorFormat(
+            srcPart, srcNode != null, tgtPart, tgtNode != null),
+        failure: () => DebugEx.Error(
             "FAILED to couple {0} (isDockingNode={1}) with {2} (isDockingNode={3})",
-            DbgFormatter.PartId(srcPart), srcNode != null,
-            DbgFormatter.PartId(tgtPart), tgtNode != null));
+            srcPart, srcNode != null, tgtPart, tgtNode != null));
   }
 
   /// <summary>Docks two <i>compatible</i> nodes.</summary>
@@ -1343,7 +1327,7 @@ public static class KIS_Shared {
   /// Turns part into physicsless. It's a counterpart to <see cref="Part.PromoteToPhysicalPart"/>.
   /// </summary>
   static void SetPartToPhysicsless(Part p) {
-    Debug.LogFormat("Disable phiycs on physicsless part {0}", DbgFormatter.PartId(p));
+    DebugEx.Info("Disable phiycs on physicsless part {0}", p);
     p.transform.parent = p.parent.transform;
     p.attachJoint.DestroyJoint();
     UnityEngine.Object.Destroy(p.rb);
@@ -1359,7 +1343,7 @@ public static class KIS_Shared {
     var physicalChildren = new List<Part>();
     p.FindNonPhysicslessChildren(physicalChildren);
     foreach (var physicalChild in physicalChildren) {
-      Debug.LogFormat("Re-create joint for phisics child {0}", DbgFormatter.PartId(physicalChild));
+      DebugEx.Info("Re-create joint for phisics child {0}", physicalChild);
       if (physicalChild.attachJoint) {
         physicalChild.attachJoint.DestroyJoint();
         physicalChild.attachJoint = null;
@@ -1371,7 +1355,7 @@ public static class KIS_Shared {
   /// <summary>Creates a new vessel from a single part.</summary>
   /// <remarks>Initially the part must belong to some vessel.</remarks>
   static IEnumerator WaitAndMakeLonePart(Part newPart, OnPartReady onPartReady) {
-    Debug.LogFormat("Create lone part vessel for {0}", DbgFormatter.PartId(newPart));
+    DebugEx.Info("Create lone part vessel for {0}", newPart);
     newPart.physicalSignificance = Part.PhysicalSignificance.NONE;
     newPart.PromoteToPhysicalPart();
     newPart.Unpack();
@@ -1385,9 +1369,9 @@ public static class KIS_Shared {
       newPart.setParent(null);
     }
     yield return new WaitWhile(() => !newPart.started && newPart.State != PartStates.DEAD);
-    Debug.LogFormat("Part {0} is in state {1}", newPart.name, newPart.State);
+    DebugEx.Info("Part {0} is in state {1}", newPart, newPart.State);
     if (newPart.State == PartStates.DEAD) {
-      Debug.LogWarningFormat("Part {0} has died before fully instantiating", newPart.name);
+      DebugEx.Warning("Part {0} has died before fully instantiating", newPart);
       yield break;
     }
 
