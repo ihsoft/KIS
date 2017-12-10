@@ -180,6 +180,39 @@ sealed class KISAddonPointer : MonoBehaviour {
   static Transform pointerNodeTransform;
   static List<AttachNode> attachNodes = new List<AttachNode>();
 
+  /// <summary>Index of the current node on the picked up part to attach with.</summary>
+  /// <remarks>
+  /// It's an index in the <see cref="attachNodes"/> colelction. Don't get over the maximum number
+  /// of the items there.
+  /// </remarks>
+  /// <seealso cref="currentAttachNode"/>
+  static int attachNodeIndex {
+    get { return _attachNodeIndex; }
+    set {
+      if (value > attachNodes.Count - 1) {
+        DebugEx.Error(
+            "Cannot set node index to {0}! The max value is {1}", value, attachNodes.Count - 1);
+        _attachNodeIndex = attachNodes.Count - 1;
+      } else {
+        _attachNodeIndex = value;
+      }
+      currentAttachNode = attachNodes[value];
+    }
+  }
+  static int _attachNodeIndex;
+
+  /// <summary>Current node on the picked up part to attach with.</summary>
+  /// <value>The attach node to couple with on the picked-up part.</value>
+  public static AttachNode currentAttachNode {
+    get { return _currentAttachNode; }
+    private set {
+      _currentAttachNode = value;
+      pointerNodeTransform.localPosition = value.position;
+      pointerNodeTransform.localRotation = KIS_Shared.GetNodeRotation(value);
+    }
+  }
+  static AttachNode _currentAttachNode;
+
   public static PointerTarget pointerTarget = PointerTarget.Nothing;
   public enum PointerTarget {
     Nothing,
@@ -401,7 +434,7 @@ sealed class KISAddonPointer : MonoBehaviour {
         }
       }
     }
-    if (allowStack && GetCurrentAttachNode().nodeType != AttachNode.NodeType.Surface) {
+    if (allowStack && currentAttachNode.nodeType != AttachNode.NodeType.Surface) {
       foreach (var an in KIS_Shared.GetAvailableAttachNodes(hoverPart, needSrf:false)) {
         KIS_Shared.AssignAttachIcon(hoverPart, an, colorStack);
       }
@@ -548,7 +581,7 @@ sealed class KISAddonPointer : MonoBehaviour {
         if (allowPart) {
           if (useAttachRules) {
             if (hoveredPart.attachRules.allowSrfAttach) {
-              invalidCurrentNode = GetCurrentAttachNode().nodeType != AttachNode.NodeType.Surface;
+              invalidCurrentNode = currentAttachNode.nodeType != AttachNode.NodeType.Surface;
             } else {
               cannotSurfaceAttach = true;
             }
@@ -614,7 +647,7 @@ sealed class KISAddonPointer : MonoBehaviour {
         UISounds.PlayBipWrong();
       } else {
         SendPointerClick(pointerTarget, pointer.transform.position, pointer.transform.rotation,
-                         hoveredPart, GetCurrentAttachNode().id, hoveredNode);
+                         hoveredPart, currentAttachNode.id, hoveredNode);
       }
     }
   }
@@ -631,12 +664,12 @@ sealed class KISAddonPointer : MonoBehaviour {
       }
       if (GameSettings.Editor_toggleSymMethod.GetKeyDown()) {  // "R" by default.
         if (pointerTarget != PointerTarget.PartMount && attachNodes.Count() > 1) {
-          attachNodeIndex++;
-          if (attachNodeIndex > (attachNodes.Count - 1)) {
+          if (attachNodeIndex < attachNodes.Count - 1) {
+            attachNodeIndex++;
+          } else {
             attachNodeIndex = 0;
           }
           DebugEx.Fine("Attach node index changed to: {0}", attachNodeIndex);
-          UpdatePointerAttachNode();
           ResetMouseOver();
           SendPointerState(pointerTarget, PointerState.OnChangeAttachNode, null, null);
         } else {
@@ -645,10 +678,6 @@ sealed class KISAddonPointer : MonoBehaviour {
         }
       }
     }
-  }
-
-  public static AttachNode GetCurrentAttachNode() {
-    return attachNodes[attachNodeIndex];
   }
 
   /// <summary>Sets current pointer visible state.</summary>
@@ -695,8 +724,6 @@ sealed class KISAddonPointer : MonoBehaviour {
     }
     attachNodeIndex = 0;  // Expect that first node is the best default.
 
-    UpdatePointerAttachNode();
-
     // Make pointer renderer.
     var combines = new List<CombineInstance>();
     CollectMeshesFromAssembly(partToAttach, combines);
@@ -727,17 +754,6 @@ sealed class KISAddonPointer : MonoBehaviour {
     DebugEx.Fine("New pointer created");
   }
 
-  /// <summary>Sets pointer origin to the current attachment node</summary>
-  private static void UpdatePointerAttachNode() {
-    var node = GetCurrentAttachNode();
-    pointerNodeTransform.localPosition = node.position;
-    // HACK(ihsoft): For some reason Z orientation axis is get mirrored in the parts for the stack
-    //   nodes. It results in a weird behavior when aligning parts in "back" or "front" node attach
-    //   modes. It may be a KIS code bug but I gave up finding it.
-    pointerNodeTransform.localRotation =
-        KIS_Shared.GetNodeRotation(node, mirrorZ: node.nodeType != AttachNode.NodeType.Surface);
-  }
-      
   /// <summary>Destroyes object(s) allocated to represent a pointer.</summary>
   /// <remarks>When making pointer for a complex hierarchy a lot of different resources may be
   /// allocated/dropped. Destroying each one of them can be too slow so, cleanup is done in

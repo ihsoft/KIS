@@ -1,6 +1,7 @@
 # 1.8 (pre-release):
 * [Fix #181] Match the part's menu max distance to the inventory grab distance.
 * [Fix #230] Equipped items don't destroy on kerbals pack.
+* [Fix #233] Mounted parts are improperly aligned to the target.
 * [Fix] Correct the localization string IDs that were conflicting with KAS.
 
 # 1.7 (September 17th, 2017):

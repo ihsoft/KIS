@@ -424,7 +424,7 @@ sealed class KISAddonPickup : MonoBehaviour {
       if (value == PointerMode.Drop) {
         KISAddonCursor.CursorEnable(
             DropIcon,
-            DropActionStatusTooltipTxt.Format(KISAddonPointer.GetCurrentAttachNode().id),
+            DropActionStatusTooltipTxt.Format(KISAddonPointer.currentAttachNode.id),
             texts);
         KISAddonPointer.allowPart = true;
         KISAddonPointer.allowStatic = true;
@@ -438,7 +438,7 @@ sealed class KISAddonPickup : MonoBehaviour {
       if (value == PointerMode.Attach) {
         KISAddonCursor.CursorEnable(
             AttachOkIcon,
-            AttachActionStatusTooltipTxt.Format(KISAddonPointer.GetCurrentAttachNode().id),
+            AttachActionStatusTooltipTxt.Format(KISAddonPointer.currentAttachNode.id),
             texts);
         KISAddonPointer.allowPart = false;
         KISAddonPointer.allowStatic = false;
@@ -1225,7 +1225,7 @@ sealed class KISAddonPickup : MonoBehaviour {
         : modulePickup != null ? modulePickup.vessel : null;
     KIS_Shared.PlaceVessel(movingPart.vessel, pos, rot, refVessel);
     KIS_Shared.SendKISMessage(movingPart, KIS_Shared.MessageAction.DropEnd,
-                              KISAddonPointer.GetCurrentAttachNode(), tgtPart);
+                              KISAddonPointer.currentAttachNode, tgtPart);
     KISAddonPointer.StopPointer();
     movingPart = null;
   }
@@ -1243,7 +1243,7 @@ sealed class KISAddonPickup : MonoBehaviour {
             p.vessel, p.vessel.vesselTransform.position, p.vessel.vesselTransform.rotation,
             refVessel));
     KIS_Shared.SendKISMessage(newPart, KIS_Shared.MessageAction.DropEnd,
-                              KISAddonPointer.GetCurrentAttachNode(), tgtPart);
+                              KISAddonPointer.currentAttachNode, tgtPart);
     KISAddonPointer.StopPointer();
     draggedItem = null;
     draggedPart = null;
@@ -1281,13 +1281,13 @@ sealed class KISAddonPickup : MonoBehaviour {
           tgtAttachNode: tgtAttachNode,
           onPartReady: createdPart => KIS_Shared.SendKISMessage(
               createdPart, KIS_Shared.MessageAction.AttachEnd,
-              KISAddonPointer.GetCurrentAttachNode(), tgtPart, tgtAttachNode));
+              KISAddonPointer.currentAttachNode, tgtPart, tgtAttachNode));
     } else {
       newPart = KIS_Shared.CreatePart(
           draggedItem.partNode, pos, rot, draggedItem.inventory.part,
           onPartReady: createdPart => KIS_Shared.SendKISMessage(
               createdPart, KIS_Shared.MessageAction.AttachEnd,
-              KISAddonPointer.GetCurrentAttachNode(), tgtPart, tgtAttachNode));
+              KISAddonPointer.currentAttachNode, tgtPart, tgtAttachNode));
     }
     KISAddonPointer.StopPointer();
     movingPart = null;
