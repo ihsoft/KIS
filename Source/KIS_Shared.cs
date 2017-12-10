@@ -735,13 +735,13 @@ public static class KIS_Shared {
     }
   }
 
-  /// <summary>Returns nodes available for attaching.</summary>
+  /// <summary>Returns the nodes available for attaching.</summary>
   /// <remarks>
-  /// When part has a surface attachment node it may (and usually does) point in the same
-  /// direction as a stack node. In such situation two different nodes in fact become the same
-  /// attachment point, and if one of them is occupied the other one should be considered
-  /// "blocked", i.e. not available for attachment. This method detects such situations and
-  /// doesn't return nodes that may result in collision.
+  /// When a part has a surface attachment node, it may (and usually does) point in the same
+  /// direction as some stack node. In such situation two different nodes, in fact, become the same
+  /// attachment point, and if one of them is occupied, then the other one should be considered
+  /// "blocked", i.e. not available for the attachment. This method detects such situations and
+  /// doesn't return the nodes that may result in collision.
   /// </remarks>
   /// <param name="p">A part to get nodes for.</param>
   /// <param name="ignoreAttachedPart">Don't consider attachment node occupied if it's
