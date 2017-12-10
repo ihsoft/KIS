@@ -1145,7 +1145,6 @@ sealed class KISAddonPickup : MonoBehaviour {
         KISAddonCursor.CursorEnable(
             MountIcon, MountActionStatusTooltipTxt,
             new List<string>() {
-              PartChangeModeKeyTooltipTxt.Format(GameSettings.Editor_toggleSymMethod.name),
               PartCancelModeKeyTooltipTxt
             });
       }
