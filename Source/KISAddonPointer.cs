@@ -389,7 +389,7 @@ sealed class KISAddonPointer : MonoBehaviour {
         // Set current attach node 
         AttachNode an = attachNodes.Find(f => f.id == pMount.mountedPartNode);
         if (an != null) {
-          attachNodeIndex = attachNodes.FindIndex(f => f.id == pMount.mountedPartNode);
+          attachNodeIndex = attachNodes.IndexOf(an);
           SetPointerVisible(false);
         } else {
           SetPointerVisible(true);
