@@ -133,9 +133,8 @@ sealed class KISAddonPointer : MonoBehaviour {
       }
     }
   }
-  private static HashSet<Part> _allowedAttachmentParts;
+  static HashSet<Part> _allowedAttachmentParts;
 
-  private static bool _allowMount = false;
   public static bool allowMount {
     get {
       return _allowMount;
@@ -145,8 +144,8 @@ sealed class KISAddonPointer : MonoBehaviour {
       _allowMount = value;
     }
   }
+  static bool _allowMount;
 
-  private static bool _allowStack = false;
   public static bool allowStack {
     get {
       return _allowStack;
@@ -156,13 +155,14 @@ sealed class KISAddonPointer : MonoBehaviour {
       _allowStack = value;
     }
   }
+  static bool _allowStack;
 
   public static Part partToAttach;
   public static float scale = 1;
   public static float maxDist = 2f;
-  public static bool useAttachRules = false;
-  private static Transform sourceTransform;
-  private static RaycastHit hit;
+  public static bool useAttachRules;
+  static Transform sourceTransform;
+  static RaycastHit hit;
 
   public static bool allowOffset = false;
   public static string offsetUpKey = "b";
@@ -170,16 +170,15 @@ sealed class KISAddonPointer : MonoBehaviour {
   public static float maxOffsetDist = 0.5f;
   public static float aboveOffsetStep = 0.05f;
 
-  private static bool running = false;
-  private static Part hoveredPart = null;
+  static bool running = false;
+  static Part hoveredPart = null;
   public static AttachNode hoveredNode = null;
-  private static GameObject pointer;
-  private static List<MeshRenderer> allModelMr;
-  private static Vector3 customRot = new Vector3(0f, 0f, 0f);
-  private static float aboveDistance = 0;
-  private static Transform pointerNodeTransform;
-  private static List<AttachNode> attachNodes = new List<AttachNode>();
-  private static int attachNodeIndex;
+  static GameObject pointer;
+  static List<MeshRenderer> allModelMr;
+  static Vector3 customRot = new Vector3(0f, 0f, 0f);
+  static float aboveDistance = 0;
+  static Transform pointerNodeTransform;
+  static List<AttachNode> attachNodes = new List<AttachNode>();
 
   public static PointerTarget pointerTarget = PointerTarget.Nothing;
   public enum PointerTarget {
