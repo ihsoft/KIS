@@ -1,10 +1,6 @@
 {
     "CHANGE_LOG_URL": "https://raw.githubusercontent.com/ihsoft/KIS/master/CHANGELOG.md", 
     "DOWNLOAD": "http://forum.kerbalspaceprogram.com/index.php?/topic/149848-12-kerbal-inventory-system-kis-v131/", 
-    "GITHUB": {
-        "REPOSITORY": "KIS", 
-        "USERNAME": "ihsoft"
-    }, 
     "KSP_VERSION": {
         "MAJOR": 1, 
         "MINOR": 3, 
