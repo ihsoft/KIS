@@ -31,5 +31,5 @@ using System.Runtime.InteropServices;
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
 [assembly: AssemblyVersion("1.8.*")]
-[assembly: AssemblyInformationalVersion("1.8-pre for KSP 1.3")]
+[assembly: AssemblyInformationalVersion("1.8 for KSP 1.3+")]
 [assembly: KSPAssembly("KIS", 1, 8)]
