@@ -1,4 +1,5 @@
 # 1.8 (pre-release):
+* [Enhancement] Add Spanish localization.
 * [Fix #181] Match the part's menu max distance to the inventory grab distance.
 * [Fix #230] Equipped items don't destroy on kerbals pack.
 * [Fix #233] Mounted parts are improperly aligned to the target.
