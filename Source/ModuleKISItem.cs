@@ -5,6 +5,7 @@
 
 using KSPDev.GUIUtils;
 using KSPDev.KSPInterfaces;
+using KSPDev.LogUtils;
 using KSPDev.ProcessingUtils;
 using System.Collections.Generic;
 using System.Collections;
@@ -225,8 +226,8 @@ public class ModuleKISItem : PartModule,
       var inventory = vessel.rootPart.GetComponent<ModuleKISInventory>();
       var item = inventory.items.Values.FirstOrDefault(i => i.equipped && i.equippedPart == part);
       if (item != null) {
-        Debug.LogFormat("Item {0} has been destroyed. Drop it from inventory of {1}",
-                        item.availablePart.title, inventory.part.name);
+        DebugEx.Info("Item {0} has been destroyed. Drop it from inventory of {1}",
+                     item.availablePart.title, inventory.part);
         AsyncCall.CallOnEndOfFrame(inventory, () => inventory.DeleteItem(item.slot));
       }
     }
@@ -270,7 +271,7 @@ public class ModuleKISItem : PartModule,
       return;
     }
     if (staticAttached) {
-      Debug.Log("Re-attach static object (OnPartUnpack)");
+      DebugEx.Fine("Re-attach static object (OnPartUnpack)");
       GroundAttach();
     }
   }
@@ -308,8 +309,7 @@ public class ModuleKISItem : PartModule,
 
   public void GroundDetach() {
     if (staticAttached) {
-      Debug.LogFormat(
-          "Removing static rigidbody and fixed joint on: {0}", this.part.partInfo.title);
+      DebugEx.Fine("Removing static rigidbody and fixed joint on: {0}", part);
       if (staticAttachJoint) {
         Destroy(staticAttachJoint);
       }
@@ -403,7 +403,7 @@ public class ModuleKISItem : PartModule,
     }
     part.vessel.Landed = true;
 
-    Debug.Log("Create fixed joint attached to the world");
+    DebugEx.Fine("Create fixed joint attached to the world");
     if (staticAttachJoint) {
       Destroy(staticAttachJoint);
     }
@@ -416,9 +416,9 @@ public class ModuleKISItem : PartModule,
   // A callback from MonoBehaviour.
   void OnJointBreak(float breakForce) {
     if (staticAttached) {
-      Debug.LogWarningFormat("A static joint has just been broken! Force: {0}", breakForce);
+      DebugEx.Warning("A static joint has just been broken! Force: {0}", breakForce);
     } else {
-      Debug.LogWarningFormat("A fixed joint has just been broken! Force: {0}", breakForce);
+      DebugEx.Warning("A fixed joint has just been broken! Force: {0}", breakForce);
     }
     GroundDetach();
   }

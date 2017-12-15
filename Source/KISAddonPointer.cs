@@ -5,6 +5,7 @@
 
 using KSPDev.GUIUtils;
 using KSPDev.ProcessingUtils;
+using KSPDev.LogUtils;
 using KSPDev.ModelUtils;
 using System;
 using System.Collections.Generic;
@@ -132,9 +133,8 @@ sealed class KISAddonPointer : MonoBehaviour {
       }
     }
   }
-  private static HashSet<Part> _allowedAttachmentParts;
+  static HashSet<Part> _allowedAttachmentParts;
 
-  private static bool _allowMount = false;
   public static bool allowMount {
     get {
       return _allowMount;
@@ -144,8 +144,8 @@ sealed class KISAddonPointer : MonoBehaviour {
       _allowMount = value;
     }
   }
+  static bool _allowMount;
 
-  private static bool _allowStack = false;
   public static bool allowStack {
     get {
       return _allowStack;
@@ -155,13 +155,14 @@ sealed class KISAddonPointer : MonoBehaviour {
       _allowStack = value;
     }
   }
+  static bool _allowStack;
 
   public static Part partToAttach;
   public static float scale = 1;
   public static float maxDist = 2f;
-  public static bool useAttachRules = false;
-  private static Transform sourceTransform;
-  private static RaycastHit hit;
+  public static bool useAttachRules;
+  static Transform sourceTransform;
+  static RaycastHit hit;
 
   public static bool allowOffset = false;
   public static string offsetUpKey = "b";
@@ -169,16 +170,48 @@ sealed class KISAddonPointer : MonoBehaviour {
   public static float maxOffsetDist = 0.5f;
   public static float aboveOffsetStep = 0.05f;
 
-  private static bool running = false;
-  private static Part hoveredPart = null;
+  static bool running = false;
+  static Part hoveredPart = null;
   public static AttachNode hoveredNode = null;
-  private static GameObject pointer;
-  private static List<MeshRenderer> allModelMr;
-  private static Vector3 customRot = new Vector3(0f, 0f, 0f);
-  private static float aboveDistance = 0;
-  private static Transform pointerNodeTransform;
-  private static List<AttachNode> attachNodes = new List<AttachNode>();
-  private static int attachNodeIndex;
+  static GameObject pointer;
+  static List<MeshRenderer> allModelMr;
+  static Vector3 customRot = new Vector3(0f, 0f, 0f);
+  static float aboveDistance = 0;
+  static Transform pointerNodeTransform;
+  static List<AttachNode> attachNodes = new List<AttachNode>();
+
+  /// <summary>Index of the current node on the picked up part to attach with.</summary>
+  /// <remarks>
+  /// It's an index in the <see cref="attachNodes"/> colelction. Don't get over the maximum number
+  /// of the items there.
+  /// </remarks>
+  /// <seealso cref="currentAttachNode"/>
+  static int attachNodeIndex {
+    get { return _attachNodeIndex; }
+    set {
+      if (value > attachNodes.Count - 1) {
+        DebugEx.Error(
+            "Cannot set node index to {0}! The max value is {1}", value, attachNodes.Count - 1);
+        _attachNodeIndex = attachNodes.Count - 1;
+      } else {
+        _attachNodeIndex = value;
+      }
+      currentAttachNode = attachNodes[value];
+    }
+  }
+  static int _attachNodeIndex;
+
+  /// <summary>Current node on the picked up part to attach with.</summary>
+  /// <value>The attach node to couple with on the picked-up part.</value>
+  public static AttachNode currentAttachNode {
+    get { return _currentAttachNode; }
+    private set {
+      _currentAttachNode = value;
+      pointerNodeTransform.localPosition = value.position;
+      pointerNodeTransform.localRotation = KIS_Shared.GetNodeRotation(value);
+    }
+  }
+  static AttachNode _currentAttachNode;
 
   public static PointerTarget pointerTarget = PointerTarget.Nothing;
   public enum PointerTarget {
@@ -217,7 +250,7 @@ sealed class KISAddonPointer : MonoBehaviour {
   public static void StartPointer(Part partToMoveAndAttach, OnPointerClick pClick,
                                   OnPointerState pState, Transform from = null) {
     if (!running) {
-      Debug.Log("StartPointer()");
+      DebugEx.Fine("StartPointer()");
       customRot = Vector3.zero;
       aboveDistance = 0;
       partToAttach = partToMoveAndAttach;
@@ -241,7 +274,7 @@ sealed class KISAddonPointer : MonoBehaviour {
   /// </param>
   /// <seealso cref="UnlockUI"/>
   public static void StopPointer(bool unlockUI = true) {
-    Debug.Log("StopPointer()");
+    DebugEx.Fine("StopPointer()");
     running = false;
     ResetMouseOver();
     SendPointerState(PointerTarget.Nothing, PointerState.OnPointerStopped, null, null);
@@ -255,13 +288,13 @@ sealed class KISAddonPointer : MonoBehaviour {
   /// <summary>Acquires KIS input lock on UI interactions.</summary>
   public static void LockUI() {
     InputLockManager.SetControlLock(ControlTypes.ALLBUTCAMERAS, "KISpointer");
-    Debug.Log("KIS UI lock acquired");
+    DebugEx.Info("KIS UI lock acquired");
   }
 
   /// <summary>Releases KIS input lock on UI interactions.</summary>
   public static void UnlockUI() {
     InputLockManager.RemoveControlLock("KISpointer");
-    Debug.Log("KIS UI lock released");
+    DebugEx.Info("KIS UI lock released");
   }
 
   public void Update() {
@@ -388,7 +421,7 @@ sealed class KISAddonPointer : MonoBehaviour {
         // Set current attach node 
         AttachNode an = attachNodes.Find(f => f.id == pMount.mountedPartNode);
         if (an != null) {
-          attachNodeIndex = attachNodes.FindIndex(f => f.id == pMount.mountedPartNode);
+          attachNodeIndex = attachNodes.IndexOf(an);
           SetPointerVisible(false);
         } else {
           SetPointerVisible(true);
@@ -401,7 +434,7 @@ sealed class KISAddonPointer : MonoBehaviour {
         }
       }
     }
-    if (allowStack && GetCurrentAttachNode().nodeType != AttachNode.NodeType.Surface) {
+    if (allowStack && currentAttachNode.nodeType != AttachNode.NodeType.Surface) {
       foreach (var an in KIS_Shared.GetAvailableAttachNodes(hoverPart, needSrf:false)) {
         KIS_Shared.AssignAttachIcon(hoverPart, an, colorStack);
       }
@@ -548,7 +581,7 @@ sealed class KISAddonPointer : MonoBehaviour {
         if (allowPart) {
           if (useAttachRules) {
             if (hoveredPart.attachRules.allowSrfAttach) {
-              invalidCurrentNode = GetCurrentAttachNode().nodeType != AttachNode.NodeType.Surface;
+              invalidCurrentNode = currentAttachNode.nodeType != AttachNode.NodeType.Surface;
             } else {
               cannotSurfaceAttach = true;
             }
@@ -614,7 +647,7 @@ sealed class KISAddonPointer : MonoBehaviour {
         UISounds.PlayBipWrong();
       } else {
         SendPointerClick(pointerTarget, pointer.transform.position, pointer.transform.rotation,
-                         hoveredPart, GetCurrentAttachNode().id, hoveredNode);
+                         hoveredPart, currentAttachNode.id, hoveredNode);
       }
     }
   }
@@ -623,7 +656,7 @@ sealed class KISAddonPointer : MonoBehaviour {
   private void UpdateKey() {
     if (isRunning) {
       if (KIS_Shared.IsKeyUp(KeyCode.Escape) || KIS_Shared.IsKeyDown(KeyCode.Return)) {
-        Debug.Log("Cancel key pressed, stop eva attach mode");
+        DebugEx.Fine("Cancel key pressed, stop eva attach mode");
         StopPointer(unlockUI: false);
         SendPointerClick(PointerTarget.Nothing, Vector3.zero, Quaternion.identity, null, null);
         // Delay unlocking to not let ESC be handled by the game.
@@ -631,12 +664,12 @@ sealed class KISAddonPointer : MonoBehaviour {
       }
       if (GameSettings.Editor_toggleSymMethod.GetKeyDown()) {  // "R" by default.
         if (pointerTarget != PointerTarget.PartMount && attachNodes.Count() > 1) {
-          attachNodeIndex++;
-          if (attachNodeIndex > (attachNodes.Count - 1)) {
+          if (attachNodeIndex < attachNodes.Count - 1) {
+            attachNodeIndex++;
+          } else {
             attachNodeIndex = 0;
           }
-          Debug.LogFormat("Attach node index changed to: {0}", attachNodeIndex);
-          UpdatePointerAttachNode();
+          DebugEx.Fine("Attach node index changed to: {0}", attachNodeIndex);
           ResetMouseOver();
           SendPointerState(pointerTarget, PointerState.OnChangeAttachNode, null, null);
         } else {
@@ -645,10 +678,6 @@ sealed class KISAddonPointer : MonoBehaviour {
         }
       }
     }
-  }
-
-  public static AttachNode GetCurrentAttachNode() {
-    return attachNodes[attachNodeIndex];
   }
 
   /// <summary>Sets current pointer visible state.</summary>
@@ -667,7 +696,7 @@ sealed class KISAddonPointer : MonoBehaviour {
       mr.enabled = isVisible;
       mr.material.renderQueue = KIS_Shared.HighlighedPartRenderQueue;
     }
-    Debug.LogFormat("Pointer state set to: visibility={0}", isVisible);
+    DebugEx.Fine("Pointer state set to: visibility={0}", isVisible);
   }
 
   /// <summary>Makes a game object to represent currently dragging assembly.</summary>
@@ -689,13 +718,11 @@ sealed class KISAddonPointer : MonoBehaviour {
       // Ideally, the caller should have checked if this part has free nodes. Now the only
       // way is to pick *any* node. The surface one always exists so, it's a good
       // candidate. Though, for many details it may result in a weird representation.
-      Debug.LogErrorFormat("Part {0} has no free nodes, use {1}",
-                           partToAttach, partToAttach.srfAttachNode);
+      DebugEx.Error(
+          "Part {0} has no free nodes, use {1}", partToAttach, partToAttach.srfAttachNode);
       attachNodes.Add(partToAttach.srfAttachNode);
     }
     attachNodeIndex = 0;  // Expect that first node is the best default.
-
-    UpdatePointerAttachNode();
 
     // Make pointer renderer.
     var combines = new List<CombineInstance>();
@@ -724,20 +751,9 @@ sealed class KISAddonPointer : MonoBehaviour {
     }
     pointerNodeTransform.parent = pointer.transform;
 
-    Debug.Log("New pointer created");
+    DebugEx.Fine("New pointer created");
   }
 
-  /// <summary>Sets pointer origin to the current attachment node</summary>
-  private static void UpdatePointerAttachNode() {
-    var node = GetCurrentAttachNode();
-    pointerNodeTransform.localPosition = node.position;
-    // HACK(ihsoft): For some reason Z orientation axis is get mirrored in the parts for the stack
-    //   nodes. It results in a weird behavior when aligning parts in "back" or "front" node attach
-    //   modes. It may be a KIS code bug but I gave up finding it.
-    pointerNodeTransform.localRotation =
-        KIS_Shared.GetNodeRotation(node, mirrorZ: node.nodeType != AttachNode.NodeType.Surface);
-  }
-      
   /// <summary>Destroyes object(s) allocated to represent a pointer.</summary>
   /// <remarks>When making pointer for a complex hierarchy a lot of different resources may be
   /// allocated/dropped. Destroying each one of them can be too slow so, cleanup is done in
@@ -756,7 +772,7 @@ sealed class KISAddonPointer : MonoBehaviour {
 
     // On large assemblies memory consumption can be significant. Reclaim it.
     Resources.UnloadUnusedAssets();
-    Debug.Log("Pointer destroyed");
+    DebugEx.Fine("Pointer destroyed");
   }
 
   /// <summary>Goes thru part assembly and collects all meshes in the hierarchy.</summary>
@@ -777,7 +793,7 @@ sealed class KISAddonPointer : MonoBehaviour {
     // Get all meshes from the part's model.
     var meshFilters = assembly.FindModelComponents<MeshFilter>();
     if (meshFilters.Count > 0) {
-      Debug.LogFormat("Found {0} children meshes in: {1}", meshFilters.Count, assembly);
+      DebugEx.Fine("Found {0} children meshes in: {1}", meshFilters.Count, assembly);
       foreach (var meshFilter in meshFilters) {
         var combine = new CombineInstance();
         combine.mesh = meshFilter.sharedMesh;
@@ -790,7 +806,7 @@ sealed class KISAddonPointer : MonoBehaviour {
     // state.
     var skinnedMeshRenderers = assembly.FindModelComponents<SkinnedMeshRenderer>();
     if (skinnedMeshRenderers.Count > 0) {
-      Debug.LogFormat("Found {0} skinned meshes in: {1}", skinnedMeshRenderers.Count, assembly);
+      DebugEx.Fine("Found {0} skinned meshes in: {1}", skinnedMeshRenderers.Count, assembly);
       foreach (var skinnedMeshRenderer in skinnedMeshRenderers) {
         var combine = new CombineInstance();
         combine.mesh = new Mesh();

@@ -74,7 +74,7 @@ sealed class MainScreenTweaker : MonoBehaviour {
   }
 
   void LogObjectChildren(Transform objTransform) {
-    Debug.Log(DbgFormatter.TranformPath(objTransform));
+    DebugEx.Fine("{0}", objTransform);
     for (var i = 0; i < objTransform.transform.childCount; i++) {
       LogObjectChildren(objTransform.transform.GetChild(i));
     }
@@ -97,8 +97,7 @@ sealed class MainScreenTweaker : MonoBehaviour {
         }
         var objTransform = Hierarchy.FindTransformByPath(root.transform, reducedNames);
         if (objTransform != null) {
-          Debug.LogFormat("Tweak '{0}' matched kerbal model: {1}",
-                          tweak.tweakName, DbgFormatter.TranformPath(objTransform));
+          DebugEx.Info("Tweak '{0}' matched kerbal model: {1}", tweak.tweakName, objTransform);
           tweak.itemNames.ToList().ForEach(x => {
             var item = new TweakEquippableItem(x, tweak.matchMeshesBySuffix);
             item.ApplyTweak(objTransform.gameObject);
@@ -122,11 +121,11 @@ sealed class TweakEquippableItem {
     this.matchMeshesBySuffix = matchMeshesBySuffix;
     avPart = PartLoader.getPartInfoByName(partName);
     if (avPart == null) {
-      Debug.LogErrorFormat("Cannot find part {0} for main menu tweaker", partName);
+      DebugEx.Error("Cannot find part {0} for main menu tweaker", partName);
     }
     itemModule = avPart.partPrefab.FindModuleImplementing<ModuleKISItem>();
     if (itemModule == null || !itemModule.equipable && !itemModule.carriable) {
-      Debug.LogWarningFormat("Part is not a KIS carriable/equippable item: {0}", avPart.name);
+      DebugEx.Warning("Part is not a KIS carriable/equippable item: {0}", avPart.name);
       avPart = null;
       return;
     }
@@ -154,9 +153,9 @@ sealed class TweakEquippableItem {
       var partModel = Hierarchy.GetPartModelTransform(avPart.partPrefab);
       equippedGameObj = UnityEngine.Object.Instantiate(partModel.gameObject);
       Hierarchy.MoveToParent(equippedGameObj.transform, evaTransform);
-      Debug.LogFormat("Equipped part on kerbal model in main screen: {0}", avPart.name);
+      DebugEx.Info("Equipped part on kerbal model in main screen: {0}", avPart.name);
     } else {
-      Debug.LogErrorFormat("Failed finding model transforms for part {0}", avPart.name);
+      DebugEx.Error("Failed finding model transforms for part {0}", avPart.name);
     }
   }
 

@@ -8,12 +8,12 @@ using KSPDev.ConfigUtils;
 using KSPDev.GUIUtils;
 using KSPDev.LogUtils;
 using KSPDev.KSPInterfaces;
+using KSPDev.PartUtils;
 using System;
 using System.Linq;
 using System.Collections.Generic;
 using System.Collections;
 using System.Text;
-using KSPDev.PartUtils;
 using UnityEngine;
 
 namespace KIS {
@@ -606,12 +606,6 @@ public class ModuleKISInventory : PartModule,
           ? PartInventoryWithNameMenuTxt.Format(invName)
           : PartInventoryMenuTxt.Format();
     }
-    if (HighLogic.LoadedSceneIsFlight && FlightGlobals.ActiveVessel != null) {
-      ModuleKISPickup mPickup = KISAddonPickup.instance.GetActivePickupNearest(part);
-      if (mPickup) {
-        invEvent.unfocusedRange = mPickup.maxDistance;
-      }
-    }
   }
   #endregion
 
@@ -657,6 +651,13 @@ public class ModuleKISInventory : PartModule,
     GameEvents.onCrewTransferred.Remove(OnCrewTransferred);
     GameEvents.onCrewTransferSelected.Remove(OnCrewTransferSelected);
     GameEvents.onVesselChange.Remove(OnVesselChange);
+    // Unequip the items to have their parts/models destroyed. 
+    foreach (var item in items.Values) {
+      if (item.equipped || item.carried) {
+        HostedDebugLog.Fine(this, "Unequip item: {0}", item.availablePart.title);
+        item.Unequip();
+      }
+    }
   }
   #endregion
 
@@ -876,6 +877,16 @@ public class ModuleKISInventory : PartModule,
     if (showGui) {
       ToggleInventory();
     }
+
+    // Update the menu unfocused range to the newly selected pick up module (if any).
+    var pickup = FlightGlobals.ActiveVessel
+        .FindPartModulesImplementing<ModuleKISPickup>()
+        .OrderByDescending(x => x.maxDistance)
+        .FirstOrDefault();
+    var invEvent = PartModuleUtils.GetEvent(this, ToggleInventory);
+    invEvent.unfocusedRange = pickup
+        ? pickup.maxDistance :
+        new KSPEvent().unfocusedRange;  // Reset to the game's default.
   }
 
   /// <summary>Checks if target part can accept non-empty inventories.</summary>

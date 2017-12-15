@@ -5,6 +5,7 @@
 
 using KSPDev.GUIUtils;
 using KSPDev.KSPInterfaces;
+using KSPDev.LogUtils;
 using KSPDev.SoundsUtils;
 using KSPDev.PartUtils;
 using System;
@@ -35,7 +36,7 @@ public class ModuleKISPartMount : PartModule,
   #region KSP events and actions
   [KSPEvent(guiActive = true, guiActiveUnfocused = true)]
   [LocalizableItem(
-      tag = "#kasLOC_10000",
+      tag = "#kisLOC_10000",
       defaultTemplate = "Release",
       description = "The name of the context menu item to release the mounted part.")]
   public void ReleaseEvent() {
@@ -49,7 +50,7 @@ public class ModuleKISPartMount : PartModule,
 
   [KSPAction("Release")]
   [LocalizableItem(
-      tag = "#kasLOC_10001",
+      tag = "#kisLOC_10001",
       defaultTemplate = "Release",
       description = "The name of the action to release the mounted part.")]
   public void ActionGroupRelease(KSPActionParam param) {
@@ -111,7 +112,7 @@ public class ModuleKISPartMount : PartModule,
         string attachNodeName = mountNode.GetValue("attachNode");
         AttachNode an = part.FindAttachNode(attachNodeName);
         if (an == null) {
-          Debug.LogErrorFormat("GetMountNodes - Node : {0} not found !", attachNodeName);
+          DebugEx.Error("GetMountNodes - Node : {0} not found !", attachNodeName);
           continue;
         }
 

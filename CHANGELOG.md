@@ -1,3 +1,10 @@
+# 1.8 (December 14th, 2017):
+* [Enhancement] Add Spanish localization.
+* [Fix #181] Match the part's menu max distance to the inventory grab distance.
+* [Fix #230] Equipped items don't destroy on kerbals pack.
+* [Fix #233] Mounted parts are improperly aligned to the target.
+* [Fix] Correct the localization string IDs that were conflicting with KAS.
+
 # 1.7 (September 17th, 2017):
 * [Fix #224] Exception when move&attach a static attach item.
 * [Fix #225] Impossible to move items between the inventories.
