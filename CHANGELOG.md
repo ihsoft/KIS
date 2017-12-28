@@ -1,4 +1,4 @@
-# Pre-release:
+# 1.9 (December 28th, 2017):
 * [Enhancement] Add Chinese localization.
 * [Fix #235] Items equip state is not persisted.
 * [Fix #218] Exception when moving part in the editor.
