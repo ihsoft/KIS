@@ -1,4 +1,5 @@
 # Pre-release:
+* [Enhancement] Add Chinese localization.
 
 # 1.8 (December 14th, 2017):
 * [Enhancement] Add Spanish localization.
