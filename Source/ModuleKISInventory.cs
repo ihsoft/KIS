@@ -701,6 +701,10 @@ public class ModuleKISInventory : PartModule,
     if (invType == InventoryType.Eva) {
       var protoCrewMember = part.protoModuleCrew[0];
       kerbalTrait = protoCrewMember.experienceTrait.Title;
+      foreach (var item in startEquip) {
+        HostedDebugLog.Info(this, "equip {0}", item.availablePart.name);
+        item.Equip();
+      }
     }
     sndFx.audio = part.gameObject.AddComponent<AudioSource>();
     sndFx.audio.volume = GameSettings.SHIP_VOLUME;
@@ -710,10 +714,6 @@ public class ModuleKISInventory : PartModule,
     sndFx.audio.maxDistance = 10;
     sndFx.audio.loop = false;
     sndFx.audio.playOnAwake = false;
-    foreach (var item in startEquip) {
-      HostedDebugLog.Info(this, "equip {0}", item.availablePart.name);
-      item.Equip();
-    }
     RefreshMassAndVolume();
 
     if (!helmetEquipped) {
