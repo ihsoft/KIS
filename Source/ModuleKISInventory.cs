@@ -651,13 +651,6 @@ public class ModuleKISInventory : PartModule,
     GameEvents.onCrewTransferred.Remove(OnCrewTransferred);
     GameEvents.onCrewTransferSelected.Remove(OnCrewTransferSelected);
     GameEvents.onVesselChange.Remove(OnVesselChange);
-    // Unequip the items to have their parts/models destroyed. 
-    foreach (var item in items.Values) {
-      if (item.equipped || item.carried) {
-        HostedDebugLog.Fine(this, "Unequip item: {0}", item.availablePart.title);
-        item.Unequip();
-      }
-    }
   }
   #endregion
 

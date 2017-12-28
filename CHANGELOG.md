@@ -1,5 +1,6 @@
 # Pre-release:
 * [Enhancement] Add Chinese localization.
+* [Fix #235] Items equip state is not persisted.
 
 # 1.8 (December 14th, 2017):
 * [Enhancement] Add Spanish localization.

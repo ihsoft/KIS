@@ -485,6 +485,7 @@ public sealed class KIS_Item {
     if (equipMode == EquipMode.Model) {
       var modelGo = availablePart.partPrefab.FindModelTransform("model").gameObject;
       equippedGameObj = UnityEngine.Object.Instantiate(modelGo);
+      equippedGameObj.transform.parent = inventory.part.transform;
       foreach (Collider col in equippedGameObj.GetComponentsInChildren<Collider>()) {
         UnityEngine.Object.DestroyImmediate(col);
       }
