@@ -485,6 +485,7 @@ public sealed class KIS_Item {
     if (equipMode == EquipMode.Model) {
       var modelGo = availablePart.partPrefab.FindModelTransform("model").gameObject;
       equippedGameObj = UnityEngine.Object.Instantiate(modelGo);
+      equippedGameObj.transform.parent = inventory.part.transform;
       foreach (Collider col in equippedGameObj.GetComponentsInChildren<Collider>()) {
         UnityEngine.Object.DestroyImmediate(col);
       }
@@ -549,7 +550,8 @@ public sealed class KIS_Item {
         Vector3 equipPos = evaTransform.TransformPoint(prefabModule.equipPos);
         Quaternion equipRot = evaTransform.rotation * Quaternion.Euler(prefabModule.equipDir);
         equippedPart = KIS_Shared.CreatePart(
-            partNode, equipPos, equipRot, inventory.part, inventory.part,
+            partNode, equipPos, equipRot, inventory.part,
+            coupleToPart: inventory.part,
             srcAttachNodeId: "srfAttach",
             onPartReady: OnEquippedPartReady,
             createPhysicsless: equipMode != EquipMode.Physic);

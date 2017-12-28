@@ -651,13 +651,6 @@ public class ModuleKISInventory : PartModule,
     GameEvents.onCrewTransferred.Remove(OnCrewTransferred);
     GameEvents.onCrewTransferSelected.Remove(OnCrewTransferSelected);
     GameEvents.onVesselChange.Remove(OnVesselChange);
-    // Unequip the items to have their parts/models destroyed. 
-    foreach (var item in items.Values) {
-      if (item.equipped || item.carried) {
-        HostedDebugLog.Fine(this, "Unequip item: {0}", item.availablePart.title);
-        item.Unequip();
-      }
-    }
   }
   #endregion
 
@@ -701,6 +694,10 @@ public class ModuleKISInventory : PartModule,
     if (invType == InventoryType.Eva) {
       var protoCrewMember = part.protoModuleCrew[0];
       kerbalTrait = protoCrewMember.experienceTrait.Title;
+      foreach (var item in startEquip) {
+        HostedDebugLog.Info(this, "equip {0}", item.availablePart.name);
+        item.Equip();
+      }
     }
     sndFx.audio = part.gameObject.AddComponent<AudioSource>();
     sndFx.audio.volume = GameSettings.SHIP_VOLUME;
@@ -710,10 +707,6 @@ public class ModuleKISInventory : PartModule,
     sndFx.audio.maxDistance = 10;
     sndFx.audio.loop = false;
     sndFx.audio.playOnAwake = false;
-    foreach (var item in startEquip) {
-      HostedDebugLog.Info(this, "equip {0}", item.availablePart.name);
-      item.Equip();
-    }
     RefreshMassAndVolume();
 
     if (!helmetEquipped) {
@@ -2069,26 +2062,37 @@ public class ModuleKISInventory : PartModule,
   /// <param name="afterDie">Callback to execute when part is destroyed.</param>
   IEnumerator AsyncConsumePartFromScene(
       Part p, KIS_Shared.OnPartReady beforeDie, KIS_Shared.OnPartReady afterDie) {
-    var formerParent = p.parent;
+    // The decoupling is only possible when the parts are connected. It's not the case in the
+    // non-flight scenes (e.g. the editor). So just simulate the decoupling.
+    if (!HighLogic.LoadedSceneIsFlight) {
+      if (beforeDie != null) {
+        beforeDie(p);
+      }
+      HostedDebugLog.Fine(this, "Not destroying part {0} in a non-flight mode", p);
+      if (afterDie != null) {
+        afterDie(null);
+      }
+      yield break;
+    }
 
+    var formerParent = p.parent;
     yield return KIS_Shared.AsyncDecoupleAssembly(p);
+
     if (beforeDie != null) {
       beforeDie(p);
     }
 
-    if (!HighLogic.LoadedSceneIsEditor) {
-      // Parts in the editor are not connected.
-      HostedDebugLog.Info(this, "Destroy consumed part: {0}", p);
-      p.Die();
+    HostedDebugLog.Info(this, "Destroy consumed part: {0}", p);
+    p.Die();
 
-      // Do cleanup in case of we're separating nodes.
-      if (formerParent != null) {
-        formerParent.FindModulesImplementing<ModuleDockingNode>()
-            .Where(x => x.otherNode != null && x.otherNode.part == p)
-            .ToList()
-            .ForEach(KIS_Shared.ResetDockingNode);
-      }
+    // Do cleanup in case of we're separating nodes.
+    if (formerParent != null) {
+      formerParent.FindModulesImplementing<ModuleDockingNode>()
+          .Where(x => x.otherNode != null && x.otherNode.part == p)
+          .ToList()
+          .ForEach(KIS_Shared.ResetDockingNode);
     }
+
     if (afterDie != null) {
       afterDie(null);
     }
