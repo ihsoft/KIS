@@ -1,3 +1,5 @@
+# 1.10 pre-release:
+
 # 1.9 (December 28th, 2017):
 * [Enhancement] Add Chinese localization.
 * [Fix #235] Items equip state is not persisted.
