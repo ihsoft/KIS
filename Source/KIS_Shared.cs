@@ -329,7 +329,7 @@ public static class KIS_Shared {
                         createPhysicsless: createPhysicsless));
     } else {
       // Create new part as a separate vessel.
-      newPart.StartCoroutine(WaitAndMakeLonePart(newPart, onPartReady));
+      newPart.StartCoroutine(WaitAndMakeLonePart(newPart, fromPart, onPartReady));
     }
     return newPart;
   }
@@ -1354,7 +1354,7 @@ public static class KIS_Shared {
 
   /// <summary>Creates a new vessel from a single part.</summary>
   /// <remarks>Initially the part must belong to some vessel.</remarks>
-  static IEnumerator WaitAndMakeLonePart(Part newPart, OnPartReady onPartReady) {
+  static IEnumerator WaitAndMakeLonePart(Part newPart, Part fromPart, OnPartReady onPartReady) {
     DebugEx.Info("Create lone part vessel for {0}", newPart);
     newPart.physicalSignificance = Part.PhysicalSignificance.NONE;
     newPart.PromoteToPhysicalPart();
@@ -1363,7 +1363,13 @@ public static class KIS_Shared {
     Vessel newVessel = newPart.gameObject.AddComponent<Vessel>();
     newVessel.id = Guid.NewGuid();
     if (newVessel.Initialize(false)) {
-      newVessel.vesselName = newPart.partInfo.title;
+      var item = newPart.FindModuleImplementing <ModuleKISItem> ();
+      if (item != null && !item.vesselAutoRename) {
+        newVessel.vesselName = newPart.partInfo.title;
+      } else {
+        string baseName = fromPart.vessel.vesselName;
+        newVessel.vesselName = Vessel.AutoRename (newVessel, baseName);
+      }
       newVessel.IgnoreGForces(10);
       newVessel.currentStage = StageManager.RecalculateVesselStaging(newVessel);
       newPart.setParent(null);
