@@ -840,7 +840,7 @@ public static class KIS_Shared {
     // HACK: Accessing Fields property of a non-awaken module triggers NRE. If it happens then do
     // explicit awakening of the *base* module class.
     try {
-      var unused = module.Fields.GetEnumerator();
+      module.Fields.GetEnumerator();
     } catch {
       DebugEx.Warning(
           "WORKAROUND. Module {0} on part prefab is not awaken. Call Awake on it", module);
@@ -1181,7 +1181,7 @@ public static class KIS_Shared {
     // Find out if coupling with a new parent is needed/allowed.
     var moduleItem = assemblyRoot.GetComponent<ModuleKISItem>();
     var useExternalPartAttach = moduleItem != null && moduleItem.useExternalPartAttach;
-    if (tgtPart == null || moduleItem != null && moduleItem.useExternalPartAttach) {
+    if (tgtPart == null || useExternalPartAttach) {
       // Skip coupling logic.
       SendKISMessage(assemblyRoot, MessageAction.AttachEnd, srcAttachNode, tgtPart, tgtAttachNode);
       yield break;
