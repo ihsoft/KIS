@@ -56,6 +56,21 @@ sealed class KISAddonConfig : MonoBehaviour {
     int loadedPartCount;
     int loadedPartIndex;
 
+    bool HasPodInventories (Part part)
+    {
+      for (int i = part.Modules.Count; i-- > 0; ) {
+        var inv = part.Modules[i] as ModuleKISInventory;
+        if (inv == null) {
+          continue;
+        }
+        if (inv.invType == ModuleKISInventory.InventoryType.Pod) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+
     IEnumerator LoadInventories ()
     {
       // Kerbal parts.
@@ -69,6 +84,12 @@ sealed class KISAddonConfig : MonoBehaviour {
         if (!(avPart.name == MaleKerbalEva || avPart.name == FemaleKerbalEva
               || avPart.name == RdKerbalEva
               || !avPart.partPrefab || avPart.partPrefab.CrewCapacity < 1)) {
+          if (HasPodInventories (avPart.partPrefab)) {
+            // pod inventories have already been added to the part by another
+            // mod, so skip the part (probably a dynamic crew capacity)
+			  DebugEx.Info("Skipping " + avPart.partPrefab);
+            continue;
+          }
           DebugEx.Fine("Found part with CrewCapacity: {0}", avPart.name);
           AddPodInventories (avPart.partPrefab, avPart.partPrefab.CrewCapacity);
         }
