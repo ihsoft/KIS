@@ -329,7 +329,7 @@ public static class KIS_Shared {
                         createPhysicsless: createPhysicsless));
     } else {
       // Create new part as a separate vessel.
-      newPart.StartCoroutine(WaitAndMakeLonePart(newPart, fromPart, onPartReady));
+      newPart.StartCoroutine(WaitAndMakeLonePart(newPart, onPartReady));
     }
     return newPart;
   }
@@ -1354,8 +1354,9 @@ public static class KIS_Shared {
 
   /// <summary>Creates a new vessel from a single part.</summary>
   /// <remarks>Initially the part must belong to some vessel.</remarks>
-  static IEnumerator WaitAndMakeLonePart(Part newPart, Part fromPart, OnPartReady onPartReady) {
+  static IEnumerator WaitAndMakeLonePart(Part newPart, OnPartReady onPartReady) {
     DebugEx.Info("Create lone part vessel for {0}", newPart);
+    string originatingVesselName = newPart.vessel.vesselName;
     newPart.physicalSignificance = Part.PhysicalSignificance.NONE;
     newPart.PromoteToPhysicalPart();
     newPart.Unpack();
@@ -1367,8 +1368,7 @@ public static class KIS_Shared {
       if (item == null || !item.vesselAutoRename) {
         newVessel.vesselName = newPart.partInfo.title;
       } else {
-        string baseName = fromPart.vessel.vesselName;
-        newVessel.vesselName = Vessel.AutoRename (newVessel, baseName);
+        newVessel.vesselName = Vessel.AutoRename (newVessel, originatingVesselName);
       }
       newVessel.IgnoreGForces(10);
       newVessel.currentStage = StageManager.RecalculateVesselStaging(newVessel);
