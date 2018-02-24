@@ -30,11 +30,11 @@ else
 	endif
 endif
 
-KISFILES := $(wildcard Plugins/Source/*.cs) \
-	$(wildcard Plugins/Source/Properties/*.cs) 
+KISFILES := $(wildcard Source/*.cs) \
+	$(wildcard Source/Properties/*.cs)
 
 RESGEN2 := resgen2
-GMCS := gmcs
+GMCS := mcs
 GIT := git
 TAR := tar
 ZIP := zip
@@ -55,11 +55,13 @@ info:
 	@echo "================================"
 
 build: build/KIS.dll
-	
+
 build/%.dll: ${KISFILES}
 	mkdir -p build
 	${GMCS} -t:library -lib:"${MANAGED}" \
-		-r:Assembly-CSharp,Assembly-CSharp-firstpass,UnityEngine \
+		-r:Assembly-CSharp,Assembly-CSharp-firstpass \
+		-r:UnityEngine,UnityEngine.UI \
+		-lib:Binaries -r:KSPDev_Utils.0.30 \
 		-out:$@ \
 		${KISFILES}
 

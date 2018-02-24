@@ -807,7 +807,6 @@ sealed class KISAddonPickup : MonoBehaviour {
       return;
     }
 
-    ModuleKISPartDrag pDrag = part.GetComponent<ModuleKISPartDrag>();
     ModuleKISItem item = part.GetComponent<ModuleKISItem>();
     ModuleKISPartMount parentMount = null;
     if (part.parent) {

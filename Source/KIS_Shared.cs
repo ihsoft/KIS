@@ -840,7 +840,7 @@ public static class KIS_Shared {
     // HACK: Accessing Fields property of a non-awaken module triggers NRE. If it happens then do
     // explicit awakening of the *base* module class.
     try {
-      var unused = module.Fields.GetEnumerator();
+      module.Fields.GetEnumerator();
     } catch {
       DebugEx.Warning(
           "WORKAROUND. Module {0} on part prefab is not awaken. Call Awake on it", module);
@@ -1181,7 +1181,7 @@ public static class KIS_Shared {
     // Find out if coupling with a new parent is needed/allowed.
     var moduleItem = assemblyRoot.GetComponent<ModuleKISItem>();
     var useExternalPartAttach = moduleItem != null && moduleItem.useExternalPartAttach;
-    if (tgtPart == null || moduleItem != null && moduleItem.useExternalPartAttach) {
+    if (tgtPart == null || useExternalPartAttach) {
       // Skip coupling logic.
       SendKISMessage(assemblyRoot, MessageAction.AttachEnd, srcAttachNode, tgtPart, tgtAttachNode);
       yield break;
@@ -1356,6 +1356,7 @@ public static class KIS_Shared {
   /// <remarks>Initially the part must belong to some vessel.</remarks>
   static IEnumerator WaitAndMakeLonePart(Part newPart, OnPartReady onPartReady) {
     DebugEx.Info("Create lone part vessel for {0}", newPart);
+    string originatingVesselName = newPart.vessel.vesselName;
     newPart.physicalSignificance = Part.PhysicalSignificance.NONE;
     newPart.PromoteToPhysicalPart();
     newPart.Unpack();
@@ -1363,7 +1364,12 @@ public static class KIS_Shared {
     Vessel newVessel = newPart.gameObject.AddComponent<Vessel>();
     newVessel.id = Guid.NewGuid();
     if (newVessel.Initialize(false)) {
-      newVessel.vesselName = newPart.partInfo.title;
+      var item = newPart.FindModuleImplementing <ModuleKISItem> ();
+      if (item == null || !item.vesselAutoRename) {
+        newVessel.vesselName = newPart.partInfo.title;
+      } else {
+        newVessel.vesselName = Vessel.AutoRename (newVessel, originatingVesselName);
+      }
       newVessel.IgnoreGForces(10);
       newVessel.currentStage = StageManager.RecalculateVesselStaging(newVessel);
       newPart.setParent(null);
