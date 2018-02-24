@@ -1364,7 +1364,7 @@ public static class KIS_Shared {
     newVessel.id = Guid.NewGuid();
     if (newVessel.Initialize(false)) {
       var item = newPart.FindModuleImplementing <ModuleKISItem> ();
-      if (item != null && !item.vesselAutoRename) {
+      if (item == null || !item.vesselAutoRename) {
         newVessel.vesselName = newPart.partInfo.title;
       } else {
         string baseName = fromPart.vessel.vesselName;
