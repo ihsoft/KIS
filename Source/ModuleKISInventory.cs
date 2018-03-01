@@ -546,7 +546,6 @@ public class ModuleKISInventory : PartModule,
   public Rect guiMainWindowPos;
   Rect guiDebugWindowPos = new Rect(0, 50, 500, 300);
   KIS_IconViewer icon = null;
-  //Rect defaultEditorPos = new Rect(Screen.width / 3, 40, 10, 10);
   Rect defaultFlightPos = new Rect(0, 50, 10, 10);
   Vector2 scrollPositionDbg;
   int splitQty = 1;
@@ -559,7 +558,6 @@ public class ModuleKISInventory : PartModule,
   // Context menu
   private KIS_Item contextItem;
   private bool contextClick = false;
-  //private int contextSlot;
   private Rect contextRect;
 
   // Animation (Not tested)
@@ -1905,7 +1903,6 @@ public class ModuleKISInventory : PartModule,
         contextClick = true;
         contextItem = items[slotIndex];
         contextRect = textureRect;
-        //contextSlot = slotIndex;
       }
     }
 

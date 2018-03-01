@@ -78,7 +78,6 @@ public sealed class ModuleKISItemBook: ModuleKISItem,
   bool showPage = false;
   Texture2D pageTexture;
   Rect guiWindowPos;
-  //KIS_Item currentItem;
   #endregion
 
   #region PartModule overrides
@@ -111,7 +110,6 @@ public sealed class ModuleKISItemBook: ModuleKISItem,
   public override void OnItemGUI(KIS_Item item) {
     if (showPage) {
       GUI.skin = HighLogic.Skin;
-      //currentItem = item;
       guiWindowPos = GUILayout.Window(GetInstanceID(), guiWindowPos, GuiReader, ReaderWindowTitle);
     }
   }
