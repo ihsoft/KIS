@@ -1356,6 +1356,7 @@ public static class KIS_Shared {
   /// <remarks>Initially the part must belong to some vessel.</remarks>
   static IEnumerator WaitAndMakeLonePart(Part newPart, OnPartReady onPartReady) {
     DebugEx.Info("Create lone part vessel for {0}", newPart);
+    string originatingVesselName = newPart.vessel.vesselName;
     newPart.physicalSignificance = Part.PhysicalSignificance.NONE;
     newPart.PromoteToPhysicalPart();
     newPart.Unpack();
@@ -1363,7 +1364,12 @@ public static class KIS_Shared {
     Vessel newVessel = newPart.gameObject.AddComponent<Vessel>();
     newVessel.id = Guid.NewGuid();
     if (newVessel.Initialize(false)) {
-      newVessel.vesselName = newPart.partInfo.title;
+      var item = newPart.FindModuleImplementing <ModuleKISItem> ();
+      if (item == null || !item.vesselAutoRename) {
+        newVessel.vesselName = newPart.partInfo.title;
+      } else {
+        newVessel.vesselName = Vessel.AutoRename (newVessel, originatingVesselName);
+      }
       newVessel.IgnoreGForces(10);
       newVessel.currentStage = StageManager.RecalculateVesselStaging(newVessel);
       newPart.setParent(null);
