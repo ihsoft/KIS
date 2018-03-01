@@ -56,7 +56,7 @@ sealed class KISAddonConfig : MonoBehaviour {
     int loadedPartCount;
     int loadedPartIndex;
 
-    IEnumerator LoadInventories ()
+    void LoadInventories ()
     {
       // Kerbal parts.
       UpdateEvaPrefab(MaleKerbalEva, nodeSettings);
@@ -72,9 +72,7 @@ sealed class KISAddonConfig : MonoBehaviour {
           DebugEx.Fine("Found part with CrewCapacity: {0}", avPart.name);
           AddPodInventories (avPart.partPrefab, avPart.partPrefab.CrewCapacity);
         }
-        yield return null;
       }
-      done = true;
     }
 
     public override bool IsReady ()
@@ -94,9 +92,9 @@ sealed class KISAddonConfig : MonoBehaviour {
 
     public override void StartLoad ()
     {
-      done = false;
+      done = true;
       loadedPartCount = PartLoader.LoadedPartsList.Count;
-      StartCoroutine (LoadInventories ());
+      LoadInventories ();
     }
   }
 
