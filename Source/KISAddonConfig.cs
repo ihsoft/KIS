@@ -21,6 +21,8 @@ sealed class KISAddonConfig : MonoBehaviour {
 
   const string MaleKerbalEva = "kerbalEVA";
   const string FemaleKerbalEva = "kerbalEVAfemale";
+  const string MaleKerbalEvaVintage = "kerbalEVAVintage";
+  const string FemaleKerbalEvaVintage = "kerbalEVAfemaleVintage";
   const string RdKerbalEva = "kerbalEVA_RD";
 
   static ConfigNode nodeSettings;
@@ -60,6 +62,7 @@ sealed class KISAddonConfig : MonoBehaviour {
       for (loadedPartIndex = 0; loadedPartIndex < loadedPartCount; loadedPartIndex++) {
         AvailablePart avPart = PartLoader.LoadedPartsList[loadedPartIndex];
         if (!(avPart.name == MaleKerbalEva || avPart.name == FemaleKerbalEva
+              || avPart.name == MaleKerbalEvaVintage || avPart.name == FemaleKerbalEvaVintage
               || avPart.name == RdKerbalEva
               || !avPart.partPrefab || avPart.partPrefab.CrewCapacity < 1)) {
           DebugEx.Fine("Found part with CrewCapacity: {0}", avPart.name);
