@@ -1,13 +1,13 @@
 ﻿using KSPDev.ConfigUtils;
 using KSPDev.LogUtils;
+using KSPDev.Types;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 namespace KIS {
 
-[KSPAddon(KSPAddon.Startup.SpaceCentre, true)]
+[KSPAddon(KSPAddon.Startup.Instantly, false)]
 [PersistentFieldsDatabase("KIS/settings/KISConfig")]
 sealed class KISAddonConfig : MonoBehaviour {
   [PersistentField("StackableItemOverride/partName", isCollection = true)]
@@ -19,66 +19,109 @@ sealed class KISAddonConfig : MonoBehaviour {
   [PersistentField("Global/breathableAtmoPressure")]
   public readonly static float breathableAtmoPressure = 0.5f;
 
+  [PersistentField("EvaInventory")]
+  readonly static PersistentConfigNode evaInventory = new PersistentConfigNode();
+  
+  [PersistentField("EvaPickup")]
+  readonly static PersistentConfigNode evaPickup = new PersistentConfigNode();
+
   const string MaleKerbalEva = "kerbalEVA";
   const string FemaleKerbalEva = "kerbalEVAfemale";
+  const string MaleKerbalEvaVintage = "kerbalEVAVintage";
+  const string FemaleKerbalEvaVintage = "kerbalEVAfemaleVintage";
   const string RdKerbalEva = "kerbalEVA_RD";
-  
-  public void Awake() {
-    ConfigAccessor.ReadFieldsInType(GetType(), this);
-    ConfigAccessor.ReadFieldsInType(typeof(ModuleKISInventory), instance: null);
 
-    // Set inventory module for every eva kerbal
-    DebugEx.Info("Set KIS config...");
-    ConfigNode nodeSettings = GameDatabase.Instance.GetConfigNode("KIS/settings/KISConfig");
-    if (nodeSettings == null) {
-      DebugEx.Error("KIS settings.cfg not found or invalid !");
-      return;
+  /// <summary>Instantly loads the KIS global settings.</summary>
+  class KISConfigLoader: LoadingSystem {
+    public override bool IsReady() {
+      return true;
     }
 
-    // Kerbal parts.
-    UpdateEvaPrefab(MaleKerbalEva, nodeSettings);
-    UpdateEvaPrefab(FemaleKerbalEva, nodeSettings);
+    public override void StartLoad() {
+      DebugEx.Info("Loading KIS global settings...");
+      ConfigAccessor.ReadFieldsInType(typeof(KISAddonConfig), instance: null);
+      ConfigAccessor.ReadFieldsInType(typeof(ModuleKISInventory), instance: null);
+    }
+  }
 
-    // Set inventory module for every pod with crew capacity.
-    DebugEx.Info("Loading pod inventories...");
-    foreach (AvailablePart avPart in PartLoader.LoadedPartsList) {
-      if (avPart.name == MaleKerbalEva || avPart.name == FemaleKerbalEva
-          || avPart.name == RdKerbalEva
-          || !avPart.partPrefab || avPart.partPrefab.CrewCapacity < 1) {
-        continue;
-      }
+  /// <summary>Adds EVA inventories to every pod.</summary>
+  class KISPodInventoryLoader: LoadingSystem {
+    public override bool IsReady() {
+      return true;
+    }
 
-      DebugEx.Fine("Found part with CrewCapacity: {0}", avPart.name);
-      for (int i = 0; i < avPart.partPrefab.CrewCapacity; i++) {
-        try {
-          var moduleInventory =
-            avPart.partPrefab.AddModule(typeof(ModuleKISInventory).Name) as ModuleKISInventory;
-          KIS_Shared.AwakePartModule(moduleInventory);
-          var baseFields = new BaseFieldList(moduleInventory);
-          baseFields.Load(nodeSettings.GetNode("EvaInventory"));
-          moduleInventory.podSeat = i;
-          moduleInventory.invType = ModuleKISInventory.InventoryType.Pod;
-          DebugEx.Fine("Pod inventory module(s) for seat {0} loaded successfully", i);
-        } catch {
-          DebugEx.Error("Pod inventory module(s) for seat {0} can't be loaded!", i);
+    public override void StartLoad() {
+      // Kerbal parts.
+      UpdateEvaPrefab(MaleKerbalEva);
+      UpdateEvaPrefab(FemaleKerbalEva);
+
+      // Set inventory module for every pod with crew capacity.
+      DebugEx.Info("Loading pod inventories...");
+      for (var i = 0; i < PartLoader.LoadedPartsList.Count; i++) {
+        var avPart = PartLoader.LoadedPartsList[i];
+        if (!(avPart.name == MaleKerbalEva || avPart.name == FemaleKerbalEva
+              || avPart.name == MaleKerbalEvaVintage || avPart.name == FemaleKerbalEvaVintage
+              || avPart.name == RdKerbalEva
+              || !avPart.partPrefab || avPart.partPrefab.CrewCapacity < 1)) {
+          DebugEx.Fine("Found part with CrewCapacity: {0}", avPart.name);
+          AddPodInventories(avPart.partPrefab, avPart.partPrefab.CrewCapacity);
         }
       }
     }
   }
 
+  public void Awake() {
+    List<LoadingSystem> list = LoadingScreen.Instance.loaders;
+    if (list != null) {
+      for (var i = 0; i < list.Count; i++) {
+        if (list[i] is PartLoader) {
+          var go = new GameObject();
+
+          var invLoader = go.AddComponent<KISPodInventoryLoader>();
+          // Cause the pod inventory loader to run AFTER the part loader.
+          list.Insert(i + 1, invLoader);
+
+          var cfgLoader = go.AddComponent<KISConfigLoader>();
+          // Cause the config loader to run BEFORE the part loader this ensures
+          // that the KIS configs are loaded after Module Manager has run but
+          // before any parts are loaded so KIS aware part modules can add
+          // pod inventories as necessary.
+          list.Insert(i, cfgLoader);
+          break;
+        }
+      }
+    }
+  }
+
+  public static void AddPodInventories(Part part, int crewCapacity) {
+    for (var i = 0; i < crewCapacity; i++) {
+      try {
+        var moduleInventory =
+            part.AddModule(typeof(ModuleKISInventory).Name) as ModuleKISInventory;
+        KIS_Shared.AwakePartModule(moduleInventory);
+        var baseFields = new BaseFieldList(moduleInventory);
+        baseFields.Load(evaInventory);
+        moduleInventory.podSeat = i;
+        moduleInventory.invType = ModuleKISInventory.InventoryType.Pod;
+        DebugEx.Fine("Pod inventory module(s) for seat {0} loaded successfully", i);
+      } catch {
+        DebugEx.Error("Pod inventory module(s) for seat {0} can't be loaded!", i);
+      }
+    }
+  }
+
   /// <summary>Load config of EVA modules for the requested part name.</summary>
-  void UpdateEvaPrefab(string partName, ConfigNode nodeSettings) {
+  static void UpdateEvaPrefab(string partName) {
     var prefab = PartLoader.getPartInfoByName(partName).partPrefab;
-    if (LoadModuleConfig(prefab, typeof(ModuleKISInventory),
-                         nodeSettings.GetNode("EvaInventory"))) {
+    if (LoadModuleConfig(prefab, typeof(ModuleKISInventory), evaInventory)) {
       prefab.GetComponent<ModuleKISInventory>().invType = ModuleKISInventory.InventoryType.Eva;
     }
-    LoadModuleConfig(prefab, typeof(ModuleKISPickup), nodeSettings.GetNode("EvaPickup"));
+    LoadModuleConfig(prefab, typeof(ModuleKISPickup), evaPickup);
   }
 
   /// <summary>Loads config values for the part's module fro the provided config node.</summary>
   /// <returns><c>true</c> if loaded successfully.</returns>
-  bool LoadModuleConfig(Part p, Type moduleType, ConfigNode node) {
+  static bool LoadModuleConfig(Part p, Type moduleType, ConfigNode node) {
     var module = p.GetComponent(moduleType);
     if (module == null) {
       DebugEx.Warning(

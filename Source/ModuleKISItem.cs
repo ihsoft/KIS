@@ -151,6 +151,8 @@ public class ModuleKISItem : PartModule,
   [KSPField]
   public bool usableFromEditor;
   [KSPField]
+  public bool vesselAutoRename;
+  [KSPField]
   public string useName = "use";
   [KSPField]
   public bool stackable;
