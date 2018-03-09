@@ -1,4 +1,7 @@
-# 1.10 pre-release:
+# 1.10 (March 8th, 2018):
+* KSP 1.4 support.
+* [Change] Update the pods in the loading screens.
+* [Enhancement] Add Espanol localization.
 
 # 1.9 (December 28th, 2017):
 * [Enhancement] Add Chinese localization.
