@@ -3,6 +3,7 @@ using KSPDev.LogUtils;
 using KSPDev.Types;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace KIS {
@@ -96,14 +97,20 @@ sealed class KISAddonConfig : MonoBehaviour {
 
   public static void AddPodInventories(Part part, int crewCapacity) {
     for (var i = 0; i < crewCapacity; i++) {
+      var moduleInventory =
+          part.AddModule(typeof(ModuleKISInventory).Name) as ModuleKISInventory;
+      KIS_Shared.AwakePartModule(moduleInventory);
+      moduleInventory.invType = ModuleKISInventory.InventoryType.Pod;
+      DebugEx.Fine("{0}: Add pod inventory to match the capacity", part);
+    }
+    var podInventories = part.Modules.OfType<ModuleKISInventory>()
+        .Where(m => m.invType == ModuleKISInventory.InventoryType.Pod)
+        .ToArray();
+    for (var i = 0; i < podInventories.Length; i++) {
       try {
-        var moduleInventory =
-            part.AddModule(typeof(ModuleKISInventory).Name) as ModuleKISInventory;
-        KIS_Shared.AwakePartModule(moduleInventory);
-        var baseFields = new BaseFieldList(moduleInventory);
+        var baseFields = new BaseFieldList(podInventories[i]);
         baseFields.Load(evaInventory);
-        moduleInventory.podSeat = i;
-        moduleInventory.invType = ModuleKISInventory.InventoryType.Pod;
+        podInventories[i].podSeat = i;
         DebugEx.Fine("{0}: Pod inventory for seat {1} loaded successfully", part, i);
       } catch {
         DebugEx.Error("{0}: Pod inventory module for seat {1} can't be loaded!", part, i);

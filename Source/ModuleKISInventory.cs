@@ -473,6 +473,8 @@ public class ModuleKISInventory : PartModule,
   public string invName = "";
   [KSPField(isPersistant = true)]
   public bool helmetEquipped = true;
+  [KSPField]
+  public InventoryType invType = InventoryType.Container;
   #endregion
 
   #region Global settings
@@ -529,7 +531,6 @@ public class ModuleKISInventory : PartModule,
   public string openGuiName;
   public float totalVolume = 0;
   public int podSeat = -1;
-  public InventoryType invType = InventoryType.Container;
   public enum InventoryType {
     Container,
     Pod,
