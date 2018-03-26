@@ -63,7 +63,8 @@ sealed class KISAddonConfig : MonoBehaviour {
               || avPart.name == MaleKerbalEvaVintage || avPart.name == FemaleKerbalEvaVintage
               || avPart.name == RdKerbalEva
               || !avPart.partPrefab || avPart.partPrefab.CrewCapacity < 1)) {
-          DebugEx.Fine("Found part with CrewCapacity: {0}", avPart.name);
+          DebugEx.Fine("Found part with crew: {0}, CrewCapacity={1}",
+                       avPart.name, avPart.partPrefab.CrewCapacity);
           AddPodInventories(avPart.partPrefab, avPart.partPrefab.CrewCapacity);
         }
       }
@@ -103,9 +104,9 @@ sealed class KISAddonConfig : MonoBehaviour {
         baseFields.Load(evaInventory);
         moduleInventory.podSeat = i;
         moduleInventory.invType = ModuleKISInventory.InventoryType.Pod;
-        DebugEx.Fine("Pod inventory module(s) for seat {0} loaded successfully", i);
+        DebugEx.Fine("{0}: Pod inventory for seat {1} loaded successfully", part, i);
       } catch {
-        DebugEx.Error("Pod inventory module(s) for seat {0} can't be loaded!", i);
+        DebugEx.Error("{0}: Pod inventory module for seat {1} can't be loaded!", part, i);
       }
     }
   }
