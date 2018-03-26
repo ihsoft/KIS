@@ -54,7 +54,9 @@ sealed class KISAddonConfig : MonoBehaviour {
     public override void StartLoad() {
       // Kerbal parts.
       UpdateEvaPrefab(MaleKerbalEva);
+      UpdateEvaPrefab(MaleKerbalEvaVintage);
       UpdateEvaPrefab(FemaleKerbalEva);
+      UpdateEvaPrefab(FemaleKerbalEvaVintage);
 
       // Set inventory module for every pod with crew capacity.
       DebugEx.Info("Loading pod inventories...");
@@ -120,11 +122,16 @@ sealed class KISAddonConfig : MonoBehaviour {
 
   /// <summary>Load config of EVA modules for the requested part name.</summary>
   static void UpdateEvaPrefab(string partName) {
-    var prefab = PartLoader.getPartInfoByName(partName).partPrefab;
-    if (LoadModuleConfig(prefab, typeof(ModuleKISInventory), evaInventory)) {
-      prefab.GetComponent<ModuleKISInventory>().invType = ModuleKISInventory.InventoryType.Eva;
+    var partInfo = PartLoader.getPartInfoByName(partName);
+    if (partInfo != null ){
+      var prefab = partInfo.partPrefab;
+      if (LoadModuleConfig(prefab, typeof(ModuleKISInventory), evaInventory)) {
+        prefab.GetComponent<ModuleKISInventory>().invType = ModuleKISInventory.InventoryType.Eva;
+      }
+      LoadModuleConfig(prefab, typeof(ModuleKISPickup), evaPickup);
+    } else {
+      DebugEx.Info("Skipping EVA model: {0}. Expansion is not installed.", partName);
     }
-    LoadModuleConfig(prefab, typeof(ModuleKISPickup), evaPickup);
   }
 
   /// <summary>Loads config values for the part's module fro the provided config node.</summary>

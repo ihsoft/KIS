@@ -1,4 +1,5 @@
 # 1.11 (pre-release):
+* [Fix #248] Broken inventory for the new DLC suits.
 
 # 1.10 (March 8th, 2018):
 * KSP 1.4 support.
