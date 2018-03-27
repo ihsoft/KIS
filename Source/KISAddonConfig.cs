@@ -3,6 +3,7 @@ using KSPDev.LogUtils;
 using KSPDev.Types;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace KIS {
@@ -53,7 +54,9 @@ sealed class KISAddonConfig : MonoBehaviour {
     public override void StartLoad() {
       // Kerbal parts.
       UpdateEvaPrefab(MaleKerbalEva);
+      UpdateEvaPrefab(MaleKerbalEvaVintage);
       UpdateEvaPrefab(FemaleKerbalEva);
+      UpdateEvaPrefab(FemaleKerbalEvaVintage);
 
       // Set inventory module for every pod with crew capacity.
       DebugEx.Info("Loading pod inventories...");
@@ -63,7 +66,8 @@ sealed class KISAddonConfig : MonoBehaviour {
               || avPart.name == MaleKerbalEvaVintage || avPart.name == FemaleKerbalEvaVintage
               || avPart.name == RdKerbalEva
               || !avPart.partPrefab || avPart.partPrefab.CrewCapacity < 1)) {
-          DebugEx.Fine("Found part with CrewCapacity: {0}", avPart.name);
+          DebugEx.Fine("Found part with crew: {0}, CrewCapacity={1}",
+                       avPart.name, avPart.partPrefab.CrewCapacity);
           AddPodInventories(avPart.partPrefab, avPart.partPrefab.CrewCapacity);
         }
       }
@@ -95,28 +99,39 @@ sealed class KISAddonConfig : MonoBehaviour {
 
   public static void AddPodInventories(Part part, int crewCapacity) {
     for (var i = 0; i < crewCapacity; i++) {
+      var moduleInventory =
+          part.AddModule(typeof(ModuleKISInventory).Name) as ModuleKISInventory;
+      KIS_Shared.AwakePartModule(moduleInventory);
+      moduleInventory.invType = ModuleKISInventory.InventoryType.Pod;
+      DebugEx.Fine("{0}: Add pod inventory to match the capacity", part);
+    }
+    var podInventories = part.Modules.OfType<ModuleKISInventory>()
+        .Where(m => m.invType == ModuleKISInventory.InventoryType.Pod)
+        .ToArray();
+    for (var i = 0; i < podInventories.Length; i++) {
       try {
-        var moduleInventory =
-            part.AddModule(typeof(ModuleKISInventory).Name) as ModuleKISInventory;
-        KIS_Shared.AwakePartModule(moduleInventory);
-        var baseFields = new BaseFieldList(moduleInventory);
+        var baseFields = new BaseFieldList(podInventories[i]);
         baseFields.Load(evaInventory);
-        moduleInventory.podSeat = i;
-        moduleInventory.invType = ModuleKISInventory.InventoryType.Pod;
-        DebugEx.Fine("Pod inventory module(s) for seat {0} loaded successfully", i);
+        podInventories[i].podSeat = i;
+        DebugEx.Fine("{0}: Pod inventory for seat {1} loaded successfully", part, i);
       } catch {
-        DebugEx.Error("Pod inventory module(s) for seat {0} can't be loaded!", i);
+        DebugEx.Error("{0}: Pod inventory module for seat {1} can't be loaded!", part, i);
       }
     }
   }
 
   /// <summary>Load config of EVA modules for the requested part name.</summary>
   static void UpdateEvaPrefab(string partName) {
-    var prefab = PartLoader.getPartInfoByName(partName).partPrefab;
-    if (LoadModuleConfig(prefab, typeof(ModuleKISInventory), evaInventory)) {
-      prefab.GetComponent<ModuleKISInventory>().invType = ModuleKISInventory.InventoryType.Eva;
+    var partInfo = PartLoader.getPartInfoByName(partName);
+    if (partInfo != null ){
+      var prefab = partInfo.partPrefab;
+      if (LoadModuleConfig(prefab, typeof(ModuleKISInventory), evaInventory)) {
+        prefab.GetComponent<ModuleKISInventory>().invType = ModuleKISInventory.InventoryType.Eva;
+      }
+      LoadModuleConfig(prefab, typeof(ModuleKISPickup), evaPickup);
+    } else {
+      DebugEx.Info("Skipping EVA model: {0}. Expansion is not installed.", partName);
     }
-    LoadModuleConfig(prefab, typeof(ModuleKISPickup), evaPickup);
   }
 
   /// <summary>Loads config values for the part's module fro the provided config node.</summary>

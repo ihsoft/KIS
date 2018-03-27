@@ -73,18 +73,12 @@ sealed class MainScreenTweaker : MonoBehaviour {
     }
   }
 
-  void LogObjectChildren(Transform objTransform) {
-    DebugEx.Fine("{0}", objTransform);
-    for (var i = 0; i < objTransform.transform.childCount; i++) {
-      LogObjectChildren(objTransform.transform.GetChild(i));
-    }
-  }
-
   void WaitAndApplyTweaks() {
     var roots = UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects();
     foreach (var root in roots) {
       if (logAllObjects) {
-        LogObjectChildren(root.transform);
+        DebugEx.Fine("Objects at the root:\n{0}",
+                     DbgFormatter.C2S(Hierarchy.ListHirerahcy(root.transform), separator: "\n"));
       }
       foreach (var tweak in modelTweaks) {
         var names = tweak.modelNamePattern.Split('/');
