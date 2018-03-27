@@ -2,6 +2,7 @@
 * [Fix #248] Broken inventory for the new DLC suits.
 * [Fix #252] Allow setting type of the inventory via config.
 * [Fix #253] Kerbal preview is wrong for the expansion pack suites.
+* [Fix #253] Remove helmet doesn't work on the expansion EVA suites.
 
 # 1.10 (March 8th, 2018):
 * KSP 1.4 support.

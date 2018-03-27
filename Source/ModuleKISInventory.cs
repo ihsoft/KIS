@@ -7,6 +7,7 @@ using KIS.GUIUtils;
 using KSPDev.ConfigUtils;
 using KSPDev.GUIUtils;
 using KSPDev.LogUtils;
+using KSPDev.ModelUtils;
 using KSPDev.KSPInterfaces;
 using KSPDev.PartUtils;
 using System;
@@ -1331,24 +1332,20 @@ public class ModuleKISInventory : PartModule,
       }
     }
 
-    //Disable helmet and visor
-    var skmrs =
-        new List<SkinnedMeshRenderer>(part.GetComponentsInChildren<SkinnedMeshRenderer>());
-    foreach (var skmr in skmrs) {
-      if (skmr.name == "helmet" || skmr.name == "visor") {
-        skmr.GetComponent<Renderer>().enabled = active;
-        helmetEquipped = active;
-      }
-    }
-
-    //Disable flares and light
-    var lights = new List<Light>(part.GetComponentsInChildren<Light>(true) as Light[]);
-    foreach (var light in lights) {
-      if (light.name == "headlamp") {
-        light.enabled = active;
-        light.transform.Find("flare1").GetComponent<Renderer>().enabled = active;
-        light.transform.Find("flare2").GetComponent<Renderer>().enabled = active;
-      }
+    // Disable helmet and visor.
+    var helmet = Hierarchy.FindTransformByPath(part.transform, "**/helmet*");
+    if (helmet != null) {
+      HostedDebugLog.Fine(this, "Disable helmet renderers and lights on {0}", part);
+      helmet.GetComponentsInChildren<Renderer>(includeInactive: true)
+          .ToList()
+          .ForEach(r => r.enabled = active);
+      part.transform.GetComponentsInChildren<Light>(includeInactive: true)
+          .Where(l => l.name == "headlamp")
+          .ToList()
+          .ForEach(l => l.enabled = active);
+      helmetEquipped = active;
+    } else {
+      HostedDebugLog.Error(this, "Cannot find the helmet model on {0}!", part);
     }
 
     return true;
