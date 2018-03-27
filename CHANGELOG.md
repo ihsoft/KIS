@@ -1,4 +1,4 @@
-# 1.11 (pre-release):
+# 1.11 (March 26th, 2018):
 * [Fix #248] Broken inventory for the new DLC suits.
 * [Fix #252] Allow setting type of the inventory via config.
 * [Fix #253] Kerbal preview is wrong for the expansion pack suites.
