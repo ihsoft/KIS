@@ -1335,7 +1335,7 @@ public class ModuleKISInventory : PartModule,
     // Disable helmet and visor.
     var helmet = Hierarchy.FindTransformByPath(part.transform, "**/helmet*");
     if (helmet != null) {
-      HostedDebugLog.Fine(this, "Disable helmet renderers and lights on {0}", part);
+      HostedDebugLog.Fine(this, "Set helmet renderers and lights to {0} on {1}", active, part);
       helmet.GetComponentsInChildren<Renderer>(includeInactive: true)
           .ToList()
           .ForEach(r => r.enabled = active);
