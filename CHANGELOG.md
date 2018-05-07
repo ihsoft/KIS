@@ -1,3 +1,7 @@
+# 1.12 (May 6th, 2018):
+* [Fix #257] Helmet doesn't remove on the female kerbal models.
+* [Change] Upgrade to KSPDev Utils v0.33.
+
 # 1.11 (March 26th, 2018):
 * [Fix #248] Broken inventory for the new DLC suits.
 * [Fix #252] Allow setting type of the inventory via config.
