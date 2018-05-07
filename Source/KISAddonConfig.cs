@@ -22,7 +22,7 @@ sealed class KISAddonConfig : MonoBehaviour {
 
   [PersistentField("EvaInventory")]
   readonly static PersistentConfigNode evaInventory = new PersistentConfigNode();
-  
+
   [PersistentField("EvaPickup")]
   readonly static PersistentConfigNode evaPickup = new PersistentConfigNode();
 
