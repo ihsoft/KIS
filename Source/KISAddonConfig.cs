@@ -18,7 +18,7 @@ sealed class KISAddonConfig : MonoBehaviour {
   public readonly static List<string> stackableModules = new List<string>();
 
   [PersistentField("Global/breathableAtmoPressure")]
-  public readonly static float breathableAtmoPressure = 0.5f;
+  public static float breathableAtmoPressure = 0.5f;
 
   [PersistentField("EvaInventory")]
   readonly static PersistentConfigNode evaInventory = new PersistentConfigNode();
