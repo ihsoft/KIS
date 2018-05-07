@@ -717,7 +717,7 @@ sealed class KISAddonPointer : MonoBehaviour {
       //TODO: When there are no nodes try finding ones in the parent or in the children.
       // Ideally, the caller should have checked if this part has free nodes. Now the only
       // way is to pick *any* node. The surface one always exists so, it's a good
-      // candidate. Though, for many details it may result in a weird representation.
+      // candidate. However, for many details it may result in a weird representation.
       DebugEx.Error(
           "Part {0} has no free nodes, use {1}", partToAttach, partToAttach.srfAttachNode);
       attachNodes.Add(partToAttach.srfAttachNode);

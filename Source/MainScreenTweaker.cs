@@ -46,12 +46,12 @@ sealed class MainScreenTweaker : MonoBehaviour {
 
   /// <summary>Tells if tweaks should be applied.</summary>
   [PersistentField("MainScreenTweaker/enabled")]
-  public readonly bool twekerEnabled = false;
+  public bool twekerEnabled = false;
   
   /// <summary>Tells if all object paths in the scene needs to be logged.</summary>
   /// <remarks>Only enable it to get the full hierarchy dump.</remarks>
   [PersistentField("MainScreenTweaker/logAllObjects")]
-  public readonly bool logAllObjects = false;
+  public bool logAllObjects = false;
 
   /// <summary>Full list of configured tweaks on the screan.</summary>
   [PersistentField("MainScreenTweaker/modelTweak", isCollection = true)]

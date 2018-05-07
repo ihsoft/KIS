@@ -10,11 +10,11 @@ namespace KIS {
   
 static class UISounds {
   /// <summary>Sound to play when user chosen action cannot be acomplished.</summary>
-  static readonly string bipWrongSndPath = "KIS/Sounds/bipwrong";
+  static string bipWrongSndPath = "KIS/Sounds/bipwrong";
   /// <summary>Sound to play when click action is successfully handled.</summary>
-  static readonly string clickSndPath = "KIS/Sounds/click";
+  static string clickSndPath = "KIS/Sounds/click";
   /// <summary>Sound to play when mechanican screedriver has done the job.</summary>
-  static readonly string attachPartSndPath = "KIS/Sounds/attachScrewdriver";
+  static string attachPartSndPath = "KIS/Sounds/attachScrewdriver";
 
   /// <summary>Plays a sound to indicate the last user action hasn't succeeded.</summary>
   public static void PlayBipWrong() {

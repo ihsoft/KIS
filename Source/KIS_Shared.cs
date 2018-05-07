@@ -588,14 +588,9 @@ public static class KIS_Shared {
 
   /// <summary>Returns a rotation for the attach node.</summary>
   /// <param name="attachNode">A node to get orientation from.</param>
-  /// <param name="mirrorZ">If <c>true</c> then Z axis in the node's orientation will be mirrored.
-  /// E.g. <c>(1, 1, 1)</c> will be translated into <c>(1, 1, -1)</c>.</param>
   /// <returns>Rotation quaternion.</returns>
-  public static Quaternion GetNodeRotation(AttachNode attachNode, bool mirrorZ = false) {
+  public static Quaternion GetNodeRotation(AttachNode attachNode) {
     var orientation = attachNode.orientation;
-    if (mirrorZ) {
-      orientation.z = -orientation.z;
-    }
     return Quaternion.LookRotation(orientation);
   }
 
