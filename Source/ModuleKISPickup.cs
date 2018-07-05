@@ -1,5 +1,5 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
+using UnityEngine;
 
 namespace KIS {
 
@@ -25,6 +25,18 @@ public class ModuleKISPickup : PartModule {
   [KSPField]
   public string detachStaticSndPath = "KIS/Sounds/detachStatic";
   public FXGroup sndFx;
+
+  public bool IsActive() {
+    return vessel.IsControllable;
+  }
+
+  public float Distance(Vector3 position) {
+    return Vector3.Distance(part.transform.position, position);
+  }
+
+  public bool IsInRange(Vector3 position) {
+    return Distance(position) <= maxDistance;
+  }
 }
 
 }  // namespace

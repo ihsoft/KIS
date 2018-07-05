@@ -464,9 +464,7 @@ sealed class KISAddonPickup : MonoBehaviour {
           if (item.allowStaticAttach == ModuleKISItem.ItemAttachMode.AllowedAlways) {
             KISAddonPointer.allowStatic = true;
           } else if (item.allowStaticAttach == ModuleKISItem.ItemAttachMode.AllowedWithKisTool) {
-            ModuleKISPickup pickupModule =
-                GetActivePickupNearest(attachPart, canStaticAttachOnly: true);
-            if (pickupModule) {
+            if (HasActivePickupNearby(attachPart, canStaticAttachOnly: true)) {
               KISAddonPointer.allowStatic = true;
             }
           }
@@ -474,16 +472,12 @@ sealed class KISAddonPickup : MonoBehaviour {
           if (item.allowPartAttach == ModuleKISItem.ItemAttachMode.AllowedAlways) {
             KISAddonPointer.allowPart = true;
           } else if (item.allowPartAttach == ModuleKISItem.ItemAttachMode.AllowedWithKisTool) {
-            ModuleKISPickup pickupModule =
-                GetActivePickupNearest(attachPart, canPartAttachOnly: true);
-            if (pickupModule) {
+            if (HasActivePickupNearby(attachPart, canPartAttachOnly: true)) {
               KISAddonPointer.allowPart = true;
             }
           }
         } else {
-          ModuleKISPickup pickupModule =
-              GetActivePickupNearest(attachPart, canPartAttachOnly: true);
-          if (pickupModule) {
+          if (HasActivePickupNearby(attachPart, canPartAttachOnly: true)) {
             KISAddonPointer.allowPart = true;
           }
           KISAddonPointer.allowStatic = false;
@@ -524,8 +518,7 @@ sealed class KISAddonPickup : MonoBehaviour {
   }
 
   public void Update() {
-    // Check if action key is pressed for an EVA kerbal. 
-    if (HighLogic.LoadedSceneIsFlight && FlightGlobals.ActiveVessel.isEVA) {
+    if (HighLogic.LoadedSceneIsFlight && FlightGlobals.ActiveVessel.IsControllable) {
       // Check if attach/detach key is pressed
       if (KIS_Shared.IsKeyDown(attachKey)) {
         EnableAttachMode();
@@ -813,11 +806,6 @@ sealed class KISAddonPickup : MonoBehaviour {
       parentMount = part.parent.GetComponent<ModuleKISPartMount>();
     }
 
-    // Do nothing if part is EVA
-    if (part.vessel.isEVA) {
-      return;
-    }
-
     // Check part distance
     if (!HasActivePickupInRange(part)) {
       KISAddonCursor.CursorEnable(TooFarIcon, TooFarStatusTooltipTxt, TooFarTooltipTxt);
@@ -827,9 +815,8 @@ sealed class KISAddonPickup : MonoBehaviour {
     // Check if part is static attached
     if (item) {
       if (item.staticAttached) {
-        ModuleKISPickup pickupModule = GetActivePickupNearest(part, canStaticAttachOnly: true);
         if ((item.allowStaticAttach == ModuleKISItem.ItemAttachMode.AllowedAlways)
-            || (pickupModule
+            || (HasActivePickupNearby(part, canStaticAttachOnly: true)
                 && item.allowStaticAttach == ModuleKISItem.ItemAttachMode.AllowedWithKisTool)) {
           part.SetHighlightColor(XKCDColors.Periwinkle);
           part.SetHighlight(true, false);
@@ -837,14 +824,9 @@ sealed class KISAddonPickup : MonoBehaviour {
                                       LonePartTargetTooltipTxt.Format(part.partInfo.title));
           detachOk = true;
         } else {
-          if (FlightGlobals.ActiveVessel.isEVA) {
-            KISAddonCursor.CursorEnable(
-                NeedToolIcon, NeedToolStatusTooltipTxt,
-                NeedToolToStaticDetachTooltipTxt);
-          } else {
-            KISAddonCursor.CursorEnable(
-                ForbiddenIcon, NotSupportedStatusTooltipTxt, NotSupportedTooltipTxt);
-          }
+          KISAddonCursor.CursorEnable(
+              NeedToolIcon, NeedToolStatusTooltipTxt,
+              NeedToolToStaticDetachTooltipTxt);
         }
       }
     }
@@ -858,15 +840,9 @@ sealed class KISAddonPickup : MonoBehaviour {
             KISAddonCursor.CursorEnable(
                 ForbiddenIcon, DetachNotOkStatusTootltipTxt, NotSupportedTooltipTxt);
           } else if (item.allowPartAttach == ModuleKISItem.ItemAttachMode.AllowedWithKisTool) {
-            ModuleKISPickup pickupModule = GetActivePickupNearest(part, canPartAttachOnly: true);
-            if (!pickupModule) {
-              if (FlightGlobals.ActiveVessel.isEVA) {
-                KISAddonCursor.CursorEnable(
-                    NeedToolIcon, NeedToolStatusTooltipTxt, NeedToolToDetachTooltipTxt);
-              } else {
-                KISAddonCursor.CursorEnable(
-                    ForbiddenIcon, NotSupportedStatusTooltipTxt, NotSupportedTooltipTxt);
-              }
+            if (!HasActivePickupNearby(part, canPartAttachOnly: true)) {
+              KISAddonCursor.CursorEnable(
+                  NeedToolIcon, NeedToolStatusTooltipTxt, NeedToolToDetachTooltipTxt);
             }
           }
           return;
@@ -949,21 +925,19 @@ sealed class KISAddonPickup : MonoBehaviour {
 
   public bool HasActivePickupInRange(Vector3 position, bool canPartAttachOnly = false,
                                      bool canStaticAttachOnly = false) {
-    bool nearPickupModule = false;
-    var pickupModules = FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleKISPickup>();
-    foreach (var pickupModule in pickupModules) {
-      float partDist = Vector3.Distance(pickupModule.part.transform.position, position);
-      if (partDist <= pickupModule.maxDistance) {
-        if (!canPartAttachOnly && !canStaticAttachOnly) {
-          nearPickupModule = true;
-        } else if (canPartAttachOnly && pickupModule.allowPartAttach) {
-          nearPickupModule = true;
-        } else if (canStaticAttachOnly && pickupModule.allowStaticAttach) {
-          nearPickupModule = true;
-        }
-      }
-    }
-    return nearPickupModule;
+    return GetActivePickupAll(canPartAttachOnly, canStaticAttachOnly)
+                .Any(pickupModule => pickupModule.IsInRange(position));
+  }
+
+  public bool HasActivePickupNearby(Part p, bool canPartAttachOnly = false,
+                                  bool canStaticAttachOnly = false) {
+    return HasActivePickupNearby(p.transform.position, canPartAttachOnly, canStaticAttachOnly);
+  }
+
+  public bool HasActivePickupNearby(Vector3 position, bool canPartAttachOnly = false,
+                                  bool canStaticAttachOnly = false) {
+    return GetActivePickupAll(canPartAttachOnly, canStaticAttachOnly)
+                .Any();
   }
 
   public ModuleKISPickup GetActivePickupNearest(Part p, bool canPartAttachOnly = false,
@@ -973,37 +947,28 @@ sealed class KISAddonPickup : MonoBehaviour {
 
   public ModuleKISPickup GetActivePickupNearest(Vector3 position, bool canPartAttachOnly = false,
                                                 bool canStaticAttachOnly = false) {
-    ModuleKISPickup nearestPModule = null;
-    float nearestDistance = Mathf.Infinity;
-    var pickupModules = FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleKISPickup>();
-    foreach (var pickupModule in pickupModules) {
-      float partDist = Vector3.Distance(pickupModule.part.transform.position, position);
-      if (partDist <= nearestDistance) {
-        if (!canPartAttachOnly && !canStaticAttachOnly) {
-          nearestDistance = partDist;
-          nearestPModule = pickupModule;
-        } else if (canPartAttachOnly && pickupModule.allowPartAttach) {
-          nearestDistance = partDist;
-          nearestPModule = pickupModule;
-        } else if (canStaticAttachOnly && pickupModule.allowStaticAttach) {
-          nearestDistance = partDist;
-          nearestPModule = pickupModule;
-        }
-      }
-    }
-    return nearestPModule;
+    return GetActivePickupAll(canPartAttachOnly, canStaticAttachOnly)
+                .OrderBy(pickupModule => pickupModule.Distance(position))
+                .FirstOrDefault();
+  }
+
+  private List<ModuleKISPickup> GetActivePickupAll(
+      bool canPartAttachOnly = false, bool canStaticAttachOnly = false) {
+    return FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleKISPickup>()
+                .Where(pickupModule => pickupModule.IsActive())
+                .Where(pickupModule =>
+                    (!canPartAttachOnly && !canStaticAttachOnly)
+                    || (canPartAttachOnly && pickupModule.allowPartAttach)
+                    || (canStaticAttachOnly && pickupModule.allowStaticAttach))
+        .ToList();
   }
 
   private float GetAllPickupMaxMassInRange(Vector3 grabPosition) {
-    float maxMass = 0;
-    var allPickupModules = FindObjectsOfType(typeof(ModuleKISPickup)) as ModuleKISPickup[];
-    foreach (ModuleKISPickup pickupModule in allPickupModules) {
-      float partDist = Vector3.Distance(pickupModule.part.transform.position, grabPosition);
-      if (partDist <= pickupModule.maxDistance) {
-        maxMass += pickupModule.grabMaxMass;
-      }
-    }
-    return maxMass;
+    return FindObjectsOfType(typeof(ModuleKISPickup))
+                .Cast<ModuleKISPickup>()
+                .Where(pickupModule => pickupModule.IsActive())
+                .Where(pickupModule => pickupModule.IsInRange(grabPosition))
+                .Sum(pickupModule => pickupModule.grabMaxMass);
   }
 
   public void Pickup(Part part) {
@@ -1474,7 +1439,7 @@ sealed class KISAddonPickup : MonoBehaviour {
         // Check if part is a ground base.
         if (item.staticAttached
             && item.allowStaticAttach == ModuleKISItem.ItemAttachMode.AllowedWithKisTool
-            && !GetActivePickupNearest(part, canStaticAttachOnly: true)) {
+            && !HasActivePickupNearby(part, canStaticAttachOnly: true)) {
           rejectText = NeedToolToStaticDetachTooltipTxt;
         }
       } else {
@@ -1488,7 +1453,7 @@ sealed class KISAddonPickup : MonoBehaviour {
         }
         if (item.allowPartAttach == ModuleKISItem.ItemAttachMode.AllowedWithKisTool) {
           // Part requires a tool to be detached.
-          if (!GetActivePickupNearest(part, canPartAttachOnly: true)) {
+          if (!HasActivePickupNearby(part, canPartAttachOnly: true)) {
             rejectText = NeedToolToDetachTooltipTxt;
           }
         }
@@ -1529,16 +1494,10 @@ sealed class KISAddonPickup : MonoBehaviour {
       return true;
     }
 
-    // Check if there is a kerbonaut with a tool to handle the task.
-    ModuleKISPickup pickupModule = GetActivePickupNearest(part, canPartAttachOnly: true);
-    if (!pickupModule) {
-      // Check if it's EVA engineer or a KAS item.
-      if (FlightGlobals.ActiveVessel.isEVA) {
-        ReportCheckError(
-            NeedToolStatusTooltipTxt, NeedToolToAttachTooltipTxt, reportToConsole, NeedToolIcon);
-      } else {
-        ReportCheckError(NotSupportedStatusTooltipTxt, NotSupportedTooltipTxt, reportToConsole);
-      }
+    // Check if there is a KISPickup module to handle the task.
+    if (!HasActivePickupNearby(part, canPartAttachOnly: true)) {
+      ReportCheckError(
+          NeedToolStatusTooltipTxt, NeedToolToAttachTooltipTxt, reportToConsole, NeedToolIcon);
       return false;
     }
 

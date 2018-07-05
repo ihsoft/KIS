@@ -72,6 +72,12 @@ public class ModuleKISInventory : PartModule,
       description: "The message to present when an inventory which cannot be accessed from EVA is"
       + " attempted to be opened by an EVA kerbal.");
 
+  static readonly Message NotInRangeMsg = new Message(
+      "#kisLOC_00005a",
+      defaultTemplate: "Cannot access storage: it is out of range!",
+      description: "The message to present when an inventory on another vessel is attempted to be opened, "
+      + "but there is no pikcup module in range.");
+
   static readonly Message NotAccessibleFromInsideMsg =new Message(
       "#kisLOC_00006",
       defaultTemplate: "This storage is not accessible from the inside!",
@@ -578,6 +584,7 @@ public class ModuleKISInventory : PartModule,
   #region IHasContextMenu implementation
   public void UpdateContextMenu() {
     var invEvent = PartModuleUtils.GetEvent(this, ToggleInventory);
+    invEvent.externalToEVAOnly = false;
     if (invType == InventoryType.Pod) {
       if (HighLogic.LoadedSceneIsEditor) {
         invEvent.guiActive = true;
@@ -779,11 +786,8 @@ public class ModuleKISInventory : PartModule,
 
   /// <summary>Overridden from MonoBehaviour.</summary>
   void Update() {
-    if (showGui && HighLogic.LoadedSceneIsFlight && FlightGlobals.ActiveVessel.isEVA) {
-      var distEvaToContainer = Vector3.Distance(
-          FlightGlobals.ActiveVessel.transform.position, part.transform.position);
-      var pickup = KISAddonPickup.instance.GetActivePickupNearest(part);
-      if (!pickup || distEvaToContainer > pickup.maxDistance) {
+    if (showGui && HighLogic.LoadedSceneIsFlight && FlightGlobals.ActiveVessel != part.vessel) {
+      if (!KISAddonPickup.instance.HasActivePickupInRange(part)) {
         ToggleInventory();
       }
     }
@@ -871,15 +875,13 @@ public class ModuleKISInventory : PartModule,
       ToggleInventory();
     }
 
-    // Update the menu unfocused range to the newly selected pick up module (if any).
-    var pickup = FlightGlobals.ActiveVessel
-        .FindPartModulesImplementing<ModuleKISPickup>()
-        .OrderByDescending(x => x.maxDistance)
-        .FirstOrDefault();
-    var invEvent = PartModuleUtils.GetEvent(this, ToggleInventory);
-    invEvent.unfocusedRange = pickup
-        ? pickup.maxDistance :
-        new KSPEvent().unfocusedRange;  // Reset to the game's default.
+    // Update the menu unfocused range to the range of the pickup with the greatest range (if any)
+    // Modified to include distance from vessel center
+    PartModuleUtils.GetEvent(this, ToggleInventory).unfocusedRange =
+                FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleKISPickup>()
+                .Select(p => p.maxDistance
+                + Vector3.Distance(p.part.transform.position, p.vessel.transform.position))
+                .OrderByDescending(d => d).DefaultIfEmpty(new KSPEvent().unfocusedRange).First();
   }
 
   /// <summary>Checks if target part can accept non-empty inventories.</summary>
@@ -1279,12 +1281,18 @@ public class ModuleKISInventory : PartModule,
           ScreenMessaging.ShowPriorityScreenMessage(NotAccessibleWhileCarriedMsg);
           return;
         }
-        if (FlightGlobals.ActiveVessel.isEVA && !externalAccess) {
+
+        if (!externalAccess && FlightGlobals.ActiveVessel != part.vessel) {
           ScreenMessaging.ShowPriorityScreenMessage(NotAccessibleFromOutsideMsg);
           return;
         }
-        if (!FlightGlobals.ActiveVessel.isEVA && !internalAccess) {
+        if (!internalAccess && FlightGlobals.ActiveVessel == part.vessel) {
           ScreenMessaging.ShowPriorityScreenMessage(NotAccessibleFromInsideMsg);
+          return;
+        }
+
+        if (FlightGlobals.ActiveVessel != part.vessel && !KISAddonPickup.instance.HasActivePickupInRange(part.transform.position)) {
+          ScreenMessaging.ShowPriorityScreenMessage(NotInRangeMsg);
           return;
         }
       }
