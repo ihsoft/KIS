@@ -1282,15 +1282,6 @@ public class ModuleKISInventory : PartModule,
           return;
         }
 
-        if (!externalAccess && FlightGlobals.ActiveVessel != part.vessel) {
-          ScreenMessaging.ShowPriorityScreenMessage(NotAccessibleFromOutsideMsg);
-          return;
-        }
-        if (!internalAccess && FlightGlobals.ActiveVessel == part.vessel) {
-          ScreenMessaging.ShowPriorityScreenMessage(NotAccessibleFromInsideMsg);
-          return;
-        }
-
         if (FlightGlobals.ActiveVessel != part.vessel && !KISAddonPickup.instance.HasActivePickupInRange(part.transform.position)) {
           ScreenMessaging.ShowPriorityScreenMessage(NotInRangeMsg);
           return;
