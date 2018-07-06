@@ -17,8 +17,6 @@ public class ModuleKISPickup : PartModule {
   [KSPField]
   public string requiredSkill = "";
   [KSPField]
-  public bool requireSkillOnPartOnly = false;
-  [KSPField]
   public string dropSndPath = "KIS/Sounds/drop";
   [KSPField]
   public string attachPartSndPath = "KIS/Sounds/attachPart";
@@ -38,9 +36,9 @@ public class ModuleKISPickup : PartModule {
     if (string.IsNullOrEmpty(requiredSkill))
       return true;
 
-    var crew = requireSkillOnPartOnly
-      ? part.protoModuleCrew
-      : vessel.GetVesselCrew();
+    var crew = part.CrewCapacity > 0
+                ? part.protoModuleCrew
+                : vessel.GetVesselCrew();
 
     return crew.Any(c => c.HasEffect(requiredSkill));
   }
