@@ -40,6 +40,11 @@ public class ModuleKISPickup : PartModule {
                 ? part.protoModuleCrew
                 : vessel.GetVesselCrew();
 
+  if (HighLogic.CurrentGame.Mode != Game.Modes.SANDBOX
+      && HighLogic.CurrentGame.Mode != Game.Modes.SCIENCE_SANDBOX) {
+    return crew.Any();
+  }
+
     return crew.Any(c => c.HasEffect(requiredSkill));
   }
 
