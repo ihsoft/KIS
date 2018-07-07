@@ -520,27 +520,36 @@ sealed class KISAddonPickup : MonoBehaviour {
   public void Update() {
     if (HighLogic.LoadedSceneIsFlight && FlightGlobals.ActiveVessel.IsControllable) {
       // Check if attach/detach key is pressed
-      if (KIS_Shared.IsKeyDown(attachKey)) {
+      if (KIS_Shared.IsKeyDown(attachKey)
+          && (FlightGlobals.ActiveVessel.isEVA || Input.GetKey(KeyCode.LeftAlt))) {
         EnableAttachMode();
+        InputLockManager.SetControlLock(ControlTypes.ALLBUTCAMERAS, "KISPickup");
       }
       if (KIS_Shared.IsKeyUp(attachKey)) {
         DisableAttachMode();
+        InputLockManager.RemoveControlLock("KISPickup");
       }
 
       // Check if grab key is pressed.
-      if (KIS_Shared.IsKeyDown(grabKey)) {
+      if (KIS_Shared.IsKeyDown(grabKey)
+          && (FlightGlobals.ActiveVessel.isEVA || Input.GetKey(KeyCode.LeftAlt))) {
         EnableGrabMode();
+        InputLockManager.SetControlLock(ControlTypes.ALLBUTCAMERAS, "KISPickup");
       }
       if (KIS_Shared.IsKeyUp(grabKey)) {
         DisableGrabMode();
+        InputLockManager.RemoveControlLock("KISPickup");
       }
 
       // Check if re-docking key is pressed.
-      if (KIS_Shared.IsKeyDown(redockKey)) {
+      if (KIS_Shared.IsKeyDown(redockKey)
+          && (FlightGlobals.ActiveVessel.isEVA || Input.GetKey(KeyCode.LeftAlt))) {
         EnableRedockingMode();
+        InputLockManager.SetControlLock(ControlTypes.ALLBUTCAMERAS, "KISPickup");
       }
       if (KIS_Shared.IsKeyUp(redockKey)) {
         DisableRedockingMode();
+        InputLockManager.RemoveControlLock("KISPickup");
       }
     }
 
