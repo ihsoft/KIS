@@ -135,31 +135,13 @@ sealed class KISAddonPointer : MonoBehaviour {
   }
   static HashSet<Part> _allowedAttachmentParts;
 
-  public static bool allowMount {
-    get {
-      return _allowMount;
-    }
-    set {
-      ResetMouseOver();
-      _allowMount = value;
-    }
-  }
-  static bool _allowMount;
-
-  public static bool allowStack {
-    get {
-      return _allowStack;
-    }
-    set {
-      ResetMouseOver();
-      _allowStack = value;
-    }
-  }
-  static bool _allowStack;
+  public static bool allowMount;
+  public static ModuleKISPickup pickupModule;
+  public static bool allowStack => pickupModule.allowPartStack;
+  public static float maxDist => pickupModule.maxDistance;
 
   public static Part partToAttach;
   public static float scale = 1;
-  public static float maxDist = 2f;
   public static bool useAttachRules;
   static Transform sourceTransform;
   static RaycastHit hit;
@@ -553,12 +535,10 @@ sealed class KISAddonPointer : MonoBehaviour {
     }
 
     //Check distance
-    float sourceDist = 0;
-    if (sourceTransform) {
-      sourceDist =
-          Vector3.Distance(FlightGlobals.ActiveVessel.transform.position, sourceTransform.position);
-    }
-    float targetDist = Vector3.Distance(FlightGlobals.ActiveVessel.transform.position, hit.point);
+    float sourceDist = sourceTransform
+        ? Vector3.Distance(pickupModule.part.transform.position, sourceTransform.position)
+        : 0;
+    float targetDist = Vector3.Distance(pickupModule.part.transform.position, hit.point);
 
     //Set color
     Color color = colorOk;

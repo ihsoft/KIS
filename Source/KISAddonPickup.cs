@@ -1037,8 +1037,7 @@ sealed class KISAddonPickup : MonoBehaviour {
         KISAddonPointer.allowEva = true;
         KISAddonPointer.allowMount = true;
         KISAddonPointer.allowStatic = true;
-        KISAddonPointer.allowStack = pickupModule.allowPartStack;
-        KISAddonPointer.maxDist = pickupModule.maxDistance;
+        KISAddonPointer.pickupModule = pickupModule;
         KISAddonPointer.scale = draggedItem != null
             ? KIS_Shared.GetPartExternalScaleModifier(draggedItem.partNode)
             : 1;
