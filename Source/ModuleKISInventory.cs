@@ -19,7 +19,7 @@ using UnityEngine;
 
 namespace KIS {
 
-// Next localization ID: #kisLOC_00061.
+// Next localization ID: #kisLOC_00062.
 [PersistentFieldsDatabase("KIS/settings/KISConfig")]
 public class ModuleKISInventory : PartModule,
     // KSP interfaces.
@@ -71,12 +71,6 @@ public class ModuleKISInventory : PartModule,
       defaultTemplate: "This storage is not accessible from the outside!",
       description: "The message to present when an inventory which cannot be accessed from EVA is"
       + " attempted to be opened by an EVA kerbal.");
-
-  static readonly Message NotInRangeMsg = new Message(
-      "#kisLOC_00005a",
-      defaultTemplate: "Cannot access storage: it is out of range!",
-      description: "The message to present when an inventory on another vessel is attempted to be opened, "
-      + "but there is no pikcup module in range.");
 
   static readonly Message NotAccessibleFromInsideMsg =new Message(
       "#kisLOC_00006",
@@ -442,6 +436,12 @@ public class ModuleKISInventory : PartModule,
       defaultTemplate: "<color=#FFA500>Cannot be accessed from EVA</color>",
       description: "The info string in the editor to present if kerbals cannot access the items in"
       + " the inventory when going EVA.");
+
+  static readonly Message NotInRangeMsg = new Message(
+      "#kisLOC_000061",
+      defaultTemplate: "Cannot access storage: it is out of range!",
+      description: "The message to present when an inventory on another vessel is attempted to be opened, "
+      + "but there is no pikcup module in range.");
   #endregion
 
   static readonly GUILayoutOption QuantityAdjustBtnLayout = GUILayout.Width(20);
