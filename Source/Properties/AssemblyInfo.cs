@@ -11,7 +11,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration ("")]
 [assembly: AssemblyCompany ("Kerbal Systems")]
 [assembly: AssemblyProduct ("KIS")]
-[assembly: AssemblyCopyright ("Copyright (C) Kerbal Systems 2015-2016")]
+[assembly: AssemblyCopyright ("Copyright (C) Kerbal Systems 2015-2018")]
 [assembly: AssemblyTrademark ("")]
 [assembly: AssemblyCulture ("")]
 // Setting ComVisible to false makes the types in this assembly not visible 
