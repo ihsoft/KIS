@@ -572,9 +572,7 @@ sealed class KISAddonPickup : MonoBehaviour {
       return;
     }
     // Check if pickup module is present on the active vessel.
-    var pickupModules =
-      FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleKISPickup>();
-    if (!pickupModules.Any()) {
+    if (!GetActivePickupAll().Any()) {
       return;
     }
     KISAddonCursor.StartPartDetection(
@@ -599,9 +597,7 @@ sealed class KISAddonPickup : MonoBehaviour {
       return;
     }
     // Check if pickup module is present on the active vessel.
-    List<ModuleKISPickup> pickupModules = 
-      FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleKISPickup>();
-    if (cursorMode != CursorMode.Nothing || !pickupModules.Any()) {
+    if (cursorMode != CursorMode.Nothing || !GetActivePickupAll().Any()) {
       return;
     }
     // Entering "detach parts" mode.
@@ -1264,9 +1260,7 @@ sealed class KISAddonPickup : MonoBehaviour {
     if (KISAddonPointer.isRunning || cursorMode != CursorMode.Nothing) {
       return;
     }
-    var pickupModules =
-        FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleKISPickup>();
-    if (pickupModules.Count > 0) {
+    if (GetActivePickupAll().Any()) {
       DebugEx.Info("Enable re-dock mode");
       KISAddonCursor.StartPartDetection(OnMouseRedockPartClick, OnMouseRedockEnterPart,
                                         null, OnMouseRedockExitPart);
