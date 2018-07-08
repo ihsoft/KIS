@@ -1,3 +1,8 @@
+# 1.13 (July 7th, 2018):
+* [Change] Migrate to x64 profile. The 32-bit game mode is no more supported!
+* [Change] Migrate to KSPDev Utils 0.36.0.
+* [Enhancement] Add Italian localization (IT_it).
+
 # 1.12 (May 6th, 2018):
 * [Fix #257] Helmet doesn't remove on the female kerbal models.
 * [Change] Upgrade to KSPDev Utils v0.33.
