@@ -962,7 +962,7 @@ sealed class KISAddonPickup : MonoBehaviour {
                 .Cast<ModuleKISPickup>()
                 .Where(pickupModule => pickupModule.IsActive())
                 .Where(pickupModule => pickupModule.IsInRange(grabPosition))
-                .Sum(pickupModule => pickupModule.grabMaxMass);
+                .Sum(pickupModule => pickupModule.AdjustedGrabMaxMass);
   }
 
   public void Pickup(Part part) {

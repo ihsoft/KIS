@@ -138,7 +138,7 @@ sealed class KISAddonPointer : MonoBehaviour {
   public static bool allowMount;
   public static ModuleKISPickup pickupModule;
   public static bool allowStack => pickupModule.allowPartStack;
-  public static float maxDist => pickupModule.maxDistance;
+  public static float maxDist => pickupModule.AdjustedMaxDist;
 
   public static Part partToAttach;
   public static float scale = 1;

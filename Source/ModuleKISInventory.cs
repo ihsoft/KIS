@@ -879,7 +879,7 @@ public class ModuleKISInventory : PartModule,
     // Modified to include distance from vessel center
     PartModuleUtils.GetEvent(this, ToggleInventory).unfocusedRange =
                 FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleKISPickup>()
-                .Select(p => p.maxDistance
+                .Select(p => p.AdjustedMaxDist
                 + Vector3.Distance(p.part.transform.position, p.vessel.transform.position))
                 .OrderByDescending(d => d).DefaultIfEmpty(new KSPEvent().unfocusedRange).First();
   }

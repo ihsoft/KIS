@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using KSPDev.ConfigUtils;
+using System.Linq;
 using UnityEngine;
 
 namespace KIS {
@@ -40,12 +41,36 @@ public class ModuleKISPickup : PartModule {
                 ? part.protoModuleCrew
                 : vessel.GetVesselCrew();
 
-  if (HighLogic.CurrentGame.Mode != Game.Modes.SANDBOX
-      && HighLogic.CurrentGame.Mode != Game.Modes.SCIENCE_SANDBOX) {
-    return crew.Any();
-  }
+    if (HighLogic.CurrentGame.Mode != Game.Modes.SANDBOX
+        && HighLogic.CurrentGame.Mode != Game.Modes.SCIENCE_SANDBOX) {
+      return crew.Any();
+    }
 
     return crew.Any(c => c.HasEffect(requiredSkill));
+  }
+
+  [PersistentField("EvaPickup/externalCommandSeatRangeModifier")]
+  public static float externalCommandSeatRangeModifier = 10;
+
+  [PersistentField("EvaPickup/externalCommandSeatStrengthModifier")]
+  public static float externalCommandSeatStrengthModifier = 2;
+
+  public float AdjustedMaxDist { 
+    get {
+      if (!FlightGlobals.ActiveVessel.isEVA && part.name.StartsWith("kerbalEVA"))
+        return maxDistance * externalCommandSeatRangeModifier;
+
+      return maxDistance;
+    }
+  }
+    
+  public float AdjustedGrabMaxMass { 
+    get {
+      if (!FlightGlobals.ActiveVessel.isEVA && part.name.StartsWith("kerbalEVA"))
+        return grabMaxMass * externalCommandSeatStrengthModifier;
+
+      return grabMaxMass;
+    }
   }
 
   public float Distance(Part part) {
@@ -61,7 +86,7 @@ public class ModuleKISPickup : PartModule {
   }
 
   public bool IsInRange(Vector3 position) {
-    return Distance(position) <= maxDistance;
+    return Distance(position) <= AdjustedMaxDist;
   }
 }
 
