@@ -1,4 +1,4 @@
-# 1.13 (pre-release):
+# 1.13 (July 7th, 2018):
 * [Change] Migrate to x64 profile. The 32-bit game mode is no more supported!
 * [Change] Migrate to KSPDev Utils 0.36.0.
 * [Enhancement] Add Italian localization (IT_it).
