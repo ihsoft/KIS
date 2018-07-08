@@ -17,7 +17,7 @@ using UnityEngine.EventSystems;
 
 namespace KIS {
 
-// Next localization ID: #kisLOC_01040.
+// Next localization ID: #kisLOC_01041.
 [PersistentFieldsDatabase("KIS/settings/KISConfig")]
 sealed class KISAddonPickup : MonoBehaviour {
   #region Localizable GUI strings.
@@ -273,6 +273,11 @@ sealed class KISAddonPickup : MonoBehaviour {
       "#kisLOC_01039",
       defaultTemplate: "[Escape] to cancel",
       description: "The tooltip help string for the key binding to cancel the operation.");
+
+  static readonly Message SourceInventoryTooFar = new Message(
+      "#kisLOC_01040",
+      defaultTemplate: "Storage is too far.",
+      description: "The error text when an item is dragged out to the world from an inventory that is too far.");
   #endregion
 
   /// <summary>A helper class to handle mouse clicks in the editor.</summary>
@@ -1015,6 +1020,13 @@ sealed class KISAddonPickup : MonoBehaviour {
     DebugEx.Info("End pickup of {0} from part: {1}", part, fromPart);
     if (!KISAddonPointer.isRunning) {
       var pickupModule = GetActivePickupNearest(fromPart);
+      if (!pickupModule.IsInRange(fromPart)) { 
+        ReportCheckError(SourceInventoryTooFar,
+                       TooFarTooltipTxt,
+                       cursorIcon: TooFarIcon,
+                       reportToConsole: true);
+        return;
+      }
       var grabPosition = fromPart.transform.position;
       int unusedPartsCount;
       if (pickupModule

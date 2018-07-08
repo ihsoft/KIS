@@ -48,8 +48,16 @@ public class ModuleKISPickup : PartModule {
     return crew.Any(c => c.HasEffect(requiredSkill));
   }
 
+  public float Distance(Part part) {
+    return Distance(part.transform.position);
+  }
+
   public float Distance(Vector3 position) {
     return Vector3.Distance(part.transform.position, position);
+  }
+
+  public bool IsInRange(Part part) { 
+    return IsInRange(part.transform.position);
   }
 
   public bool IsInRange(Vector3 position) {
