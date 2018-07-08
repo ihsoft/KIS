@@ -524,7 +524,7 @@ sealed class KISAddonPickup : MonoBehaviour {
         if (Input.GetKey(KeyCode.LeftAlt) && Input.GetKey(KeyCode.LeftShift)) { 
           EnableRedockingMode();
         }
-        if (Input.GetKey(KeyCode.LeftAlt)) { 
+        if (pointerMode == PointerMode.Drop || Input.GetKey(KeyCode.LeftAlt)) { 
           EnableAttachMode();
         }
 
