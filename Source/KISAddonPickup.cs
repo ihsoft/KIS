@@ -1302,6 +1302,7 @@ sealed class KISAddonPickup : MonoBehaviour {
       DebugEx.Info("Enable re-dock mode");
       KISAddonCursor.StartPartDetection(OnMouseRedockPartClick, OnMouseRedockEnterPart,
                                         null, OnMouseRedockExitPart);
+      KISAddonCursor.CursorEnable(GrabIcon, ReDockOkStatusTooltipTxt, ReDockSelectVesselText);
       cursorMode = CursorMode.ReDock;
     }
   }
