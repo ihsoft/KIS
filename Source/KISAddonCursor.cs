@@ -21,6 +21,12 @@ sealed class KISAddonCursor : MonoBehaviour {
   static OnMousePartAction delegateOnMouseHoverPart;
   static OnMousePartAction delegateOnMouseExitPart;
 
+  public static bool isRunning {
+    get {
+      return cursorShow;
+    }
+  }
+
   // Cursor hint text settings.
   const int ActionIconSize = 24;
   // It's quare.

@@ -518,19 +518,56 @@ sealed class KISAddonPickup : MonoBehaviour {
 
   public void Update() {
     if (HighLogic.LoadedSceneIsFlight && FlightGlobals.ActiveVessel.IsControllable) {
-      if (KIS_Shared.IsKeyDown(grabKey)) { 
-        InputLockManager.SetControlLock(ControlTypes.ALLBUTCAMERAS, "KISPickup");
-
-        if (Input.GetKey(KeyCode.LeftAlt) && Input.GetKey(KeyCode.LeftShift)) { 
-          EnableRedockingMode();
+      if (KIS_Shared.IsKeyDown(grabKey)) {
+        if (KISAddonPointer.isRunning) {
+          switch (pointerMode) {
+            case PointerMode.Nothing:
+              throw new InvalidOperationException();
+            case PointerMode.Drop:
+               EnableAttachMode();
+               return;
+            case PointerMode.Attach:
+               DisableAttachMode();
+               return;
+            case PointerMode.ReDock:
+               return;
+            default:
+              throw new ArgumentOutOfRangeException("pointerMode");
+          }
         }
-        if (pointerMode == PointerMode.Drop || Input.GetKey(KeyCode.LeftAlt)) { 
-          EnableAttachMode();
+
+        if (draggedPart) {
+          return;
         }
 
-        EnableGrabMode();
+        if (!KISAddonCursor.isRunning) {
+          InputLockManager.SetControlLock(ControlTypes.ALLBUTCAMERAS, "KISPickup");
+          EnableGrabMode();
+          return;
+        }
+
+        switch (cursorMode) {
+          case CursorMode.Nothing:
+            throw new InvalidOperationException();
+          case CursorMode.Detach:
+            DisableAttachMode();
+            EnableRedockingMode();
+            return;
+          case CursorMode.Grab:
+            DisableGrabMode();
+            EnableAttachMode();
+            return;
+          case CursorMode.ReDock:
+            DisableRedockingMode();
+            InputLockManager.RemoveControlLock("KISPickup");
+            return;
+
+          default:
+            throw new ArgumentOutOfRangeException("pointerMode");
+        }
       }
-      if (KIS_Shared.IsKeyUp(grabKey)) {
+
+      if (KIS_Shared.IsKeyUp(KeyCode.Escape)) {
         DisableGrabMode();
         DisableAttachMode();
         DisableRedockingMode();
@@ -671,6 +708,9 @@ sealed class KISAddonPickup : MonoBehaviour {
     if (hoverInventoryGui()) {
       // Couroutine to let time to KISModuleInventory to catch the draggedPart
       StartCoroutine(WaitAndStopDrag());
+      if (HighLogic.LoadedSceneIsFlight) {
+        InputLockManager.RemoveControlLock("KISPickup");
+      }
     } else {
       ModuleKISPartDrag pDrag = null;
       if (KISAddonCursor.hoveredPart && KISAddonCursor.hoveredPart != draggedPart) {
@@ -871,14 +911,9 @@ sealed class KISAddonPickup : MonoBehaviour {
       return;
     }
     detachActive = false;
+    cursorMode = CursorMode.Nothing;
     KISAddonCursor.StopPartDetection();
     KISAddonCursor.CursorDefault();
-
-    // Get actor's pickup module. Not having one is very suspicious but not a blocker. 
-    var pickupModule = FlightGlobals.ActiveVessel.GetComponent<ModuleKISPickup>();
-    if (!pickupModule) {
-      DebugEx.Error("Unexpected actor executed KIS action via UI: {0}", FlightGlobals.ActiveVessel);
-    }
 
     // Detach part and play a detach sound if one available.
     ModuleKISItem item = part.GetComponent<ModuleKISItem>();
@@ -887,10 +922,12 @@ sealed class KISAddonPickup : MonoBehaviour {
     } else {
       KIS_Shared.DecoupleAssembly(part);
     }
-    if (pickupModule) {
-      KIS_Shared.PlaySoundAtPoint(
-          pickupModule.detachStaticSndPath, pickupModule.part.transform.position);
-    }
+
+    var pickupModule = GetActivePickupNearest(part);
+    KIS_Shared.PlaySoundAtPoint(
+        pickupModule.detachStaticSndPath, pickupModule.part.transform.position);
+
+    InputLockManager.RemoveControlLock("KISPickup");
   }
 
   void OnMouseDetachExitPart(Part p) {
@@ -1157,6 +1194,7 @@ sealed class KISAddonPickup : MonoBehaviour {
     draggedPart = null;
     movingPart = null;
     KISAddonCursor.CursorDefault();
+    InputLockManager.RemoveControlLock("KISPickup");
   }
 
   void MoveDrop(Part tgtPart, Vector3 pos, Quaternion rot) {
