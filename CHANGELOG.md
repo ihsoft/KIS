@@ -1,3 +1,5 @@
+# 1.13 (pre-release):
+
 # 1.12 (May 6th, 2018):
 * [Fix #257] Helmet doesn't remove on the female kerbal models.
 * [Change] Upgrade to KSPDev Utils v0.33.
