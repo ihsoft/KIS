@@ -979,7 +979,7 @@ sealed class KISAddonPickup : MonoBehaviour {
                 .FirstOrDefault();
   }
 
-  private List<ModuleKISPickup> GetActivePickupAll(
+  public List<ModuleKISPickup> GetActivePickupAll(
       bool canPartAttachOnly = false, bool canStaticAttachOnly = false) {
     return FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleKISPickup>()
                 .Where(pickupModule => pickupModule.IsActive())
