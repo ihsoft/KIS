@@ -531,7 +531,8 @@ sealed class KISAddonPointer : MonoBehaviour {
       }
     }
 
-    var pickupModule = KISAddonPickup.instance.GetActivePickupNearest(hit.point);
+    var pickupModule = KISAddonPickup.instance.GetActivePickupNearest(hit.point,
+        canStackAttachOnly: pointerTarget == PointerTarget.PartNode);
 
     //Check distance
     float sourceDist = sourceTransform

@@ -945,48 +945,52 @@ sealed class KISAddonPickup : MonoBehaviour {
     detachOk = false;
   }
 
-  public bool HasActivePickupInRange(Part p, bool canPartAttachOnly = false,
-                                     bool canStaticAttachOnly = false) {
-    return HasActivePickupInRange(p.transform.position, canPartAttachOnly, canStaticAttachOnly);
+  public bool HasActivePickupInRange(Part p, 
+      bool canPartAttachOnly = false, bool canStaticAttachOnly = false, bool canStackAttachOnly = false) {
+    return HasActivePickupInRange(p.transform.position, canPartAttachOnly, canStaticAttachOnly, canStackAttachOnly);
   }
 
-  public bool HasActivePickupInRange(Vector3 position, bool canPartAttachOnly = false,
-                                     bool canStaticAttachOnly = false) {
-    return GetActivePickupAll(canPartAttachOnly, canStaticAttachOnly)
+  public bool HasActivePickupInRange(Vector3 position, 
+      bool canPartAttachOnly = false, bool canStaticAttachOnly = false, bool canStackAttachOnly = false) {
+    return GetActivePickupAll(canPartAttachOnly, canStaticAttachOnly, canStackAttachOnly)
                 .Any(pickupModule => pickupModule.IsInRange(position));
   }
 
-  public bool HasActivePickupNearby(Part p, bool canPartAttachOnly = false,
-                                  bool canStaticAttachOnly = false) {
-    return HasActivePickupNearby(p.transform.position, canPartAttachOnly, canStaticAttachOnly);
+  public bool HasActivePickupNearby(Part p, 
+      bool canPartAttachOnly = false, bool canStaticAttachOnly = false, bool canStackAttachOnly = false) {
+    return HasActivePickupNearby(p.transform.position, canPartAttachOnly, canStaticAttachOnly, canStackAttachOnly);
   }
 
-  public bool HasActivePickupNearby(Vector3 position, bool canPartAttachOnly = false,
-                                  bool canStaticAttachOnly = false) {
-    return GetActivePickupAll(canPartAttachOnly, canStaticAttachOnly)
-                .Any();
+  public bool HasActivePickupNearby(Vector3 position, 
+      bool canPartAttachOnly = false, bool canStaticAttachOnly = false, bool canStackAttachOnly = false) {
+    return GetActivePickupAll(canPartAttachOnly, canStaticAttachOnly, canStackAttachOnly).Any();
   }
 
-  public ModuleKISPickup GetActivePickupNearest(Part p, bool canPartAttachOnly = false,
-                                                bool canStaticAttachOnly = false) {
-    return GetActivePickupNearest(p.transform.position, canPartAttachOnly, canStaticAttachOnly);
+  public ModuleKISPickup GetActivePickupNearest(Part p, 
+      bool canPartAttachOnly = false, bool canStaticAttachOnly = false, bool canStackAttachOnly = false) {
+    return GetActivePickupNearest(p.transform.position, canPartAttachOnly, canStaticAttachOnly, canStackAttachOnly);
   }
 
-  public ModuleKISPickup GetActivePickupNearest(Vector3 position, bool canPartAttachOnly = false,
-                                                bool canStaticAttachOnly = false) {
-    return GetActivePickupAll(canPartAttachOnly, canStaticAttachOnly)
+  public ModuleKISPickup GetActivePickupNearest(Vector3 position, 
+      bool canPartAttachOnly = false, bool canStaticAttachOnly = false, bool canStackAttachOnly = false) {
+    return GetActivePickupAll(canPartAttachOnly, canStaticAttachOnly, canStackAttachOnly)
                 .OrderBy(pickupModule => pickupModule.Distance(position))
                 .FirstOrDefault();
   }
 
   public List<ModuleKISPickup> GetActivePickupAll(
-      bool canPartAttachOnly = false, bool canStaticAttachOnly = false) {
+      bool canPartAttachOnly = false, bool canStaticAttachOnly = false, bool canStackAttachOnly = false) {
+    if (new[] { canPartAttachOnly, canStaticAttachOnly, canStackAttachOnly }.Count(b => b) > 1) {
+        throw new InvalidOperationException("Can only search for one rule or none.");
+    }
+
     return FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleKISPickup>()
                 .Where(pickupModule => pickupModule.IsActive())
                 .Where(pickupModule =>
-                    (!canPartAttachOnly && !canStaticAttachOnly)
+                    (!canPartAttachOnly && !canStaticAttachOnly && !canStackAttachOnly)
                     || (canPartAttachOnly && pickupModule.allowPartAttach)
-                    || (canStaticAttachOnly && pickupModule.allowStaticAttach))
+                    || (canStaticAttachOnly && pickupModule.allowStaticAttach)
+                    || (canStackAttachOnly && pickupModule.allowPartStack))
         .ToList();
   }
 
