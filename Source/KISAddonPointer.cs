@@ -136,9 +136,6 @@ sealed class KISAddonPointer : MonoBehaviour {
   static HashSet<Part> _allowedAttachmentParts;
 
   public static bool allowMount;
-  public static ModuleKISPickup pickupModule;
-  public static bool allowStack => pickupModule.allowPartStack;
-  public static float maxDist => pickupModule.AdjustedMaxDist;
 
   public static Part partToAttach;
   public static float scale = 1;
@@ -416,7 +413,7 @@ sealed class KISAddonPointer : MonoBehaviour {
         }
       }
     }
-    if (allowStack && currentAttachNode.nodeType != AttachNode.NodeType.Surface) {
+    if (currentAttachNode.nodeType != AttachNode.NodeType.Surface) {
       foreach (var an in KIS_Shared.GetAvailableAttachNodes(hoverPart, needSrf:false)) {
         KIS_Shared.AssignAttachIcon(hoverPart, an, colorStack);
       }
@@ -534,6 +531,8 @@ sealed class KISAddonPointer : MonoBehaviour {
       }
     }
 
+    var pickupModule = KISAddonPickup.instance.GetActivePickupNearest(hit.point);
+
     //Check distance
     float sourceDist = sourceTransform
         ? Vector3.Distance(pickupModule.part.transform.position, sourceTransform.position)
@@ -580,13 +579,14 @@ sealed class KISAddonPointer : MonoBehaviour {
         }
         break;
       case PointerTarget.PartNode:
-        invalidTarget = !allowStack;
+        invalidTarget = !pickupModule.allowPartStack;
         color = colorStack;
         break;
     }
           
     // Handle generic "not OK" color. 
-    if (sourceDist > maxDist || targetDist > maxDist) {
+    if (sourceDist > pickupModule.AdjustedMaxDist
+        || targetDist > pickupModule.AdjustedMaxDist) {
       color = colorDistNok;
     } else if (invalidTarget || cannotSurfaceAttach || invalidCurrentNode
                || itselfIsInvalid || restrictedPart) {
@@ -615,11 +615,11 @@ sealed class KISAddonPointer : MonoBehaviour {
       } else if (invalidCurrentNode) {
         ScreenMessaging.ShowInfoScreenMessage(NodeNotForSurfaceAttachMsg);
         UISounds.PlayBipWrong();
-      } else if (sourceDist > maxDist) {
-        ScreenMessaging.ShowInfoScreenMessage(TooFarFromSourceMsg.Format(sourceDist, maxDist));
+      } else if (sourceDist > pickupModule.AdjustedMaxDist) {
+        ScreenMessaging.ShowInfoScreenMessage(TooFarFromSourceMsg.Format(sourceDist, pickupModule.AdjustedMaxDist));
         UISounds.PlayBipWrong();
-      } else if (targetDist > maxDist) {
-        ScreenMessaging.ShowInfoScreenMessage(TooFarFromTargetMsg.Format(targetDist, maxDist));
+      } else if (targetDist > pickupModule.AdjustedMaxDist) {
+        ScreenMessaging.ShowInfoScreenMessage(TooFarFromTargetMsg.Format(targetDist, pickupModule.AdjustedMaxDist));
         UISounds.PlayBipWrong();
       } else if (restrictedPart) {
         ScreenMessaging.ShowInfoScreenMessage(
