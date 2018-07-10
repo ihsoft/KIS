@@ -1,10 +1,87 @@
 ﻿using KSPDev.ConfigUtils;
+using KSPDev.GUIUtils;
 using System.Linq;
+using System.Text;
 using UnityEngine;
 
 namespace KIS {
 
-public class ModuleKISPickup : PartModule {
+// Next localization ID: #kisLOC_11007.
+public class ModuleKISPickup : PartModule, IModuleInfo {
+
+  #region Localizable GUI strings.
+  static readonly Message ModuleTitleInfo = new Message(
+      "#kisLOC_11000",
+      defaultTemplate: "KIS Manipulator",
+      description: "The title of the module to present in the editor details window.");
+
+  static readonly Message<bool> AllowPartAttachPartInfo = new Message<bool>(
+      "#kisLOC_11001",
+      defaultTemplate: "Can surface attach: <<1>>",
+      description: "The info string in the editor for part attach rule."
+      + "\nArgument <<1>> is a boolean.");
+
+  static readonly Message<bool> AllowStaticAttachPartInfo = new Message<bool>(
+      "#kisLOC_11002",
+      defaultTemplate: "Can attach to ground: <<1>>",
+      description: "The info string in the editor for static attach rule."
+      + "\nArgument <<1>> is a boolean.");
+
+  static readonly Message<bool> AllowPartStackPartInfo = new Message<bool>(
+      "#kisLOC_11003",
+      defaultTemplate: "Can attach to stack nodes: <<1>>",
+      description: "The info string in the editor for static attach rule."
+      + "\nArgument <<1>> is a boolean.");
+
+  static readonly Message<float> MaxDistancePartInfo = new Message<float>(
+      "#kisLOC_11004",
+      defaultTemplate: "Maximum range: <<1>>m",
+      description: "The info string in the editor for manipulator range."
+      + "\nArgument <<1>> is the maximum range.");
+
+  static readonly Message<float> GrabMaxMassPartInfo = new Message<float>(
+      "#kisLOC_11005",
+      defaultTemplate: "Maximum mass: <<1>>t",
+      description: "The info string in the editor for the maximum mass limit."
+      + "\nArgument <<1>> is the maximum mass.");
+
+  static readonly Message<string> RequiredSkillPartInfo = new Message<string>(
+      "#kisLOC_11006",
+      defaultTemplate: "Required skill: <<1>>",
+      description: "The info string in the editor for a required skill."
+      + "\nArgument <<1>> is the name of the required skill.");
+  #endregion
+
+  #region IModuleInfo implementation
+  /// <inheritdoc/>
+  public virtual string GetModuleTitle() { 
+    return ModuleTitleInfo;
+  }
+
+  /// <inheritdoc/>
+  public override string GetInfo() {
+    var sb = new StringBuilder();
+    sb.AppendLine(MaxDistancePartInfo.Format(maxDistance));
+    sb.AppendLine(GrabMaxMassPartInfo.Format(grabMaxMass));
+    sb.AppendLine(AllowPartAttachPartInfo.Format(allowPartAttach));
+    sb.AppendLine(AllowPartStackPartInfo.Format(allowPartStack));
+    //sb.AppendLine(AllowStaticAttachPartInfo.Format(allowStaticAttach));
+    if (!string.IsNullOrEmpty(requiredSkill))
+      sb.AppendLine(RequiredSkillPartInfo.Format(requiredSkill));
+    return sb.ToString();
+  }
+
+  /// <inheritdoc/>
+  public virtual Callback<Rect> GetDrawModulePanelCallback() {
+    return null;
+  }
+
+  /// <inheritdoc/>
+  public virtual string GetPrimaryField() {
+    return null;
+  }
+  #endregion
+
   [KSPField]
   public bool allowPartAttach = true;
   [KSPField]
