@@ -2,7 +2,6 @@
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <ProjectGuid>{3C0C1ACF-15FB-4852-A15A-BC3F16D3EF33}</ProjectGuid>
-
     <Configuration Condition=" '$(Configuration)' == '' ">Release</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <OutputType>Library</OutputType>
@@ -53,8 +52,8 @@
     <Reference Include="Assembly-CSharp-firstpass">
       <HintPath>Q:\KSP_x64_Data\Managed\Assembly-CSharp-firstpass.dll</HintPath>
     </Reference>
-    <Reference Include="KSPDev_Utils.0.36">
-      <HintPath>..\Binaries\KSPDev_Utils.0.36.dll</HintPath>
+    <Reference Include="KSPDev_Utils.0.37">
+      <HintPath>..\Binaries\KSPDev_Utils.0.37.dll</HintPath>
     </Reference>
     <Reference Include="System">
       <HintPath>Q:\KSP_x64_Data\Managed\System.dll</HintPath>

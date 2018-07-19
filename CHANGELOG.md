@@ -1,3 +1,6 @@
+# 1.14 (July 18th, 2018):
+* [Change] Migrate to KSPDev Utils 0.37.0. A stability fix.
+
 # 1.13 (July 7th, 2018):
 * [Change] Migrate to x64 profile. The 32-bit game mode is no more supported!
 * [Change] Migrate to KSPDev Utils 0.36.0.
