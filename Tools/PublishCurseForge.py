@@ -1,8 +1,8 @@
 # Public domain license.
 # Author: igor.zavoychinskiy@gmail.com
 # GitHub: https://github.com/ihsoft/KSPDev_ReleaseBuilder
-# $version: 1
-# $date: 07/14/2018
+# $version: 2
+# $date: 10/16/2018
 
 """ Script to publish releases to Kerbal CurseForge.
 
@@ -156,7 +156,7 @@ def main(argv):
     if versions_re == 'latest':
       game_versions = game_versions[0:1]
     else:
-      prefix = re.match(r'^(.+?\..+?\.).*$', game_versions[0]).group(1)
+      prefix = re.match(r'^(.+?\..+?)(\..+)?$', game_versions[0]).group(1)
       game_versions = filter(lambda x: x.startswith(prefix), game_versions)
   else:
     game_versions = map(
