@@ -46,12 +46,12 @@ sealed class MainScreenTweaker : MonoBehaviour {
 
   /// <summary>Tells if tweaks should be applied.</summary>
   [PersistentField("MainScreenTweaker/enabled")]
-  public bool twekerEnabled = false;
+  public bool twekerEnabled;
   
   /// <summary>Tells if all object paths in the scene needs to be logged.</summary>
   /// <remarks>Only enable it to get the full hierarchy dump.</remarks>
   [PersistentField("MainScreenTweaker/logAllObjects")]
-  public bool logAllObjects = false;
+  public bool logAllObjects;
 
   /// <summary>Full list of configured tweaks on the screan.</summary>
   [PersistentField("MainScreenTweaker/modelTweak", isCollection = true)]
@@ -83,7 +83,7 @@ sealed class MainScreenTweaker : MonoBehaviour {
       foreach (var tweak in modelTweaks) {
         var names = tweak.modelNamePattern.Split('/');
         var reducedNames = names.Skip(1).ToArray();
-        // Try first name part separately since the scene objects don't have a single root.
+        // Try the first name part separately since the scene objects don't have a single root.
         if (names[0] == "**") {
           reducedNames = names;  // Try all children in the root. 
         } else if (!Hierarchy.PatternMatch(names[0], root.transform.name)) {
