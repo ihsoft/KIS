@@ -1,5 +1,11 @@
-﻿using KSPDev.ConfigUtils;
+﻿// Kerbal Inventory System
+// Mod's author: KospY (http://forum.kerbalspaceprogram.com/index.php?/profile/33868-kospy/)
+// Module authors: KospY, igor.zavoychinskiy@gmail.com
+// License: Restricted
+
+using KSPDev.ConfigUtils;
 using KSPDev.LogUtils;
+using KSPDev.ModelUtils;
 using KSPDev.Types;
 using System;
 using System.Collections.Generic;
@@ -16,6 +22,9 @@ sealed class KISAddonConfig : MonoBehaviour {
 
   [PersistentField("StackableModule/moduleName", isCollection = true)]
   public readonly static List<string> stackableModules = new List<string>();
+
+  [PersistentField("EquipAliases/alias", isCollection = true)]
+  public readonly static List<string> equipAliases = new List<string>();
 
   [PersistentField("Global/breathableAtmoPressure")]
   public static float breathableAtmoPressure = 0.5f;
@@ -151,6 +160,35 @@ sealed class KISAddonConfig : MonoBehaviour {
     baseFields.Load(node);
     DebugEx.Info("Loaded config for {0} on part {1}", moduleType, p);
     return true;
+  }
+
+  /// <summary>Finds a bone to attach the equippable item to.</summary>
+  /// <param name="root">The transform to start searching from.</param>
+  /// <param name="bonePath">The hierarchy search pattern or a KIS alias.</param>
+  /// <returns>The transform or <c>null</c> if nothing found.</returns>
+  /// <seealso cref="KISAddonConfig.equipAliases"/>
+  public static Transform FindEquipBone(Transform root, string bonePath) {
+    Transform res;
+    if (bonePath.StartsWith("alias", StringComparison.Ordinal)) {
+      res = KISAddonConfig.equipAliases
+          .Select(a => a.Split(new[] {','}, 2))
+          .Where(pair => pair.Length == 2 && pair[0] == bonePath)
+          .Select(pair => Hierarchy.FindTransformByPath(root, pair[1]))
+          .FirstOrDefault(t => t != null);
+      DebugEx.Fine("For alias '{0}' found transform: {1}", bonePath, res);
+    } else {
+      res = Hierarchy.FindTransformByPath(root, bonePath);
+      DebugEx.Fine("For bone path '{0}' found transform: {1}", bonePath, res);
+    }
+    if (res == null) {
+      DebugEx.Error("Cannot find object for EVA item: {0}", bonePath);
+      var modelListing = Hierarchy.ListHirerahcy(root);
+      DebugEx.Fine("The following tree was available:");
+      foreach (var modelPath in modelListing) {
+        DebugEx.Fine(modelPath);
+      }
+    }
+    return res;
   }
 }
 

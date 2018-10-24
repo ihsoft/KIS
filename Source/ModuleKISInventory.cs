@@ -1333,7 +1333,7 @@ public class ModuleKISInventory : PartModule,
     }
 
     // Disable helmet and visor.
-    var helmet = Hierarchy.FindTransformByPath(part.transform, "**/helmet*");
+    var helmet = KISAddonConfig.FindEquipBone(part.transform, "aliasHelmetModel");
     if (helmet != null) {
       HostedDebugLog.Fine(this, "Set helmet renderers and lights to {0} on {1}", active, part);
       helmet.GetComponentsInChildren<Renderer>(includeInactive: true)
@@ -1344,8 +1344,6 @@ public class ModuleKISInventory : PartModule,
           .ToList()
           .ForEach(l => l.enabled = active);
       helmetEquipped = active;
-    } else {
-      HostedDebugLog.Error(this, "Cannot find the helmet model on {0}!", part);
     }
 
     return true;
@@ -1807,7 +1805,6 @@ public class ModuleKISInventory : PartModule,
         GUILayout.Label("--- " + skmr.name + " ---");
         foreach (var bone in skmr.bones) {
           if (GUILayout.Button(new GUIContent(bone.name, ""))) {
-            debugItem.prefabModule.equipMeshName = skmr.name;
             debugItem.prefabModule.equipBoneName = bone.name;
             debugItem.ReEquip();
           }

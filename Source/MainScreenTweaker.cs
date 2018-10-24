@@ -28,17 +28,6 @@ sealed class MainScreenTweaker : MonoBehaviour {
     [PersistentField("modelNamePattern")]
     public string modelNamePattern = "";
 
-    /// <summary>
-    /// Specifies if mount meshes should be searched by matching a suffix only instead of the full
-    /// match.
-    /// </summary>
-    /// <remarks>
-    /// Some kerbal models have a strange object names in the hierrachy. E.g. female kerbal models
-    /// in the start screem.
-    /// </remarks>
-    [PersistentField("matchMeshesBySuffix")]
-    public bool matchMeshesBySuffix = false;
-
     /// <summary>List of KIS item names to equip.</summary>
     [PersistentField("itemName", isCollection = true)]
     public List<string> itemNames = new List<string>();
@@ -93,7 +82,7 @@ sealed class MainScreenTweaker : MonoBehaviour {
         if (objTransform != null) {
           DebugEx.Info("Tweak '{0}' matched kerbal model: {1}", tweak.tweakName, objTransform);
           tweak.itemNames.ToList().ForEach(x => {
-            var item = new TweakEquippableItem(x, tweak.matchMeshesBySuffix);
+            var item = new TweakEquippableItem(x);
             item.ApplyTweak(objTransform.gameObject);
             sceneTweaks.Add(item);
           });
@@ -109,10 +98,8 @@ sealed class TweakEquippableItem {
   Transform evaTransform;
   readonly AvailablePart avPart;
   readonly ModuleKISItem itemModule;
-  readonly bool matchMeshesBySuffix;
 
-  public TweakEquippableItem(string partName, bool matchMeshesBySuffix) {
-    this.matchMeshesBySuffix = matchMeshesBySuffix;
+  public TweakEquippableItem(string partName) {
     avPart = PartLoader.getPartInfoByName(partName);
     if (avPart == null) {
       DebugEx.Error("Cannot find part {0} for main menu tweaker", partName);
@@ -129,20 +116,7 @@ sealed class TweakEquippableItem {
     if (avPart == null) {
       return;
     }
-    Func<Renderer, Transform, bool> findBoneTransformFn;
-    if (matchMeshesBySuffix) {
-      findBoneTransformFn = (r, b) => (
-          r.name.EndsWith(itemModule.equipMeshName) && b.name.EndsWith(itemModule.equipBoneName));
-    } else {
-      findBoneTransformFn = (r, b) => (
-          r.name == itemModule.equipMeshName && b.name == itemModule.equipBoneName);
-    }
-    evaTransform =
-        (from renderer in modelObj.GetComponentsInChildren<SkinnedMeshRenderer>()
-         from bone in renderer.bones
-         where findBoneTransformFn(renderer, bone)
-         select bone.transform)
-        .FirstOrDefault();
+    evaTransform = KISAddonConfig.FindEquipBone(modelObj.transform, itemModule.equipBoneName);
     if (evaTransform != null) {
       var partModel = Hierarchy.GetPartModelTransform(avPart.partPrefab);
       equippedGameObj = UnityEngine.Object.Instantiate(partModel.gameObject);
