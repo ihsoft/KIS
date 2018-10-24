@@ -561,9 +561,6 @@ public sealed class KIS_Item {
       }
     }
 
-    if (prefabModule.equipRemoveHelmet) {
-      inventory.SetHelmet(false);
-    }
     if (actorType == ActorType.Player) {
       UISoundPlayer.instance.Play(prefabModule.moveSndPath);
     }
