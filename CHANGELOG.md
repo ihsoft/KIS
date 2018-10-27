@@ -1,5 +1,6 @@
 # 1.15 (pre-release):
 * [Change] KSP 1.5.* compatibility.
+* [Fix #268] Wrong size detection on the MH expansion parts. READ #273!!!
 * [Fix #269] Equip items and remove helmet actions don't work.
 * [Fix #270] Command seats must not be allowed to have inventory.
 * [Fix #271] In some languages the CCK tags are broken.

@@ -791,16 +791,17 @@ sealed class KISAddonPointer : MonoBehaviour {
     var rootWorldTransform = worldTransform ?? assembly.transform.localToWorldMatrix.inverse;
 
     // Get all meshes from the part's model.
-    var meshFilters = assembly.FindModelComponents<MeshFilter>();
-    if (meshFilters.Count > 0) {
-      DebugEx.Fine("Found {0} children meshes in: {1}", meshFilters.Count, assembly);
-      foreach (var meshFilter in meshFilters) {
-        var combine = new CombineInstance();
-        combine.mesh = meshFilter.sharedMesh;
-        combine.transform = rootWorldTransform * meshFilter.transform.localToWorldMatrix;
-        meshCombines.Add(combine);
-      }
-    }
+    var meshFilters = assembly
+        .FindModelComponents<MeshFilter>()
+        .Where(mf => mf.gameObject.activeInHierarchy)
+        .ToList();
+    DebugEx.Fine("Found {0} children meshes in: {1}", meshFilters.Count, assembly);
+    meshFilters.ForEach(meshFilter => {
+      var combine = new CombineInstance();
+      combine.mesh = meshFilter.sharedMesh;
+      combine.transform = rootWorldTransform * meshFilter.transform.localToWorldMatrix;
+      meshCombines.Add(combine);
+    });
 
     // Skinned meshes are baked on every frame before rendering. Bake them to get current mesh
     // state.
