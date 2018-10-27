@@ -1335,6 +1335,12 @@ public class ModuleKISInventory : PartModule,
       }
     }
 
+    // Remove any custom helmets.
+    var customHelmet = GetEquipedItem("helmet");
+    if (customHelmet != null && customHelmet.prefabModule.equipRemoveHelmet) {
+      customHelmet.Unequip();
+    }
+    
     // Disable helmet and visor.
     var helmet = KISAddonConfig.FindEquipBone(part.transform, "aliasHelmetModel");
     if (helmet != null) {
