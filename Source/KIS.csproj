@@ -67,8 +67,10 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DebugUtils\PartAlignTool.cs" />
     <Compile Include="EditorDefaultItemsAdder.cs" />
     <Compile Include="KISAddonCursor.cs" />
+    <Compile Include="KSPDev_candidates\GUILayoutTextField.cs" />
     <Compile Include="MainScreenTweaker.cs" />
     <Compile Include="ModuleKISItemEvaPropellant.cs" />
     <Compile Include="KIS_IconViewer.cs" />
@@ -94,6 +96,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="KSPDev_candidates" />
+    <Folder Include="DebugUtils" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

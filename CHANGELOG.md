@@ -1,3 +1,10 @@
+# 1.15 (October 27th, 2018):
+* [Change] KSP 1.5.* compatibility.
+* [Fix #268] Wrong size detection on the MH expansion parts. READ #273!!!
+* [Fix #269] Equip items and remove helmet actions don't work.
+* [Fix #270] Command seats must not be allowed to have inventory.
+* [Fix #271] In some languages the CCK tags are broken.
+
 # 1.14 (July 18th, 2018):
 * [Change] Migrate to KSPDev Utils 0.37.0. A stability fix.
 

@@ -1,0 +1,7 @@
+--user=ihsoft
+--repo=KIS
+--token=<<SECRET>>
+--changelog=../CHANGELOG.md
+--as_draft
+--title=KIS v{tag}
+--archive=../KIS_v1.15.zip

@@ -482,6 +482,13 @@ public sealed class KIS_Item {
       }
     }
 
+    // Find the bone for this item to follow.
+    evaTransform =
+        KISAddonConfig.FindEquipBone(inventory.part.transform, prefabModule.equipBoneName);
+    if (evaTransform == null) {
+      UnityEngine.Object.Destroy(equippedGameObj);
+      return;  // Cannot equip!
+    }
     if (equipMode == EquipMode.Model) {
       var modelGo = availablePart.partPrefab.FindModelTransform("model").gameObject;
       equippedGameObj = UnityEngine.Object.Instantiate(modelGo);
@@ -489,48 +496,7 @@ public sealed class KIS_Item {
       foreach (Collider col in equippedGameObj.GetComponentsInChildren<Collider>()) {
         UnityEngine.Object.DestroyImmediate(col);
       }
-      evaTransform = null;
-      var skmrs = new List<SkinnedMeshRenderer>(
-          inventory.part.GetComponentsInChildren<SkinnedMeshRenderer>());
-      foreach (SkinnedMeshRenderer skmr in skmrs) {
-        if (skmr.name != prefabModule.equipMeshName) {
-          continue;
-        }
-        foreach (Transform bone in skmr.bones) {
-          if (bone.name == prefabModule.equipBoneName) {
-            evaTransform = bone.transform;
-            break;
-          }
-        }
-      }
-
-      if (!evaTransform) {
-        DebugEx.Error("evaTransform not found ! ");
-        UnityEngine.Object.Destroy(equippedGameObj);
-        return;
-      }
-    }
-    if (equipMode == EquipMode.Part || equipMode == EquipMode.Physic) {
-      evaTransform = null;
-      var skmrs = new List<SkinnedMeshRenderer>(
-          inventory.part.GetComponentsInChildren<SkinnedMeshRenderer>());
-      foreach (SkinnedMeshRenderer skmr in skmrs) {
-        if (skmr.name != prefabModule.equipMeshName) {
-          continue;
-        }
-        foreach (Transform bone in skmr.bones) {
-          if (bone.name == prefabModule.equipBoneName) {
-            evaTransform = bone.transform;
-            break;
-          }
-        }
-      }
-
-      if (!evaTransform) {
-        DebugEx.Error("evaTransform not found ! ");
-        return;
-      }
-
+    } else {
       var alreadyEquippedPart = inventory.part.FindChildPart(availablePart.name);
       if (alreadyEquippedPart) {
         DebugEx.Info("Part {0} already found on eva, use it as the item", availablePart.name);
@@ -562,7 +528,8 @@ public sealed class KIS_Item {
     }
 
     if (prefabModule.equipRemoveHelmet) {
-      inventory.SetHelmet(false);
+      // Presumably, it's a helmet replacement.
+      inventory.SetHelmet(false, playSound: false);
     }
     if (actorType == ActorType.Player) {
       UISoundPlayer.instance.Play(prefabModule.moveSndPath);
@@ -580,7 +547,7 @@ public sealed class KIS_Item {
     if (equipMode == EquipMode.Model) {
       UnityEngine.Object.Destroy(equippedGameObj);
       if (prefabModule.equipRemoveHelmet) {
-        inventory.SetHelmet(true);
+        inventory.SetHelmet(true, playSound: false);
       }
     }
     if (equipMode == EquipMode.Part || equipMode == EquipMode.Physic) {

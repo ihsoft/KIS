@@ -1,0 +1,6 @@
+--project=228561
+--token=<<SECRET>>
+--changelog=../CHANGELOG.md
+--versions=latest_all_builds
+--title=KIS {tag}
+--archive=../KIS_v1.15.zip
