@@ -579,10 +579,13 @@ public class ModuleKISInventory : PartModule,
     var invEvent = PartModuleUtils.GetEvent(this, ToggleInventory);
     if (invType == InventoryType.Pod) {
       if (HighLogic.LoadedSceneIsEditor) {
+        // Cannot pre-load inventory for the command seats: they have no inventory!
+        invEvent.guiActiveEditor = part.FindModuleImplementing<KerbalSeat>() == null;
         invEvent.guiActive = true;
         invEvent.guiActiveUnfocused = true;
         invEvent.guiName = PodSeatInventoryMenuTxt.Format(podSeat);
       } else {
+        invEvent.guiActiveEditor = false;
         invEvent.guiActive = false;
         invEvent.guiActiveUnfocused = false;
         ProtoCrewMember crewAtPodSeat = part.protoModuleCrew.Find(x => x.seatIdx == podSeat);
@@ -690,7 +693,9 @@ public class ModuleKISInventory : PartModule,
       openAnim = part.FindModelAnimators(openAnimName)[0];
     }
 
-    if (invType == InventoryType.Eva) {
+    // Only equip if this is a kerbal module. Pods and command seats have POD inventory too.
+    // SPECIAL CASE: kerbal in a command seat is NOT "isEVA", but it has the EVA module. 
+    if (invType == InventoryType.Eva && part.FindModuleImplementing<KerbalEVA>() != null) {
       var protoCrewMember = part.protoModuleCrew[0];
       kerbalTrait = protoCrewMember.experienceTrait.Title;
       foreach (var item in startEquip) {
@@ -1647,7 +1652,8 @@ public class ModuleKISInventory : PartModule,
 
     //Equip
     if (contextItem != null) {
-      if (contextItem.equipable && contextItem.quantity == 1 && invType == InventoryType.Eva) {
+      if (contextItem.equipable && contextItem.quantity == 1
+          && invType == InventoryType.Eva && FlightGlobals.ActiveVessel == part.vessel) {
         noAction = false;
         if (contextItem.equipped) {
           if (GUILayout.Button(UnequipItemContextMenuBtn)) {
@@ -1869,12 +1875,13 @@ public class ModuleKISInventory : PartModule,
     var item = items[slotIndex];
     GUI.DrawTexture(textureRect, item.icon.texture, ScaleMode.ScaleToFit);
     // Part's vessel is null when in the editor mode.
-    if (part.vessel != null && FlightGlobals.ActiveVessel == part.vessel
-        && FlightGlobals.ActiveVessel.isEVA) {
-      // Keyboard shortcut
-      //TODO(ihsoft): Show the slot shorcut instead.
-      int slotNb = slotIndex + 1;
-      GUI.Label(textureRect, SlotIdContextCaption.Format(slotNb), upperLeftStyle);
+    if (part.vessel != null && FlightGlobals.ActiveVessel == part.vessel) {
+      if (FlightGlobals.ActiveVessel.isEVA) {
+        // Keyboard shortcut
+        //TODO(ihsoft): Show the slot shorcut instead.
+        int slotNb = slotIndex + 1;
+        GUI.Label(textureRect, SlotIdContextCaption.Format(slotNb), upperLeftStyle);
+      }
       if (item.carried) {
         GUI.Label(textureRect, CarriedItemContextCaption, upperRightStyle);
       } else if (item.equipped) {
