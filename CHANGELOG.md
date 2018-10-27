@@ -1,3 +1,6 @@
+# 1.15 (pre-release):
+* [Change] KSP 1.5.* compatibility.
+
 # 1.14 (July 18th, 2018):
 * [Change] Migrate to KSPDev Utils 0.37.0. A stability fix.
 
