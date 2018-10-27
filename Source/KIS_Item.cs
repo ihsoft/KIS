@@ -527,6 +527,10 @@ public sealed class KIS_Item {
       }
     }
 
+    if (prefabModule.equipRemoveHelmet) {
+      // Presumably, it's a helmet replacement.
+      inventory.SetHelmet(false, playSound: false);
+    }
     if (actorType == ActorType.Player) {
       UISoundPlayer.instance.Play(prefabModule.moveSndPath);
     }
@@ -543,7 +547,7 @@ public sealed class KIS_Item {
     if (equipMode == EquipMode.Model) {
       UnityEngine.Object.Destroy(equippedGameObj);
       if (prefabModule.equipRemoveHelmet) {
-        inventory.SetHelmet(true);
+        inventory.SetHelmet(true, playSound: false);
       }
     }
     if (equipMode == EquipMode.Part || equipMode == EquipMode.Physic) {

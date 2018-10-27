@@ -696,6 +696,7 @@ public class ModuleKISInventory : PartModule,
     // Only equip if this is a kerbal module. Pods and command seats have POD inventory too.
     // SPECIAL CASE: kerbal in a command seat is NOT "isEVA", but it has the EVA module. 
     if (invType == InventoryType.Eva && part.FindModuleImplementing<KerbalEVA>() != null) {
+      SetHelmet(helmetEquipped, checkAtmo: true, playSound: false);
       var protoCrewMember = part.protoModuleCrew[0];
       kerbalTrait = protoCrewMember.experienceTrait.Title;
       foreach (var item in startEquip) {
@@ -713,9 +714,6 @@ public class ModuleKISInventory : PartModule,
     sndFx.audio.playOnAwake = false;
     RefreshMassAndVolume();
 
-    if (!helmetEquipped) {
-      SetHelmet(false, true);
-    }
     UpdateContextMenu();
   }
 
@@ -845,15 +843,7 @@ public class ModuleKISInventory : PartModule,
 
     // Put/remove helmet
     if (KIS_Shared.IsKeyDown(evaHelmetKey)) {
-      if (helmetEquipped) {
-        if (SetHelmet(false, true)) {
-          UISoundPlayer.instance.Play(helmetOffSndPath);
-        }
-      } else {
-        if (SetHelmet(true)) {
-          UISoundPlayer.instance.Play(helmetOnSndPath);
-        }
-      }
+      SetHelmet(!helmetEquipped, checkAtmo: true);
     }
   }
 
@@ -1318,21 +1308,30 @@ public class ModuleKISInventory : PartModule,
     }
   }
 
-  public bool SetHelmet(bool active, bool checkAtmo = false) {
-    if (checkAtmo) {
+  /// <summary>Sets or removes the stock helmet.</summary>
+  /// <param name="active"><c>true</c> if the helpmet needs to be set.</param>
+  /// <param name="checkAtmo">
+  /// Tells if the atmosphere conditions needs to be checked prior to the helmet removal. Doesn't
+  /// affect anything if "set helmet" action is requested.
+  /// </param>
+  public void SetHelmet(bool active, bool checkAtmo = false, bool playSound = true) {
+    if (!active && checkAtmo) {
       if (!part.vessel.mainBody.atmosphereContainsOxygen) {
         helmetEquipped = true;
         ScreenMessaging.ShowPriorityScreenMessage(CannotRemoveHelmetNoOxygenMsg);
-        UISounds.PlayBipWrong();
-        return false;
+        if (playSound) {
+          UISounds.PlayBipWrong();
+        }
+        return;
       }
       if (FlightGlobals.getStaticPressure() < KISAddonConfig.breathableAtmoPressure) {
         helmetEquipped = true;
         ScreenMessaging.ShowPriorityScreenMessage(
             CannotRemoveHelmetPressureTooLowMsg.Format(
                 KISAddonConfig.breathableAtmoPressure, FlightGlobals.getStaticPressure()));
-        UISounds.PlayBipWrong();
-        return false;
+        if (playSound) {
+          UISounds.PlayBipWrong();
+        }
       }
     }
 
@@ -1347,10 +1346,11 @@ public class ModuleKISInventory : PartModule,
           .Where(l => l.name == "headlamp")
           .ToList()
           .ForEach(l => l.enabled = active);
+      if (playSound && customHelmet == null) {
+        UISoundPlayer.instance.Play(active ? helmetOnSndPath : helmetOffSndPath);
+      }
       helmetEquipped = active;
     }
-
-    return true;
   }
 
   void GUIStyles() {
@@ -1517,15 +1517,11 @@ public class ModuleKISInventory : PartModule,
     } else if (invType == InventoryType.Eva) {
       if (helmetEquipped) {
         if (GUILayout.Button(RemoveHelmetMenuTxt, GUILayout.Width(Width), GUILayout.Height(22))) {
-          if (SetHelmet(false, true)) {
-            UISoundPlayer.instance.Play(helmetOffSndPath);
-          }
+          SetHelmet(false, checkAtmo: true);
         }
       } else {
         if (GUILayout.Button(PutOnHelmetMenuTxt, GUILayout.Width(Width), GUILayout.Height(22))) {
-          if (SetHelmet(true)) {
-            UISoundPlayer.instance.Play(helmetOnSndPath);
-          }
+          SetHelmet(true);
         }
       }
     } else {
