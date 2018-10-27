@@ -7,7 +7,6 @@ using KIS.GUIUtils;
 using KSPDev.ConfigUtils;
 using KSPDev.GUIUtils;
 using KSPDev.LogUtils;
-using KSPDev.ModelUtils;
 using KSPDev.KSPInterfaces;
 using KSPDev.PartUtils;
 using System;
@@ -555,12 +554,12 @@ public class ModuleKISInventory : PartModule,
   bool guiSetName = false;
 
   //Tooltip
-  private KIS_Item tooltipItem;
+  KIS_Item tooltipItem;
 
   // Context menu
-  private KIS_Item contextItem;
-  private bool contextClick = false;
-  private Rect contextRect;
+  KIS_Item contextItem;
+  bool contextClick = false;
+  Rect contextRect;
 
   // Animation (Not tested)
   [KSPField]
@@ -573,10 +572,10 @@ public class ModuleKISInventory : PartModule,
   public FXGroup sndFx;
 
   // Debug
-  private KIS_Item debugItem;
+  KIS_Item debugItem;
 
   #region IHasContextMenu implementation
-  public void UpdateContextMenu() {
+  public virtual void UpdateContextMenu() {
     var invEvent = PartModuleUtils.GetEvent(this, ToggleInventory);
     if (invType == InventoryType.Pod) {
       if (HighLogic.LoadedSceneIsEditor) {
