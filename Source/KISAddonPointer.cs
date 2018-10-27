@@ -728,7 +728,7 @@ sealed class KISAddonPointer : MonoBehaviour {
     var combines = new List<CombineInstance>();
     CollectMeshesFromAssembly(partToAttach, combines);
 
-    // Create one filter per mesh in the hierarhcy. Simple combining all meshes into one
+    // Create one filter per a mesh in the hierarhcy. Simple combining all the meshes into one
     // larger mesh may have weird representation artifacts on different video cards.
     pointer = new GameObject("KISPointer");
     foreach (var combine in combines) {
@@ -781,12 +781,14 @@ sealed class KISAddonPointer : MonoBehaviour {
   /// </remarks>
   /// <param name="assembly">An assembly to collect meshes from.</param>
   /// <param name="meshCombines">[out] Collected meshes.</param>
-  /// <param name="worldTransform">A world transformation matrix to apply to every mesh after
-  ///     it's translated into world's coordinates. If <c>null</c> then coordinates will be
-  ///     calculated relative to the root part of the assembly.</param>
-  private static void CollectMeshesFromAssembly(Part assembly,
-                                                ICollection<CombineInstance> meshCombines,
-                                                Matrix4x4? worldTransform = null) {
+  /// <param name="worldTransform">
+  /// A world transformation matrix to apply to every mesh after it's translated into world's
+  /// coordinates. If <c>null</c> then coordinates will be calculated relative to the root part of
+  /// the assembly.
+  /// </param>
+  static void CollectMeshesFromAssembly(Part assembly,
+                                        ICollection<CombineInstance> meshCombines,
+                                        Matrix4x4? worldTransform = null) {
     // Always use world transformation from the root.
     var rootWorldTransform = worldTransform ?? assembly.transform.localToWorldMatrix.inverse;
 
