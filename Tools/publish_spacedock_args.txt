@@ -2,4 +2,4 @@
 --login=<<SECRET>>
 --changelog=../CHANGELOG.md
 --ksp_version=latest
---archive=../KIS_v1.14.zip
+--archive=../KIS_v1.15.zip

@@ -3,4 +3,4 @@
 --changelog=../CHANGELOG.md
 --versions=latest_all_builds
 --title=KIS {tag}
---archive=../KIS_v1.14.zip
+--archive=../KIS_v1.15.zip
