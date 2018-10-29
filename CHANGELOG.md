@@ -1,4 +1,5 @@
 # 1.16 (pre-release):
+* [Fix #275] No preview meshes shown.
 
 # 1.15 (October 27th, 2018):
 * [Change] KSP 1.5.* compatibility.
