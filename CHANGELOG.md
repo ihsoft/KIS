@@ -1,3 +1,5 @@
+# 1.16 (pre-release):
+
 # 1.15 (October 27th, 2018):
 * [Change] KSP 1.5.* compatibility.
 * [Fix #268] Wrong size detection on the MH expansion parts. READ #273!!!
