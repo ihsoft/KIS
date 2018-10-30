@@ -33,14 +33,16 @@ sealed class MainScreenTweaker : MonoBehaviour {
     public List<string> itemNames = new List<string>();
   }
 
+  #pragma warning disable 0649
   /// <summary>Tells if tweaks should be applied.</summary>
   [PersistentField("MainScreenTweaker/enabled")]
-  public bool twekerEnabled;
+  public bool tweakerEnabled;
   
   /// <summary>Tells if all object paths in the scene needs to be logged.</summary>
   /// <remarks>Only enable it to get the full hierarchy dump.</remarks>
   [PersistentField("MainScreenTweaker/logAllObjects")]
   public bool logAllObjects;
+  #pragma warning restore 0649
 
   /// <summary>Full list of configured tweaks on the screan.</summary>
   [PersistentField("MainScreenTweaker/modelTweak", isCollection = true)]
@@ -51,7 +53,7 @@ sealed class MainScreenTweaker : MonoBehaviour {
 
   void Awake() {
     ConfigAccessor.ReadFieldsInType(GetType(), this);
-    if (twekerEnabled) {
+    if (tweakerEnabled) {
       AsyncCall.CallOnEndOfFrame(this, WaitAndApplyTweaks);
     }
   }
