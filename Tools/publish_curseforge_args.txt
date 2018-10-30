@@ -4,4 +4,4 @@
 --github=ihsoft/KIS
 --versions=latest_all_builds
 --title=KIS {tag}
---archive=../KIS_v1.15.zip
+--archive=../KIS_v1.16.zip

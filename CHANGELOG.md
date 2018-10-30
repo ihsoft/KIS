@@ -1,4 +1,4 @@
-# 1.16 (pre-release):
+# 1.16 (October 29th, 2018):
 * [Fix #275] No preview meshes shown.
 
 # 1.15 (October 27th, 2018):
