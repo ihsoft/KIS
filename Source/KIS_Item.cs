@@ -486,7 +486,6 @@ public sealed class KIS_Item {
     evaTransform =
         KISAddonConfig.FindEquipBone(inventory.part.transform, prefabModule.equipBoneName);
     if (evaTransform == null) {
-      UnityEngine.Object.Destroy(equippedGameObj);
       return;  // Cannot equip!
     }
     if (equipMode == EquipMode.Model) {

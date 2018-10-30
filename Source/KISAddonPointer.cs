@@ -795,7 +795,8 @@ sealed class KISAddonPointer : MonoBehaviour {
     // Get all meshes from the part's model.
     var meshFilters = assembly
         .FindModelComponents<MeshFilter>()
-        .Where(mf => mf.gameObject.activeInHierarchy)
+        // Prefab models are always inactive, so ignore the check.
+        .Where(mf => mf.gameObject.activeInHierarchy || assembly == assembly.partInfo.partPrefab)
         .ToList();
     DebugEx.Fine("Found {0} children meshes in: {1}", meshFilters.Count, assembly);
     meshFilters.ForEach(meshFilter => {

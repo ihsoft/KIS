@@ -1,5 +1,6 @@
 --project=1909
 --login=<<SECRET>>
 --changelog=../CHANGELOG.md
+--github=ihsoft/KIS
 --ksp_version=latest
---archive=../KIS_v1.15.zip
+--archive=../KIS_v1.16.zip
