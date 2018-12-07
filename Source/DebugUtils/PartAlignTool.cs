@@ -15,7 +15,7 @@ namespace KIS {
   /// </summary>
 [KSPAddon(KSPAddon.Startup.FlightAndEditor, false /*once*/)]
 [PersistentFieldsDatabase("KIS/settings/KISConfig")]
-sealed class PartAlignTool : MonoBehaviour, IHasGUI {
+sealed class ControllerPartEditorTool : MonoBehaviour, IHasGUI {
 
   #region Configuration settings
   /// <summary>Keyboard key to trigger the GUI.</summary>
