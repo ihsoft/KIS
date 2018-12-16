@@ -28,30 +28,21 @@ sealed class MainScreenTweaker : MonoBehaviour {
     [PersistentField("modelNamePattern")]
     public string modelNamePattern = "";
 
-    /// <summary>
-    /// Specifies if mount meshes should be searched by matching a suffix only instead of the full
-    /// match.
-    /// </summary>
-    /// <remarks>
-    /// Some kerbal models have a strange object names in the hierrachy. E.g. female kerbal models
-    /// in the start screem.
-    /// </remarks>
-    [PersistentField("matchMeshesBySuffix")]
-    public bool matchMeshesBySuffix = false;
-
     /// <summary>List of KIS item names to equip.</summary>
     [PersistentField("itemName", isCollection = true)]
     public List<string> itemNames = new List<string>();
   }
 
+  #pragma warning disable 0649
   /// <summary>Tells if tweaks should be applied.</summary>
   [PersistentField("MainScreenTweaker/enabled")]
-  public readonly bool twekerEnabled = false;
+  public bool tweakerEnabled;
   
   /// <summary>Tells if all object paths in the scene needs to be logged.</summary>
   /// <remarks>Only enable it to get the full hierarchy dump.</remarks>
   [PersistentField("MainScreenTweaker/logAllObjects")]
-  public readonly bool logAllObjects = false;
+  public bool logAllObjects;
+  #pragma warning restore 0649
 
   /// <summary>Full list of configured tweaks on the screan.</summary>
   [PersistentField("MainScreenTweaker/modelTweak", isCollection = true)]
@@ -62,7 +53,7 @@ sealed class MainScreenTweaker : MonoBehaviour {
 
   void Awake() {
     ConfigAccessor.ReadFieldsInType(GetType(), this);
-    if (twekerEnabled) {
+    if (tweakerEnabled) {
       AsyncCall.CallOnEndOfFrame(this, WaitAndApplyTweaks);
     }
   }
@@ -73,23 +64,17 @@ sealed class MainScreenTweaker : MonoBehaviour {
     }
   }
 
-  void LogObjectChildren(Transform objTransform) {
-    DebugEx.Fine("{0}", objTransform);
-    for (var i = 0; i < objTransform.transform.childCount; i++) {
-      LogObjectChildren(objTransform.transform.GetChild(i));
-    }
-  }
-
   void WaitAndApplyTweaks() {
     var roots = UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects();
     foreach (var root in roots) {
       if (logAllObjects) {
-        LogObjectChildren(root.transform);
+        DebugEx.Fine("Objects at the root:\n{0}",
+                     DbgFormatter.C2S(Hierarchy.ListHirerahcy(root.transform), separator: "\n"));
       }
       foreach (var tweak in modelTweaks) {
         var names = tweak.modelNamePattern.Split('/');
         var reducedNames = names.Skip(1).ToArray();
-        // Try first name part separately since the scene objects don't have a single root.
+        // Try the first name part separately since the scene objects don't have a single root.
         if (names[0] == "**") {
           reducedNames = names;  // Try all children in the root. 
         } else if (!Hierarchy.PatternMatch(names[0], root.transform.name)) {
@@ -99,7 +84,7 @@ sealed class MainScreenTweaker : MonoBehaviour {
         if (objTransform != null) {
           DebugEx.Info("Tweak '{0}' matched kerbal model: {1}", tweak.tweakName, objTransform);
           tweak.itemNames.ToList().ForEach(x => {
-            var item = new TweakEquippableItem(x, tweak.matchMeshesBySuffix);
+            var item = new TweakEquippableItem(x);
             item.ApplyTweak(objTransform.gameObject);
             sceneTweaks.Add(item);
           });
@@ -115,10 +100,8 @@ sealed class TweakEquippableItem {
   Transform evaTransform;
   readonly AvailablePart avPart;
   readonly ModuleKISItem itemModule;
-  readonly bool matchMeshesBySuffix;
 
-  public TweakEquippableItem(string partName, bool matchMeshesBySuffix) {
-    this.matchMeshesBySuffix = matchMeshesBySuffix;
+  public TweakEquippableItem(string partName) {
     avPart = PartLoader.getPartInfoByName(partName);
     if (avPart == null) {
       DebugEx.Error("Cannot find part {0} for main menu tweaker", partName);
@@ -135,20 +118,7 @@ sealed class TweakEquippableItem {
     if (avPart == null) {
       return;
     }
-    Func<Renderer, Transform, bool> findBoneTransformFn;
-    if (matchMeshesBySuffix) {
-      findBoneTransformFn = (r, b) => (
-          r.name.EndsWith(itemModule.equipMeshName) && b.name.EndsWith(itemModule.equipBoneName));
-    } else {
-      findBoneTransformFn = (r, b) => (
-          r.name == itemModule.equipMeshName && b.name == itemModule.equipBoneName);
-    }
-    evaTransform =
-        (from renderer in modelObj.GetComponentsInChildren<SkinnedMeshRenderer>()
-         from bone in renderer.bones
-         where findBoneTransformFn(renderer, bone)
-         select bone.transform)
-        .FirstOrDefault();
+    evaTransform = KISAddonConfig.FindEquipBone(modelObj.transform, itemModule.equipBoneName);
     if (evaTransform != null) {
       var partModel = Hierarchy.GetPartModelTransform(avPart.partPrefab);
       equippedGameObj = UnityEngine.Object.Instantiate(partModel.gameObject);

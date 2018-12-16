@@ -473,6 +473,8 @@ public class ModuleKISInventory : PartModule,
   public string invName = "";
   [KSPField(isPersistant = true)]
   public bool helmetEquipped = true;
+  [KSPField]
+  public InventoryType invType = InventoryType.Container;
   #endregion
 
   #region Global settings
@@ -529,7 +531,6 @@ public class ModuleKISInventory : PartModule,
   public string openGuiName;
   public float totalVolume = 0;
   public int podSeat = -1;
-  public InventoryType invType = InventoryType.Container;
   public enum InventoryType {
     Container,
     Pod,
@@ -553,12 +554,12 @@ public class ModuleKISInventory : PartModule,
   bool guiSetName = false;
 
   //Tooltip
-  private KIS_Item tooltipItem;
+  KIS_Item tooltipItem;
 
   // Context menu
-  private KIS_Item contextItem;
-  private bool contextClick = false;
-  private Rect contextRect;
+  KIS_Item contextItem;
+  bool contextClick = false;
+  Rect contextRect;
 
   // Animation (Not tested)
   [KSPField]
@@ -571,17 +572,20 @@ public class ModuleKISInventory : PartModule,
   public FXGroup sndFx;
 
   // Debug
-  private KIS_Item debugItem;
+  KIS_Item debugItem;
 
   #region IHasContextMenu implementation
-  public void UpdateContextMenu() {
+  public virtual void UpdateContextMenu() {
     var invEvent = PartModuleUtils.GetEvent(this, ToggleInventory);
     if (invType == InventoryType.Pod) {
       if (HighLogic.LoadedSceneIsEditor) {
+        // Cannot pre-load inventory for the command seats: they have no inventory!
+        invEvent.guiActiveEditor = part.FindModuleImplementing<KerbalSeat>() == null;
         invEvent.guiActive = true;
         invEvent.guiActiveUnfocused = true;
         invEvent.guiName = PodSeatInventoryMenuTxt.Format(podSeat);
       } else {
+        invEvent.guiActiveEditor = false;
         invEvent.guiActive = false;
         invEvent.guiActiveUnfocused = false;
         ProtoCrewMember crewAtPodSeat = part.protoModuleCrew.Find(x => x.seatIdx == podSeat);
@@ -689,7 +693,10 @@ public class ModuleKISInventory : PartModule,
       openAnim = part.FindModelAnimators(openAnimName)[0];
     }
 
-    if (invType == InventoryType.Eva) {
+    // Only equip if this is a kerbal module. Pods and command seats have POD inventory too.
+    // SPECIAL CASE: kerbal in a command seat is NOT "isEVA", but it has the EVA module. 
+    if (invType == InventoryType.Eva && part.FindModuleImplementing<KerbalEVA>() != null) {
+      SetHelmet(helmetEquipped, checkAtmo: true, playSound: false);
       var protoCrewMember = part.protoModuleCrew[0];
       kerbalTrait = protoCrewMember.experienceTrait.Title;
       foreach (var item in startEquip) {
@@ -707,9 +714,6 @@ public class ModuleKISInventory : PartModule,
     sndFx.audio.playOnAwake = false;
     RefreshMassAndVolume();
 
-    if (!helmetEquipped) {
-      SetHelmet(false, true);
-    }
     UpdateContextMenu();
   }
 
@@ -839,15 +843,7 @@ public class ModuleKISInventory : PartModule,
 
     // Put/remove helmet
     if (KIS_Shared.IsKeyDown(evaHelmetKey)) {
-      if (helmetEquipped) {
-        if (SetHelmet(false, true)) {
-          UISoundPlayer.instance.Play(helmetOffSndPath);
-        }
-      } else {
-        if (SetHelmet(true)) {
-          UISoundPlayer.instance.Play(helmetOnSndPath);
-        }
-      }
+      SetHelmet(!helmetEquipped, checkAtmo: true);
     }
   }
 
@@ -1312,45 +1308,55 @@ public class ModuleKISInventory : PartModule,
     }
   }
 
-  public bool SetHelmet(bool active, bool checkAtmo = false) {
-    if (checkAtmo) {
+  /// <summary>Sets or removes the stock helmet.</summary>
+  /// <param name="active"><c>true</c> if the helpmet needs to be set.</param>
+  /// <param name="checkAtmo">
+  /// Tells if the atmosphere conditions needs to be checked prior to the helmet removal. Doesn't
+  /// affect anything if "set helmet" action is requested.
+  /// </param>
+  public void SetHelmet(bool active, bool checkAtmo = false, bool playSound = true) {
+    if (!active && checkAtmo) {
       if (!part.vessel.mainBody.atmosphereContainsOxygen) {
         helmetEquipped = true;
         ScreenMessaging.ShowPriorityScreenMessage(CannotRemoveHelmetNoOxygenMsg);
-        UISounds.PlayBipWrong();
-        return false;
+        if (playSound) {
+          UISounds.PlayBipWrong();
+        }
+        return;
       }
       if (FlightGlobals.getStaticPressure() < KISAddonConfig.breathableAtmoPressure) {
         helmetEquipped = true;
         ScreenMessaging.ShowPriorityScreenMessage(
             CannotRemoveHelmetPressureTooLowMsg.Format(
                 KISAddonConfig.breathableAtmoPressure, FlightGlobals.getStaticPressure()));
-        UISounds.PlayBipWrong();
-        return false;
+        if (playSound) {
+          UISounds.PlayBipWrong();
+        }
       }
     }
 
-    //Disable helmet and visor
-    var skmrs =
-        new List<SkinnedMeshRenderer>(part.GetComponentsInChildren<SkinnedMeshRenderer>());
-    foreach (var skmr in skmrs) {
-      if (skmr.name == "helmet" || skmr.name == "visor") {
-        skmr.GetComponent<Renderer>().enabled = active;
-        helmetEquipped = active;
-      }
+    // Remove any custom helmets.
+    var customHelmet = GetEquipedItem("helmet");
+    if (customHelmet != null && customHelmet.prefabModule.equipRemoveHelmet) {
+      customHelmet.Unequip();
     }
-
-    //Disable flares and light
-    var lights = new List<Light>(part.GetComponentsInChildren<Light>(true) as Light[]);
-    foreach (var light in lights) {
-      if (light.name == "headlamp") {
-        light.enabled = active;
-        light.transform.Find("flare1").GetComponent<Renderer>().enabled = active;
-        light.transform.Find("flare2").GetComponent<Renderer>().enabled = active;
+    
+    // Disable helmet and visor.
+    var helmet = KISAddonConfig.FindEquipBone(part.transform, "aliasHelmetModel");
+    if (helmet != null) {
+      HostedDebugLog.Fine(this, "Set helmet renderers and lights to {0} on {1}", active, part);
+      helmet.GetComponentsInChildren<Renderer>(includeInactive: true)
+          .ToList()
+          .ForEach(r => r.enabled = active);
+      part.transform.GetComponentsInChildren<Light>(includeInactive: true)
+          .Where(l => l.name == "headlamp")
+          .ToList()
+          .ForEach(l => l.enabled = active);
+      if (playSound && customHelmet == null) {
+        UISoundPlayer.instance.Play(active ? helmetOnSndPath : helmetOffSndPath);
       }
+      helmetEquipped = active;
     }
-
-    return true;
   }
 
   void GUIStyles() {
@@ -1517,15 +1523,11 @@ public class ModuleKISInventory : PartModule,
     } else if (invType == InventoryType.Eva) {
       if (helmetEquipped) {
         if (GUILayout.Button(RemoveHelmetMenuTxt, GUILayout.Width(Width), GUILayout.Height(22))) {
-          if (SetHelmet(false, true)) {
-            UISoundPlayer.instance.Play(helmetOffSndPath);
-          }
+          SetHelmet(false, checkAtmo: true);
         }
       } else {
         if (GUILayout.Button(PutOnHelmetMenuTxt, GUILayout.Width(Width), GUILayout.Height(22))) {
-          if (SetHelmet(true)) {
-            UISoundPlayer.instance.Play(helmetOnSndPath);
-          }
+          SetHelmet(true);
         }
       }
     } else {
@@ -1652,7 +1654,8 @@ public class ModuleKISInventory : PartModule,
 
     //Equip
     if (contextItem != null) {
-      if (contextItem.equipable && contextItem.quantity == 1 && invType == InventoryType.Eva) {
+      if (contextItem.equipable && contextItem.quantity == 1
+          && invType == InventoryType.Eva && FlightGlobals.ActiveVessel == part.vessel) {
         noAction = false;
         if (contextItem.equipped) {
           if (GUILayout.Button(UnequipItemContextMenuBtn)) {
@@ -1809,7 +1812,6 @@ public class ModuleKISInventory : PartModule,
         GUILayout.Label("--- " + skmr.name + " ---");
         foreach (var bone in skmr.bones) {
           if (GUILayout.Button(new GUIContent(bone.name, ""))) {
-            debugItem.prefabModule.equipMeshName = skmr.name;
             debugItem.prefabModule.equipBoneName = bone.name;
             debugItem.ReEquip();
           }
@@ -1875,12 +1877,13 @@ public class ModuleKISInventory : PartModule,
     var item = items[slotIndex];
     GUI.DrawTexture(textureRect, item.icon.texture, ScaleMode.ScaleToFit);
     // Part's vessel is null when in the editor mode.
-    if (part.vessel != null && FlightGlobals.ActiveVessel == part.vessel
-        && FlightGlobals.ActiveVessel.isEVA) {
-      // Keyboard shortcut
-      //TODO(ihsoft): Show the slot shorcut instead.
-      int slotNb = slotIndex + 1;
-      GUI.Label(textureRect, SlotIdContextCaption.Format(slotNb), upperLeftStyle);
+    if (part.vessel != null && FlightGlobals.ActiveVessel == part.vessel) {
+      if (FlightGlobals.ActiveVessel.isEVA) {
+        // Keyboard shortcut
+        //TODO(ihsoft): Show the slot shorcut instead.
+        int slotNb = slotIndex + 1;
+        GUI.Label(textureRect, SlotIdContextCaption.Format(slotNb), upperLeftStyle);
+      }
       if (item.carried) {
         GUI.Label(textureRect, CarriedItemContextCaption, upperRightStyle);
       } else if (item.equipped) {

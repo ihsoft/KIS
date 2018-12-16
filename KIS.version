@@ -3,25 +3,25 @@
     "DOWNLOAD": "http://forum.kerbalspaceprogram.com/index.php?/topic/149848-12-kerbal-inventory-system-kis-v131/", 
     "KSP_VERSION": {
         "MAJOR": 1, 
-        "MINOR": 4, 
-        "PATCH": 0
+        "MINOR": 5, 
+        "PATCH": 1
     }, 
     "KSP_VERSION_MAX": {
         "MAJOR": 1, 
-        "MINOR": 4, 
+        "MINOR": 5, 
         "PATCH": 99
     }, 
     "KSP_VERSION_MIN": {
         "MAJOR": 1, 
-        "MINOR": 4, 
-        "PATCH": 0
+        "MINOR": 5, 
+        "PATCH": 1
     }, 
     "NAME": "Kerbal Inventory System", 
     "URL": "https://raw.githubusercontent.com/ihsoft/KIS/master/KIS.version", 
     "VERSION": {
-        "BUILD": 40620, 
+        "BUILD": 37464, 
         "MAJOR": 1, 
-        "MINOR": 10, 
-        "PATCH": 6640
+        "MINOR": 16, 
+        "PATCH": 6876
     }
 }

@@ -165,11 +165,9 @@ public class ModuleKISItem : PartModule,
   [KSPField]
   public string equipSkill = "";
   [KSPField]
-  public bool equipRemoveHelmet = false;
+  public bool equipRemoveHelmet;
   [KSPField]
-  public string equipMeshName = "helmet";
-  [KSPField]
-  public string equipBoneName = "bn_helmet01";
+  public string equipBoneName = "";
   [KSPField]
   public Vector3 equipPos = new Vector3(0f, 0f, 0f);
   [KSPField]

@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <doc>
     <assembly>
-        <name>KSPDev_Utils.0.31</name>
+        <name>KSPDev_Utils.0.37</name>
     </assembly>
     <members>
         <member name="T:KSPDev.ConfigUtils.AbstractCollectionTypeProto">
@@ -273,54 +273,45 @@
             <param name="value">String value to restore from.</param>
             <remarks>It's OK to throw exceptions if the value cannot be parsed.</remarks>
         </member>
-        <member name="T:KSPDev.ConfigUtils.PartConfig">
-            <summary>Helper methods to access and manipulate part's configs.</summary>
-        </member>
-        <member name="M:KSPDev.ConfigUtils.PartConfig.GetModuleConfig(PartModule,ConfigNode)">
-            <summary>Gets a config of the part module.</summary>
-            <remarks>
-            It takes into account the module index, so in case of the part has multiple modules of the
-            same type, the right module config will be returned.
-            </remarks>
-            <param name="module">The module to get config for.</param>
-            <param name="partNode">
-            The part's config to use. If omitted then part's prefab config is used.
-            </param>
-            <returns>Either the found config node or an empty node. It's never <c>null</c>.</returns>
-        </member>
         <member name="T:KSPDev.ConfigUtils.PersistentFieldsDatabaseAttribute">
             <summary>
             A simple annotation to associate a persistent group with a game's database key.
             </summary>
             <remarks>
-            <para>This annotation is basically a shortcut to <see cref="T:KSPDev.ConfigUtils.PersistentFieldsFileAttribute"/>.
-            You may use the latter with an empty config file path if you find it more convinient.</para>
-            <para>Each <c>.cfg</c> file in the mod's folders is scanned and indexed by the game on start. The
+            <para>
+            Each <c>.cfg</c> file in the mod's folders is scanned and indexed by the game on start. The
             data is stored in the database where it can be accessed from the game. The access is read-only,
-            any changes to the node returned from the database won't affect the database state.</para>
-            <para>The config file in the database is identified by a key which is made of three major parts:
+            any changes to the node returned from the database won't affect the database state.
+            </para>
+            <para>
+            The config file in the database is identified by a key which is made of three major parts:
             <list type="">
-            <item>A file path relative to <c>GameData</c>.</item>
+            <item>A file path relative to <c>GameData</c>. ATTENTION: the path must not contain "."!</item>
             <item>The config filename without extension.</item>
             <item>Node path inside the file starting from the root. I.e. the root node should have name as
             well.</item>
             </list>
             </para>
-            <para>E.g. key <c>KIS/settings/KISConfig/Global</c> addresses a node <c>KISConfig/Global</c> in file
+            <para>
+            E.g. key <c>KIS/settings/KISConfig/Global</c> addresses a node <c>KISConfig/Global</c> in file
             stored at <c>GameData/KIS/settings.cfg</c>.
             </para>
-            <para>Special case is subfolders <c>PluginData</c>, they are ignored during database scan. Put
+            <para>
+            Special case is subfolders <c>PluginData</c>, they are ignored during database scan. Put
             there configs that can change during the gameplay. Remember, that even a tiny change in the
             config will trigger database re-compilation on the next start which may significantly impact
-            game loading time.</para>
-            <para>Database is actively used by
+            game loading time.
+            </para>
+            <para>
+            Database is actively used by
             <see href="https://github.com/sarbian/ModuleManager">ModuleManager</see> (a.k.a. MM). Be wise
-            when choosing if fields should be read from a file or from the database. Module manager
-            patches are only applied on the database, they don't affect the config files. E.g. part configs
-            are frequently updated by the patches but never updated from the gameplay so, reading them via
-            database is the best choice. Various mod's settings, on the other hand, can change during the
-            game but will unlikely be a target for a MM patch, put them into <c>PluginData</c> folder and
-            read/write via file methods.</para>
+            when choosing if the fields should be read from a file or from the database. The module manager
+            patches are only applied on the database, they don't affect the config files. E.g. if the part
+            config is expected to be a target of the MM patches but never updated from the gameplay, then
+            reading id via the database is the best choice. However, various mod's settings, that change
+            during the game, will unlikely be a target for a MM patch - put the config into
+            <c>PluginData</c> and read it as a file.
+            </para>
             </remarks>
             <seealso cref="T:KSPDev.ConfigUtils.PersistentFieldsFileAttribute"/>
             <seealso cref="M:KSPDev.ConfigUtils.ConfigAccessor.ReadFieldsInType(System.Type,System.Object,System.String)"/>
@@ -559,15 +550,32 @@
             <seealso cref="T:KSPDev.ConfigUtils.PersistentFieldsFileAttribute"/>
             <seealso cref="T:KSPDev.ConfigUtils.PersistentFieldsDatabaseAttribute"/>
         </member>
-        <member name="M:KSPDev.ConfigUtils.ConfigAccessor.ReadPartConfig(PartModule)">
+        <member name="M:KSPDev.ConfigUtils.ConfigAccessor.ReadPartConfig(PartModule,ConfigNode)">
             <summary>Reads custom type fileds from the part's config.</summary>
             <remarks>
-            The consumer code must call this method from both the <c>OnAwake</c> and <c>OnLoad</c>
-            methods. Depending on the game scene, the part can be either created or cloned, and the fields
-            initalization is different depending on the case. See the example for more details.
+            <para>
+            The consumer code must call this method from the <c>OnLoad</c> method to capture the
+            PartLoader initalization. This method automatically detects the game loading phase, so it's
+            safe to call it in every <c>OnLoad</c> inovacation.
+            </para>
             </remarks>
             <param name="module">The module to load the data for.</param>
+            <param name="cfgNode">The config node, passed by the game to the module.</param>
             <seealso cref="T:KSPDev.ConfigUtils.PersistentFieldAttribute"/>
+            <seealso cref="F:KSPDev.ConfigUtils.StdPersistentGroups.PartConfigLoadGroup"/>
+            <seealso cref="M:KSPDev.ConfigUtils.ConfigAccessor.CopyPartConfigFromPrefab(PartModule)"/>
+            <example>
+            <code source="Examples/ConfigUtils/ConfigAccessor-Examples.cs" region="ReadPartConfigExample"/>
+            </example>
+        </member>
+        <member name="M:KSPDev.ConfigUtils.ConfigAccessor.CopyPartConfigFromPrefab(PartModule)">
+            <summary>Copies the custom part fields from the prefab into the instance.</summary>
+            <remarks>
+            The consumer code must call this method from the <c>OnAwake</c> method to ensure the custom
+            fields are properly intialized.
+            </remarks>
+            <param name="tgtModule">The module to copy the fields into.</param>
+            <seealso cref="M:KSPDev.ConfigUtils.ConfigAccessor.ReadPartConfig(PartModule,ConfigNode)"/>
             <example>
             <code source="Examples/ConfigUtils/ConfigAccessor-Examples.cs" region="ReadPartConfigExample"/>
             </example>
@@ -826,6 +834,7 @@
         </member>
         <member name="M:KSPDev.ConfigUtils.PersistentFieldsFactory.GetPersistentFields(System.Type,System.Boolean,System.Boolean,System.String)">
             <summary>Gathers persitent fields for a type.</summary>
+            <remarks>It will only find the persistent fields of the same Utils version!</remarks>
             <param name="type">A type of to gather persistent fields for.</param>
             <param name="needStatic">Specifies if static fields need to be returned.</param>
             <param name="needInstance">Specifies if non-static fields need to be returned.</param>
@@ -865,6 +874,10 @@
         </member>
         <member name="M:KSPDev.ConfigUtils.PersistentField.ReadFromConfig(ConfigNode,System.Object)">
             <summary>Reads the field from a config node.</summary>
+            <remarks>
+            The readonly fields will be refused. In spite of they can be changed via reflections, there
+            are the edge cases, which this code won't handle. 
+            </remarks>
             <param name="node">The node to read the state from.</param>
             <param name="instance">
             The owner of the field. It can be <c>null</c> for the static fields.
@@ -901,9 +914,10 @@
         <member name="T:KSPDev.ConfigUtils.PersistentFieldAttribute">
             <summary>A simple attribute for the fields that need (de)serialization.</summary>
             <remarks>
-            This form allows adjusting any <see cref="T:KSPDev.ConfigUtils.BasePersistentFieldAttribute"/> property
-            in the annotation, and has a shortcut to mark a field as a collection
-            (<c><see cref="P:KSPDev.ConfigUtils.PersistentFieldAttribute.isCollection"/> = true</c>).
+            <para>
+            The readonly fields cannot be restored from a persistent state. However, they can be written
+            out.
+            </para>
             <para>
             By default the ordinal values are handled via <see cref="T:KSPDev.ConfigUtils.StandardOrdinaryTypesProto"/>
             and the collection fields via <see cref="T:KSPDev.ConfigUtils.GenericCollectionTypeProto"/>. These proto handlers can
@@ -1117,7 +1131,61 @@
             use this group when defining the persistent fields via annotations.  
             </remarks>
             <seealso cref="T:KSPDev.ConfigUtils.PersistentFieldAttribute"/>
-            <seealso cref="M:KSPDev.ConfigUtils.ConfigAccessor.ReadPartConfig(PartModule)"/>
+            <seealso cref="M:KSPDev.ConfigUtils.ConfigAccessor.ReadPartConfig(PartModule,ConfigNode)"/>
+        </member>
+        <member name="F:KSPDev.ConfigUtils.StdPersistentGroups.SessionGroup">
+            <summary>
+            A public group of the persistent fields which need to persist their values between the game
+            scene changes. Including the game reload. 
+            </summary>
+            <remarks>
+            It's a good idea to store these values to a file, located in the "PlugindData" folder.
+            Otherwise, this any changes to this file will trigger a full game database update on the game
+            load.
+            </remarks>
+        </member>
+        <member name="T:KSPDev.GUIUtils.StdSpecTags">
+            <summary>Standard specialization tags.</summary>
+            <remarks>The specialization tells which property of the localizable entity to affect.</remarks>
+            <seealso cref="T:KSPDev.GUIUtils.LocalizableItemAttribute"/>
+            <seealso cref="M:KSPDev.GUIUtils.LocalizationLoader.LoadItemsInModule(PartModule)"/>
+        </member>
+        <member name="F:KSPDev.GUIUtils.StdSpecTags.Units">
+            <summary>
+            Specialization for the <see cref="T:KSPField"/> <c>guiUnits</c> localization. 
+            </summary>
+            <remarks>
+            Use it when specifying a <see cref="T:KSPDev.GUIUtils.LocalizableItemAttribute"/> for a field
+            with the units.
+            </remarks>
+            <example><code source="Examples/GUIUtils/LocalizableItemAttribute-Examples.cs" region="ItemField_WithUnits"/></example>
+            <item name="T:KSPField">
+  <seealso href="https://kerbalspaceprogram.com/api/class_k_s_p_field.html">KSP: KSPField</seealso>
+</item>
+        </member>
+        <member name="F:KSPDev.GUIUtils.StdSpecTags.ToggleEnabled">
+            <summary>
+            Specialization for the <see cref="T:UI_Toggle"/> <c>enabledText</c> localization. 
+            </summary>
+            <remarks>
+            Use it when specifying a <see cref="T:KSPDev.GUIUtils.LocalizableItemAttribute"/> for a toggle
+            field.
+            </remarks>
+            <item name="T:KSPField">
+  <seealso href="https://kerbalspaceprogram.com/api/class_k_s_p_field.html">KSP: KSPField</seealso>
+</item>
+        </member>
+        <member name="F:KSPDev.GUIUtils.StdSpecTags.ToggleDisabled">
+            <summary>
+            Specialization for the <see cref="T:UI_Toggle"/> <c>disabledText</c> localization. 
+            </summary>
+            <remarks>
+            Use it when specifying a <see cref="T:KSPDev.GUIUtils.LocalizableItemAttribute"/> for a toggle
+            field.
+            </remarks>
+            <item name="T:KSPField">
+  <seealso href="https://kerbalspaceprogram.com/api/class_k_s_p_field.html">KSP: KSPField</seealso>
+</item>
         </member>
         <member name="T:KSPDev.Extensions.DictExtensions">
             <summary>Helper extensions for the generic dictionary container.</summary>
@@ -1300,6 +1368,150 @@
             <summary>Returns full path to the plugins root folder (a.k.a. <c>GameData</c>).</summary>
             <value>The full path to the plugins folder.</value>
         </member>
+        <member name="T:KSPDev.GUIUtils.GUILayoutButtons">
+            <summary>Utility class to help building GUI layout buttons.</summary>
+        </member>
+        <member name="M:KSPDev.GUIUtils.GUILayoutButtons.Push(System.Boolean,UnityEngine.GUIContent,UnityEngine.GUIStyle,UnityEngine.GUILayoutOption[],System.Action,System.Action,KSPDev.GUIUtils.GuiActionsList)">
+            <summary>Makes a button that fires a callback when pressed or released.</summary>
+            <remarks>
+            The callbacks are only fired once for every state change, and are guarnteed to not be called
+            during the layout phase. The callback is called *after* the state is updated. 
+            </remarks>
+            <param name="btnState">The current press state of the button.</param>
+            <param name="guiCnt">The GUI content to present as the button's caption.</param>
+            <param name="style">The GUI style of the control.</param>
+            <param name="options">
+            The GUILayout options to apply to the control. It can be <c>null</c>.
+            </param>
+            <param name="fnPush">
+            The callback to call when the button is pressed. Can be <c>null</c>.
+            </param>
+            <param name="fnRelease">
+            The callback to call when the button is released. Can be <c>null</c>.
+            </param>
+            <param name="actionsList">
+            The action list to add to use to fire a callback. If the list is onitted, then the callback is
+            fired right away.
+            </param>
+            <returns>The new button press state.</returns>
+            <seealso cref="T:KSPDev.GUIUtils.GuiActionsList"/>
+        </member>
+        <member name="M:KSPDev.GUIUtils.GUILayoutButtons.Toggle(System.Boolean,UnityEngine.GUIContent,UnityEngine.GUIStyle,UnityEngine.GUILayoutOption[],System.Action,System.Action,KSPDev.GUIUtils.GuiActionsList)">
+            <summary>Makes a toggle control that fires a callback when the state changes.</summary>
+            <remarks>
+            The callbacks are only fired once for every state change, and are guaranteed to not be called
+            during the layout phase. The callback is called *after* the state is updated.
+            </remarks>
+            <param name="btnState">The current toggle state.</param>
+            <param name="guiCnt">The GUI content to present as the button's caption.</param>
+            <param name="style">The GUI style of the control.</param>
+            <param name="options">
+            The GUILayout options to apply to the control. It can be <c>null</c>.
+            </param>
+            <param name="fnOn">
+            The callback to call when the control is checked. Can be <c>null</c>.
+            </param>
+            <param name="fnOff">The callback to call when the control is checked. Can be <c>null</c>.
+            </param>
+            <param name="actionsList">
+            The action list to add to use to fire a callback. If the list is onitted, then the callback is
+            fired right away.
+            </param>
+            <returns>The new button toggle state.</returns>
+            <seealso cref="T:KSPDev.GUIUtils.GuiActionsList"/>
+        </member>
+        <member name="T:KSPDev.GUIUtils.GUILayoutStringTable">
+            <summary>Utility class to draw a simple table with the text colum contents.</summary>
+            <remarks>
+            <para>
+            This table cannot hold non-string content. It keeps all the columns to be of the same, and the
+            size is adjusted to the maximum column's size in the rows. There is a one frame delay between
+            the content change and the column resizing, which may result in flickering if the content
+            changes too frequently. The columns try to take as small space as possible, so defining the
+            minimum size may be a good bet.
+            </para>
+            <para>
+            This class is designed to be called on every frame. It's heavily performance optimized.
+            </para>
+            </remarks>
+        </member>
+        <member name="F:KSPDev.GUIUtils.GUILayoutStringTable.currentIndex">
+            <summary>Index of the curently rendered column.</summary>
+        </member>
+        <member name="F:KSPDev.GUIUtils.GUILayoutStringTable.columnWidths">
+            <summary>Current frame maximum widths of the columns.</summary>
+        </member>
+        <member name="F:KSPDev.GUIUtils.GUILayoutStringTable.lastFrameColumnWidths">
+            <summary>The maximum widths of the columns from the previous frame.</summary>
+        </member>
+        <member name="M:KSPDev.GUIUtils.GUILayoutStringTable.#ctor(System.Int32)">
+            <summary>Creates a table of the specified column width.</summary>
+            <remarks>
+            It's OK to render more columns than reserved. They won't resized, but it's not an error.
+            </remarks>
+            <param name="columns">The number of columns to track.</param>
+        </member>
+        <member name="M:KSPDev.GUIUtils.GUILayoutStringTable.UpdateFrame">
+            <summary>Updates the table state each frame toremember the best column size values.</summary>
+            <remarks>
+            This method is only interested in the <c>EventType.Layout</c> phase, so no need to call it on
+            each GUI event when there is a cheap way to detect it.
+            </remarks>
+        </member>
+        <member name="M:KSPDev.GUIUtils.GUILayoutStringTable.StartNewRow">
+            <summary>Tells that a new row is about to be rendered.</summary>
+            <remarks>Call it before every new row.</remarks>
+        </member>
+        <member name="M:KSPDev.GUIUtils.GUILayoutStringTable.AddTextColumn(System.String,UnityEngine.GUIStyle)">
+            <summary>Adds a text column into the table.</summary>
+            <param name="text">The text to add.</param>
+            <param name="style">
+            The style to apply to the text. If not set, then <c>GUI.skin.label</c> is used.
+            </param>
+        </member>
+        <member name="M:KSPDev.GUIUtils.GUILayoutStringTable.AddTextColumn(System.String,KSPDev.GUIUtils.LocalizableMessage,UnityEngine.GUIStyle)">
+            <summary>Adds a text column into the table.</summary>
+            <param name="text">The text to add.</param>
+            <param name="message">The localizable message to get the minimum size from.</param>
+            <param name="style">
+            The style to apply to the text. If not set, then <c>GUI.skin.label</c> is used.
+            </param>
+            <seealso cref="T:KSPDev.GUIUtils.LocalizableMessage"/>
+        </member>
+        <member name="M:KSPDev.GUIUtils.GUILayoutStringTable.AddTextColumn(System.String,System.String,UnityEngine.GUIStyle)">
+            <summary>Adds a text column into the table with a value tooltip.</summary>
+            <param name="text">The text to add.</param>
+            <param name="tooltip">
+            The tooltip for the column value. Note, that the tooltip is not handled by the table, it gets
+            rendered by the Unity GUI functionality, which may need to be configured.
+            </param>
+            <param name="style">
+            The style to apply to the text. If not set, then <c>GUI.skin.label</c> is used.
+            </param>
+        </member>
+        <member name="M:KSPDev.GUIUtils.GUILayoutStringTable.AddTextColumn(System.String,System.String,KSPDev.GUIUtils.LocalizableMessage,UnityEngine.GUIStyle)">
+            <summary>Adds a text column into the table with a value tooltip.</summary>
+            <param name="text">The text to add.</param>
+            <param name="tooltip">
+            The tooltip for the column value. Note, that the tooltip is not handled by the table, it gets
+            rendered by the Unity GUI functionality, which may need to be configured.
+            </param>
+            <param name="message">The localizable message to get the minimum size from.</param>
+            <param name="style">
+            The style to apply to the text. If not set, then <c>GUI.skin.label</c> is used.
+            </param>
+            <seealso cref="T:KSPDev.GUIUtils.LocalizableMessage"/>
+        </member>
+        <member name="M:KSPDev.GUIUtils.GUILayoutStringTable.AddTextColumn(UnityEngine.GUIContent,UnityEngine.GUIStyle,System.Single,System.Single)">
+            <summary>Adds a content into the table column.</summary>
+            <remarks>
+            When possible, this method should be preferred over the other methods, which are simply the
+            shortcuts to this one.</remarks>
+            <param name="content">The text/tooltip content of the column to add.</param>
+            <param name="style">The style to apply to the text.</param>
+            <param name="minWidth">The minimum width of the column.</param>
+            <param name="maxWidth">The maximum width of the column.</param>
+        </member>
         <member name="T:KSPDev.GUIUtils.IHasGUI">
             <summary>Generic interface for the modules that implement a GUI events handling.</summary>
         </member>
@@ -1344,46 +1556,16 @@
         <member name="M:KSPDev.GUIUtils.IsLocalizableModule.LocalizeModule">
             <summary>A callback which is called when the localization vesion has changed.</summary>
             <remarks>
+            <para>
+            This method can be called before the module is fully initialized! A very common use-case is
+            calling this method from the part module <c>OnAwake()</c> method.
+            </para>
+            <para>
             Unless the implementing class is <i>sealed</i>, the method must be declared as <i>virtual</i>.
             The descendants may want to react on the callback as well.
+            </para>
             </remarks>
             <example><code source="Examples/GUIUtils/LocalizationLoader-Examples.cs" region="LocalizationLoaderDemo2"/></example>
-        </member>
-        <member name="T:KSPDev.GUIUtils.KSPUtilsGUILayout">
-            <summary>Utility class to help building various GUILayout controls.</summary>
-        </member>
-        <member name="M:KSPDev.GUIUtils.KSPUtilsGUILayout.PushButton(System.Boolean@,UnityEngine.GUIContent,UnityEngine.GUIStyle,UnityEngine.GUILayoutOption[],System.Action,System.Action)">
-            <summary>Makes a button that fires a callback when pressed or released.</summary>
-            <remarks>
-            The callabacks are only fired once for every state change, and are guarnteed to not be called
-            during the layout phase. The callback is called *after* the state is updated. 
-            </remarks>
-            <param name="btnState">The state to read and modify.</param>
-            <param name="guiCnt">The GUI content to present as the button's caption.</param>
-            <param name="style">The GUI style of the control.</param>
-            <param name="options">The GUILayout options to apply to the control.</param>
-            <param name="fnPush">The callback to call when the button is pressed.</param>
-            <param name="fnRelease">The callback to call when the button is released.</param>
-        </member>
-        <member name="M:KSPDev.GUIUtils.KSPUtilsGUILayout.ToggleButton(System.Boolean@,UnityEngine.GUIContent,UnityEngine.GUIStyle,UnityEngine.GUILayoutOption[],System.Action,System.Action)">
-            <summary>Makes a toggle control that fires a callback when teh state changes.</summary>
-            <remarks>
-            <para>
-            The callabacks are only fired once for every state change, and are guarnteed to not be called
-            during the layout phase. The callback is called *after* the state is updated.
-            </para>
-            <para>
-            The <c>GUI.changed</c> state is preserved by these control. I.e. if the button state has
-            changed, then <c>GUI.changed</c> will be <c>true</c>. Otherwise, it will retain its value
-            before entering the method.
-            </para>
-            </remarks>
-            <param name="btnState">The state to read and modify.</param>
-            <param name="guiCnt">The GUI content to present as the button's caption.</param>
-            <param name="style">The GUI style of the control.</param>
-            <param name="options">The GUILayout options to apply to the control.</param>
-            <param name="fnOn">The callback to call when the control is checked.</param>
-            <param name="fnOff">The callback to call when the control is released.</param>
         </member>
         <member name="T:KSPDev.GUIUtils.MessageLookup`1">
             <summary>Holds a mapping of a value to a localized message.</summary>
@@ -1601,6 +1783,11 @@
             cached and reused in the subsequent calls. The cache can be reset by incrementing the
             <see cref="F:KSPDev.GUIUtils.LocalizableMessage.systemLocVersion"/>.
             </para>
+            <para>
+            The template of the messages supports special tags that may give a hint to the caller code on
+            how the messages should be rendered. Those tags must be palced at the beginning of the template.
+            For the available tags see <see cref="T:KSPDev.GUIUtils.LocalizableMessage.GuiTags"/>.
+            </para>
             </remarks>
             <seealso cref="T:KSPDev.GUIUtils.LocalizableItemAttribute"/>
             <seealso cref="F:KSPDev.GUIUtils.LocalizableMessage.systemLocVersion"/>
@@ -1637,6 +1824,15 @@
             <item name="T:KSP.Localization.Localizer">
   <seealso href="https://kerbalspaceprogram.com/api/class_k_s_p_1_1_localization_1_1_localizer.html">KSP.Localization.Localizer</seealso>
 </item>
+        </member>
+        <member name="F:KSPDev.GUIUtils.LocalizableMessage.guiTags">
+            <summary>GUI specific settings that suggest how to show the message.</summary>
+            <remarks>
+            Due to the lazzy update nature of the localized messages, these settings are <i>not</i>
+            loaded until the message is used at least once. The caller code may ensure the values are
+            updated by calling to <see cref="M:KSPDev.GUIUtils.LocalizableMessage.LoadLocalization"/>, or by simply getting the
+            <see cref="P:KSPDev.GUIUtils.LocalizableMessage.localizedTemplate"/> value.
+            </remarks>
         </member>
         <member name="F:KSPDev.GUIUtils.LocalizableMessage.loadedLocVersion">
             <summary>Currently cached version of the localization content.</summary>
@@ -1679,6 +1875,9 @@
             </param>
             <seealso href="http://lingoona.com/cgi-bin/grammar#l=en&amp;oh=1">Lingoona Grammar help</seealso>
         </member>
+        <member name="M:KSPDev.GUIUtils.LocalizableMessage.HandleSpecialTags">
+            <summary>Handles any special tags that can prefix the actual template.</summary>
+        </member>
         <member name="P:KSPDev.GUIUtils.LocalizableMessage.localizedTemplate">
             <summary>Localized Lingoona Grammar template for the <c>tag</c>.</summary>
             <remarks>
@@ -1705,6 +1904,29 @@
   <seealso href="https://kerbalspaceprogram.com/api/class_k_s_p_1_1_localization_1_1_localizer.html">KSP.Localization.Localizer</seealso>
 </item>
         </member>
+        <member name="T:KSPDev.GUIUtils.LocalizableMessage.GuiTags">
+            <summary>Various values that give hints on how the messages should be presented in GUI.</summary>
+            <remarks>
+            It's up to the caller to handle theses settings. They improve the appearence, but are not
+            required for the proper content presentation.
+            </remarks>
+        </member>
+        <member name="F:KSPDev.GUIUtils.LocalizableMessage.GuiTags.minWidth">
+            <summary>Minimum width of the area in GUI.</summary>
+            <remarks>Defined via tag: &lt;gui:min:width,heigth&gt;</remarks>
+        </member>
+        <member name="F:KSPDev.GUIUtils.LocalizableMessage.GuiTags.minHeight">
+            <summary>Minimum height of the area in GUI.</summary>
+            <remarks>Defined via tag: &lt;gui:min:width,heigth&gt;</remarks>
+        </member>
+        <member name="F:KSPDev.GUIUtils.LocalizableMessage.GuiTags.maxWidth">
+            <summary>Maximum width of the area in GUI.</summary>
+            <remarks>Defined via tag: &lt;gui:max:width,heigth&gt;</remarks>
+        </member>
+        <member name="F:KSPDev.GUIUtils.LocalizableMessage.GuiTags.maxHeight">
+            <summary>Maximum height of the area in GUI.</summary>
+            <remarks>Defined via tag: &lt;gui:max:width,heigth&gt;</remarks>
+        </member>
         <member name="T:KSPDev.GUIUtils.LocalizationLoader">
             <summary>A utility class to localize the annotated members</summary>
             <remarks>
@@ -1720,18 +1942,6 @@
             <example><code source="Examples/GUIUtils/LocalizationLoader-Examples.cs" region="LocalizationLoaderDemo1"/></example>
             <example><code source="Examples/GUIUtils/LocalizationLoader-Examples.cs" region="LocalizationLoaderDemo2"/></example>
         </member>
-        <member name="F:KSPDev.GUIUtils.LocalizationLoader.KspFieldUnitsSpec">
-            <summary>
-            Specification for the <see cref="T:KSPField"/> <c>guiUnits</c> localization. 
-            </summary>
-            <remarks>
-            Use it when specifying a <see cref="T:KSPDev.GUIUtils.LocalizableItemAttribute"/> for a field with the units.
-            </remarks>
-            <example><code source="Examples/GUIUtils/LocalizableItemAttribute-Examples.cs" region="ItemField_WithUnits"/></example>
-            <item name="T:KSPField">
-  <seealso href="https://kerbalspaceprogram.com/api/class_k_s_p_field.html">KSP: KSPField</seealso>
-</item>
-        </member>
         <member name="M:KSPDev.GUIUtils.LocalizationLoader.LoadItemsInModule(PartModule)">
             <summary>Localizes the <see cref="T:PartModule"/> items.</summary>
             <remarks>
@@ -1741,7 +1951,7 @@
             <list type="bullet">
             <item>
             <see cref="T:KSPField"/>. This type may have multiple localization items: for <c>guiName</c>
-            (spec=<c>null</c>) and for <c>guiUnits</c> (spec=<see cref="F:KSPDev.GUIUtils.LocalizationLoader.KspFieldUnitsSpec"/>).
+            (spec=<c>null</c>) and for <c>guiUnits</c> (spec=<see cref="F:KSPDev.GUIUtils.StdSpecTags.Units"/>).
             </item>
             <item><see cref="T:KSPEvent"/>.</item>
             <item><see cref="T:KSPAction"/>.</item>
@@ -1785,6 +1995,13 @@
         <member name="M:KSPDev.GUIUtils.LocalizationLoader.UpdateLocalizationInPartModules(Part)">
             <summary>Updates all the localizable strings in a part.</summary>
             <param name="part">The part to load the data in.</param>
+        </member>
+        <member name="M:KSPDev.GUIUtils.LocalizationLoader.IsModuleOfThisVersion(PartModule)">
+            <summary>
+            Checks if the module was built using the same version of the Utils assembly as this one.
+            </summary>
+            <param name="module">The module to check.</param>
+            <returns><c>true</c> if the module refers our version of the Utils assembly.</returns>
         </member>
         <member name="T:KSPDev.GUIUtils.ScreenMessaging">
             <summary>Helper class to present global UI messages.</summary>
@@ -2318,7 +2535,7 @@
         <member name="F:KSPDev.GUIUtils.GuiActionsList.guiActions">
             <summary>A list of pending actions.</summary>
         </member>
-        <member name="M:KSPDev.GUIUtils.GuiActionsList.Add(KSPDev.GUIUtils.GuiActionsList.GuiAction)">
+        <member name="M:KSPDev.GUIUtils.GuiActionsList.Add(System.Action)">
             <summary>Adds an action to the pending list.</summary>
             <param name="actionFn">An action callback.</param>
         </member>
@@ -2327,9 +2544,6 @@
             <remarks>It's safe to call this method in every pass. It will detect when it's safe to apply
             the changes and apply the changes only once per a frame.</remarks>
             <returns><c>true</c> if actions have been applied.</returns>
-        </member>
-        <member name="T:KSPDev.GUIUtils.GuiActionsList.GuiAction">
-            <summary>GUI action type.</summary>
         </member>
         <member name="T:KSPDev.GUIUtils.AngleType">
             <summary>
@@ -2465,6 +2679,10 @@
             <example><code source="Examples/GUIUtils/TypeFormatters/CostType-Examples.cs" region="CostTypeDemo2_FormatDefault"/></example>
             <example><code source="Examples/GUIUtils/TypeFormatters/CostType-Examples.cs" region="CostTypeDemo2_FormatFixed"/></example>
         </member>
+        <member name="F:KSPDev.GUIUtils.CostType.FundPrefix">
+            <summary>The prefix to use to denote the "money" cost values.</summary>
+            <remarks>This is an icon, so it's not localizable.</remarks>
+        </member>
         <member name="F:KSPDev.GUIUtils.CostType.value">
             <summary>A wrapped numeric value.</summary>
             <remarks>This is the original non-rounded and unscaled value.</remarks>
@@ -2536,6 +2754,12 @@
             <example><code source="Examples/GUIUtils/TypeFormatters/DistanceType-Examples.cs" region="DistanceTypeDemo2_FormatDefault"/></example>
             <example><code source="Examples/GUIUtils/TypeFormatters/DistanceType-Examples.cs" region="DistanceTypeDemo2_FormatWithScale"/></example>
             <example><code source="Examples/GUIUtils/TypeFormatters/DistanceType-Examples.cs" region="DistanceTypeDemo2_FormatFixed"/></example>
+        </member>
+        <member name="F:KSPDev.GUIUtils.DistanceType.MeterLocTag">
+            <summary>Localization tag for the "meter" units.</summary>
+        </member>
+        <member name="F:KSPDev.GUIUtils.DistanceType.KilometerLocTag">
+            <summary>Localization tag for the "kilometer" units.</summary>
         </member>
         <member name="F:KSPDev.GUIUtils.DistanceType.meter">
             <summary>Localized suffix for the "meter" units. Scale x1.</summary>
@@ -2622,8 +2846,11 @@
             <example><code source="Examples/GUIUtils/TypeFormatters/ForceType-Examples.cs" region="ForceTypeDemo2_FormatDefault"/></example>
             <example><code source="Examples/GUIUtils/TypeFormatters/ForceType-Examples.cs" region="ForceTypeDemo2_FormatFixed"/></example>
         </member>
+        <member name="F:KSPDev.GUIUtils.ForceType.KilonewtonLocTag">
+            <summary>Localization tag for the "kilonewton" units.</summary>
+        </member>
         <member name="F:KSPDev.GUIUtils.ForceType.kiloNewton">
-            <summary>Localized suffix for the "kilonewton" untis. Scale x1.</summary>
+            <summary>Localized suffix for the "kilonewton" units. Scale x1.</summary>
         </member>
         <member name="F:KSPDev.GUIUtils.ForceType.value">
             <summary>A wrapped numeric value.</summary>
@@ -2733,6 +2960,15 @@
             <example><code source="Examples/GUIUtils/TypeFormatters/MassType-Examples.cs" region="MassTypeDemo2_FormatDefault"/></example>
             <example><code source="Examples/GUIUtils/TypeFormatters/MassType-Examples.cs" region="MassTypeDemo2_FormatWithScale"/></example>
             <example><code source="Examples/GUIUtils/TypeFormatters/MassType-Examples.cs" region="MassTypeDemo2_FormatFixed"/></example>
+        </member>
+        <member name="F:KSPDev.GUIUtils.MassType.GramLocTag">
+            <summary>Localization tag for the "gram" units.</summary>
+        </member>
+        <member name="F:KSPDev.GUIUtils.MassType.KilogramLocTag">
+            <summary>Localization tag for the "kilogram" units.</summary>
+        </member>
+        <member name="F:KSPDev.GUIUtils.MassType.TonLocTag">
+            <summary>Localization tag for the "ton" units.</summary>
         </member>
         <member name="F:KSPDev.GUIUtils.MassType.gram">
             <summary>Localized suffix for the "gram" units. Scale <c>0.000001</c>.</summary>
@@ -2884,6 +3120,9 @@
             <example><code source="Examples/GUIUtils/TypeFormatters/PressureType-Examples.cs" region="PressureTypeDemo1"/></example>
             <example><code source="Examples/GUIUtils/TypeFormatters/PressureType-Examples.cs" region="PressureTypeDemo2_FormatDefault"/></example>
             <example><code source="Examples/GUIUtils/TypeFormatters/PressureType-Examples.cs" region="PressureTypeDemo2_FormatFixed"/></example>
+        </member>
+        <member name="F:KSPDev.GUIUtils.PressureType.KilopascalLocTag">
+            <summary>Localization tag for the "kilopascal" units.</summary>
         </member>
         <member name="F:KSPDev.GUIUtils.PressureType.kiloPascal">
             <summary>Localized suffix for the "kilopascal" units. Scale x1.</summary>
@@ -3099,7 +3338,7 @@
             Use it as a generic parameter when creating a <see cref="T:KSPDev.GUIUtils.LocalizableMessage"/> descendants.
             </para>
             <para>
-            The class uses the unit name localizations from the stock module <c>ModuleEnviroSensor</c>. In
+            The class uses the unit name localizations from the stock module <c>InternalSpeed</c>. In
             case of this module is deprecated or the tags are changed, the default English values will be
             used for the unit names.
             </para>
@@ -3110,8 +3349,23 @@
             <example><code source="Examples/GUIUtils/TypeFormatters/VelocityType-Examples.cs" region="VelocityTypeDemo2_FormatDefault"/></example>
             <example><code source="Examples/GUIUtils/TypeFormatters/VelocityType-Examples.cs" region="VelocityTypeDemo2_FormatFixed"/></example>
         </member>
-        <member name="F:KSPDev.GUIUtils.VelocityType.metrePerSecond">
-            <summary>Localized suffix for the "metre per second" units. Scale x1.</summary>
+        <member name="F:KSPDev.GUIUtils.VelocityType.MeterPerSecondLocTag">
+            <summary>Localization tag for the "meter per second" units.</summary>
+        </member>
+        <member name="F:KSPDev.GUIUtils.VelocityType.KilometerPerSecondLocTag">
+            <summary>Localization tag for the "kilometer per second" units.</summary>
+        </member>
+        <member name="F:KSPDev.GUIUtils.VelocityType.MegameterPerSecondLocTag">
+            <summary>Localization tag for the "megameter per second" units.</summary>
+        </member>
+        <member name="F:KSPDev.GUIUtils.VelocityType.meterPerSecond">
+            <summary>Localized suffix for the "meter per second" units. Scale x1.</summary>
+        </member>
+        <member name="F:KSPDev.GUIUtils.VelocityType.kilometerPerSecond">
+            <summary>Localized suffix for the "kilometer per second" units. Scale x1000.</summary>
+        </member>
+        <member name="F:KSPDev.GUIUtils.VelocityType.megameterPerSecond">
+            <summary>Localized suffix for the "megameter per second" units. Scale x1000000.</summary>
         </member>
         <member name="F:KSPDev.GUIUtils.VelocityType.value">
             <summary>A wrapped numeric value.</summary>
@@ -3120,7 +3374,7 @@
         <member name="M:KSPDev.GUIUtils.VelocityType.#ctor(System.Double)">
             <summary>Constructs an object from a numeric value.</summary>
             <param name="value">The numeric value in the base units.</param>
-            <seealso cref="M:KSPDev.GUIUtils.VelocityType.Format(System.Double,System.String)"/>
+            <seealso cref="M:KSPDev.GUIUtils.VelocityType.Format(System.Double,System.Nullable{System.Double},System.String)"/>
             <example><code source="Examples/GUIUtils/TypeFormatters/VelocityType-Examples.cs" region="VelocityTypeDemo1"/></example>
             <example><code source="Examples/GUIUtils/TypeFormatters/VelocityType-Examples.cs" region="VelocityTypeDemo2_FormatDefault"/></example>
             <example><code source="Examples/GUIUtils/TypeFormatters/VelocityType-Examples.cs" region="VelocityTypeDemo2_FormatFixed"/></example>
@@ -3135,7 +3389,7 @@
             <param name="obj">The object type to convert.</param>
             <returns>A numeric value.</returns>
         </member>
-        <member name="M:KSPDev.GUIUtils.VelocityType.Format(System.Double,System.String)">
+        <member name="M:KSPDev.GUIUtils.VelocityType.Format(System.Double,System.Nullable{System.Double},System.String)">
             <summary>Formats the value into a human friendly string with a unit specification.</summary>
             <remarks>
             <para>
@@ -3147,10 +3401,25 @@
             units is <i>one meter per second</i>. Keep it in mind when passing the argument.
             </para>
             </remarks>
-            <param name="value">The numeric value to format.</param>
+            <param name="value">The unscaled numeric value to format.</param>
+            <param name="scale">
+            The fixed scale to apply to the value before formatting. The formatting method can uderstand
+            only a few scales:
+            <list type="bullet">
+            <item>m/s: scale=<c>1.0</c>. <i>It's a base velocity unit in the game.</i></item>
+            <item>km/s: scale=<c>1.0e+3</c>.</item>
+            <item>Mm/s: scale=<c>1.0e+6</c>.</item>
+            </list>
+            <para>
+            The unknown scales will be rounded <i>up</i> to the closest known scale. If this parameter
+            is omitted, then the best scale for the value will be choosen automatically.
+            </para>
+            </param>
             <param name="format">
-            The specific float number format to use. If the format is not specified, then it's choosen
-            basing on the value.
+            The specific numeric number format to use. If this parameter is specified, then the method
+            doesn't try to guess the right scale. Instead, it uses either the provided
+            <paramref name="scale"/>, or <c>1.0</c> if nothing is provided. If the format is not
+            specified, then it's choosen basing on the scale.
             </param>
             <returns>A formatted and localized string</returns>
             <example><code source="Examples/GUIUtils/TypeFormatters/VelocityType-Examples.cs" region="VelocityTypeDemo2_FormatDefault"/></example>
@@ -3159,7 +3428,7 @@
         <member name="M:KSPDev.GUIUtils.VelocityType.ToString">
             <summary>Returns a string formatted as a human friendly pressure specification.</summary>
             <returns>A string representing the value.</returns>
-            <seealso cref="M:KSPDev.GUIUtils.VelocityType.Format(System.Double,System.String)"/>
+            <seealso cref="M:KSPDev.GUIUtils.VelocityType.Format(System.Double,System.Nullable{System.Double},System.String)"/>
         </member>
         <member name="T:KSPDev.GUIUtils.UISoundPlayer">
             <summary>Helper class to play sounds in the game GUI. Such sounds are not 3D aligned.</summary>
@@ -4190,6 +4459,37 @@
             <param name="args">The arguments for the format string.</param>
             <seealso cref="M:KSPDev.LogUtils.DebugEx.ObjectToString(System.Object)"/>
         </member>
+        <member name="T:KSPDev.MathUtils.Mathd">
+            <summary>
+            Gives some common methods for handling dobule values in the game.
+            </summary>
+        </member>
+        <member name="F:KSPDev.MathUtils.Mathd.Epsilon">
+            <summary>Value which can be safely considered to be <c>0</c>.</summary>
+        </member>
+        <member name="M:KSPDev.MathUtils.Mathd.Approximately(System.Double,System.Double)">
+            <summary>Tells if the two double values look the same in the geme's units.</summary>
+            <remarks>
+            This method gives the same logic as <c>Mathf.Approximately</c>, but for the double values.
+            </remarks>
+            <param name="a">The first value to test.</param>
+            <param name="b">The second value to test.</param>
+            <returns>
+            <c>true</c> if the values difference is negligible from the game's perspective.
+            </returns>
+        </member>
+        <member name="M:KSPDev.MathUtils.Mathd.AreSame(System.Double,System.Double)">
+            <summary>Tells if the two double are the same, allowing some small error.</summary>
+            <remarks>
+            This method requires the difference between the values to be negligible. The absolute values
+            are not counted.
+            </remarks>
+            <param name="a">The first value to test.</param>
+            <param name="b">The second value to test.</param>
+            <returns>
+            <c>true</c> if the values difference is negligible.
+            </returns>
+        </member>
         <member name="T:KSPDev.ModelUtils.AlignTransforms">
             <summary>Helper methods to align transformations relative to each other.</summary>
         </member>
@@ -4445,10 +4745,11 @@
             </item>
             <item>
             <c>**</c> - any <i>path</i> matches. What will eventually be found depends on the pattern to
-            the right of <c>**</c>. The path match pattern does a "breadth-first" search, i.e. it tries to
-            find the shortest path possible. E.g. <c>**/a/b</c> will go through all the nodes starting
-            from the parent until path <c>a/b</c> is found. Be careful with this pattern since in case of
-            not matching anything it will walk thought the <i>whole</i> hirerachy.
+            the right of <c>**</c>. E.g. <c>**/a/b</c> will go through all the nodes starting from the
+            parent until path <c>a/b</c> is found. If multiple paths have matched the pattern, then the
+            shortest path will be returned. Be careful with this pattern since in case of not matching
+            anything it will walk thought the <i>whole</i> hirerachy, starting from
+            <paramref name="parent"/>.
             </item>
             </list>
             <para>
@@ -4472,7 +4773,7 @@
             <returns>Transform or <c>null</c> if nothing found.</returns>
             <example>
             Given the following hierarchy:
-            <code lang="c++"><![CDATA[
+            <code><![CDATA[
             // a
             // + b
             // | + c
@@ -4484,22 +4785,24 @@
             // |       + e1
             // + abc
             ]]></code>
-            <para>The following pattern/output will be possible:</para>
+            <para>Here are some matching examples:</para>
             <code><![CDATA[
-            // a/b/c/d/e/e1 => node "e1"
-            // a/b/*/d/e/e1 => node "e1"
-            // a/b/*/*/e/e1 => node "e1"
-            // a/b/c/c1 => node "с1"
-            // a/b/*:0 => branch "a/b/c/c1", node "c"
-            // a/b/*:1 => branch "a/b/c/d/e/e1", node "c"
-            // a/b/c:1/d => branch "a/b/c/d/e/e1", node "d"
-            // **/e1 => node "e1"
-            // **/c1 => node "c1"
-            // **/c/d => AMBIGUITY! The first found branch will be taken
-            // a/**/e1 => node "e1"
-            // *bc => node "abc"
-            // ab* => node "abc"
-            // *b* => node "abc"
+            // a/b/c/d/e/e1 => a/b/c/d/e/e1
+            // a/b/c/c1 => a/b/c/c1
+            // a/b/*/d/e/e1 => a/b/c/d/e/e1
+            // a/b/*/*/e/e1 => a/b/c/d/e/e1
+            // a/b/* => a/b/c, branch a/b/c/c1/d (the first match)
+            // a/b/*:0 => a/b/c, branch a/b/c/c1/d
+            // a/b/*:1 => a/b/c, branch a/b/c/d/e/e1
+            // a/b/c:1/d => a/b/c/d, branch a/b/c/d/e/e1
+            // **/e1 => a/b/c/d/e/e1
+            // **/c1 => a/b/c/c1
+            // **/c/d => a/b/c/d, branch a/b/c/d
+            // **/*c => a/abc. The other matched branch (a/b/c) will be refused due to the length. 
+            // a/**/e1 => a/b/c/d/e/e1
+            // *bc => a/abc
+            // ab* => a/abc
+            // *b* => a/abc
             ]]></code>
             </example>
             <seealso cref="M:KSPDev.ModelUtils.Hierarchy.UnescapeName(System.String)"/>
@@ -4567,6 +4870,9 @@
             </remarks>
             <param name="unescapedName">The raw name with any symbols.</param>
             <returns>A name where all the special symbols are properly escaped.</returns>
+        </member>
+        <member name="M:KSPDev.ModelUtils.Hierarchy.FindTransformByPathInternal(UnityEngine.Transform,System.String[],System.Int32,System.Int32@,UnityEngine.Transform@)">
+            <summary>Searches thru the nodes, implementing the BFS algorithm.</summary>
         </member>
         <member name="T:KSPDev.ModelUtils.KspLayer">
             <summary>Defines various layers used in the game.</summary>
@@ -5057,7 +5363,7 @@
         </member>
         <member name="M:KSPDev.ProcessingUtils.SimpleStateMachine`1.#ctor(System.Boolean)">
             <summary>Constructs a new uninitialized state machine.</summary>
-            <param name="strict">Tells if all the transitions must be excplicitly declared.</param>
+            <param name="strict">Tells if all the transitions must be explicitly declared.</param>
             <seealso cref="P:KSPDev.ProcessingUtils.SimpleStateMachine`1.isStrict"/>
             <seealso cref="P:KSPDev.ProcessingUtils.SimpleStateMachine`1.currentState"/>
             <seealso cref="M:KSPDev.ProcessingUtils.SimpleStateMachine`1.SetTransitionConstraint(`0,`0[])"/>
@@ -5290,35 +5596,62 @@
             <returns>An ID of the resource.</returns>
             <code source="Examples/ResourceUtils/StockResourceNames-Examples.cs" region="StockResourceNames1"/>
         </member>
-        <member name="M:KSPDev.ResourceUtils.StockResourceNames.GetResourceTitle(System.String)">
+        <member name="M:KSPDev.ResourceUtils.StockResourceNames.GetResourceTitle(System.String,System.Boolean)">
             <summary>Returns a user friendly name of the resource.</summary>
+            <remarks>
+            This could be a rather expensive call. Cach the result if the timing is critical.
+            </remarks>
             <param name="resourceName">The resource common name.</param>
+            <param name="removeLingoonaTags">
+            Specifies if any Lingoona tags on the name must be removed. Keep it default if the name is
+            intended to be used 'as-is". If the name is to be used as a parameter to localizable phrase,
+            then the tags should be kept.
+            </param>
             <returns>A user friendly string that identifies the resource.</returns>
             <code source="Examples/ResourceUtils/StockResourceNames-Examples.cs" region="StockResourceNames1"/>
         </member>
-        <member name="M:KSPDev.ResourceUtils.StockResourceNames.GetResourceTitle(System.Int32)">
+        <member name="M:KSPDev.ResourceUtils.StockResourceNames.GetResourceTitle(System.Int32,System.Boolean)">
             <summary>Returns a user friendly name of the resource.</summary>
+            <remarks>
+            This could be a rather expensive call. Cach the result if the timing is critical.
+            </remarks>
             <param name="resourceId">The resource ID.</param>
+            <param name="removeLingoonaTags">
+            Specifies if any Lingoona tags on the name must be removed. Keep it default if the name is
+            intended to be used 'as-is". If the name is to be used as a parameter to localizable phrase,
+            then the tags should be kept.
+            </param>
             <returns>A user friendly string that identifies the resource.</returns>
             <code source="Examples/ResourceUtils/StockResourceNames-Examples.cs" region="StockResourceNames1"/>
         </member>
-        <member name="M:KSPDev.ResourceUtils.StockResourceNames.GetResourceAbbreviation(System.String)">
+        <member name="M:KSPDev.ResourceUtils.StockResourceNames.GetResourceAbbreviation(System.String,System.Boolean)">
             <summary>Returns a user friendly name of the resource bsort name (abbreviation).</summary>
             <remarks>
             If the abbreviation is not set for the resource, then the first 3 letters of its display name
             are returned.
             </remarks>
             <param name="resourceName">The resource common name.</param>
+            <param name="removeLingoonaTags">
+            Specifies if any Lingoona tags on the name must be removed. Keep it default if the name is
+            intended to be used 'as-is". If the name is to be used as a parameter to localizable phrase,
+            then the tags should be kept.
+            </param>
             <returns>A user friendly string that identifies the resource.</returns>
             <code source="Examples/ResourceUtils/StockResourceNames-Examples.cs" region="StockResourceNames1"/>
         </member>
-        <member name="M:KSPDev.ResourceUtils.StockResourceNames.GetResourceAbbreviation(System.Int32)">
+        <member name="M:KSPDev.ResourceUtils.StockResourceNames.GetResourceAbbreviation(System.Int32,System.Boolean)">
             <summary>Returns a user friendly name of the resource bsort name (abbreviation).</summary>
             <remarks>
             If the abbreviation is not set for the resource, then the first 3 letters of its display name
-            are returned.
+            are returned.  This could be a rather expensive call. Cach the result if the timing is
+            critical.
             </remarks>
             <param name="resourceId">The resource ID.</param>
+            <param name="removeLingoonaTags">
+            Specifies if any Lingoona tags on the name must be removed. Keep it default if the name is
+            intended to be used 'as-is". If the name is to be used as a parameter to localizable phrase,
+            then the tags should be kept.
+            </param>
             <returns>A user friendly string that identifies the resource.</returns>
             <code source="Examples/ResourceUtils/StockResourceNames-Examples.cs" region="StockResourceNames1"/>
         </member>
@@ -5341,7 +5674,7 @@
             <seealso cref="T:KSPDev.ConfigUtils.PersistentFieldAttribute"/>
         </member>
         <member name="M:KSPDev.Types.PersistentConfigNode.Load(ConfigNode)">
-            <summary>Copies valus from a node.</summary>
+            <summary>Copies values from a node.</summary>
             <param name="node">The node to copy from.</param>
         </member>
         <member name="M:KSPDev.Types.PersistentConfigNode.Save(ConfigNode)">

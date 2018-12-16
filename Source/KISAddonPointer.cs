@@ -717,7 +717,7 @@ sealed class KISAddonPointer : MonoBehaviour {
       //TODO: When there are no nodes try finding ones in the parent or in the children.
       // Ideally, the caller should have checked if this part has free nodes. Now the only
       // way is to pick *any* node. The surface one always exists so, it's a good
-      // candidate. Though, for many details it may result in a weird representation.
+      // candidate. However, for many details it may result in a weird representation.
       DebugEx.Error(
           "Part {0} has no free nodes, use {1}", partToAttach, partToAttach.srfAttachNode);
       attachNodes.Add(partToAttach.srfAttachNode);
@@ -728,7 +728,7 @@ sealed class KISAddonPointer : MonoBehaviour {
     var combines = new List<CombineInstance>();
     CollectMeshesFromAssembly(partToAttach, combines);
 
-    // Create one filter per mesh in the hierarhcy. Simple combining all meshes into one
+    // Create one filter per a mesh in the hierarhcy. Simple combining all the meshes into one
     // larger mesh may have weird representation artifacts on different video cards.
     pointer = new GameObject("KISPointer");
     foreach (var combine in combines) {
@@ -781,26 +781,30 @@ sealed class KISAddonPointer : MonoBehaviour {
   /// </remarks>
   /// <param name="assembly">An assembly to collect meshes from.</param>
   /// <param name="meshCombines">[out] Collected meshes.</param>
-  /// <param name="worldTransform">A world transformation matrix to apply to every mesh after
-  ///     it's translated into world's coordinates. If <c>null</c> then coordinates will be
-  ///     calculated relative to the root part of the assembly.</param>
-  private static void CollectMeshesFromAssembly(Part assembly,
-                                                ICollection<CombineInstance> meshCombines,
-                                                Matrix4x4? worldTransform = null) {
+  /// <param name="worldTransform">
+  /// A world transformation matrix to apply to every mesh after it's translated into world's
+  /// coordinates. If <c>null</c> then coordinates will be calculated relative to the root part of
+  /// the assembly.
+  /// </param>
+  static void CollectMeshesFromAssembly(Part assembly,
+                                        ICollection<CombineInstance> meshCombines,
+                                        Matrix4x4? worldTransform = null) {
     // Always use world transformation from the root.
     var rootWorldTransform = worldTransform ?? assembly.transform.localToWorldMatrix.inverse;
 
     // Get all meshes from the part's model.
-    var meshFilters = assembly.FindModelComponents<MeshFilter>();
-    if (meshFilters.Count > 0) {
-      DebugEx.Fine("Found {0} children meshes in: {1}", meshFilters.Count, assembly);
-      foreach (var meshFilter in meshFilters) {
-        var combine = new CombineInstance();
-        combine.mesh = meshFilter.sharedMesh;
-        combine.transform = rootWorldTransform * meshFilter.transform.localToWorldMatrix;
-        meshCombines.Add(combine);
-      }
-    }
+    var meshFilters = assembly
+        .FindModelComponents<MeshFilter>()
+        // Prefab models are always inactive, so ignore the check.
+        .Where(mf => mf.gameObject.activeInHierarchy || assembly == assembly.partInfo.partPrefab)
+        .ToList();
+    DebugEx.Fine("Found {0} children meshes in: {1}", meshFilters.Count, assembly);
+    meshFilters.ForEach(meshFilter => {
+      var combine = new CombineInstance();
+      combine.mesh = meshFilter.sharedMesh;
+      combine.transform = rootWorldTransform * meshFilter.transform.localToWorldMatrix;
+      meshCombines.Add(combine);
+    });
 
     // Skinned meshes are baked on every frame before rendering. Bake them to get current mesh
     // state.

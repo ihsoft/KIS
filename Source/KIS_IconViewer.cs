@@ -20,7 +20,7 @@ public class KIS_IconViewer : IDisposable {
   public Texture texture;
 
   public KIS_IconViewer(Part p, int resolution) {
-    if (p.partInfo.name == "kerbalEVA" || p.partInfo.name == "kerbalEVAfemale") {
+    if (p.vessel != null && p.vessel.isEVA) {
       // Icon Camera
       GameObject camGo = new GameObject("KASCamItem" + camStaticIndex);
       camGo.transform.parent = p.transform;
