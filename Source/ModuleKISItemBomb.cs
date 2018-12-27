@@ -4,6 +4,7 @@
 // License: Restricted
 
 using KSPDev.GUIUtils;
+using KSPDev.GUIUtils.TypeFormatters;
 using KSPDev.PartUtils;
 using KSPDev.SoundsUtils;
 using KSPDev.KSPInterfaces;

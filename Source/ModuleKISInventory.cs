@@ -6,6 +6,7 @@
 using KIS.GUIUtils;
 using KSPDev.ConfigUtils;
 using KSPDev.GUIUtils;
+using KSPDev.GUIUtils.TypeFormatters;
 using KSPDev.LogUtils;
 using KSPDev.KSPInterfaces;
 using KSPDev.PartUtils;

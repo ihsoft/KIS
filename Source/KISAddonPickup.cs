@@ -6,6 +6,7 @@
 using KSP.UI.Screens;
 using KSPDev.ConfigUtils;
 using KSPDev.GUIUtils;
+using KSPDev.GUIUtils.TypeFormatters;
 using KSPDev.InputUtils;
 using KSPDev.LogUtils;
 using System;

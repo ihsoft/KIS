@@ -4,6 +4,7 @@
 // License: Restricted
 
 using KSPDev.GUIUtils;
+using KSPDev.GUIUtils.TypeFormatters;
 using KSPDev.ProcessingUtils;
 using KSPDev.LogUtils;
 using KSPDev.ModelUtils;
