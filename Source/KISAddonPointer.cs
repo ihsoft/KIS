@@ -310,7 +310,8 @@ sealed class KISAddonPointer : MonoBehaviour {
       Ray ray = FlightCamera.fetch.mainCamera.ScreenPointToRay(Input.mousePosition);
       var colliderHit = Physics.Raycast(
           ray, out hit, maxDistance: 500,
-          layerMask: (int)(KspLayerMask.Part | KspLayerMask.Kerbal | KspLayerMask.SurfaceCollider));
+          layerMask: (int)(KspLayerMask.Part | KspLayerMask.Kerbal | KspLayerMask.SurfaceCollider),
+          queryTriggerInteraction: QueryTriggerInteraction.Ignore);
       if (!colliderHit) {
         pointerTarget = PointerTarget.Nothing;
         ResetMouseOver();
