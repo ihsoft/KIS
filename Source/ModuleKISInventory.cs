@@ -520,7 +520,7 @@ public class ModuleKISInventory : PartModule,
   public static float kerbalDefaultMass = 0.094f;
 
   [PersistentField("Global/itemDebug")]
-  public static bool debugContextMenu = false;
+  public static bool debugContextMenu;
 
   [PersistentField("Editor/PodInventory/addToAllSeats", isCollection = true)]
   public static List<String> defaultItemsForAllSeats = new List<string>();
@@ -546,10 +546,8 @@ public class ModuleKISInventory : PartModule,
   public bool showGui = false;
   GUIStyle lowerRightStyle, upperLeftStyle, upperRightStyle, buttonStyle, boxStyle;
   public Rect guiMainWindowPos;
-  Rect guiDebugWindowPos = new Rect(0, 50, 500, 300);
   KIS_IconViewer icon = null;
   Rect defaultFlightPos = new Rect(0, 50, 10, 10);
-  Vector2 scrollPositionDbg;
   int splitQty = 1;
   bool clickThroughLocked = false;
   bool guiSetName = false;
@@ -571,9 +569,6 @@ public class ModuleKISInventory : PartModule,
 
   // Sounds
   public FXGroup sndFx;
-
-  // Debug
-  KIS_Item debugItem;
 
   #region IHasContextMenu implementation
   public virtual void UpdateContextMenu() {
@@ -1454,11 +1449,6 @@ public class ModuleKISInventory : PartModule,
       }
     }
 
-    if (debugItem != null) {
-      guiDebugWindowPos =
-          GUILayout.Window(GetInstanceID() + 782, guiDebugWindowPos, GuiDebugItem, "Debug item");
-    }
-
     // Disable Click through
     if (HighLogic.LoadedSceneIsEditor) {
       if (guiMainWindowPos.Contains(Event.current.mousePosition) && !clickThroughLocked) {
@@ -1769,15 +1759,14 @@ public class ModuleKISInventory : PartModule,
     }
 
     //Debug
-    if (debugContextMenu) {
-      if (contextItem != null && !HighLogic.LoadedSceneIsEditor && invType == InventoryType.Eva) {
-        if (contextItem.prefabModule != null) {
-          noAction = false;
-          if (GUILayout.Button("Debug")) {
-            debugItem = contextItem;
-            contextItem = null;
-          }
-        }
+    if (debugContextMenu && contextItem != null
+        && !HighLogic.LoadedSceneIsEditor && invType == InventoryType.Eva) {
+      noAction = false;
+      if (GUILayout.Button("Debug")) {
+        DebugGui2.MakePartDebugDialog("KIS item adjustment tool",
+                                      group: Debug.KISDebugAdjustableAttribute.DebugGroup,
+                                      bindToPart: contextItem.availablePart.partPrefab);
+        contextItem = null;
       }
     }
     if (noAction) {
@@ -1785,55 +1774,7 @@ public class ModuleKISInventory : PartModule,
     }
   }
 
-  void GuiDebugItem(int windowID) {
-    if (debugItem != null) {
-      KIS_Shared.EditField("moveSndPath", ref debugItem.prefabModule.moveSndPath);
-      KIS_Shared.EditField("shortcutKeyAction(drop,equip,custom)",
-                           ref debugItem.prefabModule.shortcutKeyAction);
-      KIS_Shared.EditField("usableFromEva", ref debugItem.prefabModule.usableFromEva);
-      KIS_Shared.EditField("usableFromContainer", ref debugItem.prefabModule.usableFromContainer);
-      KIS_Shared.EditField("usableFromPod", ref debugItem.prefabModule.usableFromPod);
-      KIS_Shared.EditField("usableFromEditor", ref debugItem.prefabModule.usableFromEditor);
-      KIS_Shared.EditField("useName", ref debugItem.prefabModule.useName);
-      KIS_Shared.EditField("equipMode(model,physic)", ref debugItem.prefabModule.equipMode);
-      KIS_Shared.EditField("equipSlot", ref debugItem.prefabModule.equipSlot);
-      KIS_Shared.EditField("equipable", ref debugItem.prefabModule.equipable);
-      KIS_Shared.EditField("stackable", ref debugItem.prefabModule.stackable);
-      KIS_Shared.EditField("carriable", ref debugItem.prefabModule.carriable);
-      KIS_Shared.EditField("equipSkill(<blank>,RepairSkill,ScienceSkill,etc...)",
-                           ref debugItem.prefabModule.equipSkill);
-      KIS_Shared.EditField("equipRemoveHelmet", ref debugItem.prefabModule.equipRemoveHelmet);
-      KIS_Shared.EditField("volumeOverride(0 = auto)", ref debugItem.prefabModule.volumeOverride);
-
-      scrollPositionDbg = GUILayout.BeginScrollView(scrollPositionDbg,
-                                                    GUILayout.Width(400), GUILayout.Height(200));
-      var skmrs =
-          new List<SkinnedMeshRenderer>(part.GetComponentsInChildren<SkinnedMeshRenderer>());
-      foreach (var skmr in skmrs) {
-        GUILayout.Label("--- " + skmr.name + " ---");
-        foreach (var bone in skmr.bones) {
-          if (GUILayout.Button(new GUIContent(bone.name, ""))) {
-            debugItem.prefabModule.equipBoneName = bone.name;
-            debugItem.ReEquip();
-          }
-        }
-      }
-
-      GUILayout.EndScrollView();
-      if (KIS_Shared.EditField("equipPos", ref debugItem.prefabModule.equipPos)) {
-        debugItem.ReEquip();
-      }
-      if (KIS_Shared.EditField("equipDir", ref debugItem.prefabModule.equipDir)) {
-        debugItem.ReEquip();
-      }
-    }
-    if (GUILayout.Button("Close")) {
-      debugItem = null;
-    }
-    GUI.DragWindow();
-  }
-
- void GuiInventory() {
+  void GuiInventory() {
     int slotIndex = 0;
     KIS_Item mouseOverItem = null;
     for (var x = 0; x < slotsY; x++) {

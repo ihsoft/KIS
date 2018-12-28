@@ -3,6 +3,7 @@
 // Module authors: KospY, igor.zavoychinskiy@gmail.com
 // License: Restricted
 
+using KSPDev.DebugUtils;
 using KSPDev.GUIUtils;
 using KSPDev.GUIUtils.TypeFormatters;
 using KSPDev.KSPInterfaces;
@@ -12,7 +13,6 @@ using System.Collections.Generic;
 using System.Collections;
 using System;
 using System.Linq;
-using System.Text;
 using UnityEngine;
 
 namespace KIS {
@@ -22,7 +22,7 @@ public class ModuleKISItem : PartModule,
     // KSP interfaces.
     IModuleInfo,
     // KSPDEV interfaces.
-    IsPartDeathListener, IsPackable,
+    IsPartDeathListener, IsPackable, IHasDebugAdjustables,
     // KSPDEV sugar interfaces.
     IKSPDevModuleInfo {
 
@@ -140,60 +140,143 @@ public class ModuleKISItem : PartModule,
 
   #region Part's config fields
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Sound: item moved")]
   public string moveSndPath = "KIS/Sounds/itemMove";
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Key action")]
   public string shortcutKeyAction = "drop";
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Usable from EVA")]
   public bool usableFromEva;
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Usable from container")]
   public bool usableFromContainer;
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Usable from pod")]
   public bool usableFromPod;
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Usable from editor")]
   public bool usableFromEditor;
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Vessel auto-rename")]
   public bool vesselAutoRename;
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Use menu name")]
   public string useName = "use";
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Stackable")]
   public bool stackable;
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Equipable")]
   public bool equipable;
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Equip mode")]
   public string equipMode = "model";
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Equip slot")]
   public string equipSlot = "";
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Equip skill")]
   public string equipSkill = "";
+
+  //FIXME: deprecate?
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Equip remove helmet")]
   public bool equipRemoveHelmet;
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Equip bone")]
   public string equipBoneName = "";
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Equip position (metres)")]
   public Vector3 equipPos = new Vector3(0f, 0f, 0f);
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Equip direction (euler degrees)")]
   public Vector3 equipDir = new Vector3(0f, 0f, 0f);
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Volume override")]
   public float volumeOverride;
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Carriable")]
   public bool carriable;
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Part attach")]
   public ItemAttachMode allowPartAttach = ItemAttachMode.AllowedWithKisTool;
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Static attach")]
   public ItemAttachMode allowStaticAttach = ItemAttachMode.Disabled;
+
+  // For KAS
+  // TODO(ihsoft): Deprecate. The new KAS can handle normal coupling logic.
   [KSPField]
   public bool useExternalPartAttach;
+
   // For KAS
+  // TODO(ihsoft): Deprecate. It's not KAS function.
   [KSPField]
   public bool useExternalStaticAttach;
-  // For KAS
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Static attach break force")]
   public float staticAttachBreakForce = 10;
+
   [KSPField(isPersistant = true)]
   public bool staticAttached;
   #endregion
 
   FixedJoint staticAttachJoint;
+
+  #region IHasDebugAdjustables implementation
+  List<KIS_Item> equippedItems;
+
+  /// <summary>Logs all the part's model objects.</summary>
+  [Debug.KISDebugAdjustable("Dump active kerbal's model hierarchy")]
+  public void ShowHirerachyDbgAction() {
+    if (FlightGlobals.ActiveVessel.isEVA) {
+      var p = FlightGlobals.ActiveVessel.rootPart;
+      DebugEx.Warning("Objects hierarchy in: {0}", p);
+      DebugGui2.DumpHierarchy(p.transform, p.transform);
+    } else {
+      DebugEx.Warning("The active vessel is not EVA!");
+    }
+  }
+
+  /// <inheritdoc/>
+  public void OnBeforeDebugAdjustablesUpdate() {
+    equippedItems = FlightGlobals.Vessels
+        .Where(v => v.isEVA)
+        .Select(v => v.rootPart)
+        .SelectMany(p => p.Modules.OfType<ModuleKISInventory>())
+        .SelectMany(inv => inv.items.Values)
+        .Where(item => item.carried || item.equipped)
+        .ToList();
+    equippedItems.ForEach(item => item.Unequip());
+  }
+
+  /// <inheritdoc/>
+  public void OnDebugAdjustablesUpdated() {
+    equippedItems.ForEach(item => item.Equip());
+    equippedItems = null;
+  }
+  #endregion
 
   #region IModuleInfo implementation
   /// <inheritdoc/>
