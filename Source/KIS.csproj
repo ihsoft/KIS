@@ -71,6 +71,8 @@
     <Compile Include="EditorDefaultItemsAdder.cs" />
     <Compile Include="KISAddonCursor.cs" />
     <Compile Include="KSPDev_candidates\GUILayoutTextField.cs" />
+    <Compile Include="KSPDev_candidates\DebugGui2.cs" />
+    <Compile Include="KSPDev_candidates\PartDebugAdjustmentDialog2.cs" />
     <Compile Include="MainScreenTweaker.cs" />
     <Compile Include="ModuleKISItemEvaPropellant.cs" />
     <Compile Include="KIS_IconViewer.cs" />
