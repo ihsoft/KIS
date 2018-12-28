@@ -182,11 +182,6 @@ sealed class KISAddonConfig : MonoBehaviour {
     }
     if (res == null) {
       DebugEx.Error("Cannot find object for EVA item: {0}", bonePath);
-      var modelListing = Hierarchy.ListHirerahcy(root);
-      DebugEx.Fine("The following tree was available:");
-      foreach (var modelPath in modelListing) {
-        DebugEx.Fine(modelPath);
-      }
     }
     return res;
   }

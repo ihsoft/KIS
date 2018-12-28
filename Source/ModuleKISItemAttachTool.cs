@@ -38,18 +38,31 @@ public class ModuleKISItemAttachTool : ModuleKISItem,
   #endregion
 
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Can attaches to part")]
   public bool toolPartAttach = true;
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Can attach to surface")]
   public bool toolStaticAttach;
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Can attach to stack node")]
   public bool toolPartStack;
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Sound: Attached to part")]
   public string attachPartSndPath = "KIS/Sounds/attachPart";
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Sound: Detached from part")]
   public string detachPartSndPath = "KIS/Sounds/detachPart";
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Sound: Attached to surface")]
   public string attachStaticSndPath = "KIS/Sounds/attachStatic";
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Sound: Detached from surface")]
   public string detachStaticSndPath = "KIS/Sounds/detachStatic";
 
   string orgAttachPartSndPath;

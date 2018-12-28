@@ -5,6 +5,7 @@
 
 using KIS.GUIUtils;
 using KSPDev.ConfigUtils;
+using KSPDev.DebugUtils;
 using KSPDev.GUIUtils;
 using KSPDev.GUIUtils.TypeFormatters;
 using KSPDev.LogUtils;
@@ -444,36 +445,62 @@ public class ModuleKISInventory : PartModule,
   #region KSP Part's config fields
   // Inventory
   public Dictionary<int, KIS_Item> items = new Dictionary<int, KIS_Item>();
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Allow external access")]
   public bool externalAccess = true;
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Allow internal access")]
   public bool internalAccess = true;
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Horizontal slots")]
   public int slotsX = 6;
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Vertical slots")]
   public int slotsY = 4;
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Slot size")]
   public int slotSize = 50;
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Item icon resolution")]
   public int itemIconResolution = 128;
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Self icon resolution")]
   public int selfIconResolution = 128;
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Max volume")]
   public float maxVolume = 1;
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Sound: Container open")]
   public string openSndPath = "KIS/Sounds/containerOpen";
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Sound: Container close")]
   public string closeSndPath = "KIS/Sounds/containerClose";
+
   [KSPField]
   public string helmetOnSndPath = "KIS/Sounds/helmetOn";
   [KSPField]
   public string helmetOffSndPath = "KIS/Sounds/helmetOff";
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Sound: Item move")]
   public string defaultMoveSndPath = "KIS/Sounds/itemMove";
+
   [KSPField(isPersistant = true)]
   public string invName = "";
+
   [KSPField(isPersistant = true)]
   public bool helmetEquipped = true;
+
   [KSPField]
   public InventoryType invType = InventoryType.Container;
   #endregion

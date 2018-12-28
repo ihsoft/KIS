@@ -67,6 +67,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="controllers\ControllerPartEditorTool.cs" />
+    <Compile Include="Debug\KISDebugAdjustableAttribute.cs" />
     <Compile Include="EditorDefaultItemsAdder.cs" />
     <Compile Include="KISAddonCursor.cs" />
     <Compile Include="KSPDev_candidates\DebugGui2.cs" />
@@ -96,6 +98,8 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="KSPDev_candidates" />
+    <Folder Include="Debug" />
+    <Folder Include="controllers" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
