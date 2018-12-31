@@ -1382,6 +1382,7 @@ public class ModuleKISInventory : PartModule,
     }
   }
 
+  #region GUI methods
   void GUIStyles() {
     GUI.skin = HighLogic.Skin;
     GUI.skin.button.alignment = TextAnchor.MiddleCenter;
@@ -2008,15 +2009,17 @@ public class ModuleKISInventory : PartModule,
       }
     }
   }
+  #endregion
 
+  #region Local utility methods
   // Sets icon, ensuring any old icon is Disposed
-  private void EnableIcon() {
+  void EnableIcon() {
     DisableIcon();
     icon = new KIS_IconViewer(part, selfIconResolution);
   }
 
   // Clears icon, ensuring it is Disposed
-  private void DisableIcon() {
+  void DisableIcon() {
     if (icon != null) {
       icon.Dispose();
       icon = null;
@@ -2072,6 +2075,7 @@ public class ModuleKISInventory : PartModule,
       Part p, KIS_Shared.OnPartReady beforeDie = null, KIS_Shared.OnPartReady afterDie = null) {
     StartCoroutine(AsyncConsumePartFromScene(p, beforeDie, afterDie));
   }
+  #endregion
 }
   
 }  // namespace
