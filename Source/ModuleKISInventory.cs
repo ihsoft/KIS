@@ -422,10 +422,19 @@ public class ModuleKISInventory : PartModule,
       + " the inventory when going EVA.");
   #endregion
 
-  #region Part's config fields
-  // Inventory
-  public Dictionary<int, KIS_Item> items = new Dictionary<int, KIS_Item>();
+  #region Public types
+  /// <summary>The time of inventory which the module controls.</summary>
+  public enum InventoryType {
+    /// <summary>Storage space inside a part.</summary>
+    Container,
+    /// <summary>Temporary storage to hold the items of the boarded kerbals.</summary>
+    Pod,
+    /// <summary>Inventory of an EVA kerbal.</summary>
+    Eva
+  }
+  #endregion
 
+  #region Part's config fields
   [KSPField]
   [Debug.KISDebugAdjustableAttribute("Allow external access")]
   public bool externalAccess = true;
@@ -601,7 +610,10 @@ public class ModuleKISInventory : PartModule,
       if (GetAllOpenInventories().Count == 1
           && Mathf.Approximately(guiMainWindowPos.x, defaultFlightPos.x)
           && Mathf.Approximately(guiMainWindowPos.y, defaultFlightPos.y)) {
-        guiMainWindowPos.y += 250;
+        guiMainWindowPos = new Rect() {
+          x = guiMainWindowPos.x,
+          y = guiMainWindowPos.y + 250
+        };
       }
       if (openAnim) {
         openAnim[openAnimName].speed = openAnimSpeed;
@@ -617,19 +629,22 @@ public class ModuleKISInventory : PartModule,
   }
   #endregion
 
-  public string openGuiName;
-  public float totalVolume;
-  public int podSeat = -1;
-  public enum InventoryType {
-    Container,
-    Pod,
-    Eva
+  #region API fields and properties
+  // Inventory
+  public Dictionary<int, KIS_Item> items = new Dictionary<int, KIS_Item>();
+
+  public float totalVolume { get; private set; }
+
+  public int podSeat {
+    get { return _podSeat; }
+    internal set { _podSeat = value; }
   }
-  public string kerbalTrait;
+  int _podSeat = -1;
 
   // GUI
-  public bool showGui;
-  public Rect guiMainWindowPos;
+  public bool showGui { get; private set; }
+  public Rect guiMainWindowPos { get; private set; }
+  #endregion
 
   #region Local methods and properties
   /// <summary>Tells if the helmet of the owner kerbal is currently equipped.</summary>
@@ -671,6 +686,7 @@ public class ModuleKISInventory : PartModule,
   int splitQty = 1;
   bool clickThroughLocked;
   bool guiSetName;
+  string kerbalTrait;
   #endregion
 
   #region GUI styles
