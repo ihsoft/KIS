@@ -625,7 +625,6 @@ public class ModuleKISInventory : PartModule,
     Pod,
     Eva
   }
-  public delegate void DelayedActionMethod(KIS_Item item);
   public string kerbalTrait;
 
   // GUI
@@ -1085,11 +1084,6 @@ public class ModuleKISInventory : PartModule,
       contentCost += item.Value.totalCost;
     }
     return contentCost;
-  }
-
-  // TODO(ihsoft): Move out of base inventory module.
-  public void DelayedAction(DelayedActionMethod actionMethod, KIS_Item item, float delay) {
-    StartCoroutine(WaitAndDoAction(actionMethod, item, delay));
   }
   #endregion
 
@@ -2068,11 +2062,6 @@ public class ModuleKISInventory : PartModule,
         return true;
       }
     }
-  }
-
-  IEnumerator WaitAndDoAction(DelayedActionMethod actionMethod, KIS_Item item, float delay) {
-    yield return new WaitForSeconds(delay);
-    actionMethod(item);
   }
   #endregion
 }
