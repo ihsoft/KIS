@@ -79,23 +79,6 @@ public class ModuleKISInventory : PartModule,
       description: "The message to present when an inventory which cannot be accessed from inside"
       + " the vessel is attempted to be accessed while the active vessel is no an EVA kerbal.");
 
-  static readonly Message CannotRemoveHelmetNoOxygenMsg = new Message(
-      "#kisLOC_00007",
-      defaultTemplate: "Cannot remove helmet: atmosphere does not contain oxygen!",
-      description: "The message to present when a remove helmet action is attempted in the"
-      + " atmosphere which doesn't contain oxygen.");
-
-  static readonly Message<PressureType, PressureType>
-      CannotRemoveHelmetPressureTooLowMsg = new Message<PressureType, PressureType>(
-          "#kisLOC_00008",
-          defaultTemplate: "Cannot remove helmet: pressure too low (<<2>> < <<1>>)",
-          description: "The message to present when a remove helmet action is attempted in the"
-          + " atmosphere which is not dense enough."
-          + "\nArgument <<1>> is a value of type PressureType which specifies a minimum allowed"
-          + " pressure."
-          + "\nArgument <<2>> is a value of type PressureType which specifies the actual pressure"
-          + " outside.");
-
   static readonly Message InventoryFullCannotSplitMsg = new Message(
       "#kisLOC_00009",
       defaultTemplate: "Inventory is full, cannot split!",
@@ -487,8 +470,11 @@ public class ModuleKISInventory : PartModule,
   public string closeSndPath = "KIS/Sounds/containerClose";
 
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Sound: Helmet on")]
   public string helmetOnSndPath = "KIS/Sounds/helmetOn";
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Sound: Helmet off")]
   public string helmetOffSndPath = "KIS/Sounds/helmetOff";
 
   [KSPField]
@@ -497,9 +483,6 @@ public class ModuleKISInventory : PartModule,
 
   [KSPField(isPersistant = true)]
   public string invName = "";
-
-  [KSPField(isPersistant = true)]
-  public bool helmetEquipped = true;
 
   [KSPField]
   public InventoryType invType = InventoryType.Container;
@@ -594,6 +577,29 @@ public class ModuleKISInventory : PartModule,
   float openAnimSpeed = 1f;
   Animation openAnim;
 
+  #region Local methods and properties
+  /// <summary>Tells if the helmet of the owner kerbal is currently equipped.</summary>
+  /// <remarks>
+  /// This value is updated from the stock game callback, and this callback is not called when the
+  /// kerbal is created in the default mode (with helmet ON). In some cases it's important to know
+  /// if the helmet is actually ON (deafult) or the state is not yet updated. That's why this vlaue
+  /// is optional. The "unset" value should be treated depending on the logic. 
+  /// </remarks>
+  bool? helmetEquippedState;
+
+  /// <summary>EVA module of the owner.</summary>
+  /// <value>The EVA module or <c>null</c> if the inventory doesn't belong to kerbal.</value>
+  KerbalEVA kerbalModule {
+    get {
+      if (_kerbalModule == null) {
+        _kerbalModule = part.FindModuleImplementing<KerbalEVA>();
+      }
+      return _kerbalModule;
+    }
+  }
+  KerbalEVA _kerbalModule;
+  #endregion
+
   // Sounds
   public FXGroup sndFx;
 
@@ -676,6 +682,7 @@ public class ModuleKISInventory : PartModule,
     GameEvents.onCrewTransferred.Remove(OnCrewTransferred);
     GameEvents.onCrewTransferSelected.Remove(OnCrewTransferSelected);
     GameEvents.onVesselChange.Remove(OnVesselChange);
+    GameEvents.OnHelmetChanged.Remove(OnHelmetChanged);
   }
   #endregion
 
@@ -686,6 +693,7 @@ public class ModuleKISInventory : PartModule,
       GameEvents.onCrewTransferred.Add(OnCrewTransferred);
       GameEvents.onCrewTransferSelected.Add(OnCrewTransferSelected);
       GameEvents.onVesselChange.Add(OnVesselChange);
+      GameEvents.OnHelmetChanged.Add(OnHelmetChanged);
     }
   }
 
@@ -717,9 +725,8 @@ public class ModuleKISInventory : PartModule,
     }
 
     // Only equip if this is a kerbal module. Pods and command seats have POD inventory too.
-    // SPECIAL CASE: kerbal in a command seat is NOT "isEVA", but it has the EVA module. 
+    // Don't check for "isEVA", since kerbal on a command seat is not an EVA vessel.
     if (invType == InventoryType.Eva && part.FindModuleImplementing<KerbalEVA>() != null) {
-      SetHelmet(helmetEquipped, checkAtmo: true, playSound: false);
       var protoCrewMember = part.protoModuleCrew[0];
       kerbalTrait = protoCrewMember.experienceTrait.Title;
       foreach (var item in startEquip) {
@@ -866,7 +873,9 @@ public class ModuleKISInventory : PartModule,
 
     // Put/remove helmet
     if (KIS_Shared.IsKeyDown(evaHelmetKey)) {
-      SetHelmet(!helmetEquipped, checkAtmo: true);
+      // If HelmetChange event haven't fired till this momemnt, then the helmet is ON.
+      helmetEquippedState = helmetEquippedState ?? true;
+      SetHelmet(!helmetEquippedState.Value);
     }
   }
 
@@ -952,7 +961,6 @@ public class ModuleKISInventory : PartModule,
               destInventory.startEquip.Add(item);
             }
           }
-          destInventory.helmetEquipped = helmetEquipped;  // Restore helmet state.
         }
       } else {
         // Pod-to-Pod
@@ -969,7 +977,6 @@ public class ModuleKISInventory : PartModule,
           // Find target seat and schedule a coroutine.
           var destInventory = fromToAction.to.GetComponents<ModuleKISInventory>().ToList()
               .Find(x => x.podSeat == fromToAction.host.seatIdx);
-          destInventory.helmetEquipped = helmetEquipped;  // Move helmet state.
           StartCoroutine(destInventory.WaitAndTransferItems(items, fromToAction.host, this));
         }
       }
@@ -992,7 +999,6 @@ public class ModuleKISInventory : PartModule,
               item.Value.equipped = true;  // Mark state for the further re-equip.
             }
           }
-          helmetEquipped = evaInventory.helmetEquipped;  // Save helmet state.
           foreach (var item in itemsToDrop) {
             item.Drop(part);
           }
@@ -1333,52 +1339,15 @@ public class ModuleKISInventory : PartModule,
 
   /// <summary>Sets or removes the stock helmet.</summary>
   /// <param name="active"><c>true</c> if the helpmet needs to be set.</param>
-  /// <param name="checkAtmo">
-  /// Tells if the atmosphere conditions needs to be checked prior to the helmet removal. Doesn't
-  /// affect anything if "set helmet" action is requested.
-  /// </param>
-  public void SetHelmet(bool active, bool checkAtmo = false, bool playSound = true) {
-    if (!active && checkAtmo) {
-      if (!part.vessel.mainBody.atmosphereContainsOxygen) {
-        helmetEquipped = true;
-        ScreenMessaging.ShowPriorityScreenMessage(CannotRemoveHelmetNoOxygenMsg);
-        if (playSound) {
-          UISounds.PlayBipWrong();
-        }
-        return;
+  public void SetHelmet(bool active) {
+    if (kerbalModule.helmetTransform != null) {
+      if (active && !kerbalModule.helmetTransform.gameObject.activeSelf) {
+        kerbalModule.ToggleHelmetAndNeckRing(true, true);
+      } else if (!active && kerbalModule.helmetTransform.gameObject.activeSelf) {
+        kerbalModule.ToggleHelmetAndNeckRing(false, false);
       }
-      if (FlightGlobals.getStaticPressure() < KISAddonConfig.breathableAtmoPressure) {
-        helmetEquipped = true;
-        ScreenMessaging.ShowPriorityScreenMessage(
-            CannotRemoveHelmetPressureTooLowMsg.Format(
-                KISAddonConfig.breathableAtmoPressure, FlightGlobals.getStaticPressure()));
-        if (playSound) {
-          UISounds.PlayBipWrong();
-        }
-      }
-    }
-
-    // Remove any custom helmets.
-    var customHelmet = GetEquipedItem("helmet");
-    if (customHelmet != null && customHelmet.prefabModule.equipRemoveHelmet) {
-      customHelmet.Unequip();
-    }
-    
-    // Disable helmet and visor.
-    var helmet = KISAddonConfig.FindEquipBone(part.transform, "aliasHelmetModel");
-    if (helmet != null) {
-      HostedDebugLog.Fine(this, "Set helmet renderers and lights to {0} on {1}", active, part);
-      helmet.GetComponentsInChildren<Renderer>(includeInactive: true)
-          .ToList()
-          .ForEach(r => r.enabled = active);
-      part.transform.GetComponentsInChildren<Light>(includeInactive: true)
-          .Where(l => l.name == "headlamp")
-          .ToList()
-          .ForEach(l => l.enabled = active);
-      if (playSound && customHelmet == null) {
-        UISoundPlayer.instance.Play(active ? helmetOnSndPath : helmetOffSndPath);
-      }
-      helmetEquipped = active;
+    } else {
+      DebugEx.Warning("Kerbal model doesn't have helmet transform: {0}", part);
     }
   }
 
@@ -1539,10 +1508,10 @@ public class ModuleKISInventory : PartModule,
           guiSetName = true;
         }
       }
-    } else if (invType == InventoryType.Eva) {
-      if (helmetEquipped) {
+    } else if (invType == InventoryType.Eva && kerbalModule.helmetTransform != null) {
+      if (kerbalModule.helmetTransform.gameObject.activeSelf) {
         if (GUILayout.Button(RemoveHelmetMenuTxt, GUILayout.Width(Width), GUILayout.Height(22))) {
-          SetHelmet(false, checkAtmo: true);
+          SetHelmet(false);
         }
       } else {
         if (GUILayout.Button(PutOnHelmetMenuTxt, GUILayout.Width(Width), GUILayout.Height(22))) {
@@ -2074,6 +2043,17 @@ public class ModuleKISInventory : PartModule,
   void ConsumePartFromScene(
       Part p, KIS_Shared.OnPartReady beforeDie = null, KIS_Shared.OnPartReady afterDie = null) {
     StartCoroutine(AsyncConsumePartFromScene(p, beforeDie, afterDie));
+  }
+
+  /// <summary>Callback that reacts on the helmet state change.</summary>
+  /// <remarks>It's only responsibility is playing the put/remove sound.</remarks>
+  void OnHelmetChanged(KerbalEVA changedKerbal, bool helmetVisible, bool neckRingVisible) {
+    if (changedKerbal.part == part) {
+      if (helmetEquippedState.HasValue && helmetEquippedState != helmetVisible) {
+        UISoundPlayer.instance.Play(helmetVisible ? helmetOnSndPath : helmetOffSndPath);
+      }
+      helmetEquippedState = helmetVisible;
+    }
   }
   #endregion
 }

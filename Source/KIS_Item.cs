@@ -55,6 +55,13 @@ public sealed class KIS_Item {
       + " existing slot stack, but the item being added is currently equipped.");
   #endregion
 
+  /// <summary>Name for the helmet slot.</summary>
+  /// <remarks>
+  /// While the other slots are simply arbitrary strings, the helmet slot is special. When an item
+  /// equips to it, the stock helmet becomes hidden, and it becomes visible gains on unequip. 
+  /// </remarks>
+  public const string HelmetSlotName = "helmet";
+
   public ConfigNode partNode;
   public AvailablePart availablePart;
   public int quantity;
@@ -526,10 +533,21 @@ public sealed class KIS_Item {
       }
     }
 
-    if (prefabModule.equipRemoveHelmet) {
-      // Presumably, it's a helmet replacement.
-      inventory.SetHelmet(false, playSound: false);
+    // Hide the stock meshes if the custom helmet is equipped.
+    if (equipSlot == HelmetSlotName) {
+      var kerbalModule = inventory.part.FindModuleImplementing<KerbalEVA>();
+      if (kerbalModule.helmetTransform != null) {
+        for (var i = 0; i < kerbalModule.helmetTransform.childCount; i++) {
+          kerbalModule.helmetTransform.GetChild(i).gameObject.SetActive(false);
+        }
+        if (equippedGameObj != null) {
+          equippedGameObj.transform.parent = kerbalModule.helmetTransform;
+        }
+      } else {
+        DebugEx.Warning("Kerbal model doesn't have helmet transform: {0}", inventory);
+      }
     }
+
     if (actorType == ActorType.Player) {
       UISoundPlayer.instance.Play(prefabModule.moveSndPath);
     }
@@ -545,9 +563,6 @@ public sealed class KIS_Item {
     equipped = false;
     if (equipMode == EquipMode.Model) {
       UnityEngine.Object.Destroy(equippedGameObj);
-      if (prefabModule.equipRemoveHelmet) {
-        inventory.SetHelmet(true, playSound: false);
-      }
     }
     if (equipMode == EquipMode.Part || equipMode == EquipMode.Physic) {
       DebugEx.Info("Update config node of equipped part: {0}", availablePart.title);
@@ -562,6 +577,18 @@ public sealed class KIS_Item {
       UISoundPlayer.instance.Play(prefabModule.moveSndPath);
     }
     prefabModule.OnUnEquip(this);
+
+    // Return back the stock meshes if the custom helmet is unequipped.
+    if (equipSlot == HelmetSlotName) {
+      var kerbalModule = inventory.part.FindModuleImplementing<KerbalEVA>();
+      if (kerbalModule.helmetTransform != null) {
+        for (var i = 0; i < kerbalModule.helmetTransform.childCount; i++) {
+          kerbalModule.helmetTransform.GetChild(i).gameObject.SetActive(true);
+        }
+      } else {
+        DebugEx.Warning("Kerbal model doesn't have helmet transform: {0}", inventory.part);
+      }
+    }
   }
 
   public void OnEquippedPartReady(Part createdPart) {
