@@ -1,5 +1,7 @@
 # 1.17 (pre-release):
+* KSP 1.6 support. This mod's version is not comaptible with the prior versions of KSP!
 * [Enhancement] Add Portuguese (Brazil) localization.
+* [Enhancement] Improve items&parts debug ability. See `partAlignToolKey` and `itemDebug` in the settings file.
 * [Fix #281] Use the stock funtionality from the KIS code and properly support custom helmets.
 
 # 1.16 (October 29th, 2018):
