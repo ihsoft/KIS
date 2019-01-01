@@ -422,10 +422,7 @@ public class ModuleKISInventory : PartModule,
       + " the inventory when going EVA.");
   #endregion
 
-  static readonly GUILayoutOption QuantityAdjustBtnLayout = GUILayout.Width(20);
-  static GUIStyle noWrapLabelStyle;
-
-  #region KSP Part's config fields
+  #region Part's config fields
   // Inventory
   public Dictionary<int, KIS_Item> items = new Dictionary<int, KIS_Item>();
 
@@ -486,6 +483,13 @@ public class ModuleKISInventory : PartModule,
 
   [KSPField]
   public InventoryType invType = InventoryType.Container;
+
+  // Animation (Not tested)
+  [KSPField]
+  public string openAnimName = "Doors";
+
+  [KSPField]
+  public float openAnimSpeed = 1f;
   #endregion
 
   #region Global settings
@@ -539,43 +543,94 @@ public class ModuleKISInventory : PartModule,
   public static List<String> defaultItemsForTheFirstSeat = new List<string>();
   #endregion
 
+  #region Context menu events/actions
+  [KSPEvent(guiActiveEditor = true, guiActive = true, guiActiveUnfocused = true)]
+  [LocalizableItem(tag = null)]
+  public void ToggleInventory() {
+    if (showGui) {
+      // Destroy icons viewer
+      foreach (KeyValuePair<int, KIS_Item> item in items) {
+        item.Value.DisableIcon();
+      }
+      if (openAnim) {
+        openAnim[openAnimName].speed = -openAnimSpeed;
+        openAnim.Play(openAnimName);
+      }
+      DisableIcon();
+      showGui = false;
+      if (HighLogic.LoadedSceneIsEditor) {
+        UISoundPlayer.instance.Play(closeSndPath);
+      } else {
+        UISoundPlayer.instance.Play(closeSndPath);
+      }
+      clickThroughLocked = false;
+      if (HighLogic.LoadedSceneIsFlight) {
+        InputLockManager.RemoveControlLock("KISInventoryFlightLock");
+      }
+      if (HighLogic.LoadedSceneIsEditor) {
+        InputLockManager.RemoveControlLock("KISInventoryEditorLock");
+      }
+    } else {
+      // Check if inventory can be opened from interior/exterior
+      if (HighLogic.LoadedSceneIsFlight) {
+        // Don't allow access to the container being carried by a kerbal. Its state is
+        // serialized in the kerbal's invenotry so, any changes will be reverted once
+        // the container is dropped.
+        // TODO: Find a way to update serialized state and remove this check (#89). 
+        if (GetComponent<ModuleKISItemEvaTweaker>() && vessel.isEVA) {
+          ScreenMessaging.ShowPriorityScreenMessage(NotAccessibleWhileCarriedMsg);
+          return;
+        }
+        if (FlightGlobals.ActiveVessel.isEVA && !externalAccess) {
+          ScreenMessaging.ShowPriorityScreenMessage(NotAccessibleFromOutsideMsg);
+          return;
+        }
+        if (!FlightGlobals.ActiveVessel.isEVA && !internalAccess) {
+          ScreenMessaging.ShowPriorityScreenMessage(NotAccessibleFromInsideMsg);
+          return;
+        }
+      }
+
+      // Create icons viewer
+      foreach (KeyValuePair<int, KIS_Item> item in items) {
+        item.Value.EnableIcon(itemIconResolution);
+      }
+      EnableIcon();
+
+      // TODO(ihsoft): Don't limit to one open inventory. Add till bootom is reached.
+      if (GetAllOpenInventories().Count == 1
+          && Mathf.Approximately(guiMainWindowPos.x, defaultFlightPos.x)
+          && Mathf.Approximately(guiMainWindowPos.y, defaultFlightPos.y)) {
+        guiMainWindowPos.y += 250;
+      }
+      if (openAnim) {
+        openAnim[openAnimName].speed = openAnimSpeed;
+        openAnim.Play(openAnimName);
+      }
+      showGui = true;
+      if (HighLogic.LoadedSceneIsEditor) {
+        UISoundPlayer.instance.Play(openSndPath);
+      } else {
+        UISoundPlayer.instance.Play(openSndPath);
+      }
+    }
+  }
+  #endregion
+
   public string openGuiName;
-  public float totalVolume = 0;
+  public float totalVolume;
   public int podSeat = -1;
   public enum InventoryType {
     Container,
     Pod,
     Eva
   }
-  float keyPressTime = 0f;
   public delegate void DelayedActionMethod(KIS_Item item);
   public string kerbalTrait;
-  List<KIS_Item> startEquip = new List<KIS_Item>();
 
   // GUI
-  public bool showGui = false;
-  GUIStyle lowerRightStyle, upperLeftStyle, upperRightStyle, buttonStyle, boxStyle;
+  public bool showGui;
   public Rect guiMainWindowPos;
-  KIS_IconViewer icon = null;
-  Rect defaultFlightPos = new Rect(0, 50, 10, 10);
-  int splitQty = 1;
-  bool clickThroughLocked = false;
-  bool guiSetName = false;
-
-  //Tooltip
-  KIS_Item tooltipItem;
-
-  // Context menu
-  KIS_Item contextItem;
-  bool contextClick = false;
-  Rect contextRect;
-
-  // Animation (Not tested)
-  [KSPField]
-  string openAnimName = "Doors";
-  [KSPField]
-  float openAnimSpeed = 1f;
-  Animation openAnim;
 
   #region Local methods and properties
   /// <summary>Tells if the helmet of the owner kerbal is currently equipped.</summary>
@@ -598,6 +653,35 @@ public class ModuleKISInventory : PartModule,
     }
   }
   KerbalEVA _kerbalModule;
+
+  //Tooltip
+  KIS_Item tooltipItem;
+
+  // Context menu
+  KIS_Item contextItem;
+  bool contextClick;
+  Rect contextRect;
+
+  Animation openAnim;
+
+  float keyPressTime;
+  List<KIS_Item> startEquip = new List<KIS_Item>();
+
+  KIS_IconViewer icon;
+  Rect defaultFlightPos = new Rect(0, 50, 10, 10);
+  int splitQty = 1;
+  bool clickThroughLocked;
+  bool guiSetName;
+  #endregion
+
+  #region GUI styles
+  static readonly GUILayoutOption QuantityAdjustBtnLayout = GUILayout.Width(20);
+  GUIStyle noWrapLabelStyle;
+  GUIStyle lowerRightStyle;
+  GUIStyle upperLeftStyle;
+  GUIStyle upperRightStyle;
+  GUIStyle buttonStyle;
+  GUIStyle boxStyle;
   #endregion
 
   // Sounds
@@ -683,6 +767,29 @@ public class ModuleKISInventory : PartModule,
     GameEvents.onCrewTransferSelected.Remove(OnCrewTransferSelected);
     GameEvents.onVesselChange.Remove(OnVesselChange);
     GameEvents.OnHelmetChanged.Remove(OnHelmetChanged);
+  }
+  #endregion
+
+  #region IPartCostModifier implemetation
+  /// <summary>Overridden from IPartCostModifier.</summary>
+  public ModifierChangeWhen GetModuleCostChangeWhen() {
+    // TODO(ihsoft): Figure out what value is right.
+    return ModifierChangeWhen.FIXED;
+  }
+
+  /// <summary>Overridden from IPartCostModifier.</summary>
+  public float GetModuleCost(float defaultCost, ModifierStagingSituation sit) {
+    return GetContentCost();
+  }
+
+  /// <summary>Overridden from IPartMassModifier.</summary>
+  public ModifierChangeWhen GetModuleMassChangeWhen() {
+    return ModifierChangeWhen.CONSTANTLY;
+  }
+      
+  /// <summary>Overridden from IPartMassModifier.</summary>
+  public float GetModuleMass(float defaultMass, ModifierStagingSituation sit) {
+    return GetContentMass();
   }
   #endregion
 
@@ -809,6 +916,7 @@ public class ModuleKISInventory : PartModule,
   }
   #endregion
 
+  #region MonoBehaviour overrides
   /// <summary>Overridden from MonoBehaviour.</summary>
   void Update() {
     if (showGui && HighLogic.LoadedSceneIsFlight && FlightGlobals.ActiveVessel.isEVA) {
@@ -829,56 +937,9 @@ public class ModuleKISInventory : PartModule,
       item.Value.Update();
     }
   }
+  #endregion
 
-  void UpdateKey() {
-    if (!HighLogic.LoadedSceneIsFlight
-        || FlightGlobals.ActiveVessel != part.vessel
-        || !FlightGlobals.ActiveVessel.isEVA) {
-      return;
-    }
-
-    // Open inventory on keypress
-    if (KIS_Shared.IsKeyDown(evaInventoryKey)) {
-      ToggleInventory();
-    }
-    // Use slot when not in drag mode.
-    if (!KISAddonPointer.isRunning) {
-      slotKeyPress(slotHotkey1, 0, 1);
-      slotKeyPress(slotHotkey2, 1, 1);
-      slotKeyPress(slotHotkey3, 2, 1);
-      slotKeyPress(slotHotkey4, 3, 1);
-      slotKeyPress(slotHotkey5, 4, 1);
-      slotKeyPress(slotHotkey6, 5, 1);
-      slotKeyPress(slotHotkey7, 6, 1);
-      slotKeyPress(slotHotkey8, 7, 1);
-    }
-
-    // Use right hand tool
-    if (KIS_Shared.IsKeyDown(evaRightHandKey)) {
-      KIS_Item rightHandItem = GetEquipedItem("rightHand");
-      if (rightHandItem != null) {
-        rightHandItem.Use(KIS_Item.UseFrom.KeyDown);
-      } else {
-        UISounds.PlayBipWrong();
-        ScreenMessaging.ShowInfoScreenMessage(NoItemEquippedMsg);
-      }
-    }
-
-    if (KIS_Shared.IsKeyUp(evaRightHandKey)) {
-      KIS_Item rightHandItem = GetEquipedItem("rightHand");
-      if (rightHandItem != null) {
-        rightHandItem.Use(KIS_Item.UseFrom.KeyUp);
-      }
-    }
-
-    // Put/remove helmet
-    if (KIS_Shared.IsKeyDown(evaHelmetKey)) {
-      // If HelmetChange event haven't fired till this momemnt, then the helmet is ON.
-      helmetEquippedState = helmetEquippedState ?? true;
-      SetHelmet(!helmetEquippedState.Value);
-    }
-  }
-
+  #region API methods
   /// <summary>Helper method to get all inventories on the part with open UI.</summary>
   /// <returns>List of inventories.</returns>
   public static List<ModuleKISInventory> GetAllOpenInventories() {
@@ -892,149 +953,6 @@ public class ModuleKISInventory : PartModule,
     return openInventories;
   }
 
-  void OnVesselChange(Vessel vess) {
-    if (showGui) {
-      ToggleInventory();
-    }
-
-    // Update the menu unfocused range to the newly selected pick up module (if any).
-    var pickup = FlightGlobals.ActiveVessel
-        .FindPartModulesImplementing<ModuleKISPickup>()
-        .OrderByDescending(x => x.maxDistance)
-        .FirstOrDefault();
-    var invEvent = PartModuleUtils.GetEvent(this, ToggleInventory);
-    invEvent.unfocusedRange = pickup
-        ? pickup.maxDistance :
-        new KSPEvent().unfocusedRange;  // Reset to the game's default.
-  }
-
-  /// <summary>Checks if target part can accept non-empty inventories.</summary>
-  void OnCrewTransferSelected(CrewTransfer.CrewTransferData transferData) {
-    if (invType != InventoryType.Pod || transferData.sourcePart != part
-        || transferData.crewMember.seatIdx != podSeat || items.Count == 0) {
-      return;  // Not our problem.
-    }
-    var podInventories = transferData.destPart.FindModulesImplementing<ModuleKISInventory>()
-        .Count(x => x.invType == InventoryType.Pod);
-    if (transferData.destPart.CrewCapacity > podInventories) {
-      ScreenMessaging.ShowErrorScreenMessage(
-          CannotTransferInventoryMsg.Format(transferData.destPart.name));
-      UISounds.PlayBipWrong();
-      transferData.canTransfer = false;
-    }
-  }
-
-  void OnCrewTransferred(GameEvents.HostedFromToAction<ProtoCrewMember, Part> fromToAction) {
-    UpdateContextMenu();
-
-    // Ensure target pod will accept the inventory.
-    if (!fromToAction.to.vessel.isEVA) {
-      // Assing pod seat if not yet done.
-      if (fromToAction.host.seatIdx == -1) {  
-        fromToAction.host.seatIdx = GetFirstFreeSeatIdx(fromToAction.to);
-        HostedDebugLog.Info(
-            this, "Assign {0} to seat {1} in {2}",
-            fromToAction.host.name, fromToAction.host.seatIdx, fromToAction.to);
-      }
-    }
-
-    if (fromToAction.from == part && invType == InventoryType.Pod) {
-      if (fromToAction.to.vessel.isEVA) {
-        // pod to eva
-        ProtoCrewMember crewAtPodSeat =
-            fromToAction.from.protoModuleCrew.Find(x => x.seatIdx == podSeat);
-        if (items.Count > 0 && crewAtPodSeat == null) {
-          ModuleKISInventory destInventory = fromToAction.to.GetComponent<ModuleKISInventory>();
-          HostedDebugLog.Info(this, "Items transfer | source seat: {0}", podSeat);
-          HostedDebugLog.Info(this, "Items transfer | destination: {0}", destInventory.part);
-          MoveItems(items, destInventory);
-          RefreshMassAndVolume();
-          destInventory.RefreshMassAndVolume();
-
-          // Re-equip items on the EVA kerbal.
-          destInventory.startEquip.Clear();
-          foreach (var item in destInventory.items.Values) {
-            if (item.equipped) {
-              HostedDebugLog.Info(
-                  this, "Schedule re-equipping item: {0}", item.availablePart.title);
-              item.equipped = false;
-              destInventory.startEquip.Add(item);
-            }
-          }
-        }
-      } else {
-        // Pod-to-Pod
-        // The target seat is always known from the crew proto, but the source seat has to be
-        // deducted. To do so, an assumtion is made that the event listeners are called in the
-        // exactly same order as they were registered, and the modules register the listeners in the
-        // order of appearance in the part's config. Basing on this, if a POD inventory has some
-        // items but the relevant seat ID is not occupied, then the kerbal has just left the pod
-        // from this seat. If there are no items, then it doesn't matter anyways.
-        ProtoCrewMember crewAtPodSeat =
-            fromToAction.from.protoModuleCrew.Find(x => x.seatIdx == podSeat);
-        if (items.Count > 0 && crewAtPodSeat == null) {
-          HostedDebugLog.Info(this, "Items transfer | source seat: {0}", podSeat);
-          // Find target seat and schedule a coroutine.
-          var destInventory = fromToAction.to.GetComponents<ModuleKISInventory>().ToList()
-              .Find(x => x.podSeat == fromToAction.host.seatIdx);
-          StartCoroutine(destInventory.WaitAndTransferItems(items, fromToAction.host, this));
-        }
-      }
-    }
-
-    if (fromToAction.to == part && invType == InventoryType.Pod) {
-      // eva to pod
-      // Only process transfer for the inventory in the target seat. This event will trigger for
-      // all inventory modules on the part.
-      if (fromToAction.from.vessel.isEVA && fromToAction.host.seatIdx == podSeat) {
-        if (fromToAction.host.seatIdx == podSeat) {
-          var evaInventory = fromToAction.from.GetComponent<ModuleKISInventory>();
-          HostedDebugLog.Info(this, "Item transfer | source {0}", fromToAction.host.name);
-          var itemsToDrop = new List<KIS_Item>();
-          foreach (var item in evaInventory.items) {
-            if (item.Value.carriable) {
-              itemsToDrop.Add(item.Value);
-            } else if (item.Value.equipped) {
-              item.Value.Unequip();
-              item.Value.equipped = true;  // Mark state for the further re-equip.
-            }
-          }
-          foreach (var item in itemsToDrop) {
-            item.Drop(part);
-          }
-          var transferedItems = new Dictionary<int, KIS_Item>(evaInventory.items);
-          StartCoroutine(WaitAndTransferItems(transferedItems, fromToAction.host));
-        }
-      }
-    }
-  }
-
-  int GetFirstFreeSeatIdx(Part p) {
-    for (var i = 0; i < p.protoModuleCrew.Count; i++) {
-      var pcm = p.protoModuleCrew.Find(x => x.seatIdx == i);
-      if (pcm == null) {
-        return i;
-      }
-    }
-    HostedDebugLog.Error(this, "Cannot find a free seat in: {0}", p);
-    return -1;
-  }
-
-  IEnumerator WaitAndTransferItems(Dictionary<int, KIS_Item> transferedItems,
-                                   ProtoCrewMember protoCrew,
-                                   ModuleKISInventory srcInventory = null) {
-    yield return new WaitForFixedUpdate();
-    var crewAtPodSeat = part.protoModuleCrew.Find(x => x.seatIdx == podSeat);
-    if (crewAtPodSeat == protoCrew) {
-      MoveItems(transferedItems, this);
-      HostedDebugLog.Info(this, "Item transfer | destination seat: {0}", podSeat);
-      RefreshMassAndVolume();
-      if (srcInventory) {
-        srcInventory.RefreshMassAndVolume();
-      }
-    }
-  }
-
   /// <summary>Refreshes container mass, volume and cost.</summary>
   public void RefreshMassAndVolume() {
     // Update volume.
@@ -1042,32 +960,6 @@ public class ModuleKISInventory : PartModule,
     // Update vessel cost in editor.
     if (HighLogic.LoadedSceneIsEditor) {
       GameEvents.onEditorShipModified.Fire(EditorLogic.fetch.ship);
-    }
-  }
-
-  void slotKeyPress(KeyCode kc, int slot, int delay = 1) {
-    if (kc == KeyCode.None || !inventoryKeysEnabled) {
-      return;
-    }
-
-    // TODO: Add a check for shift keys to not trigger use action on combinations with
-    // Shift, Ctrl, and Alt.
-    if (KIS_Shared.IsKeyDown(kc)) {
-      keyPressTime = Time.time;
-    }
-    if (InputLockManager.IsUnlocked(ControlTypes.UI) && Input.GetKey(kc)) {
-      if (Time.time - keyPressTime >= delay) {
-        if (items.ContainsKey(slot)) {
-          items[slot].Use(KIS_Item.UseFrom.InventoryShortcut);
-        }
-        keyPressTime = Mathf.Infinity;
-      }
-    }
-    if (KIS_Shared.IsKeyUp(kc)) {
-      if (!float.IsInfinity(keyPressTime) && items.ContainsKey(slot)) {
-        items[slot].ShortcutKeyPress();
-      }
-      keyPressTime = 0;
     }
   }
 
@@ -1195,147 +1087,11 @@ public class ModuleKISInventory : PartModule,
     return contentCost;
   }
 
-  /// <summary>Overridden from IPartCostModifier.</summary>
-  public ModifierChangeWhen GetModuleCostChangeWhen() {
-    // TODO(ihsoft): Figure out what value is right.
-    return ModifierChangeWhen.FIXED;
-  }
-
-  /// <summary>Overridden from IPartCostModifier.</summary>
-  public float GetModuleCost(float defaultCost, ModifierStagingSituation sit) {
-    return GetContentCost();
-  }
-
-  /// <summary>Overridden from IPartMassModifier.</summary>
-  public ModifierChangeWhen GetModuleMassChangeWhen() {
-    return ModifierChangeWhen.CONSTANTLY;
-  }
-      
-  /// <summary>Overridden from IPartMassModifier.</summary>
-  public float GetModuleMass(float defaultMass, ModifierStagingSituation sit) {
-    return GetContentMass();
-  }
-
-  /// <summary>Checks if part has a child, and reports the problem.</summary>
-  /// <param name="p">A part to check.</param>
-  /// <returns><c>true</c> if it's OK to put the part into the inventory.</returns>
-  bool VerifyIsNotAssembly(Part p) {
-    if (!HighLogic.LoadedSceneIsEditor && KISAddonPickup.grabbedPartsCount > 1) {
-      ScreenMessaging.ShowPriorityScreenMessage(
-          PartHasChildrenMsg.Format(KISAddonPickup.grabbedPartsCount - 1));
-      return false;
-    }
-    return true;
-  }
-
-  bool VolumeAvailableFor(Part p) {
-    float partVolume = KIS_Shared.GetPartVolume(p.partInfo);
-    var newTotalVolume = GetContentVolume() + partVolume;
-    if (newTotalVolume > maxVolume) {
-      ScreenMessaging.ShowPriorityScreenMessage(
-          MaxVolumeReachedMsg.Format(partVolume, newTotalVolume - maxVolume));
-      return false;
-    }
-    return true;
-  }
-
-  bool VolumeAvailableFor(KIS_Item item) {
-    RefreshMassAndVolume();
-    if (KISAddonPickup.draggedItem.inventory == this) {
-      return true;
-    } else {
-      float newTotalVolume = GetContentVolume() + item.stackVolume;
-      if (newTotalVolume > maxVolume) {
-        ScreenMessaging.ShowPriorityScreenMessage(
-            MaxVolumeReachedMsg.Format(item.stackVolume, (newTotalVolume - maxVolume)));
-        return false;
-      } else {
-        return true;
-      }
-    }
-  }
-
   // TODO(ihsoft): Move out of base inventory module.
   public void DelayedAction(DelayedActionMethod actionMethod, KIS_Item item, float delay) {
     StartCoroutine(WaitAndDoAction(actionMethod, item, delay));
   }
-
-  IEnumerator WaitAndDoAction(DelayedActionMethod actionMethod, KIS_Item item, float delay) {
-    yield return new WaitForSeconds(delay);
-    actionMethod(item);
-  }
-
-  [KSPEvent(guiActiveEditor = true, guiActive = true, guiActiveUnfocused = true)]
-  [LocalizableItem(tag = null)]
-  public void ToggleInventory() {
-    if (showGui) {
-      // Destroy icons viewer
-      foreach (KeyValuePair<int, KIS_Item> item in items) {
-        item.Value.DisableIcon();
-      }
-      if (openAnim) {
-        openAnim[openAnimName].speed = -openAnimSpeed;
-        openAnim.Play(openAnimName);
-      }
-      DisableIcon();
-      showGui = false;
-      if (HighLogic.LoadedSceneIsEditor) {
-        UISoundPlayer.instance.Play(closeSndPath);
-      } else {
-        UISoundPlayer.instance.Play(closeSndPath);
-      }
-      clickThroughLocked = false;
-      if (HighLogic.LoadedSceneIsFlight) {
-        InputLockManager.RemoveControlLock("KISInventoryFlightLock");
-      }
-      if (HighLogic.LoadedSceneIsEditor) {
-        InputLockManager.RemoveControlLock("KISInventoryEditorLock");
-      }
-    } else {
-      // Check if inventory can be opened from interior/exterior
-      if (HighLogic.LoadedSceneIsFlight) {
-        // Don't allow access to the container being carried by a kerbal. Its state is
-        // serialized in the kerbal's invenotry so, any changes will be reverted once
-        // the container is dropped.
-        // TODO: Find a way to update serialized state and remove this check (#89). 
-        if (GetComponent<ModuleKISItemEvaTweaker>() && vessel.isEVA) {
-          ScreenMessaging.ShowPriorityScreenMessage(NotAccessibleWhileCarriedMsg);
-          return;
-        }
-        if (FlightGlobals.ActiveVessel.isEVA && !externalAccess) {
-          ScreenMessaging.ShowPriorityScreenMessage(NotAccessibleFromOutsideMsg);
-          return;
-        }
-        if (!FlightGlobals.ActiveVessel.isEVA && !internalAccess) {
-          ScreenMessaging.ShowPriorityScreenMessage(NotAccessibleFromInsideMsg);
-          return;
-        }
-      }
-
-      // Create icons viewer
-      foreach (KeyValuePair<int, KIS_Item> item in items) {
-        item.Value.EnableIcon(itemIconResolution);
-      }
-      EnableIcon();
-
-      // TODO(ihsoft): Don't limit to one open inventory. Add till bootom is reached.
-      if (GetAllOpenInventories().Count == 1
-          && Mathf.Approximately(guiMainWindowPos.x, defaultFlightPos.x)
-          && Mathf.Approximately(guiMainWindowPos.y, defaultFlightPos.y)) {
-        guiMainWindowPos.y += 250;
-      }
-      if (openAnim) {
-        openAnim[openAnimName].speed = openAnimSpeed;
-        openAnim.Play(openAnimName);
-      }
-      showGui = true;
-      if (HighLogic.LoadedSceneIsEditor) {
-        UISoundPlayer.instance.Play(openSndPath);
-      } else {
-        UISoundPlayer.instance.Play(openSndPath);
-      }
-    }
-  }
+  #endregion
 
   /// <summary>Sets or removes the stock helmet.</summary>
   /// <param name="active"><c>true</c> if the helpmet needs to be set.</param>
@@ -2054,6 +1810,269 @@ public class ModuleKISInventory : PartModule,
       }
       helmetEquippedState = helmetVisible;
     }
+  }
+
+  void UpdateKey() {
+    if (!HighLogic.LoadedSceneIsFlight
+        || FlightGlobals.ActiveVessel != part.vessel
+        || !FlightGlobals.ActiveVessel.isEVA) {
+      return;
+    }
+
+    // Open inventory on keypress
+    if (KIS_Shared.IsKeyDown(evaInventoryKey)) {
+      ToggleInventory();
+    }
+    // Use slot when not in drag mode.
+    if (!KISAddonPointer.isRunning) {
+      slotKeyPress(slotHotkey1, 0, 1);
+      slotKeyPress(slotHotkey2, 1, 1);
+      slotKeyPress(slotHotkey3, 2, 1);
+      slotKeyPress(slotHotkey4, 3, 1);
+      slotKeyPress(slotHotkey5, 4, 1);
+      slotKeyPress(slotHotkey6, 5, 1);
+      slotKeyPress(slotHotkey7, 6, 1);
+      slotKeyPress(slotHotkey8, 7, 1);
+    }
+
+    // Use right hand tool
+    if (KIS_Shared.IsKeyDown(evaRightHandKey)) {
+      KIS_Item rightHandItem = GetEquipedItem("rightHand");
+      if (rightHandItem != null) {
+        rightHandItem.Use(KIS_Item.UseFrom.KeyDown);
+      } else {
+        UISounds.PlayBipWrong();
+        ScreenMessaging.ShowInfoScreenMessage(NoItemEquippedMsg);
+      }
+    }
+
+    if (KIS_Shared.IsKeyUp(evaRightHandKey)) {
+      //FIXME: make a const to teh slot name 
+      KIS_Item rightHandItem = GetEquipedItem("rightHand");
+      if (rightHandItem != null) {
+        rightHandItem.Use(KIS_Item.UseFrom.KeyUp);
+      }
+    }
+
+    // Put/remove helmet
+    if (KIS_Shared.IsKeyDown(evaHelmetKey)) {
+      // If HelmetChange event haven't fired till this momemnt, then the helmet is ON.
+      helmetEquippedState = helmetEquippedState ?? true;
+      SetHelmet(!helmetEquippedState.Value);
+    }
+  }
+
+  void OnVesselChange(Vessel vess) {
+    if (showGui) {
+      ToggleInventory();
+    }
+
+    // Update the menu unfocused range to the newly selected pick up module (if any).
+    var pickup = FlightGlobals.ActiveVessel
+        .FindPartModulesImplementing<ModuleKISPickup>()
+        .OrderByDescending(x => x.maxDistance)
+        .FirstOrDefault();
+    var invEvent = PartModuleUtils.GetEvent(this, ToggleInventory);
+    invEvent.unfocusedRange = pickup
+        ? pickup.maxDistance :
+        new KSPEvent().unfocusedRange;  // Reset to the game's default.
+  }
+
+  /// <summary>Checks if target part can accept non-empty inventories.</summary>
+  void OnCrewTransferSelected(CrewTransfer.CrewTransferData transferData) {
+    if (invType != InventoryType.Pod || transferData.sourcePart != part
+        || transferData.crewMember.seatIdx != podSeat || items.Count == 0) {
+      return;  // Not our problem.
+    }
+    var podInventories = transferData.destPart.FindModulesImplementing<ModuleKISInventory>()
+        .Count(x => x.invType == InventoryType.Pod);
+    if (transferData.destPart.CrewCapacity > podInventories) {
+      ScreenMessaging.ShowErrorScreenMessage(
+          CannotTransferInventoryMsg.Format(transferData.destPart.name));
+      UISounds.PlayBipWrong();
+      transferData.canTransfer = false;
+    }
+  }
+
+  void OnCrewTransferred(GameEvents.HostedFromToAction<ProtoCrewMember, Part> fromToAction) {
+    UpdateContextMenu();
+
+    // Ensure target pod will accept the inventory.
+    if (!fromToAction.to.vessel.isEVA) {
+      // Assing pod seat if not yet done.
+      if (fromToAction.host.seatIdx == -1) {  
+        fromToAction.host.seatIdx = GetFirstFreeSeatIdx(fromToAction.to);
+        HostedDebugLog.Info(
+            this, "Assign {0} to seat {1} in {2}",
+            fromToAction.host.name, fromToAction.host.seatIdx, fromToAction.to);
+      }
+    }
+
+    if (fromToAction.from == part && invType == InventoryType.Pod) {
+      if (fromToAction.to.vessel.isEVA) {
+        // pod to eva
+        ProtoCrewMember crewAtPodSeat =
+            fromToAction.from.protoModuleCrew.Find(x => x.seatIdx == podSeat);
+        if (items.Count > 0 && crewAtPodSeat == null) {
+          ModuleKISInventory destInventory = fromToAction.to.GetComponent<ModuleKISInventory>();
+          HostedDebugLog.Info(this, "Items transfer | source seat: {0}", podSeat);
+          HostedDebugLog.Info(this, "Items transfer | destination: {0}", destInventory.part);
+          MoveItems(items, destInventory);
+          RefreshMassAndVolume();
+          destInventory.RefreshMassAndVolume();
+
+          // Re-equip items on the EVA kerbal.
+          destInventory.startEquip.Clear();
+          foreach (var item in destInventory.items.Values) {
+            if (item.equipped) {
+              HostedDebugLog.Info(
+                  this, "Schedule re-equipping item: {0}", item.availablePart.title);
+              item.equipped = false;
+              destInventory.startEquip.Add(item);
+            }
+          }
+        }
+      } else {
+        // Pod-to-Pod
+        // The target seat is always known from the crew proto, but the source seat has to be
+        // deducted. To do so, an assumtion is made that the event listeners are called in the
+        // exactly same order as they were registered, and the modules register the listeners in the
+        // order of appearance in the part's config. Basing on this, if a POD inventory has some
+        // items but the relevant seat ID is not occupied, then the kerbal has just left the pod
+        // from this seat. If there are no items, then it doesn't matter anyways.
+        ProtoCrewMember crewAtPodSeat =
+            fromToAction.from.protoModuleCrew.Find(x => x.seatIdx == podSeat);
+        if (items.Count > 0 && crewAtPodSeat == null) {
+          HostedDebugLog.Info(this, "Items transfer | source seat: {0}", podSeat);
+          // Find target seat and schedule a coroutine.
+          var destInventory = fromToAction.to.GetComponents<ModuleKISInventory>().ToList()
+              .Find(x => x.podSeat == fromToAction.host.seatIdx);
+          StartCoroutine(destInventory.WaitAndTransferItems(items, fromToAction.host, this));
+        }
+      }
+    }
+
+    if (fromToAction.to == part && invType == InventoryType.Pod) {
+      // eva to pod
+      // Only process transfer for the inventory in the target seat. This event will trigger for
+      // all inventory modules on the part.
+      if (fromToAction.from.vessel.isEVA && fromToAction.host.seatIdx == podSeat) {
+        if (fromToAction.host.seatIdx == podSeat) {
+          var evaInventory = fromToAction.from.GetComponent<ModuleKISInventory>();
+          HostedDebugLog.Info(this, "Item transfer | source {0}", fromToAction.host.name);
+          var itemsToDrop = new List<KIS_Item>();
+          foreach (var item in evaInventory.items) {
+            if (item.Value.carriable) {
+              itemsToDrop.Add(item.Value);
+            } else if (item.Value.equipped) {
+              item.Value.Unequip();
+              item.Value.equipped = true;  // Mark state for the further re-equip.
+            }
+          }
+          foreach (var item in itemsToDrop) {
+            item.Drop(part);
+          }
+          var transferedItems = new Dictionary<int, KIS_Item>(evaInventory.items);
+          StartCoroutine(WaitAndTransferItems(transferedItems, fromToAction.host));
+        }
+      }
+    }
+  }
+
+  int GetFirstFreeSeatIdx(Part p) {
+    for (var i = 0; i < p.protoModuleCrew.Count; i++) {
+      var pcm = p.protoModuleCrew.Find(x => x.seatIdx == i);
+      if (pcm == null) {
+        return i;
+      }
+    }
+    HostedDebugLog.Error(this, "Cannot find a free seat in: {0}", p);
+    return -1;
+  }
+
+  IEnumerator WaitAndTransferItems(Dictionary<int, KIS_Item> transferedItems,
+                                   ProtoCrewMember protoCrew,
+                                   ModuleKISInventory srcInventory = null) {
+    yield return new WaitForFixedUpdate();
+    var crewAtPodSeat = part.protoModuleCrew.Find(x => x.seatIdx == podSeat);
+    if (crewAtPodSeat == protoCrew) {
+      MoveItems(transferedItems, this);
+      HostedDebugLog.Info(this, "Item transfer | destination seat: {0}", podSeat);
+      RefreshMassAndVolume();
+      if (srcInventory) {
+        srcInventory.RefreshMassAndVolume();
+      }
+    }
+  }
+
+  void slotKeyPress(KeyCode kc, int slot, int delay = 1) {
+    if (kc == KeyCode.None || !inventoryKeysEnabled) {
+      return;
+    }
+
+    // TODO: Add a check for shift keys to not trigger use action on combinations with
+    // Shift, Ctrl, and Alt.
+    if (KIS_Shared.IsKeyDown(kc)) {
+      keyPressTime = Time.time;
+    }
+    if (InputLockManager.IsUnlocked(ControlTypes.UI) && Input.GetKey(kc)) {
+      if (Time.time - keyPressTime >= delay) {
+        if (items.ContainsKey(slot)) {
+          items[slot].Use(KIS_Item.UseFrom.InventoryShortcut);
+        }
+        keyPressTime = Mathf.Infinity;
+      }
+    }
+    if (KIS_Shared.IsKeyUp(kc)) {
+      if (!float.IsInfinity(keyPressTime) && items.ContainsKey(slot)) {
+        items[slot].ShortcutKeyPress();
+      }
+      keyPressTime = 0;
+    }
+  }
+
+  /// <summary>Checks if part has a child, and reports the problem.</summary>
+  /// <param name="p">A part to check.</param>
+  /// <returns><c>true</c> if it's OK to put the part into the inventory.</returns>
+  bool VerifyIsNotAssembly(Part p) {
+    if (!HighLogic.LoadedSceneIsEditor && KISAddonPickup.grabbedPartsCount > 1) {
+      ScreenMessaging.ShowPriorityScreenMessage(
+          PartHasChildrenMsg.Format(KISAddonPickup.grabbedPartsCount - 1));
+      return false;
+    }
+    return true;
+  }
+
+  bool VolumeAvailableFor(Part p) {
+    float partVolume = KIS_Shared.GetPartVolume(p.partInfo);
+    var newTotalVolume = GetContentVolume() + partVolume;
+    if (newTotalVolume > maxVolume) {
+      ScreenMessaging.ShowPriorityScreenMessage(
+          MaxVolumeReachedMsg.Format(partVolume, newTotalVolume - maxVolume));
+      return false;
+    }
+    return true;
+  }
+
+  bool VolumeAvailableFor(KIS_Item item) {
+    RefreshMassAndVolume();
+    if (KISAddonPickup.draggedItem.inventory == this) {
+      return true;
+    } else {
+      float newTotalVolume = GetContentVolume() + item.stackVolume;
+      if (newTotalVolume > maxVolume) {
+        ScreenMessaging.ShowPriorityScreenMessage(
+            MaxVolumeReachedMsg.Format(item.stackVolume, (newTotalVolume - maxVolume)));
+        return false;
+      } else {
+        return true;
+      }
+    }
+  }
+
+  IEnumerator WaitAndDoAction(DelayedActionMethod actionMethod, KIS_Item item, float delay) {
+    yield return new WaitForSeconds(delay);
+    actionMethod(item);
   }
   #endregion
 }
