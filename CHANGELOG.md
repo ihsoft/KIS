@@ -1,4 +1,5 @@
 # 1.17 (pre-release):
+* [Enhancement] Add Portuguese (Brazil) localization.
 * [Fix #281] Use the stock funtionality from the KIS code and properly support custom helmets.
 
 # 1.16 (October 29th, 2018):
