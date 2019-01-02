@@ -1162,12 +1162,6 @@ public class ModuleKISInventory : PartModule,
       return;
     }
 
-    // Update GUI of items
-    //TODO(ihsoft): Call in the per item display instead. 
-    foreach (KeyValuePair<int, KIS_Item> item in items) {
-      item.Value.GUIUpdate();
-    }
-
     GUIStyles();
 
     // Set title

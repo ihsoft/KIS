@@ -356,15 +356,6 @@ public sealed class KIS_Item {
           evaTransform.rotation * Quaternion.Euler(prefabModule.equipDir);
       equippedGameObj.transform.position = evaTransform.TransformPoint(prefabModule.equipPos);
     }
-    if (prefabModule != null) {
-      prefabModule.OnItemUpdate(this);
-    }
-  }
-
-  public void GUIUpdate() {
-    if (prefabModule) {
-      prefabModule.OnItemGUI(this);
-    }
   }
 
   public bool CanStackAdd(float qty, bool checkVolume = true) {

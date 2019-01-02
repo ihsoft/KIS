@@ -318,16 +318,8 @@ public class ModuleKISItem : PartModule,
   }
   #endregion
 
-  #region IInventoryItem candidate
+  #region IKISInventoryItem candidates
   public virtual void OnItemUse(KIS_Item item, KIS_Item.UseFrom useFrom) {
-  }
-
-  // TODO(ihsoft): Deprecate it. Too expensive.
-  public virtual void OnItemUpdate(KIS_Item item) {
-  }
-
-  // TODO(ihsoft): Deprecate it. Too expensive.
-  public virtual void OnItemGUI(KIS_Item item) {
   }
 
   public virtual void OnDragToPart(KIS_Item item, Part destPart) {
