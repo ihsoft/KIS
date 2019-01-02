@@ -495,7 +495,7 @@ public class ModuleKISInventory : PartModule,
 
   // Animation (Not tested)
   [KSPField]
-  public string openAnimName = "Doors";
+  public string openAnimName = "";
 
   [KSPField]
   public float openAnimSpeed = 1f;
@@ -841,9 +841,13 @@ public class ModuleKISInventory : PartModule,
 
     guiMainWindowPos = defaultFlightPos;
 
-    Animation[] anim = part.FindModelAnimators(openAnimName);
-    if (anim.Length > 0) {
-      openAnim = part.FindModelAnimators(openAnimName)[0];
+    if (openAnimName != "") {
+      Animation[] anim = part.FindModelAnimators(openAnimName);
+      if (anim.Length > 0) {
+        openAnim = anim[0];
+      } else {
+        HostedDebugLog.Error(this, "Cannot find animation: {0}", openAnimName);
+      }
     }
 
     // Only equip if this is a kerbal module. Pods and command seats have POD inventory too.
