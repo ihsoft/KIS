@@ -1927,7 +1927,9 @@ public class ModuleKISInventory : PartModule,
           HostedDebugLog.Info(this, "Items transfer | destination: {0}", destInventory.part);
           MoveItems(items, destInventory);
           RefreshMassAndVolume();
+          UpdateContextMenu();
           destInventory.RefreshMassAndVolume();
+          destInventory.UpdateContextMenu();
 
           // Re-equip items on the EVA kerbal.
           destInventory.startEquip.Clear();
@@ -2007,8 +2009,10 @@ public class ModuleKISInventory : PartModule,
       MoveItems(transferedItems, this);
       HostedDebugLog.Info(this, "Item transfer | destination seat: {0}", podSeat);
       RefreshMassAndVolume();
+      UpdateContextMenu();
       if (srcInventory) {
         srcInventory.RefreshMassAndVolume();
+        srcInventory.UpdateContextMenu();
       }
     }
   }
