@@ -839,7 +839,7 @@ public static class KIS_Shared {
     } catch {
       DebugEx.Warning(
           "WORKAROUND. Module {0} on part prefab is not awaken. Call Awake on it", module);
-      AwakePartModule(module);
+      module.Awake();
     }
     foreach (var field in module.Fields) {
       var baseField = field as BaseField;
@@ -851,32 +851,6 @@ public static class KIS_Shared {
                         baseField.name, module, baseField.FieldInfo.FieldType, defValue);
         baseField.SetValue(defValue, module);
       }
-    }
-  }
-
-  /// <summary>Makes a call to <c>Awake()</c> method of the part module.</summary>
-  /// <remarks>Modules added to prefab via <c>AddModule()</c> call are not get activated as they
-  /// would if activated by the Unity core. As a result some vital fields may be left uninitialized
-  /// which may result in an NRE later when working with the prefab (e.g. making a part snapshot).
-  /// This method finds and invokes method <c>Awake</c> via reflection which is normally done by
-  /// Unity.
-  /// <para><b>IMPORTANT!</b> This method cannot awake a module! To make the things right every
-  /// class in the hierarchy should get its <c>Awake</c> called. This method only calls <c>Awake</c>
-  /// method on <c>PartModule</c> parent class which is not enough to do a complete awakening.
-  /// </para>
-  /// <para>This is a HACK since <c>Awake()</c> method is not supposed to be called by anyone but
-  /// Unity. For now it works fine but one day it may awake the kraken.</para>
-  /// </remarks>
-  /// <param name="module">Module instance to awake.</param>
-  public static void AwakePartModule(PartModule module) {
-    // Private method can only be accessed via reflection when requested on the class that declares
-    // it. So, don't use type of the argument and specify it explicitly. 
-    var moduleAwakeMethod = typeof(PartModule).GetMethod(
-        "Awake", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-    if (moduleAwakeMethod != null) {
-      moduleAwakeMethod.Invoke(module, new object[] {});
-    } else {
-      DebugEx.Error("Cannot find Awake() method on {0}. Skip awakening", module);
     }
   }
 

@@ -8,13 +8,14 @@ using KSPDev.ConfigUtils;
 using KSPDev.DebugUtils;
 using KSPDev.GUIUtils;
 using KSPDev.GUIUtils.TypeFormatters;
-using KSPDev.LogUtils;
 using KSPDev.KSPInterfaces;
+using KSPDev.LogUtils;
+using KSPDev.ModelUtils;
 using KSPDev.PartUtils;
 using System;
-using System.Linq;
-using System.Collections.Generic;
 using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using UnityEngine;
 
@@ -490,8 +491,15 @@ public class ModuleKISInventory : PartModule,
   [KSPField(isPersistant = true)]
   public string invName = "";
 
+  /// <summary>INTERNAL. Type of the container.</summary>
+  /// <remarks>Don't define it in the config.</remarks>
   [KSPField]
   public InventoryType invType = InventoryType.Container;
+
+  /// <summary>INTERNAL. Seat number to assign the pod container to.</summary>
+  /// <remarks>Don't define it in the config.</remarks>
+  [KSPField]
+  public int podSeat = -1;
 
   // Animation (Not tested)
   [KSPField]
@@ -634,12 +642,6 @@ public class ModuleKISInventory : PartModule,
   public Dictionary<int, KIS_Item> items = new Dictionary<int, KIS_Item>();
 
   public float totalVolume { get; private set; }
-
-  public int podSeat {
-    get { return _podSeat; }
-    internal set { _podSeat = value; }
-  }
-  int _podSeat = -1;
 
   // GUI
   public bool showGui { get; private set; }
