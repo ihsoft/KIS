@@ -349,15 +349,6 @@ public sealed class KIS_Item {
     }
   }
 
-  //TODO(ihsoft): It's too expensive to call it for every item.
-  public void Update() {
-    if (equippedGameObj != null) {
-      equippedGameObj.transform.rotation =
-          evaTransform.rotation * Quaternion.Euler(prefabModule.equipDir);
-      equippedGameObj.transform.position = evaTransform.TransformPoint(prefabModule.equipPos);
-    }
-  }
-
   public bool CanStackAdd(float qty, bool checkVolume = true) {
     if (qty <= 0) {
       return false;
@@ -544,6 +535,7 @@ public sealed class KIS_Item {
     }
     equipped = true;
     prefabModule.OnEquip(this);
+    inventory.StartCoroutine(AlignEquippedPart());
   }
 
   public void Unequip(ActorType actorType = ActorType.API) {
@@ -637,6 +629,16 @@ public sealed class KIS_Item {
   public void DragToInventory(ModuleKISInventory destInventory, int destSlot) {
     if (prefabModule) {
       prefabModule.OnDragToInventory(this, destInventory, destSlot);
+    }
+  }
+
+  /// <summary>Coroutine to align the equipped atems to the kerbal model.</summary>
+  IEnumerator AlignEquippedPart() {
+    while (equippedGameObj != null && evaTransform != null) {
+      equippedGameObj.transform.rotation =
+          evaTransform.rotation * Quaternion.Euler(prefabModule.equipDir);
+      equippedGameObj.transform.position = evaTransform.TransformPoint(prefabModule.equipPos);
+      yield return new WaitForEndOfFrame();
     }
   }
 }

@@ -950,14 +950,6 @@ public class ModuleKISInventory : PartModule,
     }
     UpdateKey();
   }
-
-  /// <summary>Overridden from MonoBehaviour.</summary>
-  void LateUpdate() {
-    //TODO(ihsoft): It's too BAD for performance.
-    foreach (KeyValuePair<int, KIS_Item> item in items) {
-      item.Value.Update();
-    }
-  }
   #endregion
 
   #region API methods
