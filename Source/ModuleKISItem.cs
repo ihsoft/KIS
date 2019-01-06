@@ -329,9 +329,25 @@ public class ModuleKISItem : PartModule,
                                         int destSlot) {
   }
 
+  /// <summary>Called when an item equips.</summary>
+  /// <remarks>
+  /// Note, that the module that gets the callback is not be the actual module of the equipped
+  /// part (e.g. when the equip mode is "model"). It's a prefab module. Use <paramref name="item"/>
+  /// to reach to the actual part/module of the item. Note, that in some equipping modes there may
+  /// be no live part for the item.
+  /// </remarks>
+  /// <param name="item">The item the action is executed for.</param>
   public virtual void OnEquip(KIS_Item item) {
   }
 
+  /// <summary>Called when the item unequips.</summary>
+  /// <remarks>
+  /// Note, that the module that gets the callback is not be the actual module of the equipped
+  /// part (e.g. when the equip mode is "model"). It's a prefab module. Use <paramref name="item"/>
+  /// to reach to the actual part/module of the item. Note, that in some equipping modes there may
+  /// be no live part for the item.
+  /// </remarks>
+  /// <param name="item">The item the action is executed for.</param>
   public virtual void OnUnEquip(KIS_Item item) {
   }
   #endregion

@@ -8,8 +8,9 @@ using KSPDev.GUIUtils;
 using KSPDev.LogUtils;
 using KSPDev.ProcessingUtils;
 using System;
-using System.Linq;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace KIS {
@@ -65,20 +66,25 @@ public sealed class KIS_Item {
   public ConfigNode partNode;
   public AvailablePart availablePart;
   public int quantity;
-  public KIS_IconViewer icon = null;
-  public bool stackable = false;
+  public KIS_IconViewer icon;
+  public bool stackable;
   public string equipSlot;
-  public bool usableFromEva = false;
-  public bool usableFromContainer = false;
-  public bool usableFromPod = false;
-  public bool usableFromEditor = false;
-  public bool carriable = false;
+  public bool usableFromEva;
+  public bool usableFromContainer;
+  public bool usableFromPod;
+  public bool usableFromEditor;
+  public bool carriable;
   public float volume;
   public float cost;
-  public bool equipable = false;
-  public bool equipped = false;
+  public bool equipable;
+  public bool equipped;
+
+  /// <summary>Inventory that owns this item.</summary>
   public ModuleKISInventory inventory;
+
+  /// <summary>Part module that implements this item.</summary>
   public ModuleKISItem prefabModule;
+
   GameObject equippedGameObj;
   public Part equippedPart;
   Transform evaTransform;
@@ -226,7 +232,7 @@ public sealed class KIS_Item {
 
     // Set launchID
     if (partNode.HasValue("launchID")) {
-      if (int.Parse(this.partNode.GetValue("launchID")) == 0) {
+      if (int.Parse(partNode.GetValue("launchID")) == 0) {
         partNode.SetValue("launchID", this.inventory.part.launchID.ToString(), true);
       }
     } else {
