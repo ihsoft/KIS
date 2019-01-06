@@ -245,7 +245,7 @@ public class ModuleKISItem : PartModule,
   FixedJoint staticAttachJoint;
 
   #region IHasDebugAdjustables implementation
-  List<KIS_Item> equippedItems;
+  List<KIS_Item> dbgEquippedItems;
 
   /// <summary>Logs all the part's model objects.</summary>
   [Debug.KISDebugAdjustable("Dump active kerbal's model hierarchy")]
@@ -261,20 +261,20 @@ public class ModuleKISItem : PartModule,
 
   /// <inheritdoc/>
   public void OnBeforeDebugAdjustablesUpdate() {
-    equippedItems = FlightGlobals.Vessels
+    dbgEquippedItems = FlightGlobals.Vessels
         .Where(v => v.isEVA)
         .Select(v => v.rootPart)
         .SelectMany(p => p.Modules.OfType<ModuleKISInventory>())
         .SelectMany(inv => inv.items.Values)
         .Where(item => item.carried || item.equipped)
         .ToList();
-    equippedItems.ForEach(item => item.Unequip());
+    dbgEquippedItems.ForEach(item => item.Unequip());
   }
 
   /// <inheritdoc/>
   public void OnDebugAdjustablesUpdated() {
-    equippedItems.ForEach(item => item.Equip());
-    equippedItems = null;
+    dbgEquippedItems.ForEach(item => item.Equip());
+    dbgEquippedItems = null;
   }
   #endregion
 
