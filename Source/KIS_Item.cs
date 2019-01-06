@@ -602,13 +602,6 @@ public sealed class KIS_Item {
     StackRemove(1);
   }
 
-  public void ReEquip() {
-    if (equipped) {
-      Unequip();
-      Equip();
-    }
-  }
-
   public void OnMove(ModuleKISInventory srcInventory, ModuleKISInventory destInventory) {
     if (srcInventory != destInventory && equipped) {
       Unequip();
