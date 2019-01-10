@@ -563,7 +563,7 @@ public class ModuleKISInventory : PartModule,
   #region Context menu events/actions
   [KSPEvent(guiActiveEditor = true, guiActive = true, guiActiveUnfocused = true)]
   [LocalizableItem(tag = null)]
-  public void ToggleInventory() {
+  public void ToggleInventoryEvent() {
     if (showGui) {
       // Destroy icons viewer
       foreach (KeyValuePair<int, KIS_Item> item in items) {
@@ -706,7 +706,7 @@ public class ModuleKISInventory : PartModule,
 
   #region IHasContextMenu implementation
   public virtual void UpdateContextMenu() {
-    var invEvent = PartModuleUtils.GetEvent(this, ToggleInventory);
+    var invEvent = PartModuleUtils.GetEvent(this, ToggleInventoryEvent);
     if (invType == InventoryType.Pod) {
       if (HighLogic.LoadedSceneIsEditor) {
         // Cannot pre-load inventory for the command seats: they have no inventory!
@@ -727,7 +727,7 @@ public class ModuleKISInventory : PartModule,
         } else {
           if (showGui) {
             // In case of there was GUI active but the kerbal has left the seat.
-            ToggleInventory(); 
+            ToggleInventoryEvent();
           }
         }
       }
@@ -1307,7 +1307,7 @@ public class ModuleKISInventory : PartModule,
       GUI.DragWindow(new Rect(0, 0, 10000, 30));
     }
     if (closeInv) {
-      ToggleInventory();
+      ToggleInventoryEvent();
     }
   }
 
@@ -1823,7 +1823,7 @@ public class ModuleKISInventory : PartModule,
 
     // Open inventory on keypress
     if (KIS_Shared.IsKeyDown(evaInventoryKey)) {
-      ToggleInventory();
+      ToggleInventoryEvent();
     }
     // Use slot when not in drag mode.
     if (!KISAddonPointer.isRunning) {
@@ -1866,7 +1866,7 @@ public class ModuleKISInventory : PartModule,
 
   void OnVesselChange(Vessel vess) {
     if (showGui) {
-      ToggleInventory();
+      ToggleInventoryEvent();
     }
 
     // Update the menu unfocused range to the newly selected pick up module (if any).
@@ -1874,7 +1874,7 @@ public class ModuleKISInventory : PartModule,
         .FindPartModulesImplementing<ModuleKISPickup>()
         .OrderByDescending(x => x.maxDistance)
         .FirstOrDefault();
-    var invEvent = PartModuleUtils.GetEvent(this, ToggleInventory);
+    var invEvent = PartModuleUtils.GetEvent(this, ToggleInventoryEvent);
     invEvent.unfocusedRange = pickup
         ? pickup.maxDistance :
         new KSPEvent().unfocusedRange;  // Reset to the game's default.

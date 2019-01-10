@@ -21,6 +21,7 @@ namespace KIS {
 // Next localization ID: #kisLOC_01040.
 [PersistentFieldsDatabase("KIS/settings/KISConfig")]
 sealed class KISAddonPickup : MonoBehaviour {
+
   #region Localizable GUI strings.
   static readonly Message ReDockOkStatusTooltipTxt = new Message(
       "#kisLOC_01000",
@@ -355,13 +356,13 @@ sealed class KISAddonPickup : MonoBehaviour {
   public static int draggedIconSize = 50;
   public static Part movingPart;
   public static KISAddonPickup instance;
-  public bool grabActive = false;
-  public bool detachActive = false;
+  public bool grabActive;
+  public bool detachActive;
 
-  private bool grabOk = false;
-  private bool detachOk = false;
-  private bool jetpackLock = false;
-  private bool delayedButtonUp = false;
+  private bool grabOk;
+  private bool detachOk;
+  private bool jetpackLock;
+  private bool delayedButtonUp;
 
   /// <summary>A number of parts in the currently grabbed assembly.</summary>
   public static int grabbedPartsCount;
