@@ -67,6 +67,10 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="api\IKISActor.cs" />
+    <Compile Include="api\IKISInventory.cs" />
+    <Compile Include="api\Utils\ColliderUtilsImpl.cs" />
+    <Compile Include="api\Utils\KISAPI.cs" />
     <Compile Include="controllers\ControllerPartEditorTool.cs" />
     <Compile Include="Debug\KISDebugAdjustableAttribute.cs" />
     <Compile Include="EditorDefaultItemsAdder.cs" />
@@ -97,9 +101,11 @@
     <Compile Include="VolumeLType.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="api\Utils" />
     <Folder Include="KSPDev_candidates" />
     <Folder Include="Debug" />
     <Folder Include="controllers" />
+    <Folder Include="api" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
