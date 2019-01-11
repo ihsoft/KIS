@@ -1099,7 +1099,6 @@ public class ModuleKISInventory : PartModule,
     }
     return contentCost;
   }
-  #endregion
 
   /// <summary>Sets or removes the stock helmet.</summary>
   /// <param name="active"><c>true</c> if the helpmet needs to be set.</param>
@@ -1114,6 +1113,7 @@ public class ModuleKISInventory : PartModule,
       DebugEx.Warning("Kerbal model doesn't have helmet transform: {0}", part);
     }
   }
+  #endregion
 
   #region GUI methods
   void GUIStyles() {

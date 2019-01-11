@@ -14,11 +14,11 @@ public class ColliderUtilsImpl {
   /// <summary>
   /// Returns the minimum square distance to the nearest point on the part's collider surface.
   /// </summary>
-  /// <remarks>This method skips triggers and inactive collidres.</remarks>
+  /// <remarks>This method skips triggers and inactive colliders.</remarks>
   /// <param name="point">The reference point to find distance for.</param>
   /// <param name="part">The part to check for.</param>
   /// <param name="filterFn">
-  /// The filter function to apply to every collider. Return <c>false</c> from it to sklipp the
+  /// The filter function to apply to every collider. Return <c>false</c> from it to sklip the
   /// collider in the following checks.
   /// </param>
   /// <returns>The square distance or <c>null</c> if no colliders found.</returns>
@@ -34,12 +34,12 @@ public class ColliderUtilsImpl {
   /// <summary>
   /// Returns the minimum square distance to the nearest point on the part's collider surface.
   /// </summary>
-  /// <remarks>This method skips triggers and inactive collidres.</remarks>
+  /// <remarks>This method skips triggers and inactive colliders.</remarks>
   /// <param name="point">The reference point to find distance for.</param>
   /// <param name="part">The part to check for.</param>
   /// <param name="defaultValue">The value to return if no suitable colliders found.</param>
   /// <param name="filterFn">
-  /// The filter function to apply to every collider. Return <c>false</c> from it to sklipp the
+  /// The filter function to apply to every collider. Return <c>false</c> from it to sklip the
   /// collider in the following checks.
   /// </param>
   /// <returns>

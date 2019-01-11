@@ -359,10 +359,10 @@ sealed class KISAddonPickup : MonoBehaviour {
   public bool grabActive;
   public bool detachActive;
 
-  private bool grabOk;
-  private bool detachOk;
-  private bool jetpackLock;
-  private bool delayedButtonUp;
+  bool grabOk;
+  bool detachOk;
+  bool jetpackLock;
+  bool delayedButtonUp;
 
   /// <summary>A number of parts in the currently grabbed assembly.</summary>
   public static int grabbedPartsCount;
@@ -371,9 +371,9 @@ sealed class KISAddonPickup : MonoBehaviour {
   /// <summary>A root part of the currently grabbed assembly.</summary>
   public static Part grabbedPart;
 
-  private static Part redockTarget;
-  private static string redockVesselName;
-  private static bool redockOk;
+  static Part redockTarget;
+  static string redockVesselName;
+  static bool redockOk;
 
   public enum PointerMode {
     Nothing,
@@ -1024,7 +1024,7 @@ sealed class KISAddonPickup : MonoBehaviour {
     HandlePickup(PickupMode.GrabFromInventory);
   }
 
-  private void HandlePickup(PickupMode newPickupMode) {
+  void HandlePickup(PickupMode newPickupMode) {
     DebugEx.Info("Start pickup in mode {0} from part: {1}", newPickupMode, draggedPart);
     grabbedPart = null;
     pickupMode = newPickupMode;
@@ -1159,9 +1159,9 @@ sealed class KISAddonPickup : MonoBehaviour {
     }
   }
 
-  private void OnPointerAction(KISAddonPointer.PointerTarget pointerTarget, Vector3 pos,
-                               Quaternion rot, Part tgtPart, string srcAttachNodeID = null,
-                               AttachNode tgtAttachNode = null) {
+  void OnPointerAction(KISAddonPointer.PointerTarget pointerTarget, Vector3 pos,
+                       Quaternion rot, Part tgtPart, string srcAttachNodeID = null,
+                       AttachNode tgtAttachNode = null) {
     if (pointerTarget == KISAddonPointer.PointerTarget.PartMount) {
       if (movingPart) {
         MoveAttach(tgtPart, pos, rot, srcAttachNodeID, tgtAttachNode);
