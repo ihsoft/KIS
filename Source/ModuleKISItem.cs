@@ -380,17 +380,9 @@ public class ModuleKISItem : PartModule,
         || action == KIS_Shared.MessageAction.DropEnd.ToString()
         || action == KIS_Shared.MessageAction.AttachStart.ToString()) {
       GroundDetach();
-      var modulePickup = KISAddonPickup.instance.GetActivePickupNearest(this.transform.position);
-      if (modulePickup) {
-        KIS_Shared.PlaySoundAtPoint(modulePickup.detachStaticSndPath, this.transform.position);
-      }
     }
     if (action == KIS_Shared.MessageAction.AttachEnd.ToString() && tgtPart == null) {
       GroundAttach();
-      var modulePickup = KISAddonPickup.instance.GetActivePickupNearest(this.transform.position);
-      if (modulePickup) {
-        KIS_Shared.PlaySoundAtPoint(modulePickup.attachStaticSndPath, this.transform.position);
-      }
     }
   }
 

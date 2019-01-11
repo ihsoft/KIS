@@ -4,6 +4,7 @@
 * [Enhancement] Improve items&parts debug ability. See `partAlignToolKey` and `itemDebug` in the settings file.
 * [Enhancement] Add new containers: `IMiC-1500`, `ImC-3K`, `IMC-22K`, and `IGC-45K`.
 * [Fix #281] Use the stock funtionality from the KIS code and properly support custom helmets.
+* [Enhancement #289] Take into account the container size when detecting its availability.
 
 # 1.16 (October 29th, 2018):
 * [Fix #275] No preview meshes shown.

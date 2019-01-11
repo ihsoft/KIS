@@ -3,6 +3,7 @@
 // Module authors: KospY, igor.zavoychinskiy@gmail.com
 // License: Restricted
 
+using KISAPIv1;
 using KIS.GUIUtils;
 using KSPDev.ConfigUtils;
 using KSPDev.DebugUtils;
@@ -561,7 +562,8 @@ public class ModuleKISInventory : PartModule,
   #endregion
 
   #region Context menu events/actions
-  [KSPEvent(guiActiveEditor = true, guiActive = true, guiActiveUnfocused = true)]
+  [KSPEvent(guiActiveEditor = true, guiActive = true,
+            guiActiveUnfocused = true, guiActiveUncommand = true)]
   [LocalizableItem(tag = null)]
   public void ToggleInventoryEvent() {
     if (showGui) {
@@ -689,6 +691,12 @@ public class ModuleKISInventory : PartModule,
   bool clickThroughLocked;
   bool guiSetName;
   string kerbalTrait;
+
+  /// <summary>Time, when the inventory menu was last time checked for range visibility.</summary>
+  float lastMenuRangeCheckedTime;
+
+  /// <summary>Minimum delay between the inventory range checking calls.</summary>
+  const float MenuRangeCheckThreshold = 0.1f;  // 100ms
   #endregion
 
   #region GUI styles
@@ -738,6 +746,10 @@ public class ModuleKISInventory : PartModule,
           ? PartInventoryWithNameMenuTxt.Format(invName)
           : PartInventoryMenuTxt.Format();
     }
+    // Set action menu MAX range. The distance will be fine turned in the action menu callback.
+    var bounds = part.gameObject.GetColliderBounds();
+    invEvent.unfocusedRange = Mathf.Max(bounds.size.x, bounds.size.y, bounds.size.z) + 30.0f;
+    invEvent.active = true;
   }
   #endregion
 
@@ -784,6 +796,7 @@ public class ModuleKISInventory : PartModule,
     GameEvents.onCrewTransferSelected.Remove(OnCrewTransferSelected);
     GameEvents.onVesselChange.Remove(OnVesselChange);
     GameEvents.OnHelmetChanged.Remove(OnHelmetChanged);
+    GameEvents.onPartActionUICreate.Remove(OnPartActionMenuCreate);
   }
   #endregion
 
@@ -818,6 +831,7 @@ public class ModuleKISInventory : PartModule,
       GameEvents.onCrewTransferSelected.Add(OnCrewTransferSelected);
       GameEvents.onVesselChange.Add(OnVesselChange);
       GameEvents.OnHelmetChanged.Add(OnHelmetChanged);
+      GameEvents.onPartActionUICreate.Add(OnPartActionMenuCreate);
     }
   }
 
@@ -935,17 +949,14 @@ public class ModuleKISInventory : PartModule,
       }
     }
   }
-  #endregion
 
-  #region MonoBehaviour overrides
-  /// <summary>Overridden from MonoBehaviour.</summary>
-  void Update() {
-    if (showGui && HighLogic.LoadedSceneIsFlight && FlightGlobals.ActiveVessel.isEVA) {
-      var distEvaToContainer = Vector3.Distance(
-          FlightGlobals.ActiveVessel.transform.position, part.transform.position);
-      var pickup = KISAddonPickup.instance.GetActivePickupNearest(part);
-      if (!pickup || distEvaToContainer > pickup.maxDistance) {
-        ToggleInventory();
+  /// <inheritdoc/>
+  public override void OnUpdate() {
+    base.OnUpdate();
+    if (showGui && HighLogic.LoadedSceneIsFlight && vessel != FlightGlobals.ActiveVessel
+        && lastMenuRangeCheckedTime + MenuRangeCheckThreshold < Time.time) {
+      if (!CheckActionMenuVisibility()) {
+        ToggleInventoryEvent();
       }
     }
     UpdateKey();
@@ -1868,16 +1879,7 @@ public class ModuleKISInventory : PartModule,
     if (showGui) {
       ToggleInventoryEvent();
     }
-
-    // Update the menu unfocused range to the newly selected pick up module (if any).
-    var pickup = FlightGlobals.ActiveVessel
-        .FindPartModulesImplementing<ModuleKISPickup>()
-        .OrderByDescending(x => x.maxDistance)
-        .FirstOrDefault();
-    var invEvent = PartModuleUtils.GetEvent(this, ToggleInventoryEvent);
-    invEvent.unfocusedRange = pickup
-        ? pickup.maxDistance :
-        new KSPEvent().unfocusedRange;  // Reset to the game's default.
+    PartModuleUtils.SetupEvent(this, ToggleInventoryEvent, inv => inv.active = true);
   }
 
   /// <summary>Checks if target part can accept non-empty inventories.</summary>
@@ -2073,6 +2075,38 @@ public class ModuleKISInventory : PartModule,
       } else {
         return true;
       }
+    }
+  }
+
+  /// <summary>Checks if the inventory menu has to be visible in GUI.</summary>
+  /// <remarks>
+  /// This method check if the active vessel has actors that can reach the inventory. No actors
+  /// means the inventory should be hidden from GUI.
+  /// </remarks>
+  /// <returns></returns>
+  bool CheckActionMenuVisibility() {
+    lastMenuRangeCheckedTime = Time.time;
+    if (FlightGlobals.ActiveVessel != vessel) {
+      // Go thru each actor module in the active vessel and check if it can reach the inventory.
+      return FlightGlobals.ActiveVessel.parts
+          .SelectMany(p => p.Modules.OfType<ModuleKISPickup>())
+          .Any(m => m.maxDistance * m.maxDistance
+               >= KISAPI.colliderUtils.GetSqrDistanceToPartOrDefault(m.transform.position, part));
+    }
+    return true;
+  }
+
+  /// <summary>
+  /// Checks if the inventory action menu should be visible to the current actor(s).
+  /// </summary>
+  /// <remarks>The actor(s) are obtained from the active vessel.</remarks>
+  /// <param name="p"></param>
+  void OnPartActionMenuCreate(Part p) {
+    if (p == part && vessel != FlightGlobals.ActiveVessel
+        && lastMenuRangeCheckedTime + MenuRangeCheckThreshold < Time.time) {
+      PartModuleUtils.SetupEvent(this, ToggleInventoryEvent, inv => {
+        inv.active = CheckActionMenuVisibility();
+      });
     }
   }
   #endregion
