@@ -67,8 +67,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="api\IKISActor.cs" />
-    <Compile Include="api\IKISInventory.cs" />
     <Compile Include="api\Utils\ColliderUtilsImpl.cs" />
     <Compile Include="api\Utils\KISAPI.cs" />
     <Compile Include="controllers\ControllerPartEditorTool.cs" />
