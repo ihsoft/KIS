@@ -215,8 +215,8 @@ public sealed class KIS_Item {
     this.resourceMass = part.GetResourceMass();
     ModuleKISInventory itemInventory = part.GetComponent<ModuleKISInventory>();
     if (itemInventory) {
-      this.contentMass = itemInventory.GetContentMass();
-      this.contentCost = itemInventory.GetContentCost();
+      this.contentMass = itemInventory.contentsMass;
+      this.contentCost = itemInventory.contentsCost;
       if (itemInventory.invName != "") {
         this.inventoryName = itemInventory.invName;
       }
@@ -364,7 +364,7 @@ public sealed class KIS_Item {
       UISounds.PlayBipWrong();
       return false;
     }
-    float newVolume = inventory.totalVolume + (volume * qty);
+    float newVolume = inventory.totalContentsVolume + (volume * qty);
     if (checkVolume && newVolume > inventory.maxVolume) {
       ScreenMessaging.ShowPriorityScreenMessage(
           CannotStackMaxVolumeReachedMsg.Format(newVolume - inventory.maxVolume));
@@ -376,7 +376,7 @@ public sealed class KIS_Item {
   public bool StackAdd(int qty, bool checkVolume = true) {
     if (CanStackAdd(qty, checkVolume)) {
       quantity += qty;
-      inventory.RefreshMassAndVolume();
+      inventory.RefreshContents();
       return true;
     }
     return false;
@@ -391,7 +391,7 @@ public sealed class KIS_Item {
       return false;
     }
     quantity -= qty;
-    inventory.RefreshMassAndVolume();
+    inventory.RefreshContents();
     return true;
   }
 
@@ -403,7 +403,7 @@ public sealed class KIS_Item {
       Unequip();
     }
     inventory.items.Remove(slot);
-    inventory.RefreshMassAndVolume();
+    inventory.RefreshContents();
   }
 
   public void ShortcutKeyPress() {

@@ -11,8 +11,8 @@ using KSPDev.GUIUtils;
 using KSPDev.GUIUtils.TypeFormatters;
 using KSPDev.KSPInterfaces;
 using KSPDev.LogUtils;
-using KSPDev.ModelUtils;
 using KSPDev.PartUtils;
+using KSPDev.ProcessingUtils;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -643,7 +643,20 @@ public class ModuleKISInventory : PartModule,
   // Inventory
   public Dictionary<int, KIS_Item> items = new Dictionary<int, KIS_Item>();
 
-  public float totalVolume { get; private set; }
+  /// <summary>Total volume of the contents.</summary>
+  /// <value>The volume in <c>liters</c>.</value>
+  /// <seealso cref="RefreshContents"/>
+  public float totalContentsVolume { get; private set; }
+  
+  /// <summary>Total mass of the contents.</summary>
+  /// <value>The mass in <c>tons</c>.</value>
+  /// <seealso cref="RefreshContents"/>
+  public float contentsMass { get; private set; }
+
+  /// <summary>Total cost of the contents.</summary>
+  /// <value>The cost in game currency.</value>
+  /// <seealso cref="RefreshContents"/>
+  public float contentsCost { get; private set; }
 
   // GUI
   public bool showGui { get; private set; }
@@ -803,13 +816,12 @@ public class ModuleKISInventory : PartModule,
   #region IPartCostModifier implemetation
   /// <summary>Overridden from IPartCostModifier.</summary>
   public ModifierChangeWhen GetModuleCostChangeWhen() {
-    // TODO(ihsoft): Figure out what value is right.
-    return ModifierChangeWhen.FIXED;
+    return ModifierChangeWhen.CONSTANTLY;
   }
 
   /// <summary>Overridden from IPartCostModifier.</summary>
   public float GetModuleCost(float defaultCost, ModifierStagingSituation sit) {
-    return GetContentCost();
+    return contentsCost;
   }
 
   /// <summary>Overridden from IPartMassModifier.</summary>
@@ -819,7 +831,7 @@ public class ModuleKISInventory : PartModule,
       
   /// <summary>Overridden from IPartMassModifier.</summary>
   public float GetModuleMass(float defaultMass, ModifierStagingSituation sit) {
-    return GetContentMass();
+    return contentsMass;
   }
   #endregion
 
@@ -848,9 +860,9 @@ public class ModuleKISInventory : PartModule,
         if (crewAtPodSeat == null && items.Count > 0) {
           HostedDebugLog.Info(
               this, "Clear unoccupied seat inventory: seat={0}, count={1}, mass={2}",
-              podSeat, items.Count, GetContentMass());
+              podSeat, items.Count, contentsMass);
           items.Clear();
-          RefreshMassAndVolume();
+          RefreshContents();
         }
       }
     }
@@ -884,7 +896,7 @@ public class ModuleKISInventory : PartModule,
     sndFx.audio.maxDistance = 10;
     sndFx.audio.loop = false;
     sndFx.audio.playOnAwake = false;
-    RefreshMassAndVolume();
+    RefreshContents();
 
     UpdateContextMenu();
   }
@@ -978,12 +990,24 @@ public class ModuleKISInventory : PartModule,
   }
 
   /// <summary>Refreshes container mass, volume and cost.</summary>
-  public void RefreshMassAndVolume() {
-    // Update volume.
-    totalVolume = GetContentVolume();
-    // Update vessel cost in editor.
+  /// <remarks>
+  /// This method must be called if any changes are done to the inventory content. The
+  /// <see cref="KIS_Item"/> class does all the needed updates, but it cannot detect the runtime
+  /// changes in the item properties. If it happens, then this method must be called.
+  /// </remarks>
+  public void RefreshContents() {
+    totalContentsVolume = items.Values
+        .Where(v => !v.carriable || invType != InventoryType.Eva)
+        .Sum(v => v.stackVolume);
+    contentsCost = items.Values.Sum(x => x.totalCost);
+    contentsMass = items.Values.Sum(x => x.totalMass);
+    HostedDebugLog.Fine(this, "Content refreshed: volume={0}, mass={1}, cost={2}",
+                        totalContentsVolume, contentsMass, contentsCost);
+
+    // Force updating the vessel cost in the editor.
     if (HighLogic.LoadedSceneIsEditor) {
-      GameEvents.onEditorShipModified.Fire(EditorLogic.fetch.ship);
+      AsyncCall.CallOnEndOfFrame(
+          this, () => GameEvents.onEditorShipModified.Fire(EditorLogic.fetch.ship));
     }
   }
 
@@ -1007,7 +1031,7 @@ public class ModuleKISInventory : PartModule,
     if (showGui) {
       items[slot].EnableIcon(itemIconResolution);
     }
-    RefreshMassAndVolume();
+    RefreshContents();
     return item;
   }
 
@@ -1030,7 +1054,7 @@ public class ModuleKISInventory : PartModule,
     if (showGui) {
       items[slot].EnableIcon(itemIconResolution);
     }
-    RefreshMassAndVolume();
+    RefreshContents();
     return item;
   }
 
@@ -1041,8 +1065,8 @@ public class ModuleKISInventory : PartModule,
     tgtInventory.items.Add(tgtSlot, srcItem);
     srcItem.inventory.items.Remove(srcSlot);
     srcItem.inventory = tgtInventory;
-    srcInventory.RefreshMassAndVolume();
-    tgtInventory.RefreshMassAndVolume();
+    srcInventory.RefreshContents();
+    tgtInventory.RefreshContents();
   }
 
   public static void MoveItems(Dictionary<int, KIS_Item> srcItems, ModuleKISInventory destInventory) {
@@ -1081,34 +1105,6 @@ public class ModuleKISInventory : PartModule,
       }
     }
     return -1;
-  }
-
-  public float GetContentMass() {
-    float contentMass = 0;
-    foreach (KeyValuePair<int, KIS_Item> item in items) {
-      contentMass += item.Value.totalMass;
-    }
-    return contentMass;
-  }
-
-  public float GetContentVolume() {
-    float contentVolume = 0;
-    foreach (KeyValuePair<int, KIS_Item> item in items) {
-      if (item.Value.carriable && invType == InventoryType.Eva) {
-        contentVolume += 0;
-      } else {
-        contentVolume += item.Value.stackVolume;
-      }
-    }
-    return contentVolume;
-  }
-
-  public float GetContentCost() {
-    float contentCost = 0;
-    foreach (KeyValuePair<int, KIS_Item> item in items) {
-      contentCost += item.Value.totalCost;
-    }
-    return contentCost;
   }
 
   /// <summary>Sets or removes the stock helmet.</summary>
@@ -1296,9 +1292,9 @@ public class ModuleKISInventory : PartModule,
     }
 
     var sb = new StringBuilder();
-    sb.AppendLine(InventoryVolumeInfo.Format(totalVolume, maxVolume));
+    sb.AppendLine(InventoryVolumeInfo.Format(totalContentsVolume, maxVolume));
     sb.AppendLine(InventoryMassInfo.Format(part.mass));
-    sb.AppendLine(InventoryCostInfo.Format(GetContentCost() + part.partInfo.cost));
+    sb.AppendLine(InventoryCostInfo.Format(contentsCost + part.partInfo.cost));
     GUILayout.Box(sb.ToString(), boxStyle,
                   GUILayout.Width(Width), GUILayout.Height(45 + extraSpace));
     bool closeInv = false;
@@ -1658,13 +1654,13 @@ public class ModuleKISInventory : PartModule,
               destInventory.items.Remove(destSlot);
               destInventory.items.Add(destSlot, srcItem);
               srcItem.inventory = destInventory;
-              destInventory.RefreshMassAndVolume();
+              destInventory.RefreshContents();
 
               // Move dest to src
               srcInventory.items.Remove(srcSlot);
               srcInventory.items.Add(srcSlot, destItem);
               destItem.inventory = srcInventory;
-              srcInventory.RefreshMassAndVolume();
+              srcInventory.RefreshContents();
               items[slotIndex].OnMove(srcInventory, this);
             }
           }
@@ -1731,6 +1727,7 @@ public class ModuleKISInventory : PartModule,
           if (carryPart) {
             ConsumePartFromScene(KISAddonPickup.draggedPart, beforeDie: p => {
               KIS_Shared.SendKISMessage(p, KIS_Shared.MessageAction.Store);
+              //FIXME: make a sound?
               var carryItem = AddItem(p, 1, slotIndex);
               carryItem.Equip();
             });
@@ -1739,6 +1736,7 @@ public class ModuleKISInventory : PartModule,
                 && VolumeAvailableFor(KISAddonPickup.draggedPart)) {
               ConsumePartFromScene(KISAddonPickup.draggedPart, beforeDie: p => {
                 KIS_Shared.SendKISMessage(p, KIS_Shared.MessageAction.Store);
+                //FIXME: make a sound?
                 AddItem(p, 1, slotIndex);
               });
             }
@@ -1922,9 +1920,9 @@ public class ModuleKISInventory : PartModule,
           HostedDebugLog.Info(this, "Items transfer | source seat: {0}", podSeat);
           HostedDebugLog.Info(this, "Items transfer | destination: {0}", destInventory.part);
           MoveItems(items, destInventory);
-          RefreshMassAndVolume();
+          RefreshContents();
           UpdateContextMenu();
-          destInventory.RefreshMassAndVolume();
+          destInventory.RefreshContents();
           destInventory.UpdateContextMenu();
 
           // Re-equip items on the EVA kerbal.
@@ -2004,10 +2002,10 @@ public class ModuleKISInventory : PartModule,
     if (crewAtPodSeat == protoCrew) {
       MoveItems(transferedItems, this);
       HostedDebugLog.Info(this, "Item transfer | destination seat: {0}", podSeat);
-      RefreshMassAndVolume();
+      RefreshContents();
       UpdateContextMenu();
       if (srcInventory) {
-        srcInventory.RefreshMassAndVolume();
+        srcInventory.RefreshContents();
         srcInventory.UpdateContextMenu();
       }
     }
@@ -2053,7 +2051,7 @@ public class ModuleKISInventory : PartModule,
 
   bool VolumeAvailableFor(Part p) {
     float partVolume = KIS_Shared.GetPartVolume(p.partInfo);
-    var newTotalVolume = GetContentVolume() + partVolume;
+    var newTotalVolume = totalContentsVolume + partVolume;
     if (newTotalVolume > maxVolume) {
       ScreenMessaging.ShowPriorityScreenMessage(
           MaxVolumeReachedMsg.Format(partVolume, newTotalVolume - maxVolume));
@@ -2063,11 +2061,11 @@ public class ModuleKISInventory : PartModule,
   }
 
   bool VolumeAvailableFor(KIS_Item item) {
-    RefreshMassAndVolume();
+    RefreshContents();
     if (KISAddonPickup.draggedItem.inventory == this) {
       return true;
     } else {
-      float newTotalVolume = GetContentVolume() + item.stackVolume;
+      float newTotalVolume = totalContentsVolume + item.stackVolume;
       if (newTotalVolume > maxVolume) {
         ScreenMessaging.ShowPriorityScreenMessage(
             MaxVolumeReachedMsg.Format(item.stackVolume, (newTotalVolume - maxVolume)));
