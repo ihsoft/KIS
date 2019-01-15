@@ -2089,7 +2089,7 @@ public class ModuleKISInventory : PartModule,
       return FlightGlobals.ActiveVessel.parts
           .SelectMany(p => p.Modules.OfType<ModuleKISPickup>())
           .Any(m => m.maxDistance * m.maxDistance
-               >= KISAPI.colliderUtils.GetSqrDistanceToPartOrDefault(m.transform.position, part));
+               >= KISAPI.ColliderUtils.GetSqrDistanceToPartOrDefault(m.transform.position, part));
     }
     return true;
   }

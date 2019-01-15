@@ -25,7 +25,7 @@ public static class KISAPI {
   public static bool isLoaded = true;
 
   /// <summary>Untils to deal with colliders within KIS.</summary>
-  public static ColliderUtilsImpl colliderUtils = new ColliderUtilsImpl();
+  public static readonly ColliderUtilsImpl ColliderUtils = new ColliderUtilsImpl();
 }
 
 }  // namespace
