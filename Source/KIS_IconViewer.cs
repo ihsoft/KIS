@@ -71,7 +71,7 @@ public class KIS_IconViewer : IDisposable {
       this.texture = tex;
 
       //light
-      if (iconLight == null) {
+      if (iconLight == null && HighLogic.LoadedSceneIsFlight) {
         GameObject lightGo = new GameObject("KASLight");
         iconLight = lightGo.AddComponent<Light>();
         iconLight.cullingMask = 1 << mask;
