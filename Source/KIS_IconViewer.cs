@@ -5,16 +5,16 @@ using UnityEngine;
 namespace KIS {
 
 public class KIS_IconViewer : IDisposable {
-  float iconPosY = 0;
-  int mask = 22;
-  float lightIntensity = 0.4f;
-  float zoom = 0.75f;
+  const float iconPosY = 0;
+  const int mask = 22;
+  const float lightIntensity = 0.4f;
+  const float zoom = 0.75f;
   const float rotationsPerSecond = 0.20f;  // Full round in 5 seconds.
 
   Camera cam;
   static Light iconLight;
-  static int camStaticIndex = 0;
-  static int iconCount = 0;
+  static int camStaticIndex;
+  static int iconCount;
   int camIndex;
 
   public GameObject iconPrefab;
@@ -113,9 +113,9 @@ public class KIS_IconViewer : IDisposable {
     if (iconPrefab) {
       iconPrefab.DestroyGameObject();
     }
-    this.cam = null;
-    this.iconPrefab = null;
-    this.texture = null;
+    cam = null;
+    iconPrefab = null;
+    texture = null;
     iconCount -= 1;
     if (iconCount == 0) {
       camStaticIndex = 0;
