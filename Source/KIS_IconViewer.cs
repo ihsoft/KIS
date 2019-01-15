@@ -66,6 +66,7 @@ public class KIS_IconViewer : IDisposable {
       cam.orthographic = true;
       cam.orthographicSize = zoom;
       cam.clearFlags = CameraClearFlags.Color;
+      cam.enabled = false;
       // Render texture
       RenderTexture tex = new RenderTexture(resolution, resolution, 8);
       this.texture = tex;
@@ -122,12 +123,14 @@ public class KIS_IconViewer : IDisposable {
 
   public void Rotate() {
     iconPrefab.transform.Rotate(0.0f, 1f, 0.0f);
+    cam.Render();  // Update snapshot.
   }
 
   public void ResetPos() {
     iconPrefab.transform.position = new Vector3(camIndex, iconPosY, 2f);
     iconPrefab.transform.rotation = Quaternion.Euler(-15f, 0.0f, 0.0f);
     iconPrefab.transform.Rotate(0.0f, -30f, 0.0f);
+    cam.Render();  // Update snapshot.
   }
 
   public static void ResetCamIndex() {
