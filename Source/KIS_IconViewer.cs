@@ -9,6 +9,7 @@ public class KIS_IconViewer : IDisposable {
   int mask = 22;
   float lightIntensity = 0.4f;
   float zoom = 0.75f;
+  const float rotationsPerSecond = 0.20f;  // Full round in 5 seconds.
 
   Camera cam;
   static Light iconLight;
@@ -122,7 +123,8 @@ public class KIS_IconViewer : IDisposable {
   }
 
   public void Rotate() {
-    iconPrefab.transform.Rotate(0.0f, 1f, 0.0f);
+    var step = 360.0f * rotationsPerSecond * Time.deltaTime;
+    iconPrefab.transform.Rotate(0.0f, step, 0.0f);
     cam.Render();  // Update snapshot.
   }
 
