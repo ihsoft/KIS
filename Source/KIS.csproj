@@ -71,6 +71,7 @@
     <Compile Include="api\Utils\KISAPI.cs" />
     <Compile Include="controllers\ControllerPartEditorTool.cs" />
     <Compile Include="Debug\KISDebugAdjustableAttribute.cs" />
+    <Compile Include="Debug\SpawnItemDialog.cs" />
     <Compile Include="EditorDefaultItemsAdder.cs" />
     <Compile Include="KISAddonCursor.cs" />
     <Compile Include="KSPDev_candidates\DebugGui2.cs" />

@@ -1302,6 +1302,11 @@ public class ModuleKISInventory : PartModule,
     if (GUILayout.Button(CloseInventoryBtn, GUILayout.Width(Width), GUILayout.Height(21))) {
       closeInv = true;
     }
+
+    // DEBUG: Spawn inventory item functionality. 
+    if (debugContextMenu && GUILayout.Button("Spawn item", GUILayout.Height(21))) {
+      Debug.SpawnItemDialog.ShowDialog(this);
+    }
     GUILayout.EndVertical();
 
     GUILayout.BeginVertical();
