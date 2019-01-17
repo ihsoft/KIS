@@ -69,6 +69,7 @@
   <ItemGroup>
     <Compile Include="api\Utils\ColliderUtilsImpl.cs" />
     <Compile Include="api\Utils\KISAPI.cs" />
+    <Compile Include="api\Utils\PartUtilsImpl.cs" />
     <Compile Include="controllers\ControllerPartEditorTool.cs" />
     <Compile Include="Debug\KISDebugAdjustableAttribute.cs" />
     <Compile Include="Debug\SpawnItemDialog.cs" />
