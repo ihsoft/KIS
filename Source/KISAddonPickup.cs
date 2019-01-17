@@ -1134,7 +1134,7 @@ sealed class KISAddonPickup : MonoBehaviour {
     KISAddonCursor.StopPartDetection();
   }
 
-  private bool hoverInventoryGui() {
+  bool hoverInventoryGui() {
     // Check if hovering an inventory GUI
     var inventories = FindObjectsOfType(typeof(ModuleKISInventory)) as ModuleKISInventory[];
     bool hoverInventory = false;
@@ -1150,7 +1150,7 @@ sealed class KISAddonPickup : MonoBehaviour {
     return hoverInventory;
   }
 
-  private void OnGUI() {
+  void OnGUI() {
     if (draggedPart) {
       GUI.depth = 0;
       GUI.DrawTexture(new Rect(Event.current.mousePosition.x - (draggedIconSize / 2),
@@ -1161,29 +1161,29 @@ sealed class KISAddonPickup : MonoBehaviour {
     }
   }
 
-  private IEnumerator WaitAndStopDrag() {
+  IEnumerator WaitAndStopDrag() {
     yield return new WaitForFixedUpdate();
     DisableIcon();
     draggedPart = null;
   }
 
   // Sets icon, ensuring any old icon is Disposed
-  private void EnableIcon(Part part, int resolution) {
+  void EnableIcon(Part part, int resolution) {
     DisableIcon();
     icon = new KIS_IconViewer(part, resolution);
   }
 
   // Clears icon, ensuring it is Disposed
-  private void DisableIcon() {
+  void DisableIcon() {
     if (icon != null) {
       icon.Dispose();
       icon = null;
     }
   }
 
-  private void OnPointerState(KISAddonPointer.PointerTarget pTarget,
-                              KISAddonPointer.PointerState pState,
-                              Part hoverPart, AttachNode hoverNode) {
+  void OnPointerState(KISAddonPointer.PointerTarget pTarget,
+                      KISAddonPointer.PointerState pState,
+                      Part hoverPart, AttachNode hoverNode) {
     if (pState == KISAddonPointer.PointerState.OnPointerStopped) {
       pointerMode = PointerMode.Nothing;
     }
