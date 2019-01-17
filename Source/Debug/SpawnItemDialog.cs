@@ -77,7 +77,6 @@ class SpawnItemDialog : MonoBehaviour, IHasGUI {
     } else if (foundMatches.Length == 0) {
       GUILayout.Label("...nothing is found for the pattern...", GUI.skin.box);
     } else {
-      //foreach (var p in foundMatches) {
       for (var i = 0; i < MaxFoundItems && i < foundMatches.Length; i++) {
         var p = foundMatches[i];
         using (new GUILayout.HorizontalScope(GUI.skin.box)) {
@@ -107,6 +106,7 @@ class SpawnItemDialog : MonoBehaviour, IHasGUI {
     }
     pattern = pattern.ToLower();
     foundMatches = PartLoader.Instance.loadedParts
+        .Where(p => p.partConfig != null)
         .Where(p => p.name.ToLower().Contains(pattern) || p.title.Contains(pattern))
         .OrderBy(p => p.name)
         .Take(MaxFoundItems + 1)
@@ -114,10 +114,19 @@ class SpawnItemDialog : MonoBehaviour, IHasGUI {
   }
 
   /// <summary>Spawns the item in the inventory.</summary>
-  void GuiSpawnItems(AvailablePart p) {
+  void GuiSpawnItems(AvailablePart avPart) {
     var node = new ConfigNode("PART");
-    node.AddNode(p.partConfig.CreateCopy());
-    tgtInventory.AddItem(p, node, qty: int.Parse(createQuantity));
+    node.AddNode(avPart.partConfig.CreateCopy());
+    int quantity;
+    if (int.TryParse(createQuantity, out quantity) || quantity < 1) {
+      quantity = 1;
+      DebugEx.Error("Worng quantity: selected='{0}', fallback={1}", createQuantity, quantity);
+    }
+    if (quantity > 1 && !KIS_Item.CheckItemStackable(avPart)) {
+      quantity = 1;
+      DebugEx.Warning("Part {0} is not stackable. Only adding 1 item", avPart.name);
+    }
+    tgtInventory.AddItem(avPart, node, qty: quantity);
   }
 
   /// <summary>Initializes the dialog.</summary>
