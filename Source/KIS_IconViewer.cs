@@ -152,6 +152,8 @@ public sealed class KIS_IconViewer : IDisposable {
       iconLight.cullingMask = 1 << CameraLayer;
       iconLight.type = LightType.Directional;
       iconLight.intensity = LightIntensity;
+      iconLight.shadows = LightShadows.None;
+      iconLight.renderMode = LightRenderMode.ForcePixel;
     }
 
     // Layer
