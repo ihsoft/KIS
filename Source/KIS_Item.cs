@@ -269,6 +269,19 @@ public sealed class KIS_Item {
     }
   }
 
+  /// <summary>Tells if the part can be stacked in the inventory.</summary>
+  /// <param name="avPart">The part proto to check.</param>
+  /// <returns><c>true</c> if it can stack.</returns>
+  public static bool CheckItemStackable(AvailablePart avPart) {
+    var module = avPart.partPrefab.GetComponent<ModuleKISItem>();
+    var allModulesCompatible = avPart.partPrefab.Modules.Cast<PartModule>()
+        .All(m => KISAddonConfig.stackableModules.Contains(m.moduleName));
+    var hasNoResources = KISAPI.PartUtils.GetPartModuleNode(avPart.partConfig, "RESOURCE") != null;
+    return module != null && module.stackable
+        || KISAddonConfig.stackableList.Contains(avPart.name.Replace('.', '_'))
+        || allModulesCompatible && hasNoResources;
+  }
+
   public void OnSave(ConfigNode node) {
     node.AddValue("partName", this.availablePart.name);
     node.AddValue("slot", slot);
