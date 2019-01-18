@@ -47,11 +47,11 @@ public sealed class KIS_IconViewer : IDisposable {
   public void Dispose()
   {
     if (camera != null) {
-      camera.gameObject.DestroyGameObject();
+      UnityEngine.Object.DestroyImmediate(camera.gameObject);
       camera = null;
     }
     if (iconPrefab != null) {
-      iconPrefab.DestroyGameObject();
+      UnityEngine.Object.DestroyImmediate(iconPrefab);
       iconPrefab = null;
     }
     if (texture != null) {

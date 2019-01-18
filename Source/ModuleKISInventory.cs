@@ -810,6 +810,7 @@ public class ModuleKISInventory : PartModule,
     GameEvents.onVesselChange.Remove(OnVesselChange);
     GameEvents.OnHelmetChanged.Remove(OnHelmetChanged);
     GameEvents.onPartActionUICreate.Remove(OnPartActionMenuCreate);
+    GameEvents.onEditorVariantApplied.Remove(OnPartVariandChanged);
   }
   #endregion
 
@@ -844,6 +845,9 @@ public class ModuleKISInventory : PartModule,
       GameEvents.onVesselChange.Add(OnVesselChange);
       GameEvents.OnHelmetChanged.Add(OnHelmetChanged);
       GameEvents.onPartActionUICreate.Add(OnPartActionMenuCreate);
+    }
+    if (HighLogic.LoadedSceneIsEditor) {
+      GameEvents.onEditorVariantApplied.Add(OnPartVariandChanged);
     }
   }
 
@@ -2110,6 +2114,13 @@ public class ModuleKISInventory : PartModule,
       PartModuleUtils.SetupEvent(this, ToggleInventoryEvent, inv => {
         inv.active = CheckActionMenuVisibility();
       });
+    }
+  }
+
+  /// <summary>Refreshes the inventory's icon when a new variant is selected.</summary>
+  void OnPartVariandChanged(Part p, PartVariant v) {
+    if (p == part) {
+      EnableIcon();
     }
   }
   #endregion
