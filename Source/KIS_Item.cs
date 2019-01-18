@@ -276,7 +276,7 @@ public sealed class KIS_Item {
     var module = avPart.partPrefab.GetComponent<ModuleKISItem>();
     var allModulesCompatible = avPart.partPrefab.Modules.Cast<PartModule>()
         .All(m => KISAddonConfig.stackableModules.Contains(m.moduleName));
-    var hasNoResources = KISAPI.PartUtils.GetPartModuleNode(avPart.partConfig, "RESOURCE") != null;
+    var hasNoResources = KISAPI.PartNodeUtils.GetModuleNode(avPart.partConfig, "RESOURCE") != null;
     return module != null && module.stackable
         || KISAddonConfig.stackableList.Contains(avPart.name.Replace('.', '_'))
         || allModulesCompatible && hasNoResources;
