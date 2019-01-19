@@ -115,18 +115,16 @@ class SpawnItemDialog : MonoBehaviour, IHasGUI {
 
   /// <summary>Spawns the item in the inventory.</summary>
   void GuiSpawnItems(AvailablePart avPart) {
-    var node = new ConfigNode("PART");
-    node.AddNode(avPart.partConfig.CreateCopy());
     int quantity;
-    if (int.TryParse(createQuantity, out quantity) || quantity < 1) {
+    if (!int.TryParse(createQuantity, out quantity) || quantity < 1) {
       quantity = 1;
-      DebugEx.Error("Worng quantity: selected='{0}', fallback={1}", createQuantity, quantity);
+      DebugEx.Error("Wrong quantity: selected='{0}', fallback={1}", createQuantity, quantity);
     }
     if (quantity > 1 && !KIS_Item.CheckItemStackable(avPart)) {
       quantity = 1;
       DebugEx.Warning("Part {0} is not stackable. Only adding 1 item", avPart.name);
     }
-    tgtInventory.AddItem(avPart, node, qty: quantity);
+    tgtInventory.AddItem(avPart.partPrefab, qty: quantity);
   }
 
   /// <summary>Initializes the dialog.</summary>
