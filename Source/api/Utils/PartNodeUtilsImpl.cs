@@ -3,24 +3,30 @@
 // License: Public Domain
 
 using KSPDev.ConfigUtils;
+using KSPDev.LogUtils;
 using System.Linq;
 
 namespace KISAPIv1 {
 
 /// <summary>Various methods to deal with the parts configs.</summary>
 public class PartNodeUtilsImpl {
-  /// <summary>Gets various scale modifiers, applied by the third-party mods.</summary>
-  /// <remarks>Only <c>TweakScale</c> is currently supported.</remarks>
+
+  /// <summary>Gets scale modifier, applied by TweakScale mod.</summary>
   /// <param name="partNode">The part's persistent state config.</param>
-  /// <returns>The scale ratio, comparing to the default's one.</returns>
-  public float GetPartExternalScaleModifier(ConfigNode partNode) {
-    var tweakScale = GetModuleNode(partNode, "TweakScale");
-    if (tweakScale != null) {
-      var defaultScale = ConfigAccessor2.GetValueByPath<float>(tweakScale, "defaultScale") ?? 1.0f;
-      var currentScale = ConfigAccessor2.GetValueByPath<float>(tweakScale, "currentScale") ?? 1.0f;
-      return currentScale / defaultScale;
+  /// <returns>The scale ratio.</returns>
+  public float GetTweakScaleSizeModifier(ConfigNode partNode) {
+    var ratio = 1.0f;
+    var tweakScaleNode = GetTweakScaleModule(partNode);
+    if (tweakScaleNode != null) {
+      var defaultScale = ConfigAccessor2.GetValueByPath<float>(tweakScaleNode, "defaultScale");
+      var currentScale = ConfigAccessor2.GetValueByPath<float>(tweakScaleNode, "currentScale");
+      if (defaultScale.HasValue && currentScale.HasValue) {
+        ratio = currentScale.Value / defaultScale.Value;
+      } else {
+        DebugEx.Error("Bad TweakScale config:\n{0}", tweakScaleNode);
+      }
     }
-    return 1.0f;
+    return ratio;
   }
 
   /// <summary>Extracts a module config node from the part config.</summary>
