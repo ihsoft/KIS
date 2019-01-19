@@ -142,8 +142,13 @@ public class PartUtilsImpl {
   }
 
   /// <summary>Executes an action on a part with an arbitrary variant applied.</summary>
+  /// <remarks>
+  /// If the part doesn't support variants, then the action is executed for the unchanged prefab.
+  /// </remarks>
   /// <param name="avPart">The part proto.</param>
-  /// <param name="variant">The variant to apply. It can be <c>null</c>.</param>
+  /// <param name="variant">
+  /// The variant to apply. Set it to <c>null</c> to use teh default part variant.
+  /// </param>
   /// <param name="fn">
   /// The action to call once the variant is applied. The argument is a prefab part with the variant
   /// applied, so changing it or obtaining any hard references won't be a good idea. The prefab
@@ -152,12 +157,11 @@ public class PartUtilsImpl {
   public void ExecuteAtPartVariant(
       AvailablePart avPart, PartVariant variant, Action<Part> fn) {
     var oldPartVariant = GetCurrentPartVariant(avPart.partPrefab);
-    if (oldPartVariant != null && variant != null) {
-      if (variant != null) {
-        avPart.partPrefab.variants.SetVariant(variant.Name);  // Set.
-        fn(avPart.partPrefab);  // Run on the updated part.
-        avPart.partPrefab.variants.SetVariant(oldPartVariant.Name);  // Restore.
-      }
+    if (oldPartVariant != null) {
+      variant = variant ?? avPart.partPrefab.baseVariant;
+      avPart.partPrefab.variants.SetVariant(variant.Name);  // Set.
+      fn(avPart.partPrefab);  // Run on the updated part.
+      avPart.partPrefab.variants.SetVariant(oldPartVariant.Name);  // Restore.
     } else {
       fn(avPart.partPrefab);
     }
