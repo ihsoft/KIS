@@ -16,23 +16,30 @@ public class PartUtilsImpl {
 
   /// <summary>Returns the part's models, used to make the perview icon.</summary>
   /// <remarks>
-  /// It properly handles a variants modification, given it's defined in the part's config.
-  /// <para>
   /// Note, that this is not the actual part appearance. It's an optimized version, specifically
-  /// made for the icon preview.
-  /// </para>
+  /// made for the icon preview. In particular, the model is scaled to fit the icon's constrains.
   /// </remarks>
   /// <param name="avPart">The part proto to get the models from.</param>
-  /// <param name="variant">The part's variant to apply.</param>
-  /// <param name="skipVariansShader">
+  /// <param name="variant">
+  /// The part's variant to apply. If <c>null</c>, then variant will be extracted from
+  /// <paramref name="partNode"/>.
+  /// </param>
+  /// <param name="partNode">
+  /// The part's persistent state. It's used to extract the part's variant. It can be <c>null</c>.
+  /// </param>
+  /// <param name="skipVariantsShader">
   /// Tells if the variant shaders must not be applied to the model. For the purpose of making a
   /// preview icon it's usually undesirable to have the shaders changed.
   /// </param>
-  /// <returns>The model of the part.</returns>
+  /// <returns>The model of the part. Don't forget to destroy it when not needed.</returns>
   public GameObject GetIconPrefab(
-      AvailablePart avPart, PartVariant variant = null, bool skipVariansShader = true) {
+      AvailablePart avPart,
+      PartVariant variant = null, ConfigNode partNode = null, bool skipVariantsShader = true) {
     var iconPrefab = UnityEngine.Object.Instantiate(avPart.iconPrefab);
     iconPrefab.SetActive(true);
+    if (variant == null && partNode != null) {
+      variant = GetCurrentPartVariant(avPart, partNode);
+    }
     if (variant != null) {
       DebugEx.Fine(
           "Applying variant to the iconPrefab: part={0}, variant={1}", avPart, variant.Name);
@@ -41,7 +48,7 @@ public class PartUtilsImpl {
           Hierarchy.FindTransformByPath(iconPrefab.transform, "**/model"),
           variant,
           KSP.UI.Screens.EditorPartIcon.CreateMaterialArray(iconPrefab),
-          skipVariansShader);
+          skipVariantsShader);
     }
     return iconPrefab;
   }
@@ -123,7 +130,7 @@ public class PartUtilsImpl {
       AvailablePart avPart, PartVariant variant = null, ConfigNode partNode = null) {
     // TweakScale compatibility
     if (partNode != null) {
-      var tweakScale = KISAPI.PartNodeUtils.GetModuleNode(partNode, "TweakScale");
+      var tweakScale = KISAPI.PartNodeUtils.GetTweakScaleModule(partNode);
       if (tweakScale != null) {
         var tweakedCost = ConfigAccessor2.GetValueByPath<float>(tweakScale, "DryCost");
         if (tweakedCost.HasValue) {
@@ -147,7 +154,7 @@ public class PartUtilsImpl {
   /// </remarks>
   /// <param name="avPart">The part proto.</param>
   /// <param name="variant">
-  /// The variant to apply. Set it to <c>null</c> to use teh default part variant.
+  /// The variant to apply. Set it to <c>null</c> to use the default part variant.
   /// </param>
   /// <param name="fn">
   /// The action to call once the variant is applied. The argument is a prefab part with the variant

@@ -68,6 +68,15 @@ public class PartNodeUtilsImpl {
   public ConfigNode[] GetModuleNodes<T>(ConfigNode partNode) {
     return GetModuleNodes(partNode, typeof(T).Name);
   }
+
+  /// <summary>Gets <c>TweakScale</c> module config.</summary>
+  /// <param name="partNode">
+  /// The config to extract the module config from. It can be <c>null</c>.
+  /// </param>
+  /// <returns>The <c>TweakScale</c> module or <c>null</c>.</returns>
+  public ConfigNode GetTweakScaleModule(ConfigNode partNode) {
+    return partNode != null ? GetModuleNode(partNode, "TweakScale") : null;
+  }
 }
 
 }  // namespace
