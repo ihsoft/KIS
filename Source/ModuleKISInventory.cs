@@ -1297,7 +1297,7 @@ public class ModuleKISInventory : PartModule,
 
     var sb = new StringBuilder();
     sb.AppendLine(InventoryVolumeInfo.Format(totalContentsVolume, maxVolume));
-    sb.AppendLine(InventoryMassInfo.Format(part.mass));
+    sb.AppendLine(InventoryMassInfo.Format(part.mass));  // Part's mass includes EVERYTHING!
     sb.AppendLine(InventoryCostInfo.Format(contentsCost + part.partInfo.cost));
     GUILayout.Box(sb.ToString(), boxStyle,
                   GUILayout.Width(Width), GUILayout.Height(45 + extraSpace));
@@ -1771,12 +1771,12 @@ public class ModuleKISInventory : PartModule,
     }
   }
 
-  /// <summary>Properly detaches part from the parent and destroys it.</summary>
-  /// <param name="p">Part to destroy.</param>
+  /// <summary>Properly detaches the part from the parent and destroys it.</summary>
+  /// <param name="p">The part to destroy.</param>
   /// <param name="beforeDie">
-  /// Callback to execute after decouple is complete but before the destruction.
+  /// The callback to execute after decouple is complete but before the destruction.
   /// </param>
-  /// <param name="afterDie">Callback to execute when part is destroyed.</param>
+  /// <param name="afterDie">The callback to execute when the part is destroyed.</param>
   IEnumerator AsyncConsumePartFromScene(
       Part p, KIS_Shared.OnPartReady beforeDie, KIS_Shared.OnPartReady afterDie) {
     // The decoupling is only possible when the parts are connected. It's not the case in the

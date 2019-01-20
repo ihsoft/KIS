@@ -27,7 +27,7 @@ public static class KISAPI {
   /// <summary>Untils to deal with colliders.</summary>
   public static readonly ColliderUtilsImpl ColliderUtils = new ColliderUtilsImpl();
   
-  /// <summary>Untils to deal with parts within.</summary>
+  /// <summary>Untils to deal with parts.</summary>
   public static readonly PartUtilsImpl PartUtils = new PartUtilsImpl();
 
   /// <summary>Untils to deal with part config nodes.</summary>

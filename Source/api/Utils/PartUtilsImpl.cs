@@ -14,12 +14,12 @@ namespace KISAPIv1 {
 /// <summary>Various methods to deal with the parts.</summary>
 public class PartUtilsImpl {
 
-  /// <summary>Returns the part's models, used to make the perview icon.</summary>
+  /// <summary>Returns the part's model, used to make the perview icon.</summary>
   /// <remarks>
   /// Note, that this is not the actual part appearance. It's an optimized version, specifically
   /// made for the icon preview. In particular, the model is scaled to fit the icon's constrains.
   /// </remarks>
-  /// <param name="avPart">The part proto to get the models from.</param>
+  /// <param name="avPart">The part proto to get the model from.</param>
   /// <param name="variant">
   /// The part's variant to apply. If <c>null</c>, then variant will be extracted from
   /// <paramref name="partNode"/>.
