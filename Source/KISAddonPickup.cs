@@ -1076,7 +1076,7 @@ sealed class KISAddonPickup : MonoBehaviour {
     grabbedPart = null;
     pickupMode = newPickupMode;
     cursorMode = CursorMode.Nothing;
-    EnableIcon(draggedPart, draggedIconResolution);
+    EnableIcon();
     KISAddonCursor.AbortPartDetection();
     grabActive = false;
     KISAddonCursor.CursorDisable();
@@ -1122,7 +1122,7 @@ sealed class KISAddonPickup : MonoBehaviour {
         KISAddonPointer.allowStack = pickupModule.allowPartStack;
         KISAddonPointer.maxDist = pickupModule.maxDistance;
         KISAddonPointer.scale = draggedItem != null
-            ? KIS_Shared.GetPartExternalScaleModifier(draggedItem.partNode)
+            ? KISAPI.PartNodeUtils.GetTweakScaleSizeModifier(draggedItem.partNode)
             : 1;
         KISAddonPointer.StartPointer(part, OnPointerAction, OnPointerState, pickupModule.transform);
 
@@ -1167,13 +1167,23 @@ sealed class KISAddonPickup : MonoBehaviour {
     draggedPart = null;
   }
 
-  // Sets icon, ensuring any old icon is Disposed
-  void EnableIcon(Part part, int resolution) {
+  /// <summary>Creates an icon for the currently dragging part or item.</summary>
+  /// <seealso cref="draggedPart"/>
+  /// <seealso cref="draggedItem"/>
+  void EnableIcon() {
     DisableIcon();
-    icon = new KIS_IconViewer(part, resolution);
+    if (draggedPart != null) {
+      if (draggedItem != null) {
+        icon = new KIS_IconViewer(
+            draggedPart.partInfo, draggedIconResolution,
+            KISAPI.PartUtils.GetCurrentPartVariant(draggedPart.partInfo, draggedItem.partNode));
+      } else {
+        icon = new KIS_IconViewer(draggedPart, draggedIconResolution);
+      }
+    }
   }
 
-  // Clears icon, ensuring it is Disposed
+  /// <summary>Clears icon, ensuring it is Disposed</summary>
   void DisableIcon() {
     if (icon != null) {
       icon.Dispose();
@@ -1493,7 +1503,7 @@ sealed class KISAddonPickup : MonoBehaviour {
   /// </param>
   /// <returns><c>true</c> if total mass is within the limits.</returns>
   bool CheckItemMass(KIS_Item item, bool reportToConsole = false) {
-    grabbedMass = item.totalMass;
+    grabbedMass = item.totalSlotMass;
     var pickupMaxMass = GetAllPickupMaxMassInRange(item.inventory.part);
     if (grabbedMass > pickupMaxMass) {
       ReportCheckError(TooHeavyStatusTooltipTxt,

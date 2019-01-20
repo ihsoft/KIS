@@ -908,40 +908,18 @@ public class ModuleKISInventory : PartModule,
   /// <inheritdoc/>
   public override void OnLoad(ConfigNode node) {
     base.OnLoad(node);
-    foreach (ConfigNode itemNode in node.nodes) {
-      if (itemNode.name == "ITEM") {
-        if (itemNode.HasValue("partName") && itemNode.HasValue("slot")
-            && itemNode.HasValue("quantity")) {
-          string availablePartName = itemNode.GetValue("partName");
-          AvailablePart availablePart = PartLoader.getPartInfoByName(availablePartName);
-          if (availablePart != null) {
-            int slot = int.Parse(itemNode.GetValue("slot"));
-            int qty = int.Parse(itemNode.GetValue("quantity"));
-            KIS_Item item = null;
-            if (itemNode.HasNode("PART")) {
-              item = AddItem(availablePart, itemNode, qty, slot);
-            } else {
-              HostedDebugLog.Warning(
-                  this, "No part node found on item {0}, creating new one from prefab",
-                  availablePartName);
-              item = AddItem(availablePart.partPrefab, qty, slot);
-            }
-            if (item != null) {
-              bool isEquipped = false;
-              ConfigAccessor.GetValueByPath(itemNode, "equipped", ref isEquipped);
-              if (isEquipped) {
-                if (invType == InventoryType.Eva) {
-                  startEquip.Add(item);
-                } else {
-                  item.equipped = true;
-                }
-              }
-            }
+    var itemNodes = node.nodes.Cast<ConfigNode>().Where(n => n.name == "ITEM");
+    foreach (var itemNode in itemNodes) {
+      var slot = ConfigAccessor2.GetValueByPath<int>(itemNode, "slot") ?? -1;
+      var item = AddItem(itemNode, slot);
+      if (item != null) {
+        var isEquipped = ConfigAccessor2.GetValueByPath<bool>(itemNode, "equipped") ?? false;
+        if (isEquipped) {
+          if (invType == InventoryType.Eva) {
+            startEquip.Add(item);
           } else {
-            HostedDebugLog.Error(this, "Unable to load {0} from inventory", availablePartName);
+            item.equipped = true;
           }
-        } else {
-          HostedDebugLog.Error(this, "Unable to load an item from inventory");
         }
       }
     }
@@ -1003,8 +981,8 @@ public class ModuleKISInventory : PartModule,
     totalContentsVolume = items.Values
         .Where(v => !v.carriable || invType != InventoryType.Eva)
         .Sum(v => v.stackVolume);
-    contentsCost = items.Values.Sum(x => x.totalCost);
-    contentsMass = items.Values.Sum(x => x.totalMass);
+    contentsCost = items.Values.Sum(x => x.totalSlotCost);
+    contentsMass = items.Values.Sum(x => x.totalSlotMass);
     HostedDebugLog.Fine(this, "Content refreshed: volume={0}, mass={1}, cost={2}",
                         totalContentsVolume, contentsMass, contentsCost);
 
@@ -1015,9 +993,8 @@ public class ModuleKISInventory : PartModule,
     }
   }
 
-  public KIS_Item AddItem(AvailablePart availablePart, ConfigNode partNode,
-                          int qty = 1, int slot = -1) {
-    KIS_Item item = null;
+  public KIS_Item AddItem(ConfigNode partNode, int slot = -1) {
+    var item = KIS_Item.RestoreItemFromNode(partNode, this);
     if (items.ContainsKey(slot)) {
       slot = -1;
     }
@@ -1026,11 +1003,10 @@ public class ModuleKISInventory : PartModule,
       slot = GetFreeSlot();
       if (slot == -1) {
         HostedDebugLog.Error(
-            this, "AddItem error : No free slot available for {0}", availablePart.title);
+            this, "AddItem error : No free slot available for {0}", item.availablePart.name);
         return null;
       }
     }
-    item = new KIS_Item(availablePart, partNode, this, qty);
     items.Add(slot, item);
     if (showGui) {
       items[slot].EnableIcon(itemIconResolution);
@@ -1053,7 +1029,7 @@ public class ModuleKISInventory : PartModule,
         return null;
       }
     }
-    item = new KIS_Item(p, this, qty);
+    item = KIS_Item.CreateItemFromScenePart(p, this, qty);
     items.Add(slot, item);
     if (showGui) {
       items[slot].EnableIcon(itemIconResolution);
@@ -1191,13 +1167,10 @@ public class ModuleKISInventory : PartModule,
 
     if (tooltipItem != null) {
       if (contextItem == null) {
-        var tooltipName = tooltipItem.inventoryName != ""
-            ? TooltipWindowTitle.Format(tooltipItem.availablePart.title, tooltipItem.inventoryName)
-            : tooltipItem.availablePart.title;
         GUILayout.Window(GetInstanceID() + 780,
                          new Rect(Event.current.mousePosition.x + 5,
                                   Event.current.mousePosition.y + 5, 400, 1),
-                         GuiTooltip, tooltipName);
+                         GuiTooltip, tooltipItem.availablePart.title);
       }
     }
     if (contextItem != null) {
@@ -1341,17 +1314,17 @@ public class ModuleKISInventory : PartModule,
     GUILayout.EndVertical();
 
     var sb = new StringBuilder();
-    sb.AppendLine(ItemVolumeTooltipInfo.Format(tooltipItem.volume));
-    sb.AppendLine(ItemDryMassTooltipInfo.Format(tooltipItem.dryMass));
+    sb.AppendLine(ItemVolumeTooltipInfo.Format(tooltipItem.itemVolume));
+    sb.AppendLine(ItemDryMassTooltipInfo.Format(tooltipItem.fullItemMass));
     if (tooltipItem.availablePart.partPrefab.Resources.Count > 0) {
-      sb.AppendLine(ItemResourceMassTooltipInfo.Format(tooltipItem.resourceMass));
+      sb.AppendLine(ItemResourceMassTooltipInfo.Format(tooltipItem.itemResourceMass));
     }
-    sb.AppendLine(ItemCostTooltipInfo.Format(tooltipItem.cost));
-    if (tooltipItem.contentCost > 0) {
-      sb.AppendLine(ItemContentsCostTooltipInfo.Format(tooltipItem.contentCost));
+    sb.AppendLine(ItemCostTooltipInfo.Format(tooltipItem.fullItemCost));
+    if (tooltipItem.itemContentCost > 0) {
+      sb.AppendLine(ItemContentsCostTooltipInfo.Format(tooltipItem.itemContentCost));
     }
-    if (tooltipItem.contentMass > 0) {
-      sb.AppendLine(ItemContentsMassTooltipInfo.Format(tooltipItem.contentMass));
+    if (tooltipItem.itemContentMass > 0) {
+      sb.AppendLine(ItemContentsMassTooltipInfo.Format(tooltipItem.itemContentMass));
     }
     if (tooltipItem.equipSlot != null) {
       sb.AppendLine(tooltipItem.prefabModule.GetEqipSlotString());
@@ -1371,9 +1344,9 @@ public class ModuleKISInventory : PartModule,
       GUI.Label(textureRect,
           MultipleItemsContextCaption.Format(tooltipItem.quantity),
           lowerRightStyle);
-      text2.AppendLine(TotalSlotCostTooltipInfo.Format(tooltipItem.totalCost));
+      text2.AppendLine(TotalSlotCostTooltipInfo.Format(tooltipItem.totalSlotCost));
       text2.AppendLine(TotalSlotVolumeTooltipInfo.Format(tooltipItem.stackVolume));
-      text2.AppendLine(TotalSlotMassTooltipInfo.Format(tooltipItem.totalMass));
+      text2.AppendLine(TotalSlotMassTooltipInfo.Format(tooltipItem.totalSlotMass));
     } else {
       // Show resource if not stacked
       List<KIS_Item.ResourceInfo> resources = tooltipItem.GetResources();
@@ -1498,6 +1471,7 @@ public class ModuleKISInventory : PartModule,
         if (GUILayout.Button(SplitItemsContextBtn.Format(splitQty), buttonStyle)) {
           if (!isFull()) {
             contextItem.quantity -= splitQty;
+            // FIXME: handle variants! use item node instead
             AddItem(contextItem.availablePart.partPrefab, splitQty);
           } else {
             ScreenMessaging.ShowPriorityScreenMessage(InventoryFullCannotSplitMsg);
@@ -2059,7 +2033,7 @@ public class ModuleKISInventory : PartModule,
   }
 
   bool VolumeAvailableFor(Part p) {
-    float partVolume = KIS_Shared.GetPartVolume(p.partInfo);
+    var partVolume = KISAPI.PartUtils.GetPartVolume(p);
     var newTotalVolume = totalContentsVolume + partVolume;
     if (newTotalVolume > maxVolume) {
       ScreenMessaging.ShowPriorityScreenMessage(
@@ -2071,18 +2045,15 @@ public class ModuleKISInventory : PartModule,
 
   bool VolumeAvailableFor(KIS_Item item) {
     RefreshContents();
-    if (KISAddonPickup.draggedItem.inventory == this) {
-      return true;
-    } else {
+    if (KISAddonPickup.draggedItem.inventory != this) {
       float newTotalVolume = totalContentsVolume + item.stackVolume;
       if (newTotalVolume > maxVolume) {
         ScreenMessaging.ShowPriorityScreenMessage(
             MaxVolumeReachedMsg.Format(item.stackVolume, (newTotalVolume - maxVolume)));
         return false;
-      } else {
-        return true;
       }
     }
+    return true;
   }
 
   /// <summary>Checks if the inventory menu has to be visible in GUI.</summary>
