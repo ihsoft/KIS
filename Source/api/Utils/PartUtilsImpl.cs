@@ -141,6 +141,18 @@ public class PartUtilsImpl {
     return boundsSize.x * boundsSize.y * boundsSize.z * 1000f;
   }
 
+  /// <summary>Returns part's volume basing on its geometrics.</summary>
+  /// <remarks>
+  /// The volume is calculated basing on the smallest boundary box that encapsulates all the meshes
+  /// in the part. The deployable parts can take much more space in teh deployed state.
+  /// </remarks>
+  /// <param name="part">The actual part, that exists in the scene.</param>
+  /// <returns>The volume in liters.</returns>
+  public float GetPartVolume(Part part) {
+    var partNode = KISAPI.PartNodeUtils.PartSnapshot(part);
+    return GetPartVolume(part.partInfo, partNode: partNode);
+  }
+
   /// <summary>Calculates part's dry mass given the config and the variant.</summary>
   /// <param name="avPart">The part's proto.</param>
   /// <param name="variant">
