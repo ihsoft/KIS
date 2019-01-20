@@ -1972,68 +1972,75 @@ public class ModuleKISInventory : PartModule,
     // Mouse up on a free slot
     if (Event.current.type == EventType.MouseUp && Event.current.button == 0
         && textureRect.Contains(Event.current.mousePosition) && KISAddonPickup.draggedPart) {
-      // Check if part can be carried
-      bool carryPart = false;
-      bool storePart = true;
-      var draggedItemModule = KISAddonPickup.draggedPart.GetComponent<ModuleKISItem>();
-      if (!draggedItemModule && KISAddonPickup.draggedItem != null) {
-        draggedItemModule = KISAddonPickup.draggedItem.prefabModule;
-      }
+      PutDraggedItemIntoEmptySlot(slotIndex);
+    }
+  }
 
-      if (draggedItemModule && draggedItemModule.carriable) {
-        if (HighLogic.LoadedSceneIsEditor && podSeat != -1) {
-          ScreenMessaging.ShowPriorityScreenMessage(CarriableItemsNotForSeatsInventoryMsg);
-          storePart = false;
-        } else if (HighLogic.LoadedSceneIsFlight && invType == InventoryType.Eva) {
-          carryPart = true;
-          foreach (KeyValuePair<int, KIS_Item> enumeratedItem in items) {
-            if (enumeratedItem.Value.equipSlot == draggedItemModule.equipSlot
-                && enumeratedItem.Value.carriable) {
-              if (KISAddonPickup.draggedItem != null) {
-                // Ignore self
-                if (enumeratedItem.Value == KISAddonPickup.draggedItem) {
-                  break;
-                }
+  /// <summary>Handles storing an item in an empty slot.</summary>
+  /// Only call this for empty slots!
+  /// <param name="slotIndex">Slot's index in inventory.</param>
+  void PutDraggedItemIntoEmptySlot(int slotIndex) {
+    // Check if part can be carried
+    bool carryPart = false;
+    bool storePart = true;
+    var draggedItemModule = KISAddonPickup.draggedPart.GetComponent<ModuleKISItem>();
+    if (!draggedItemModule && KISAddonPickup.draggedItem != null) {
+      draggedItemModule = KISAddonPickup.draggedItem.prefabModule;
+    }
+
+    if (draggedItemModule && draggedItemModule.carriable) {
+      if (HighLogic.LoadedSceneIsEditor && podSeat != -1) {
+        ScreenMessaging.ShowPriorityScreenMessage(CarriableItemsNotForSeatsInventoryMsg);
+        storePart = false;
+      } else if (HighLogic.LoadedSceneIsFlight && invType == InventoryType.Eva) {
+        carryPart = true;
+        foreach (KeyValuePair<int, KIS_Item> enumeratedItem in items) {
+          if (enumeratedItem.Value.equipSlot == draggedItemModule.equipSlot
+              && enumeratedItem.Value.carriable) {
+            if (KISAddonPickup.draggedItem != null) {
+              // Ignore self
+              if (enumeratedItem.Value == KISAddonPickup.draggedItem) {
+                break;
               }
-              carryPart = false;
-              storePart = false;
-              ScreenMessaging.ShowPriorityScreenMessage(PartAlreadyCarriedMsg);
-              break;
             }
+            carryPart = false;
+            storePart = false;
+            ScreenMessaging.ShowPriorityScreenMessage(PartAlreadyCarriedMsg);
+            break;
           }
         }
       }
+    }
 
-      // Store item or part
-      if (storePart) {
-        if (KISAddonPickup.draggedItem != null) {
-          // Picked part from an inventory
-          if (carryPart) {
-            MoveItem(KISAddonPickup.draggedItem, this, slotIndex);
-            if (!KISAddonPickup.draggedItem.equipped) {
-              KISAddonPickup.draggedItem.Equip();
-            }
-          } else {
-            if (VolumeAvailableFor(KISAddonPickup.draggedItem)) {
-              MoveItem(KISAddonPickup.draggedItem, this, slotIndex);
-            }
+    // Store item or part
+    if (storePart) {
+      if (KISAddonPickup.draggedItem != null) {
+        // Picked part from an inventory
+        if (carryPart) {
+          MoveItem(KISAddonPickup.draggedItem, this, slotIndex);
+          if (!KISAddonPickup.draggedItem.equipped) {
+            KISAddonPickup.draggedItem.Equip();
           }
-        } else if (KISAddonPickup.draggedPart != part) {
-          // Picked part from scene
-          if (carryPart) {
+        } else {
+          if (VolumeAvailableFor(KISAddonPickup.draggedItem)) {
+            MoveItem(KISAddonPickup.draggedItem, this, slotIndex);
+          }
+        }
+      } else if (KISAddonPickup.draggedPart != part) {
+        // Picked part from scene
+        if (carryPart) {
+          ConsumePartFromScene(KISAddonPickup.draggedPart, beforeDie: p => {
+            KIS_Shared.SendKISMessage(p, KIS_Shared.MessageAction.Store);
+            var carryItem = AddItem(p, 1, slotIndex);
+            carryItem.Equip();
+          });
+        } else {
+          if (VerifyIsNotAssembly(KISAddonPickup.draggedPart)
+              && VolumeAvailableFor(KISAddonPickup.draggedPart)) {
             ConsumePartFromScene(KISAddonPickup.draggedPart, beforeDie: p => {
               KIS_Shared.SendKISMessage(p, KIS_Shared.MessageAction.Store);
-              var carryItem = AddItem(p, 1, slotIndex);
-              carryItem.Equip();
+              AddItem(p, 1, slotIndex);
             });
-          } else {
-            if (VerifyIsNotAssembly(KISAddonPickup.draggedPart)
-                && VolumeAvailableFor(KISAddonPickup.draggedPart)) {
-              ConsumePartFromScene(KISAddonPickup.draggedPart, beforeDie: p => {
-                KIS_Shared.SendKISMessage(p, KIS_Shared.MessageAction.Store);
-                AddItem(p, 1, slotIndex);
-              });
-            }
           }
         }
       }
