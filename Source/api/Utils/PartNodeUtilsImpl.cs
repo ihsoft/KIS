@@ -4,6 +4,7 @@
 
 using KSPDev.ConfigUtils;
 using KSPDev.LogUtils;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace KISAPIv1 {
@@ -83,6 +84,120 @@ public class PartNodeUtilsImpl {
   public ConfigNode GetTweakScaleModule(ConfigNode partNode) {
     return partNode != null ? GetModuleNode(partNode, "TweakScale") : null;
   }
+
+  /// <summary>Creates a simplified snapshot of the part's persistent state.</summary>
+  /// <remarks>
+  /// This is not the same as a complete part persistent state. This state only captures the key
+  /// module settings.
+  /// </remarks>
+  /// <param name="part">The part to snapshot. It must be a fully activated part.</param>
+  /// <returns>The part's snapshot.</returns>
+  public ConfigNode PartSnapshot(Part part) {
+    if (ReferenceEquals(part, part.partInfo.partPrefab)) {
+      // HACK: Prefab may have fields initialized to "null". Such fields cannot be saved via
+      //   BaseFieldList when making a snapshot. So, go thru the persistent fields of all prefab
+      //   modules and replace nulls with a default value of the type. It's unlikely we break
+      //   something since by design such fields are not assumed to be used until loaded, and it's
+      //   impossible to have "null" value read from a config.
+      CleanupModuleFieldsInPart(part);
+    }
+
+    var partNode = new ConfigNode("PART");
+    var snapshot = new ProtoPartSnapshot(part, null);
+
+    snapshot.attachNodes = new List<AttachNodeSnapshot>();
+    snapshot.srfAttachNode = new AttachNodeSnapshot("attach,-1");
+    snapshot.symLinks = new List<ProtoPartSnapshot>();
+    snapshot.symLinkIdxs = new List<int>();
+    snapshot.Save(partNode);
+
+    // Prune unimportant data.
+    partNode.RemoveValues("parent");
+    partNode.RemoveValues("position");
+    partNode.RemoveValues("rotation");
+    partNode.RemoveValues("istg");
+    partNode.RemoveValues("dstg");
+    partNode.RemoveValues("sqor");
+    partNode.RemoveValues("sidx");
+    partNode.RemoveValues("attm");
+    partNode.RemoveValues("srfN");
+    partNode.RemoveValues("attN");
+    partNode.RemoveValues("connected");
+    partNode.RemoveValues("attached");
+    partNode.RemoveValues("flag");
+
+    partNode.RemoveNodes("ACTIONS");
+    partNode.RemoveNodes("EVENTS");
+    foreach (var moduleNode in partNode.GetNodes("MODULE")) {
+      moduleNode.RemoveNodes("ACTIONS");
+      moduleNode.RemoveNodes("EVENTS");
+    }
+
+    return partNode;
+  }
+
+  #region Local utility methods
+  /// <summary>Walks thru all modules in the part and fixes null persistent fields.</summary>
+  /// <remarks>Used to prevent NREs in methods that persist KSP fields.
+  /// <para>
+  /// Bad modules that cannot be fixed will be dropped which may make the part to be not behaving as
+  /// expected. It's guaranteed that the <i>stock</i> modules that need fixing will be fixed
+  /// successfully. So, the failures are only expected on the modules from the third-parties mods.
+  /// </para></remarks>
+  /// <param name="part">The part to fix.</param>
+  static void CleanupModuleFieldsInPart(Part part) {
+    var badModules = new List<PartModule>();
+    foreach (var moduleObj in part.Modules) {
+      var module = moduleObj as PartModule;
+      try {
+        CleanupFieldsInModule(module);
+      } catch {
+        badModules.Add(module);
+      }
+    }
+    // Cleanup modules that block KIS. It's a bad thing to do but not working KIS is worse.
+    foreach (var moduleToDrop in badModules) {
+      DebugEx.Error(
+          "Module on part prefab {0} is setup improperly: name={1}. Drop it!", part, moduleToDrop);
+      part.RemoveModule(moduleToDrop);
+    }
+  }
+
+  /// <summary>Fixes null persistent fields in the module.</summary>
+  /// <remarks>Used to prevent NREs in methods that persist KSP fields.</remarks>
+  /// <param name="module">The module to fix.</param>
+  static void CleanupFieldsInModule(PartModule module) {
+    // HACK: Fix uninitialized fields in science lab module.
+    var scienceModule = module as ModuleScienceLab;
+    if (scienceModule != null) {
+      scienceModule.ExperimentData = new List<string>();
+      DebugEx.Warning(
+          "WORKAROUND. Fix null field in ModuleScienceLab module on the part prefab: {0}", module);
+    }
+    
+    // Ensure the module is awaken. Otherwise, any access to base fields list will result in NRE.
+    // HACK: Accessing Fields property of a non-awaken module triggers NRE. If it happens then do
+    // explicit awakening of the *base* module class.
+    try {
+      module.Fields.GetEnumerator();
+    } catch {
+      DebugEx.Warning(
+          "WORKAROUND. Module {0} on part prefab is not awaken. Call Awake on it", module);
+      module.Awake();
+    }
+    foreach (var field in module.Fields) {
+      var baseField = field as BaseField;
+      if (baseField.isPersistant && baseField.GetValue(module) == null) {
+        var proto = new StandardOrdinaryTypesProto();
+        var defValue = proto.ParseFromString("", baseField.FieldInfo.FieldType);
+        DebugEx.Warning("WORKAROUND. Found null field {0} in module prefab {1},"
+                        + " fixing to default value of type {2}: {3}",
+                        baseField.name, module, baseField.FieldInfo.FieldType, defValue);
+        baseField.SetValue(defValue, module);
+      }
+    }
+  }
+  #endregion
 }
 
 }  // namespace
