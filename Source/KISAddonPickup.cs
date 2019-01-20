@@ -733,7 +733,22 @@ sealed class KISAddonPickup : MonoBehaviour {
       return false;
     }
 
-    // TODO: Check distance to kerbal here.
+    var distance = Vector3.Distance(FlightGlobals.ActiveVessel.transform.position, eva.transform.position);
+    var maxDist = KISAddonPointer.maxDist;
+    if (draggedItem != null) {
+      // TODO: How to get max distance for item?
+    } else if (draggedPart != null) {
+      var modulePickup = draggedPart.FindModuleImplementing<ModuleKISPickup>();
+      if (modulePickup != null) {
+        maxDist = modulePickup.maxDistance;
+      }
+    }
+    if (distance > maxDist) {
+      // TODO: Show message here?
+      //ScreenMessaging.ShowInfoScreenMessage(TooFarFromTargetMsg.Format(distance, maxDist));
+      //UISounds.PlayBipWrong();
+      return false;
+    }
 
     var inventory = eva.GetComponent<ModuleKISInventory>();
     if (inventory == null) {
