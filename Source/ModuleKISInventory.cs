@@ -2047,6 +2047,16 @@ public class ModuleKISInventory : PartModule,
     }
   }
 
+  public bool PutDraggedItemIntoEmptySlot() {
+    var slot = GetFreeSlot();
+    if (slot < 0) {
+      return false;
+    }
+
+    PutDraggedItemIntoEmptySlot(slot);
+    return true;
+  }
+
   // Sets icon, ensuring any old icon is Disposed
   private void EnableIcon() {
     DisableIcon();

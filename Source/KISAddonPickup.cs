@@ -708,8 +708,10 @@ sealed class KISAddonPickup : MonoBehaviour {
           if (draggedItem != null) {
             Drop(draggedItem);
           } else {
-            movingPart = draggedPart;
-            Drop(movingPart, movingPart);
+            if (!TryPutDraggedPartIntoInventory()) {
+              movingPart = draggedPart;
+              Drop(movingPart, movingPart);
+            }
           }
         }
       }
@@ -717,6 +719,28 @@ sealed class KISAddonPickup : MonoBehaviour {
       draggedPart = null;
     }
     KISAddonCursor.StopPartDetection();
+  }
+
+  bool TryPutDraggedPartIntoInventory() {
+    // While dragging a part KISAddonCursor and KISAddonPointer are not running, so neither will work here.
+    // TODO: Would be nice to have KISAddonCursor to provide better feedback. Or maybe create something like KISDragCursor?
+    KerbalEVA eva = null;
+    var hoveredPart = Mouse.HoveredPart;
+    if (hoveredPart != null) {
+        eva = hoveredPart.GetComponent<KerbalEVA>();
+    }
+    if (eva == null) {
+      return false;
+    }
+
+    // TODO: Check distance to kerbal here.
+
+    var inventory = eva.GetComponent<ModuleKISInventory>();
+    if (inventory == null) {
+      return false;
+    }
+
+    return inventory.PutDraggedItemIntoEmptySlot();
   }
 
   void OnMouseGrabEnterPart(Part part) {
