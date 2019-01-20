@@ -2053,6 +2053,10 @@ public class ModuleKISInventory : PartModule,
       return false;
     }
 
+    var item = KISAddonPickup.draggedItem;
+    if (item != null) {
+      item.EnableIcon(itemIconResolution);
+    }
     PutDraggedItemIntoEmptySlot(slot);
     return true;
   }

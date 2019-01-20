@@ -705,10 +705,10 @@ sealed class KISAddonPickup : MonoBehaviour {
           draggedItem.Delete();
         }
         if (HighLogic.LoadedSceneIsFlight) {
-          if (draggedItem != null) {
-            Drop(draggedItem);
-          } else {
-            if (!TryPutDraggedPartIntoInventory()) {
+          if (!TryPutDraggedPartIntoInventory()) {
+            if (draggedItem != null) {
+              Drop(draggedItem);
+            } else {
               movingPart = draggedPart;
               Drop(movingPart, movingPart);
             }
