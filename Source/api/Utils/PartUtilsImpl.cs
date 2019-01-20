@@ -53,13 +53,9 @@ public class PartUtilsImpl {
     return iconPrefab;
   }
 
-  /// <summary>Returns the part's icon model without any scale adjustments.</summary>
-  /// <remarks>
-  /// Normally, the part's icon prefab is scaled to fit a reasonable camera view. However, if the
-  /// real part's size needs to be estimated, the scale modifier is an obstacle. This method gets
-  /// rid of it, but a significant change to KSP can easily brake the logic.
-  /// </remarks>
-  /// <param name="avPart">The part proto to get the models from.</param>
+  /// <summary>Returns the part's model.</summary>
+  /// <remarks>The returned model is a copy from the part prefab.</remarks>
+  /// <param name="avPart">The part proto to get the model from.</param>
   /// <param name="variant">
   /// The part's variant to apply. If <c>null</c>, then variant will be extracted from
   /// <paramref name="partNode"/>.
@@ -68,36 +64,33 @@ public class PartUtilsImpl {
   /// The part's persistent state. It's used to extract the external scale modifiers and part's
   /// variant. It can be <c>null</c>.
   /// </param>
-  /// <param name="skipVariantsShader">
-  /// Tells if the variant shaders must not be applied to the model. For the purpose of making a
-  /// preview icon it's usually undesirable to have the shaders changed.
-  /// </param>
   /// <returns>The model of the part. Don't forget to destroy it when not needed.</returns>
-  public GameObject GetUnscaledIconPrefab(
+  public GameObject GetPartModel(
       AvailablePart avPart,
-      PartVariant variant = null, ConfigNode partNode = null, bool skipVariantsShader = true) {
-    var icon = GetIconPrefab(
-        avPart, variant: variant, partNode: partNode, skipVariantsShader: skipVariantsShader);
-    var modelRoot = Hierarchy.FindTransformByPath(icon.transform, "**/model");
-    if (modelRoot == null) {
-      throw new ArgumentException("Cannot find model in icon prefab for: " + avPart.name);
+      PartVariant variant = null, ConfigNode partNode = null) {
+    if (variant == null && partNode != null) {
+      variant = GetCurrentPartVariant(avPart, partNode);
     }
-    modelRoot.transform.parent = null;
-    UnityEngine.Object.DestroyImmediate(icon);
+    GameObject modelObj = null;
+    ExecuteAtPartVariant(avPart, variant, p => {
+      var partPrefabModel = Hierarchy.GetPartModelTransform(avPart.partPrefab).gameObject;
+      modelObj = UnityEngine.Object.Instantiate(partPrefabModel);
+      modelObj.SetActive(true);
+    });
 
     // Handle TweakScale settings.
     if (partNode != null) {
       var scale = KISAPI.PartNodeUtils.GetTweakScaleSizeModifier(partNode);
       if (Mathf.Abs(1.0f - scale) > float.Epsilon) {
         DebugEx.Fine("Applying TweakScale size modifier: {0}", scale);
-        var scaleRoot = new GameObject("TweakScale").transform;
-        scaleRoot.localScale = new Vector3(scale, scale, scale);
-        modelRoot.SetParent(scaleRoot, worldPositionStays: false);
-        modelRoot = scaleRoot;
+        var scaleRoot = new GameObject("TweakScale");
+        scaleRoot.transform.localScale = new Vector3(scale, scale, scale);
+        modelObj.transform.SetParent(scaleRoot.transform, worldPositionStays: false);
+        modelObj = scaleRoot;
       }
     }
     
-    return modelRoot.gameObject;
+    return modelObj;
   }
 
   /// <summary>Gets the part's variant.</summary>
@@ -142,7 +135,7 @@ public class PartUtilsImpl {
   /// <returns>The volume in liters.</returns>
   public float GetPartVolume(
       AvailablePart avPart, PartVariant variant = null, ConfigNode partNode = null) {
-    var model = GetUnscaledIconPrefab(avPart, variant: variant, partNode: partNode);
+    var model = GetPartModel(avPart, variant: variant, partNode: partNode);
     var boundsSize = model.GetRendererBounds().size;
     UnityEngine.Object.DestroyImmediate(model);
     return boundsSize.x * boundsSize.y * boundsSize.z * 1000f;
