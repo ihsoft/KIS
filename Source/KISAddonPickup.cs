@@ -768,13 +768,36 @@ sealed class KISAddonPickup : MonoBehaviour {
     }
     if (HighLogic.LoadedSceneIsFlight) {
       if (grabOk) {
-        Pickup(part);
+
+        var pickedUp = TryPickupFromInventory(part);
+        if (!pickedUp) {
+          Pickup(part);
+        }
       }
     } else if (HighLogic.LoadedSceneIsEditor) {
       if (ModuleKISInventory.GetAllOpenInventories().Count > 0) {
         Pickup(part);
       }
     }
+  }
+
+  bool TryPickupFromInventory(Part part) {
+    // Get the equipped item for the part:
+    var moduleItem = part.FindModuleImplementing<ModuleKISItem>();
+    if (!moduleItem) {
+        return false;
+    }
+    // TODO: This is a bit awkward. Is there a better way to get the corresponding KIS_Item for an equipped ModuleKISItem?
+    // Maybe store it in ModuleKISItem#OnEquip? Will this work when loading save games?
+    var item = part.vessel.FindPartModulesImplementing<ModuleKISInventory>()
+      .SelectMany(inventory => inventory.items.Values).ToList()
+      .Find(candidate => candidate.equipped && candidate.equippedPart == part);
+
+    if (item != null) {
+      Pickup(item);
+      return true;
+    }
+    return false;
   }
 
   void OnMouseGrabExitPart(Part p) {
@@ -1399,8 +1422,11 @@ sealed class KISAddonPickup : MonoBehaviour {
   bool CheckCanGrabRealPart(Part part) {
     // Don't grab kerbals. It's weird, and they don't have the attachment nodes anyways.
     if (part.vessel.isEVA) {
-      ReportCheckError(GrabNotOkStatusTooltipTxt, CannotMoveKerbonautTooltipTxt);
-      return false;
+      // Double-check if we actually grabbed a kerbal or maybe an equipped item.
+      if (part.FindModuleImplementing<ModuleKISItem>() == null) {
+        ReportCheckError(GrabNotOkStatusTooltipTxt, CannotMoveKerbonautTooltipTxt);
+        return false;
+      }
     }
     // Check if there are kerbals in range.
     if (!HasActivePickupInRange(part)) {
