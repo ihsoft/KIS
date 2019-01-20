@@ -143,15 +143,6 @@ public class ModuleKISInventory : PartModule,
           + "\nArgument <<1>> is a name of the part that holds the inventory."
           + "\nArgument <<2>> is a custom name of the inventory.");
 
-  static readonly Message<string, string> TooltipWindowTitle =
-      new Message<string, string>(
-          "#kisLOC_00018",
-          defaultTemplate: "<<1>> | <<2>>",
-          description: "The title of the window that shows a tooltip for the item being hovered"
-          + " over in the open inventory."
-          + "\nArgument <<1>> is a name of the part item."
-          + "\nArgument <<2>> is a custom name of the inventory.");
-
   static readonly Message ItemActionMenuWindowTitle = new Message(
       "#kisLOC_00019",
       defaultTemplate: "Action",
