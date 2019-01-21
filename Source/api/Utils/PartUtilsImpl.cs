@@ -42,7 +42,7 @@ public class PartUtilsImpl {
     }
     if (variant != null) {
       DebugEx.Fine(
-          "Applying variant to the iconPrefab: part={0}, variant={1}", avPart, variant.Name);
+          "Applying variant to the iconPrefab: part={0}, variant={1}", avPart.name, variant.Name);
       ModulePartVariants.ApplyVariant(
           null,
           Hierarchy.FindTransformByPath(iconPrefab.transform, "**/model"),
