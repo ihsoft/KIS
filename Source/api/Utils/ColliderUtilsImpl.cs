@@ -24,11 +24,20 @@ public class ColliderUtilsImpl {
   /// <returns>The square distance or <c>null</c> if no colliders found.</returns>
   public float? GetSqrDistanceToPart(
       Vector3 point, Part part, Func<Collider, bool> filterFn = null) {
-    return part.transform.GetComponentsInChildren<Collider>()
+    float? minDistance = null;
+    var colliders = part.transform.GetComponentsInChildren<Collider>()
         .Where(c => !c.isTrigger && c.enabled && c.gameObject.activeInHierarchy
-             && (filterFn == null || filterFn(c)))
-        .Select(c => c.ClosestPoint(point))
-        .Min(pt => (float?)(pt - point).sqrMagnitude);
+               && (filterFn == null || filterFn(c)));
+    foreach (var collider in colliders) {
+      var closetsPoint = collider.ClosestPoint(point);
+      if (closetsPoint == collider.transform.position) {
+        // The point it inside the collider or on the boundary.
+        return 0.0f;
+      }
+      var sqrMagnitude = (closetsPoint - point).sqrMagnitude;
+      minDistance = Mathf.Min(minDistance ?? float.PositiveInfinity, sqrMagnitude);
+    }
+    return minDistance;
   }
 
   /// <summary>
