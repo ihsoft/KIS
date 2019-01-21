@@ -626,6 +626,9 @@ public class ModuleKISInventory : PartModule,
       } else {
         UISoundPlayer.instance.Play(openSndPath);
       }
+      if (HighLogic.LoadedSceneIsFlight) {
+        StartCoroutine(CheckInventoryGUIVisibilityCoroutine());
+      }
     }
   }
   #endregion
@@ -938,12 +941,6 @@ public class ModuleKISInventory : PartModule,
   /// <inheritdoc/>
   public override void OnUpdate() {
     base.OnUpdate();
-    if (showGui && HighLogic.LoadedSceneIsFlight && vessel != FlightGlobals.ActiveVessel
-        && lastMenuRangeCheckedTime + MenuRangeCheckThreshold < Time.time) {
-      if (!CheckActionMenuVisibility()) {
-        ToggleInventoryEvent();
-      }
-    }
     UpdateKey();
   }
   #endregion
@@ -2054,7 +2051,6 @@ public class ModuleKISInventory : PartModule,
   /// </remarks>
   /// <returns></returns>
   bool CheckActionMenuVisibility() {
-    lastMenuRangeCheckedTime = Time.time;
     if (FlightGlobals.ActiveVessel != vessel) {
       // Go thru each actor module in the active vessel and check if it can reach the inventory.
       return FlightGlobals.ActiveVessel.parts
@@ -2075,6 +2071,7 @@ public class ModuleKISInventory : PartModule,
         && lastMenuRangeCheckedTime + MenuRangeCheckThreshold < Time.time) {
       PartModuleUtils.SetupEvent(this, ToggleInventoryEvent, inv => {
         inv.active = CheckActionMenuVisibility();
+        lastMenuRangeCheckedTime = Time.time;
       });
     }
   }
@@ -2083,6 +2080,19 @@ public class ModuleKISInventory : PartModule,
   void OnPartVariandChanged(Part p, PartVariant v) {
     if (p == part) {
       EnableIcon();
+    }
+  }
+
+  /// <summary>
+  /// Checks the distance from actor to the inventory and closes the GUI if it's too far.
+  /// </summary>
+  IEnumerator CheckInventoryGUIVisibilityCoroutine() {
+    while (showGui && HighLogic.LoadedSceneIsFlight && vessel != FlightGlobals.ActiveVessel) {
+      yield return new WaitForSeconds(MenuRangeCheckThreshold);
+      if (!CheckActionMenuVisibility()) {
+        HostedDebugLog.Fine(this, "Out of distance to the nearest pickup. Closing GUI");
+        ToggleInventoryEvent();
+      }
     }
   }
   #endregion
