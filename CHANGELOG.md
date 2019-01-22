@@ -1,9 +1,10 @@
 # 1.17 (pre-release):
-* KSP 1.6 support. This mod's version is not comaptible with the prior versions of KSP!
+* KSP 1.6 support. This mod's version is not compatible with the prior versions of KSP!
 * [Enhancement] Add Portuguese (Brazil) localization.
 * [Enhancement] Improve items&parts debug ability. See `partAlignToolKey` and `itemDebug` in the settings file.
 * [Enhancement] Add new containers: `IMiC-1500`, `ImC-3K`, `IMC-22K`, and `IGC-45K`.
-* [Fix #281] Use the stock funtionality from the KIS code and properly support custom helmets.
+* [Enhancement] Big improvement in performance. Many inventories with items in one scene could slow down the game significantly (see #287 & #288).
+* [Enhancement #281] Use the stock functionality from the KIS code and properly support custom helmets.
 * [Enhancement #289] Take into account the container size when detecting its availability.
 
 # 1.16 (October 29th, 2018):
