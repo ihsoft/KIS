@@ -621,8 +621,9 @@ public static class KIS_Shared {
   /// doesn't return the nodes that may result in collision.
   /// </remarks>
   /// <param name="p">A part to get nodes for.</param>
-  /// <param name="ignoreAttachedPart">Don't consider attachment node occupied if it's
-  /// attached to this part.</param>
+  /// <param name="ignoreAttachedPart">
+  /// Don't consider an attachment node if it's occupied ans attached to this part.
+  /// </param>
   /// <param name="needSrf">If <c>true</c> then free surface node should be retruned as well.
   /// Otherwise, only the stack nodes are returned.</param>
   /// <returns>A list of nodes that are available for attaching. First nodes in the list are the
