@@ -93,6 +93,57 @@ public class PartUtilsImpl {
     return modelObj;
   }
 
+  /// <summary>Collects all the models in the part or hierarchy.</summary>
+  /// <remarks>
+  /// The result of this method only includes meshes and renderers. Any colliders, animations or
+  /// effects will be dropped.
+  /// <para>
+  /// Note, that this method captures the current model state fro the part, which may be affected
+  /// by animations or third-party mods. That said, each call for the same part may return different
+  /// results.
+  /// </para>
+  /// </remarks>
+  /// <param name="rootPart">The part to start scanning the assembly from.</param>
+  /// <param name="goThruChildren">
+  /// Tells if the parts down the hierarchy need to be captured too.
+  /// </param>
+  /// <returns>
+  /// The root game object of the new hirerarchy. This object must be explicitly disposed when not
+  /// needed anymore.
+  /// </returns>
+  public GameObject GetSceneAssemblyModel(Part rootPart, bool goThruChildren = true) {
+    var modelObj = UnityEngine.Object.Instantiate<GameObject>(
+        Hierarchy.GetPartModelTransform(rootPart).gameObject);
+    modelObj.SetActive(true);
+
+    // This pice of code was stolen from PartLoader.CreatePartIcon (alas, it's private).
+    PartLoader.StripComponent<EffectBehaviour>(modelObj);
+    PartLoader.StripGameObject<Collider>(modelObj, "collider");
+    PartLoader.StripComponent<Collider>(modelObj);
+    PartLoader.StripComponent<WheelCollider>(modelObj);
+    PartLoader.StripComponent<SmokeTrailControl>(modelObj);
+    PartLoader.StripComponent<FXPrefab>(modelObj);
+    PartLoader.StripComponent<ParticleSystem>(modelObj);
+    PartLoader.StripComponent<Light>(modelObj);
+    PartLoader.StripComponent<Animation>(modelObj);
+    PartLoader.StripComponent<DAE>(modelObj);
+    PartLoader.StripComponent<MeshRenderer>(modelObj, "Icon_Hidden", true);
+    PartLoader.StripComponent<MeshFilter>(modelObj, "Icon_Hidden", true);
+    PartLoader.StripComponent<SkinnedMeshRenderer>(modelObj, "Icon_Hidden", true);
+    
+    if (goThruChildren) {
+      foreach (var childPart in rootPart.children) {
+        var childObj = GetSceneAssemblyModel(childPart);
+        childObj.transform.parent = modelObj.transform;
+        childObj.transform.localRotation =
+            rootPart.transform.rotation.Inverse() * childPart.transform.rotation;
+        childObj.transform.localPosition =
+            rootPart.transform.InverseTransformPoint(childPart.transform.position);
+      }
+    }
+    return modelObj;
+  }
+
   /// <summary>Gets the part's variant.</summary>
   /// <param name="avPart">The part proto to get the variant for.</param>
   /// <param name="partNode">The part's persistent state.</param>
