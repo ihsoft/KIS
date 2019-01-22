@@ -29,10 +29,16 @@ public class ColliderUtilsImpl {
         .Where(c => !c.isTrigger && c.enabled && c.gameObject.activeInHierarchy
                && (filterFn == null || filterFn(c)));
     foreach (var collider in colliders) {
-      var closetsPoint = collider.ClosestPoint(point);
-      if (closetsPoint == collider.transform.position) {
-        // The point it inside the collider or on the boundary.
-        return 0.0f;
+      Vector3 closetsPoint;
+      if (collider is WheelCollider) {
+        // Wheel colliders don't support closets point check.
+        closetsPoint = collider.ClosestPointOnBounds(point);
+      } else {
+        closetsPoint = collider.ClosestPoint(point);
+        if (closetsPoint == collider.transform.position) {
+          // The point it inside the collider or on the boundary.
+          return 0.0f;
+        }
       }
       var sqrMagnitude = (closetsPoint - point).sqrMagnitude;
       minDistance = Mathf.Min(minDistance ?? float.PositiveInfinity, sqrMagnitude);
