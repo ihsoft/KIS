@@ -224,10 +224,39 @@ public class PartUtilsImpl {
     if (oldPartVariant != null) {
       variant = variant ?? avPart.partPrefab.baseVariant;
       avPart.partPrefab.variants.SetVariant(variant.Name);  // Set.
+      ApplyVariantOnAttachNodes(avPart.partPrefab, variant);
       fn(avPart.partPrefab);  // Run on the updated part.
       avPart.partPrefab.variants.SetVariant(oldPartVariant.Name);  // Restore.
+      ApplyVariantOnAttachNodes(avPart.partPrefab, oldPartVariant);
     } else {
       fn(avPart.partPrefab);
+    }
+  }
+
+  /// <summary>Applies variant settinsg to the part attach nodes.</summary>
+  /// <remarks>
+  /// The stock apply variant method only does it when the active scene is editor. So if there is a
+  /// part in the flight scene with a variant, it needs to be updated for the proper KIS behavior.
+  /// </remarks>
+  /// <param name="part">The part to apply the chnages to.</param>
+  /// <param name="variant">The variant to apply.</param>
+  /// <param name="updatePartPosition">
+  /// Tells if any connected parts at the attach nodes need to be repositioned accordingly. This may
+  /// trigger collisions in the scene, so use carefully.
+  /// </param>
+  public void ApplyVariantOnAttachNodes(Part part, PartVariant variant,
+                                        bool updatePartPosition = false) {
+    foreach (var partAttachNode in part.attachNodes) {
+      foreach (var variantAttachNode in variant.AttachNodes) {
+        if (partAttachNode.id == variantAttachNode.id) {
+          if (updatePartPosition) {
+            ModulePartVariants.UpdatePartPosition(partAttachNode, variantAttachNode);
+          }
+          partAttachNode.originalPosition = variantAttachNode.originalPosition;
+          partAttachNode.position = variantAttachNode.position;
+          partAttachNode.size = variantAttachNode.size;
+        }
+      }
     }
   }
 }
