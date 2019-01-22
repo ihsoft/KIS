@@ -1220,7 +1220,17 @@ public class ModuleKISInventory : PartModule,
     const int Width = 160;
     GUILayout.Box("", GUILayout.Width(Width), GUILayout.Height(100));
     Rect textureRect = GUILayoutUtility.GetLastRect();
-    GUI.DrawTexture(textureRect, icon.texture, ScaleMode.ScaleToFit);
+    if (invType != InventoryType.Pod) {
+      GUI.DrawTexture(textureRect, icon.texture, ScaleMode.ScaleToFit);
+    } else {
+      var crewOwner = part.protoModuleCrew.FirstOrDefault(x => x.seatIdx == podSeat);
+      if (crewOwner != null && crewOwner.seat != null && crewOwner.seat.kerbalRef != null
+          && crewOwner.seat.kerbalRef.avatarTexture != null) {
+        GUI.DrawTexture(textureRect, crewOwner.seat.kerbalRef.avatarTexture, ScaleMode.ScaleToFit);
+      } else {
+        GUI.DrawTexture(textureRect, icon.texture, ScaleMode.ScaleToFit);
+      }
+    }
 
     int extraSpace = 0;
     //Set inventory name
