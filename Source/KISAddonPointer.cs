@@ -3,6 +3,7 @@
 // Module authors: KospY, igor.zavoychinskiy@gmail.com
 // License: Restricted
 
+using KISAPIv1;
 using KSPDev.GUIUtils;
 using KSPDev.GUIUtils.TypeFormatters;
 using KSPDev.ProcessingUtils;
@@ -159,7 +160,6 @@ sealed class KISAddonPointer : MonoBehaviour {
   static bool _allowStack;
 
   public static Part partToAttach;
-  public static float scale = 1;
   public static float maxDist = 2f;
   public static bool useAttachRules;
   static Transform sourceTransform;
@@ -175,7 +175,7 @@ sealed class KISAddonPointer : MonoBehaviour {
   static Part hoveredPart = null;
   public static AttachNode hoveredNode = null;
   static GameObject pointer;
-  static List<MeshRenderer> allModelMr;
+  static readonly List<Renderer> allModelRenderers = new List<Renderer>();
   static Vector3 customRot = new Vector3(0f, 0f, 0f);
   static float aboveDistance = 0;
   static Transform pointerNodeTransform;
@@ -248,19 +248,29 @@ sealed class KISAddonPointer : MonoBehaviour {
     get { return running; }
   }
 
-  public static void StartPointer(Part partToMoveAndAttach, OnPointerClick pClick,
-                                  OnPointerState pState, Transform from = null) {
+  public static void StartPointer(Part rootPart, KIS_Item item,
+                                  OnPointerClick pClick, OnPointerState pState,
+                                  Transform from = null) {
     if (!running) {
       DebugEx.Fine("StartPointer()");
       customRot = Vector3.zero;
       aboveDistance = 0;
-      partToAttach = partToMoveAndAttach;
+      partToAttach = rootPart;
       sourceTransform = from;
       running = true;
       SendPointerClick = pClick;
       SendPointerState = pState;
 
-      MakePointer();
+      if (rootPart) {
+        MakePointer(rootPart);
+      } else {
+        KISAPI.PartUtils.ExecuteAtPartVariant(
+            item.availablePart,
+            KISAPI.PartUtils.GetCurrentPartVariant(item.availablePart, item.partNode),
+            MakePointer);
+        pointer.transform.localScale *=
+            KISAPI.PartNodeUtils.GetTweakScaleSizeModifier(item.partNode);
+      }
              
       LockUI();
       allowedAttachmentParts = allowedAttachmentParts;  // Apply selection.
@@ -415,8 +425,10 @@ sealed class KISAddonPointer : MonoBehaviour {
   }
 
   static void OnMouseEnterPart(Part hoverPart) {
-    if (hoverPart == partToAttach)
+    if (hoverPart == partToAttach) {
       return;
+    }
+
     if (allowMount) {
       ModuleKISPartMount pMount = hoverPart.GetComponent<ModuleKISPartMount>();
       if (pMount) {
@@ -437,7 +449,11 @@ sealed class KISAddonPointer : MonoBehaviour {
       }
     }
     if (allowStack && currentAttachNode.nodeType != AttachNode.NodeType.Surface) {
-      foreach (var an in KIS_Shared.GetAvailableAttachNodes(hoverPart, needSrf:false)) {
+      var variant = KISAPI.PartUtils.GetCurrentPartVariant(hoverPart);
+      if (variant != null) {
+        KISAPI.PartUtils.ApplyVariantOnAttachNodes(hoverPart, variant);
+      }
+      foreach (var an in KIS_Shared.GetAvailableAttachNodes(hoverPart, needSrf: false)) {
         KIS_Shared.AssignAttachIcon(hoverPart, an, colorStack);
       }
     }
@@ -568,7 +584,8 @@ sealed class KISAddonPointer : MonoBehaviour {
     bool notAllowedOnMount = false;
     bool cannotSurfaceAttach = false;
     bool invalidCurrentNode = false;
-    bool itselfIsInvalid = !allowPartItself && partToAttach.hasIndirectChild(hoveredPart);
+    bool itselfIsInvalid = !allowPartItself
+        && partToAttach != null && partToAttach.hasIndirectChild(hoveredPart);
     bool restrictedPart =
       allowedAttachmentParts != null && !allowedAttachmentParts.Contains(hoveredPart);
     switch (pointerTarget) {
@@ -597,7 +614,8 @@ sealed class KISAddonPointer : MonoBehaviour {
           ModuleKISPartMount pMount = hoveredPart.GetComponent<ModuleKISPartMount>();
           var allowedPartNames = new List<string>();
           pMount.GetMounts().TryGetValue(hoveredNode, out allowedPartNames);
-          notAllowedOnMount = !allowedPartNames.Contains(partToAttach.partInfo.name);
+          notAllowedOnMount =
+              partToAttach != null && !allowedPartNames.Contains(partToAttach.partInfo.name);
           color = colorMountOk;
         }
         break;
@@ -616,7 +634,7 @@ sealed class KISAddonPointer : MonoBehaviour {
     }
           
     color.a = 0.5f;
-    foreach (MeshRenderer mr in allModelMr) {
+    foreach (var mr in allModelRenderers) {
       mr.material.color = color;
     }
 
@@ -690,7 +708,7 @@ sealed class KISAddonPointer : MonoBehaviour {
   /// <param name="isVisible">New state.</param>
   /// <exception cref="InvalidOperationException">If pointer doesn't exist.</exception>
   private static void SetPointerVisible(bool isVisible) {
-    foreach (var mr in pointer.GetComponentsInChildren<MeshRenderer>()) {
+    foreach (var mr in allModelRenderers) {
       if (mr.enabled == isVisible
           && mr.material.renderQueue == KIS_Shared.HighlighedPartRenderQueue) {
         return;  // Abort if current state is already up to date.
@@ -703,7 +721,7 @@ sealed class KISAddonPointer : MonoBehaviour {
 
   /// <summary>Makes a game object to represent currently dragging assembly.</summary>
   /// <remarks>It's a very expensive operation.</remarks>
-  static void MakePointer() {
+  static void MakePointer(Part rootPart) {
     DestroyPointer();
 
     // Make pointer node transformations.
@@ -714,42 +732,33 @@ sealed class KISAddonPointer : MonoBehaviour {
 
     // Deatch will decouple from the parent so, ask to ignore it when looking for the nodes.
     attachNodes =
-        KIS_Shared.GetAvailableAttachNodes(partToAttach, ignoreAttachedPart: partToAttach.parent);
+        KIS_Shared.GetAvailableAttachNodes(rootPart, ignoreAttachedPart: rootPart.parent)
+        .Select(AttachNode.Clone)
+        .ToList();
     if (!attachNodes.Any()) {
       //TODO: When there are no nodes try finding ones in the parent or in the children.
       // Ideally, the caller should have checked if this part has free nodes. Now the only
       // way is to pick *any* node. The surface one always exists so, it's a good
       // candidate. However, for many details it may result in a weird representation.
       DebugEx.Error(
-          "Part {0} has no free nodes, use {1}", partToAttach, partToAttach.srfAttachNode);
-      attachNodes.Add(partToAttach.srfAttachNode);
+          "Part {0} has no free nodes, use {1}", rootPart, rootPart.srfAttachNode);
+      attachNodes.Add(AttachNode.Clone(rootPart.srfAttachNode));
     }
     attachNodeIndex = 0;  // Expect that first node is the best default.
 
-    // Make pointer renderer.
-    var combines = new List<CombineInstance>();
-    CollectMeshesFromAssembly(partToAttach, combines);
-
-    // Create one filter per a mesh in the hierarhcy. Simple combining all the meshes into one
-    // larger mesh may have weird representation artifacts on different video cards.
+    // Collect models from all the part in the assembly.
     pointer = new GameObject("KISPointer");
-    foreach (var combine in combines) {
-      var mesh = new Mesh();
-      mesh.CombineMeshes(new[] { combine });
-      var childObj = new GameObject("KISPointerChildMesh");
+    var model = KISAPI.PartUtils.GetSceneAssemblyModel(rootPart);
+    model.transform.parent = pointer.transform;
+    model.transform.position = Vector3.zero;
+    model.transform.rotation = Quaternion.identity;
 
-      var meshRenderer = childObj.AddComponent<MeshRenderer>();
-      meshRenderer.shadowCastingMode = ShadowCastingMode.Off;
-      meshRenderer.receiveShadows = false;
-
-      var filter = childObj.AddComponent<MeshFilter>();
-      filter.sharedMesh = mesh;
-
-      childObj.transform.parent = pointer.transform;
-    }
-    allModelMr = pointer.GetComponentsInChildren<MeshRenderer>().ToList();
-    foreach (var mr in allModelMr) {
-      mr.material = new Material(Shader.Find("Transparent/Diffuse"));
+    allModelRenderers.Clear();
+    allModelRenderers.AddRange(pointer.GetComponentsInChildren<Renderer>());
+    foreach (var renderer in allModelRenderers) {
+      renderer.material = new Material(Shader.Find("Transparent/Diffuse"));
+      renderer.shadowCastingMode = ShadowCastingMode.Off;
+      renderer.receiveShadows = false;
     }
     pointerNodeTransform.parent = pointer.transform;
 
@@ -770,62 +779,11 @@ sealed class KISAddonPointer : MonoBehaviour {
     pointer = null;
     pointerNodeTransform.gameObject.DestroyGameObject();
     pointerNodeTransform = null;
-    allModelMr.Clear();
+    allModelRenderers.Clear();
 
     // On large assemblies memory consumption can be significant. Reclaim it.
     Resources.UnloadUnusedAssets();
     DebugEx.Fine("Pointer destroyed");
-  }
-
-  /// <summary>Goes thru part assembly and collects all meshes in the hierarchy.</summary>
-  /// <remarks>
-  /// Returns shared meshes with the right transformations. No new objects are created.
-  /// </remarks>
-  /// <param name="assembly">An assembly to collect meshes from.</param>
-  /// <param name="meshCombines">[out] Collected meshes.</param>
-  /// <param name="worldTransform">
-  /// A world transformation matrix to apply to every mesh after it's translated into world's
-  /// coordinates. If <c>null</c> then coordinates will be calculated relative to the root part of
-  /// the assembly.
-  /// </param>
-  static void CollectMeshesFromAssembly(Part assembly,
-                                        ICollection<CombineInstance> meshCombines,
-                                        Matrix4x4? worldTransform = null) {
-    // Always use world transformation from the root.
-    var rootWorldTransform = worldTransform ?? assembly.transform.localToWorldMatrix.inverse;
-
-    // Get all meshes from the part's model.
-    var meshFilters = assembly
-        .FindModelComponents<MeshFilter>()
-        // Prefab models are always inactive, so ignore the check.
-        .Where(mf => mf.gameObject.activeInHierarchy || assembly == assembly.partInfo.partPrefab)
-        .ToList();
-    DebugEx.Fine("Found {0} children meshes in: {1}", meshFilters.Count, assembly);
-    meshFilters.ForEach(meshFilter => {
-      var combine = new CombineInstance();
-      combine.mesh = meshFilter.sharedMesh;
-      combine.transform = rootWorldTransform * meshFilter.transform.localToWorldMatrix;
-      meshCombines.Add(combine);
-    });
-
-    // Skinned meshes are baked on every frame before rendering. Bake them to get current mesh
-    // state.
-    var skinnedMeshRenderers = assembly.FindModelComponents<SkinnedMeshRenderer>();
-    if (skinnedMeshRenderers.Count > 0) {
-      DebugEx.Fine("Found {0} skinned meshes in: {1}", skinnedMeshRenderers.Count, assembly);
-      foreach (var skinnedMeshRenderer in skinnedMeshRenderers) {
-        var combine = new CombineInstance();
-        combine.mesh = new Mesh();
-        skinnedMeshRenderer.BakeMesh(combine.mesh);
-        combine.transform = rootWorldTransform * skinnedMeshRenderer.transform.localToWorldMatrix;
-        meshCombines.Add(combine);
-      }
-    }
-
-    // Collect meshes from the children parts.
-    foreach (Part child in assembly.children) {
-      CollectMeshesFromAssembly(child, meshCombines, worldTransform: rootWorldTransform);
-    }
   }
 }
 

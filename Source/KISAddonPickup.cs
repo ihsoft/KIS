@@ -621,7 +621,10 @@ sealed class KISAddonPickup : MonoBehaviour {
     if (KISAddonPointer.isRunning
         && KISAddonPointer.pointerTarget != KISAddonPointer.PointerTarget.PartMount
         && pointerMode == KISAddonPickup.PointerMode.Drop) {
-      if (CheckIsAttachable(grabbedPart, reportToConsole: true)) {
+      var refPart = grabbedPart ?? draggedItem.availablePart.partPrefab;
+      var hasFreeNodes = KIS_Shared.GetAvailableAttachNodes(
+          refPart, ignoreAttachedPart: refPart.parent).Any();
+      if (CheckIsAttachable(refPart, hasFreeNodes: hasFreeNodes, reportToConsole: true)) {
         UISounds.PlayClick();
         pointerMode = KISAddonPickup.PointerMode.Attach;
       }
@@ -698,10 +701,10 @@ sealed class KISAddonPickup : MonoBehaviour {
         }
         if (HighLogic.LoadedSceneIsFlight) {
           if (draggedItem != null) {
-            Drop(draggedItem);
+            Drop(draggedItem.inventory.part, item: draggedItem);
           } else {
             movingPart = draggedPart;
-            Drop(movingPart, movingPart);
+            Drop(movingPart);
           }
         }
       }
@@ -933,10 +936,10 @@ sealed class KISAddonPickup : MonoBehaviour {
   }
 
   /// <summary>
-  /// Checks if there is at elast one actor in range that can interact with the part, given the
+  /// Checks if there is at least one actor in range that can interact with the part, given the
   /// capabilities restrictions.
   /// </summary>
-  /// <param name="p">The part to check for.</param>
+  /// <param name="refPart">The real part in teh scene to check the bounds for.</param>
   /// <param name="canPartAttachOnly">Set <c>true</c> to check the part attach capability.</param>
   /// <param name="canStaticAttachOnly">
   /// Set <c>true</c> to check the surafce attach capability.
@@ -944,9 +947,9 @@ sealed class KISAddonPickup : MonoBehaviour {
   /// <returns><c>true</c> if at least one actor found.</returns>
   /// <seealso cref="GetActivePickupNearest"/>
   bool HasActivePickupInRange(
-      Part p, bool canPartAttachOnly = false, bool canStaticAttachOnly = false) {
+      Part refPart, bool canPartAttachOnly = false, bool canStaticAttachOnly = false) {
     var actor = GetActivePickupNearest(
-        p, canPartAttachOnly: canPartAttachOnly, canStaticAttachOnly: canStaticAttachOnly);
+        refPart, canPartAttachOnly: canPartAttachOnly, canStaticAttachOnly: canStaticAttachOnly);
     return actor != null;
   }
 
@@ -1093,27 +1096,31 @@ sealed class KISAddonPickup : MonoBehaviour {
   }
 
   public void Drop(KIS_Item item) {
-    draggedItem = item;
-    Drop(item.inventory.part, item.availablePart.partPrefab, item: item);
+    Drop(item.inventory.part, item: item);
   }
 
   /// <summary>Handles part drop action.</summary>
-  /// <param name="fromPart">A part that was the source of the draggign action. If a world's part is
-  /// grabbed than it will be that part. If part is being dragged from inventory then this parameter
-  /// is an inventory reference.</param>
-  /// <param name="part">
-  /// Part being grabbed. It's always a real part. Mutial exclusive with <paramref name="item"/>.
+  /// <param name="fromPart">
+  /// The part that was the source of the dragging action. If a world's part is grabbed than it will
+  /// be that part. If part is being dragged from inventory, then this parameter is an inventory
+  /// reference.
   /// </param>
-  /// <param name="item">Item being dragged. Mutial exclusive with <paramref name="part"/>.</param>
-  void Drop(Part fromPart, Part part, KIS_Item item = null) {
-    grabbedPart = part;
-    DebugEx.Info("End pickup of {0} from part: {1}", part, fromPart);
+  /// <param name="item">The item being dragged.</param>
+  void Drop(Part fromPart, KIS_Item item = null) {
+    if (item != null) {
+      draggedItem = item;
+      DebugEx.Info("End pickup of item {0} from inventory {1}",
+                   item.availablePart.name, item.inventory);
+    } else {
+      grabbedPart = fromPart;
+      DebugEx.Info("End pickup of {0}", fromPart);
+    }
     if (!KISAddonPointer.isRunning) {
       var pickupModule = GetActivePickupNearest(fromPart);
       var grabPosition = fromPart.transform.position;
       int unusedPartsCount;
       if (pickupModule
-          && (item == null && CheckMass(part, out unusedPartsCount, reportToConsole: true)
+          && (item == null && CheckMass(fromPart, out unusedPartsCount, reportToConsole: true)
               || item != null && CheckItemMass(item, reportToConsole: true))) {
         KISAddonPointer.allowPart = true;
         KISAddonPointer.allowEva = true;
@@ -1121,10 +1128,15 @@ sealed class KISAddonPickup : MonoBehaviour {
         KISAddonPointer.allowStatic = true;
         KISAddonPointer.allowStack = pickupModule.allowPartStack;
         KISAddonPointer.maxDist = pickupModule.maxDistance;
-        KISAddonPointer.scale = draggedItem != null
-            ? KISAPI.PartNodeUtils.GetTweakScaleSizeModifier(draggedItem.partNode)
-            : 1;
-        KISAddonPointer.StartPointer(part, OnPointerAction, OnPointerState, pickupModule.transform);
+        if (item != null) {
+          KISAddonPointer.StartPointer(
+              null /* rootPart */, item,
+              OnPointerAction, OnPointerState, pickupModule.transform);
+        } else {
+          KISAddonPointer.StartPointer(
+              fromPart, null /* item */,
+              OnPointerAction, OnPointerState, pickupModule.transform);
+        }
 
         pointerMode = pickupMode == PickupMode.Undock
             ? PointerMode.ReDock
@@ -1418,7 +1430,8 @@ sealed class KISAddonPickup : MonoBehaviour {
     KIS_Shared.SetHierarchySelection(redockTarget, true /* isSelected */);
 
     if (!CheckCanGrabRealPart(redockTarget) || !CheckCanDetach(redockTarget) ||
-        !CheckIsAttachable(redockTarget)) {
+        !CheckIsAttachable(redockTarget,
+                           hasFreeNodes: KIS_Shared.GetAvailableAttachNodes(redockTarget).Any())) {
       return;
     }
 
@@ -1568,29 +1581,28 @@ sealed class KISAddonPickup : MonoBehaviour {
   }
 
   /// <summary>Checks if part can be attached. At least in theory.</summary>
-  /// <remarks>This method doesn't say if part *will* be attached if such attempt is made.</remarks>   
-  bool CheckIsAttachable(Part part, bool reportToConsole = false) {
-    var item = part.GetComponent<ModuleKISItem>();
+  /// <remarks>This method doesn't say if part *will* be attached if such attempt is made.</remarks>
+  bool CheckIsAttachable(Part refPart, bool hasFreeNodes = true, bool reportToConsole = false) {
+    var item = refPart.GetComponent<ModuleKISItem>();
 
     // Check if part has at least one free node.
-    var nodes = KIS_Shared.GetAvailableAttachNodes(part, part.parent);
-    if (!nodes.Any()) {
+    if (!hasFreeNodes) {
       // Check if it's a static attachable item. Those are not required to have nodes
       // since they attach to the ground.
-      if (!item || item.allowStaticAttach == ModuleKISItem.ItemAttachMode.Disabled) {
+      if (item == null || item.allowStaticAttach == ModuleKISItem.ItemAttachMode.Disabled) {
         ReportCheckError(AttachNotOkStatusTooltipTxt, CannotAttachTooltipTxt, reportToConsole);
         return false;
       }
     }
 
     // Check if KISItem part is allowed for attach without a tool.
-    if (item && (item.allowPartAttach == ModuleKISItem.ItemAttachMode.AllowedAlways
-                 || item.allowStaticAttach == ModuleKISItem.ItemAttachMode.AllowedAlways)) {
+    if (item != null && (item.allowPartAttach == ModuleKISItem.ItemAttachMode.AllowedAlways
+                         || item.allowStaticAttach == ModuleKISItem.ItemAttachMode.AllowedAlways)) {
       return true;
     }
 
     // Check if there is a kerbonaut with a tool to handle the task.
-    if (!HasActivePickupInRange(part, canPartAttachOnly: true)) {
+    if (!HasActivePickupInRange(refPart, canPartAttachOnly: true)) {
       // Check if it's EVA engineer or a KAS item.
       if (FlightGlobals.ActiveVessel.isEVA) {
         ReportCheckError(
