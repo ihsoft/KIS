@@ -912,7 +912,7 @@ public class ModuleKISInventory : PartModule,
           if (invType == InventoryType.Eva) {
             startEquip.Add(item);
           } else {
-            item.equipped = true;
+            item.SetEquipedState(true);
           }
         }
       }
@@ -1906,7 +1906,7 @@ public class ModuleKISInventory : PartModule,
             if (item.equipped) {
               HostedDebugLog.Info(
                   this, "Schedule re-equipping item: {0}", item.availablePart.title);
-              item.equipped = false;
+              item.SetEquipedState(false);
               destInventory.startEquip.Add(item);
             }
           }
@@ -1945,7 +1945,7 @@ public class ModuleKISInventory : PartModule,
               itemsToDrop.Add(item.Value);
             } else if (item.Value.equipped) {
               item.Value.Unequip();
-              item.Value.equipped = true;  // Mark state for the further re-equip.
+              item.Value.SetEquipedState(true);  // Mark state for the further re-equip.
             }
           }
           foreach (var item in itemsToDrop) {

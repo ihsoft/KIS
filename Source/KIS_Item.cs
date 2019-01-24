@@ -77,9 +77,24 @@ public sealed class KIS_Item {
   public bool carriable;
   public bool equipable;
 
-  #region Persisted properties (TBD: fix to API)
-  public int quantity;//FIXME: persiatant
-  public bool equipped;//FIXME: persistant
+  #region Persisted properties
+  /// <summary>The number of irems in the inventory slot.</summary>
+  /// <value>The number of items.</value>
+  public int quantity {
+    get { return _quantity; }
+    private set { _quantity = value; }
+  }
+  [PersistentField("quantity", group = StdPersistentGroups.PartPersistant)]
+  int _quantity;
+
+  /// <summary>Tells if the item is equipped on the kerbal.</summary>
+  /// <value><c>true</c> if equipped.</value>
+  public bool equipped {
+    get { return _equipped; }
+    private set { _equipped = value; }
+  }
+  [PersistentField("equipped", group = StdPersistentGroups.PartPersistant)]
+  bool _equipped;
 
   /// <summary>
   /// The item's part mass without the resources and content (if it's a KIS container).
@@ -324,6 +339,16 @@ public sealed class KIS_Item {
     this._itemDryCost -= this._contentCost;
   }
 
+  /// <summary>Sets the item's equipped state.</summary>
+  /// <remarks>
+  /// Changing of the state does <i>not</i> equip or unequip the item. It only changes teh state.
+  /// </remarks>
+  /// <param name="state">The state.</param>
+  /// <seealso cref="equipped"/>
+  public void SetEquipedState(bool state) {
+    equipped = state;
+  }
+
   /// <summary>Tells if the part can be stacked in the inventory.</summary>
   /// <param name="avPart">The part proto to check.</param>
   /// <returns><c>true</c> if it can stack.</returns>
@@ -340,8 +365,6 @@ public sealed class KIS_Item {
   public void OnSave(ConfigNode node) {
     node.AddValue("partName", availablePart.name);
     node.AddValue("slot", slot);
-    node.AddValue("quantity", quantity);
-    node.AddValue("equipped", equipped);
     ConfigAccessor.WriteFieldsIntoNode(
         node, GetType(), this, group: StdPersistentGroups.PartPersistant);
     // Items in pod and container may have equipped status True but they are not actually equipped,
