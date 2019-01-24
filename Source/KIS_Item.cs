@@ -183,13 +183,6 @@ public sealed class KIS_Item {
     Physics,
   }
 
-  //FIXME: rfactor to the resource snapshot
-  public struct ResourceInfo {
-    public string resourceName;
-    public double amount;
-    public double maxAmount;
-  }
-
   public EquipMode equipMode {
     get {
       EquipMode mode = EquipMode.Model;
@@ -363,21 +356,6 @@ public sealed class KIS_Item {
       partNode = KISAPI.PartNodeUtils.PartSnapshot(equippedPart);
     }
     partNode.CopyTo(node.AddNode("PART"));
-  }
-
-  // FIXME: refatcor to use the resource snaphost and use API.
-  public List<ResourceInfo> GetResources() {
-    var resources = new List<ResourceInfo>();
-    foreach (ConfigNode node in this.partNode.GetNodes("RESOURCE")) {
-      if (node.HasValue("name") && node.HasValue("amount") && node.HasValue("maxAmount")) {
-        var rInfo = new ResourceInfo();
-        rInfo.resourceName = node.GetValue("name");
-        rInfo.amount = double.Parse(node.GetValue("amount"));
-        rInfo.maxAmount = double.Parse(node.GetValue("maxAmount"));
-        resources.Add(rInfo);
-      }
-    }
-    return resources;
   }
 
   public List<ScienceData> GetSciences() {

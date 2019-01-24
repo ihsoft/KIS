@@ -3,6 +3,7 @@
 // Module authors: KospY, igor.zavoychinskiy@gmail.com
 // License: Restricted
 
+using KISAPIv1;
 using KSPDev.GUIUtils;
 using KSPDev.ResourceUtils;
 using System;
@@ -104,8 +105,9 @@ public class ModuleKISItemEvaPropellant : ModuleKISItem {
   /// <summary>Returns KIS resource dexcription for the propellant in the part.</summary>
   /// <param name="item">Item to get resource for.</param>
   /// <returns>Resource description.</returns>
-  protected static KIS_Item.ResourceInfo GetCanisterFuelResource(KIS_Item item) {
-    return item.GetResources().First(x => x.resourceName == StockResourceNames.EvaPropellant);
+  protected static ProtoPartResourceSnapshot GetCanisterFuelResource(KIS_Item item) {
+    return KISAPI.PartNodeUtils.GetResources(item.partNode)
+        .FirstOrDefault(x => x.resourceName == StockResourceNames.EvaPropellant);
   }
   #endregion
 }

@@ -1347,9 +1347,9 @@ public class ModuleKISInventory : PartModule,
       text2.AppendLine(TotalSlotMassTooltipInfo.Format(tooltipItem.totalSlotMass));
     } else {
       // Show resource if not stacked
-      List<KIS_Item.ResourceInfo> resources = tooltipItem.GetResources();
-      if (resources.Count > 0) {
-        foreach (KIS_Item.ResourceInfo resource in resources) {
+      var resources = KISAPI.PartNodeUtils.GetResources(tooltipItem.partNode);
+      if (resources.Length > 0) {
+        foreach (var resource in resources) {
           text2.AppendLine(ItemResourceTootltipInfo.Format(
               resource.resourceName, resource.amount, resource.maxAmount));
         }

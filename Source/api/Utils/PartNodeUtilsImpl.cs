@@ -12,6 +12,7 @@ namespace KISAPIv1 {
 /// <summary>Various methods to deal with the parts configs.</summary>
 public class PartNodeUtilsImpl {
 
+  #region API implementation
   /// <summary>Gets scale modifier, applied by TweakScale mod.</summary>
   /// <param name="partNode">The part's persistent state config.</param>
   /// <returns>The scale ratio.</returns>
@@ -135,6 +136,21 @@ public class PartNodeUtilsImpl {
 
     return partNode;
   }
+
+  /// <summary>Returns all the resource on the part.</summary>
+  /// <param name="partNode">
+  /// The part's config or a persistent state. It can be a top-level node or the <c>PART</c> node.
+  /// </param>
+  /// <returns>The list of found resources.</returns>
+  public ProtoPartResourceSnapshot[] GetResources(ConfigNode partNode) {
+    if (partNode.HasNode("PART")) {
+      partNode = partNode.GetNode("PART");
+    }
+    return partNode.GetNodes("RESOURCE")
+        .Select(n => new ProtoPartResourceSnapshot(n))
+        .ToArray();
+  }
+  #endregion
 
   #region Local utility methods
   /// <summary>Walks thru all modules in the part and fixes null persistent fields.</summary>
