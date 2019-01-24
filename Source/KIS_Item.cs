@@ -355,17 +355,6 @@ public sealed class KIS_Item {
     partNode.CopyTo(node.AddNode("PART"));
   }
 
-  public List<ScienceData> GetSciences() {
-    var sciences = new List<ScienceData>();
-    foreach (ConfigNode module in this.partNode.GetNodes("MODULE")) {
-      foreach (ConfigNode experiment in module.GetNodes("ScienceData")) {
-        var scienceData = new ScienceData(experiment);
-        sciences.Add(scienceData);
-      }
-    }
-    return sciences;
-  }
-
   public void SetResource(string name, double amount) {
     foreach (ConfigNode node in this.partNode.GetNodes("RESOURCE")) {
       if (node.HasValue("name") && node.GetValue("name") == name

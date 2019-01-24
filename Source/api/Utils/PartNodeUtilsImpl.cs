@@ -150,6 +150,19 @@ public class PartNodeUtilsImpl {
         .Select(n => new ProtoPartResourceSnapshot(n))
         .ToArray();
   }
+
+  /// <summary>Returns all the science from the part's saved state.</summary>
+  /// <param name="partNode">
+  /// The persistent part's state. It can be a top-level node or the <c>PART</c> node.
+  /// </param>
+  /// <returns>The found science.</returns>
+  public ScienceData[] GetSciences(ConfigNode partNode) {
+    return partNode.GetNodes("MODULE")
+        .SelectMany(m => m.GetNodes("ScienceData"))
+        .Select(n => new ScienceData(n))
+        .ToArray();
+  }
+
   #endregion
 
   #region Local utility methods
