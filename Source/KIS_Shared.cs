@@ -1156,7 +1156,7 @@ public static class KIS_Shared {
     Vessel newVessel = newPart.gameObject.AddComponent<Vessel>();
     newVessel.id = Guid.NewGuid();
     if (newVessel.Initialize(false)) {
-      var item = newPart.FindModuleImplementing <ModuleKISItem> ();
+      var item = newPart.FindModuleImplementing<ModuleKISItem>();
       if (item == null || !item.vesselAutoRename) {
         newVessel.vesselName = newPart.partInfo.title;
       } else {

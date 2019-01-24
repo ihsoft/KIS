@@ -122,10 +122,6 @@ public sealed class KIS_Item {
   float _contentCost;
   #endregion
 
-  /// <summary>A breaking force of a joint that attaches equipped item to the kerbal.</summary>
-  /// TODO: Read it from the items's config. See #128.
-  const float EqippedPartJointBreakForce = 50.0f;
-
   #region API properties
   /// <summary>Total voulme of the item's meshes.</summary>
   /// <value>The volume in liters.</value>
@@ -352,7 +348,8 @@ public sealed class KIS_Item {
     // so there is no equipped part.
     if (equipped && equippedPart != null
         && (equipMode == EquipMode.Part || equipMode == EquipMode.Physic)) {
-      DebugEx.Info("Update config node of equipped part: {0}", availablePart.title);
+      HostedDebugLog.Info(
+          inventory, "Update config node of equipped part: {0}", availablePart.name);
       partNode = KISAPI.PartNodeUtils.PartSnapshot(equippedPart);
     }
     partNode.CopyTo(node.AddNode("PART"));

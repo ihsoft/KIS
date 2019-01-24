@@ -141,7 +141,7 @@ public class PartNodeUtilsImpl {
   /// <param name="partNode">
   /// The part's config or a persistent state. It can be a top-level node or the <c>PART</c> node.
   /// </param>
-  /// <returns>The list of found resources.</returns>
+  /// <returns>The found resources.</returns>
   public ProtoPartResourceSnapshot[] GetResources(ConfigNode partNode) {
     if (partNode.HasNode("PART")) {
       partNode = partNode.GetNode("PART");
