@@ -4,8 +4,6 @@
 
 using System;
 using System.Linq;
-using KSPDev.FSUtils;
-using KSPDev.LogUtils;
 
 namespace KSPDev.ConfigUtils {
 
@@ -68,6 +66,57 @@ public static class ConfigAccessor2 {
     return strValue == null
         ? null
         : (T?)typeProto.ParseFromString(strValue, typeof(T));
+  }
+
+  /// <summary>
+  /// Saves a value of an arbitrary type <typeparamref name="T"/> to the config node.
+  /// </summary>
+  /// <param name="node">The node to write data to.</param>
+  /// <param name="path">
+  /// The path to the node. The path components should be separated by '/' symbol.
+  /// </param>
+  /// <param name="value">The value to write.</param>
+  /// <param name="typeProto">
+  /// A proto that can serialize values of type <typeparamref name="T"/>. If not set, then
+  /// <see cref="StandardOrdinaryTypesProto"/> is used.
+  /// </param>
+  /// <typeparam name="T">
+  /// The value type to write. The <paramref name="typeProto"/> instance must be able to handle it.
+  /// </typeparam>
+  /// <exception cref="ArgumentException">If type cannot be handled by the proto.</exception>
+  /// <seealso cref="GetValueByPath&lt;T&gt;"/>
+  public static void SetValueByPath<T>(
+      ConfigNode node, string path, T value, AbstractOrdinaryValueTypeProto typeProto = null)
+      where T : struct {
+    SetValueByPath<T>(node, ConfigAccessor.StrToPath(path), value, typeProto);
+  }
+
+  /// <summary>
+  /// Saves a value of an arbitrary type <typeparamref name="T"/> to the config node.
+  /// </summary>
+  /// <param name="node">The node to write data to.</param>
+  /// <param name="pathKeys">
+  /// The array of values that makes the full path. The first node in the array is the top most
+  /// component of the path.
+  /// </param>
+  /// <param name="value">The value to write.</param>
+  /// <param name="typeProto">
+  /// A proto that can serialize values of type <typeparamref name="T"/>. If not set, then
+  /// <see cref="StandardOrdinaryTypesProto"/> is used.
+  /// </param>
+  /// <typeparam name="T">
+  /// The value type to write. The <paramref name="typeProto"/> instance must be able to handle it.
+  /// </typeparam>
+  /// <exception cref="ArgumentException">If type cannot be handled by the proto.</exception>
+  /// <seealso cref="GetValueByPath&lt;T&gt;"/>
+  public static void SetValueByPath<T>(
+      ConfigNode node, string[] pathKeys, T value, AbstractOrdinaryValueTypeProto typeProto = null)
+      where T : struct {
+    if (typeProto == null) {
+      typeProto = standardTypesProto;
+    }
+    ConfigAccessor.SetValueByPath(node, pathKeys, typeProto.SerializeToString(value));
+    var strValue = ConfigAccessor.GetValueByPath(node, pathKeys);
   }
 }
   
