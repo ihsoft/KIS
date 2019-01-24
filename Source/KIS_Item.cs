@@ -355,13 +355,22 @@ public sealed class KIS_Item {
     partNode.CopyTo(node.AddNode("PART"));
   }
 
-  public void SetResource(string name, double amount) {
-    foreach (ConfigNode node in this.partNode.GetNodes("RESOURCE")) {
-      if (node.HasValue("name") && node.GetValue("name") == name
-          && node.HasValue("amount") && node.HasValue("maxAmount")) {
-        node.SetValue("amount", amount.ToString());
-        return;
-      }
+  /// <summary>Updates the item's resource.</summary>
+  /// <param name="name">The new of the resource.</param>
+  /// <param name="amount">The new amount or delta.</param>
+  /// <param name="isAmountRelative">
+  /// Tells if the amount must be added to the current item's amount instead of simply replacing it.
+  /// </param>
+  public void UpdateResource(string name, double amount, bool isAmountRelative = false) {
+    var res = KISAPI.PartNodeUtils.UpdateResource(partNode, name, amount,
+                                                  isAmountRelative: isAmountRelative);
+    if (res.HasValue) {
+      HostedDebugLog.Fine(
+          inventory, "Updated item resource: name={0}, newAmount={1}", name, res);
+      inventory.RefreshContents();
+    } else {
+      HostedDebugLog.Error(
+          inventory, "Cannot find resource {0} in item for {1}", name, availablePart.name);
     }
   }
 

@@ -151,6 +151,34 @@ public class PartNodeUtilsImpl {
         .ToArray();
   }
 
+  /// <summary>Updates the part's resource.</summary>
+  /// <param name="partNode">
+  /// The part's config or a persistent state. It can be a top-level node or the <c>PART</c> node.
+  /// </param>
+  /// <param name="name">The name of the resource.</param>
+  /// <param name="amount">The new amount or teh delta.</param>
+  /// <param name="isAmountRelative">
+  /// Tells if the amount must be added to the current item's amount instead of simply replacing it.
+  /// </param>
+  /// <returns>The new amount or <c>null</c> if the resource was not found.</returns>
+  public double? UpdateResource(ConfigNode partNode, string name, double amount,
+                                bool isAmountRelative = false) {
+    if (partNode.HasNode("PART")) {
+      partNode = partNode.GetNode("PART");
+    }
+    var node = partNode.GetNodes("RESOURCE")
+        .FirstOrDefault(r => r.GetValue("name") == name);
+    double? setAmount = null;
+    if (node != null) {
+      setAmount = ConfigAccessor2.GetValueByPath<double>(node, "amount") ?? 0.0f;
+      if (isAmountRelative) {
+        setAmount += amount;
+      }
+      ConfigAccessor2.SetValueByPath(node, "amount", setAmount.Value);
+    }
+    return setAmount;
+  }
+
   /// <summary>Returns all the science from the part's saved state.</summary>
   /// <param name="partNode">
   /// The persistent part's state. It can be a top-level node or the <c>PART</c> node.

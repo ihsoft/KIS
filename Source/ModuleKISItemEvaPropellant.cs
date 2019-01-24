@@ -68,7 +68,7 @@ public class ModuleKISItemEvaPropellant : ModuleKISItem {
   /// <summary>Fills up canister to the maximum capacity.</summary>
   /// <param name="item">Item to refill.</param>
   protected virtual void RefillCanister(KIS_Item item) {
-    item.SetResource(StockResourceNames.EvaPropellant, GetCanisterFuelResource(item).maxAmount);
+    item.UpdateResource(StockResourceNames.EvaPropellant, GetCanisterFuelResource(item).maxAmount);
     ScreenMessaging.ShowPriorityScreenMessage(CanisterRefilledMsg);
     UISoundPlayer.instance.Play(refuelSndPath);
   }
@@ -90,7 +90,7 @@ public class ModuleKISItemEvaPropellant : ModuleKISItem {
         UISounds.PlayBipWrong();
       } else {
         var canRefuel = Math.Min(needsFuel, canisterFuelResource.amount);
-        item.SetResource(StockResourceNames.EvaPropellant, canisterFuelResource.amount - canRefuel);
+        item.UpdateResource(StockResourceNames.EvaPropellant, canisterFuelResource.amount - canRefuel);
         evaFuelResource.amount += canRefuel;
         if (canRefuel < needsFuel) {
           ScreenMessaging.ShowPriorityScreenMessage(NotEnoughPropellantMsg);
