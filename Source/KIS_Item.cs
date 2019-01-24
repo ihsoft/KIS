@@ -415,17 +415,31 @@ public sealed class KIS_Item {
     return false;
   }
 
-  public bool StackRemove(int qty = 1) {
+  /// <summary>Removes items form the stack.</summary>
+  /// <remarks>
+  /// This method does its best. If it cannot remove the desired number of items, then it removes as
+  /// many is there are avaiable in the slot.
+  /// </remarks>
+  /// <param name="qty">The number of items to remove.</param>
+  /// <returns>The actual number of items removed.</returns>
+  public int StackRemove(int qty) {
     if (qty <= 0) {
-      return false;
+      return 0;
     }
-    if (quantity - qty <= 0) {
-      Delete();
-      return false;
+    int removeQty;
+    if (quantity - qty < 0) {
+      removeQty = quantity;
+      HostedDebugLog.Fine(inventory, "Exhausted item quantity: name={0}, removeExactly={1}",
+                          availablePart.name, removeQty);
+    } else {
+      removeQty = qty;
     }
-    quantity -= qty;
+    quantity -= removeQty;
     inventory.RefreshContents();
-    return true;
+    if (quantity == 0) {
+      Delete();
+    }
+    return removeQty;
   }
 
   public void Delete() {

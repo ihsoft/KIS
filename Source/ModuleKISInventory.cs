@@ -1048,7 +1048,7 @@ public class ModuleKISInventory : PartModule,
 
   public void DeleteItem(int slot) {
     if (items.ContainsKey(slot)) {
-      items[slot].StackRemove();
+      items[slot].StackRemove(1);
     }
   }
 
@@ -1422,20 +1422,14 @@ public class ModuleKISInventory : PartModule,
         GUILayout.BeginHorizontal();
         if (GUILayout.Button("-", buttonStyle, QuantityAdjustBtnLayout)) {
           if (Input.GetKey(KeyCode.LeftShift)) {
-            if (contextItem.quantity > 10) {
-              if (contextItem.StackRemove(10) == false)
-                contextItem = null;
-            }
+            contextItem.StackRemove(10);
           } else if (Input.GetKey(KeyCode.LeftControl)) {
-            if (contextItem.quantity > 100) {
-              if (contextItem.StackRemove(100) == false)
-                contextItem = null;
-            }
+            contextItem.StackRemove(100);
           } else {
-            if (contextItem.quantity > 1) {
-              if (contextItem.StackRemove(1) == false)
-                contextItem = null;
-            }
+            contextItem.StackRemove(1);
+          }
+          if (contextItem.quantity == 0) {
+            contextItem = null;
           }
         }
         if (GUILayout.Button("+", buttonStyle, QuantityAdjustBtnLayout)) {
@@ -1468,7 +1462,7 @@ public class ModuleKISInventory : PartModule,
         }
         if (GUILayout.Button(SplitItemsContextBtn.Format(splitQty), buttonStyle)) {
           if (!isFull()) {
-            contextItem.quantity -= splitQty;
+            contextItem.StackRemove(splitQty);
             // FIXME: handle variants! use item node instead
             AddItem(contextItem.availablePart.partPrefab, splitQty);
           } else {

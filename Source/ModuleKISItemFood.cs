@@ -15,7 +15,7 @@ public sealed class ModuleKISItemFood : ModuleKISItem {
 
   public override void OnItemUse(KIS_Item item, KIS_Item.UseFrom useFrom) {
     if (useFrom != KIS_Item.UseFrom.KeyUp) {
-      item.StackRemove();
+      item.StackRemove(1);
       eatCount++;
 
       if (eatCount > 3) {
