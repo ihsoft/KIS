@@ -5,6 +5,7 @@
 using KSPDev.ConfigUtils;
 using KSPDev.ModelUtils;
 using KSPDev.LogUtils;
+using KSPDev.PartUtils;
 using System;
 using System.Linq;
 using UnityEngine;
@@ -38,7 +39,7 @@ public class PartUtilsImpl {
     var iconPrefab = UnityEngine.Object.Instantiate(avPart.iconPrefab);
     iconPrefab.SetActive(true);
     if (variant == null && partNode != null) {
-      variant = GetCurrentPartVariant(avPart, partNode);
+      variant = VariantsUtils.GetCurrentPartVariant(avPart, partNode);
     }
     if (variant != null) {
       DebugEx.Fine(
@@ -69,10 +70,10 @@ public class PartUtilsImpl {
       AvailablePart avPart,
       PartVariant variant = null, ConfigNode partNode = null) {
     if (variant == null && partNode != null) {
-      variant = GetCurrentPartVariant(avPart, partNode);
+      variant = VariantsUtils.GetCurrentPartVariant(avPart, partNode);
     }
     GameObject modelObj = null;
-    ExecuteAtPartVariant(avPart, variant, p => {
+    VariantsUtils.ExecuteAtPartVariant(avPart, variant, p => {
       var partPrefabModel = Hierarchy.GetPartModelTransform(avPart.partPrefab).gameObject;
       modelObj = UnityEngine.Object.Instantiate(partPrefabModel);
       modelObj.SetActive(true);
@@ -116,7 +117,7 @@ public class PartUtilsImpl {
         Hierarchy.GetPartModelTransform(rootPart).gameObject);
     modelObj.SetActive(true);
 
-    // This pice of code was stolen from PartLoader.CreatePartIcon (alas, it's private).
+    // This piece of code was stolen from PartLoader.CreatePartIcon (alas, it's private).
     PartLoader.StripComponent<EffectBehaviour>(modelObj);
     PartLoader.StripGameObject<Collider>(modelObj, "collider");
     PartLoader.StripComponent<Collider>(modelObj);
@@ -142,32 +143,6 @@ public class PartUtilsImpl {
       }
     }
     return modelObj;
-  }
-
-  /// <summary>Gets the part's variant.</summary>
-  /// <param name="avPart">The part proto to get the variant for.</param>
-  /// <param name="partNode">The part's persistent state.</param>
-  /// <returns>The part's variant.</returns>
-  public PartVariant GetCurrentPartVariant(AvailablePart avPart, ConfigNode partNode) {
-    var variantsModule = KISAPI.PartNodeUtils.GetModuleNode<ModulePartVariants>(partNode);
-    if (variantsModule == null) {
-      return null;
-    }
-    var selectedVariantName = variantsModule.GetValue("selectedVariant")
-        ?? avPart.partPrefab.baseVariant.Name;
-    return avPart.partPrefab.variants.variantList
-        .FirstOrDefault(v => v.Name == selectedVariantName);
-  }
-
-  /// <summary>Gets the part variant.</summary>
-  /// <param name="part">The part to get variant for.</param>
-  /// <returns>The part's variant.</returns>
-  public PartVariant GetCurrentPartVariant(Part part) {
-    var variantsModule = part.Modules.OfType<ModulePartVariants>().FirstOrDefault();
-    if (variantsModule != null) {
-      return variantsModule.SelectedVariant;
-    }
-    return null;
   }
 
   /// <summary>Returns part's volume basing on its geometrics.</summary>
@@ -218,9 +193,9 @@ public class PartUtilsImpl {
       AvailablePart avPart, PartVariant variant = null, ConfigNode partNode = null) {
     var itemMass = avPart.partPrefab.mass;
     if (variant == null && partNode != null) {
-      variant = GetCurrentPartVariant(avPart, partNode);
+      variant = VariantsUtils.GetCurrentPartVariant(avPart, partNode);
     }
-    ExecuteAtPartVariant(avPart, variant, p => itemMass += p.GetModuleMass(p.mass));
+    VariantsUtils.ExecuteAtPartVariant(avPart, variant, p => itemMass += p.GetModuleMass(p.mass));
     return itemMass;
   }
 
@@ -250,65 +225,11 @@ public class PartUtilsImpl {
     }
     var itemCost = avPart.cost;
     if (variant == null && partNode != null) {
-      variant = GetCurrentPartVariant(avPart, partNode);
+      variant = VariantsUtils.GetCurrentPartVariant(avPart, partNode);
     }
-    ExecuteAtPartVariant(avPart, variant, p => itemCost += p.GetModuleCosts(avPart.cost));
+    VariantsUtils.ExecuteAtPartVariant(avPart, variant,
+                                       p => itemCost += p.GetModuleCosts(avPart.cost));
     return itemCost;
-  }
-
-  /// <summary>Executes an action on a part with an arbitrary variant applied.</summary>
-  /// <remarks>
-  /// If the part doesn't support variants, then the action is executed for the unchanged prefab.
-  /// </remarks>
-  /// <param name="avPart">The part proto.</param>
-  /// <param name="variant">
-  /// The variant to apply. Set it to <c>null</c> to use the default part variant.
-  /// </param>
-  /// <param name="fn">
-  /// The action to call once the variant is applied. The argument is a prefab part with the variant
-  /// applied, so changing it or obtaining any hard references won't be a good idea. The prefab
-  /// part's variant will be reverted before the method return.
-  /// </param>
-  public void ExecuteAtPartVariant(
-      AvailablePart avPart, PartVariant variant, Action<Part> fn) {
-    var oldPartVariant = GetCurrentPartVariant(avPart.partPrefab);
-    if (oldPartVariant != null) {
-      variant = variant ?? avPart.partPrefab.baseVariant;
-      avPart.partPrefab.variants.SetVariant(variant.Name);  // Set.
-      ApplyVariantOnAttachNodes(avPart.partPrefab, variant);
-      fn(avPart.partPrefab);  // Run on the updated part.
-      avPart.partPrefab.variants.SetVariant(oldPartVariant.Name);  // Restore.
-      ApplyVariantOnAttachNodes(avPart.partPrefab, oldPartVariant);
-    } else {
-      fn(avPart.partPrefab);
-    }
-  }
-
-  /// <summary>Applies variant settinsg to the part attach nodes.</summary>
-  /// <remarks>
-  /// The stock apply variant method only does it when the active scene is editor. So if there is a
-  /// part in the flight scene with a variant, it needs to be updated for the proper KIS behavior.
-  /// </remarks>
-  /// <param name="part">The part to apply the chnages to.</param>
-  /// <param name="variant">The variant to apply.</param>
-  /// <param name="updatePartPosition">
-  /// Tells if any connected parts at the attach nodes need to be repositioned accordingly. This may
-  /// trigger collisions in the scene, so use carefully.
-  /// </param>
-  public void ApplyVariantOnAttachNodes(Part part, PartVariant variant,
-                                        bool updatePartPosition = false) {
-    foreach (var partAttachNode in part.attachNodes) {
-      foreach (var variantAttachNode in variant.AttachNodes) {
-        if (partAttachNode.id == variantAttachNode.id) {
-          if (updatePartPosition) {
-            ModulePartVariants.UpdatePartPosition(partAttachNode, variantAttachNode);
-          }
-          partAttachNode.originalPosition = variantAttachNode.originalPosition;
-          partAttachNode.position = variantAttachNode.position;
-          partAttachNode.size = variantAttachNode.size;
-        }
-      }
-    }
   }
 }
 

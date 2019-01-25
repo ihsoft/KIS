@@ -8,6 +8,7 @@ using KIS.GUIUtils;
 using KSPDev.ConfigUtils;
 using KSPDev.GUIUtils;
 using KSPDev.LogUtils;
+using KSPDev.PartUtils;
 using KSPDev.ProcessingUtils;
 using System;
 using System.Collections;
@@ -78,7 +79,7 @@ public sealed class KIS_Item {
   public bool equipable;
 
   #region Persisted properties
-  /// <summary>The number of irems in the inventory slot.</summary>
+  /// <summary>The number of items in the inventory slot.</summary>
   /// <value>The number of items.</value>
   public int quantity {
     get { return _quantity; }
@@ -290,7 +291,7 @@ public sealed class KIS_Item {
 
     // COMPATIBILITY: Set/restore the resources cost and mass.
     // TODO(ihsoft): This code is only needed for the pre-1.17 KIS version saves. Drop it one day.  
-    var resourceNodes = KISAPI.PartNodeUtils.GetModuleNodes(partNode, "RESOURCE");
+    var resourceNodes = PartNodeUtils.GetModuleNodes(partNode, "RESOURCE");
     if (resourceNodes.Any()
         && (this.itemResourceMass < float.Epsilon || this.itemResourceCost < float.Epsilon)) {
       var oldResourceMass = this.itemResourceMass;
@@ -356,7 +357,7 @@ public sealed class KIS_Item {
     var module = avPart.partPrefab.GetComponent<ModuleKISItem>();
     var allModulesCompatible = avPart.partPrefab.Modules.Cast<PartModule>()
         .All(m => KISAddonConfig.stackableModules.Contains(m.moduleName));
-    var hasNoResources = KISAPI.PartNodeUtils.GetModuleNode(avPart.partConfig, "RESOURCE") != null;
+    var hasNoResources = PartNodeUtils.GetModuleNode(avPart.partConfig, "RESOURCE") != null;
     return module != null && module.stackable
         || KISAddonConfig.stackableList.Contains(avPart.name.Replace('.', '_'))
         || allModulesCompatible && hasNoResources;
@@ -401,7 +402,7 @@ public sealed class KIS_Item {
     DisableIcon();
     icon = new KIS_IconViewer(
         availablePart, resolution,
-        KISAPI.PartUtils.GetCurrentPartVariant(availablePart, partNode));
+        VariantsUtils.GetCurrentPartVariant(availablePart, partNode));
   }
 
   public void DisableIcon() {

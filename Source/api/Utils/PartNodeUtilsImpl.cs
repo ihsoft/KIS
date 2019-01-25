@@ -31,59 +31,13 @@ public class PartNodeUtilsImpl {
     return ratio;
   }
 
-  /// <summary>Extracts a module config node from the part config.</summary>
-  /// <param name="partNode">
-  /// The part's config. It can be a top-level node or the <c>PART</c> node.
-  /// </param>
-  /// <param name="moduleName">The name of the module to extract.</param>
-  /// <returns>The module node or <c>null</c> if not found.</returns>
-  public ConfigNode GetModuleNode(ConfigNode partNode, string moduleName) {
-    var res = GetModuleNodes(partNode, moduleName);
-    return res.Length > 0 ? res[0] : null;
-  }
-
-  /// <summary>Extracts a module config node from the part config.</summary>
-  /// <param name="partNode">
-  /// The part's config. It can be a top-level node or the <c>PART</c> node.
-  /// </param>
-  /// <returns>The module node or <c>null</c> if not found.</returns>
-  /// <typeparam name="T">The type of the module to get node for.</typeparam>
-  public ConfigNode GetModuleNode<T>(ConfigNode partNode) {
-    return GetModuleNode(partNode, typeof(T).Name);
-  }
-
-  /// <summary>Extracts all module config nodes from the part config.</summary>
-  /// <param name="partNode">
-  /// The part's config. It can be a top-level node or the <c>PART</c> node.
-  /// </param>
-  /// <param name="moduleName">The name of the module to extract.</param>
-  /// <returns>The array of found module nodes.</returns>
-  public ConfigNode[] GetModuleNodes(ConfigNode partNode, string moduleName) {
-    if (partNode.HasNode("PART")) {
-      partNode = partNode.GetNode("PART");
-    }
-    return partNode.GetNodes("MODULE")
-        .Where(m => m.GetValue("name") == moduleName)
-        .ToArray();
-  }
-
-  /// <summary>Extracts all module config nodes from the part config.</summary>
-  /// <param name="partNode">
-  /// The part's config. It can be a top-level node or the <c>PART</c> node.
-  /// </param>
-  /// <returns>The array of found module nodes.</returns>
-  /// <typeparam name="T">The type of the module to get node for.</typeparam>
-  public ConfigNode[] GetModuleNodes<T>(ConfigNode partNode) {
-    return GetModuleNodes(partNode, typeof(T).Name);
-  }
-
   /// <summary>Gets <c>TweakScale</c> module config.</summary>
   /// <param name="partNode">
   /// The config to extract the module config from. It can be <c>null</c>.
   /// </param>
   /// <returns>The <c>TweakScale</c> module or <c>null</c>.</returns>
   public ConfigNode GetTweakScaleModule(ConfigNode partNode) {
-    return partNode != null ? GetModuleNode(partNode, "TweakScale") : null;
+    return partNode != null ? PartNodeUtils.GetModuleNode(partNode, "TweakScale") : null;
   }
 
   /// <summary>Creates a simplified snapshot of the part's persistent state.</summary>

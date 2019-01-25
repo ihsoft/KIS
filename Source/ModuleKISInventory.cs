@@ -11,6 +11,7 @@ using KSPDev.GUIUtils;
 using KSPDev.GUIUtils.TypeFormatters;
 using KSPDev.KSPInterfaces;
 using KSPDev.LogUtils;
+using KSPDev.ModelUtils;
 using KSPDev.PartUtils;
 using KSPDev.ProcessingUtils;
 using System;
@@ -2060,7 +2061,7 @@ public class ModuleKISInventory : PartModule,
       return FlightGlobals.ActiveVessel.parts
           .SelectMany(p => p.Modules.OfType<ModuleKISPickup>())
           .Any(m => m.maxDistance * m.maxDistance
-               >= KISAPI.ColliderUtils.GetSqrDistanceToPartOrDefault(m.transform.position, part));
+               >= Colliders2.GetSqrDistanceToPartOrDefault(m.transform.position, part));
     }
     return true;
   }

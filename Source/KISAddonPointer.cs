@@ -8,6 +8,7 @@ using KSPDev.GUIUtils;
 using KSPDev.GUIUtils.TypeFormatters;
 using KSPDev.ProcessingUtils;
 using KSPDev.LogUtils;
+using KSPDev.PartUtils;
 using KSPDev.ModelUtils;
 using System;
 using System.Collections.Generic;
@@ -264,9 +265,9 @@ sealed class KISAddonPointer : MonoBehaviour {
       if (rootPart) {
         MakePointer(rootPart);
       } else {
-        KISAPI.PartUtils.ExecuteAtPartVariant(
+        VariantsUtils.ExecuteAtPartVariant(
             item.availablePart,
-            KISAPI.PartUtils.GetCurrentPartVariant(item.availablePart, item.partNode),
+            VariantsUtils.GetCurrentPartVariant(item.availablePart, item.partNode),
             MakePointer);
         pointer.transform.localScale *=
             KISAPI.PartNodeUtils.GetTweakScaleSizeModifier(item.partNode);
@@ -449,9 +450,9 @@ sealed class KISAddonPointer : MonoBehaviour {
       }
     }
     if (allowStack && currentAttachNode.nodeType != AttachNode.NodeType.Surface) {
-      var variant = KISAPI.PartUtils.GetCurrentPartVariant(hoverPart);
+      var variant = VariantsUtils.GetCurrentPartVariant(hoverPart);
       if (variant != null) {
-        KISAPI.PartUtils.ApplyVariantOnAttachNodes(hoverPart, variant);
+        VariantsUtils.ApplyVariantOnAttachNodes(hoverPart, variant);
       }
       foreach (var an in KIS_Shared.GetAvailableAttachNodes(hoverPart, needSrf: false)) {
         KIS_Shared.AssignAttachIcon(hoverPart, an, colorStack);

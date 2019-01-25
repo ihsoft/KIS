@@ -1,16 +1,16 @@
-﻿// Kerbal Inventory System
-// Module author: igor.zavoychinskiy@gmail.com
-// License: Public Domain
+﻿// Kerbal Development tools.
+// Author: igor.zavoychinskiy@gmail.com
+// This software is distributed under Public domain license.
 
+using KSPDev.LogUtils;
 using System;
 using System.Linq;
 using UnityEngine;
 
-namespace KISAPIv1 {
+namespace KSPDev.ModelUtils {
 
-/// <summary>Various methods to deal with the part's colliders.</summary>
-public class ColliderUtilsImpl {
-
+/// <summary>Various tools to deal with procedural colliders.</summary>
+public static class Colliders2 {
   /// <summary>
   /// Returns the minimum square distance to the nearest point on the part's collider surface.
   /// </summary>
@@ -22,7 +22,7 @@ public class ColliderUtilsImpl {
   /// collider in the following checks.
   /// </param>
   /// <returns>The square distance or <c>null</c> if no colliders found.</returns>
-  public float? GetSqrDistanceToPart(
+  public static float? GetSqrDistanceToPart(
       Vector3 point, Part part, Func<Collider, bool> filterFn = null) {
     float? minDistance = null;
     var colliders = part.transform.GetComponentsInChildren<Collider>()
@@ -60,9 +60,9 @@ public class ColliderUtilsImpl {
   /// <returns>
   /// The square distance or <paramref name="defaultValue"/> if no colliders found.
   /// </returns>
-  public float GetSqrDistanceToPartOrDefault(Vector3 point, Part part,
-                                             float defaultValue = float.PositiveInfinity,
-                                             Func<Collider, bool> filterFn = null) {
+  public static float GetSqrDistanceToPartOrDefault(
+      Vector3 point, Part part,
+      float defaultValue = float.PositiveInfinity, Func<Collider, bool> filterFn = null) {
     return GetSqrDistanceToPart(point, part) ?? defaultValue;
   }
 }

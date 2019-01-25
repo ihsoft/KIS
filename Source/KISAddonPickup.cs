@@ -10,6 +10,8 @@ using KSPDev.GUIUtils;
 using KSPDev.GUIUtils.TypeFormatters;
 using KSPDev.InputUtils;
 using KSPDev.LogUtils;
+using KSPDev.ModelUtils;
+using KSPDev.PartUtils;
 using System;
 using System.Collections.Generic;
 using System.Collections;
@@ -994,7 +996,7 @@ sealed class KISAddonPickup : MonoBehaviour {
     var pickupModules = FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleKISPickup>();
 
     foreach (var pickupModule in pickupModules) {
-      var partSqrDist = KISAPI.ColliderUtils.GetSqrDistanceToPartOrDefault(
+      var partSqrDist = Colliders2.GetSqrDistanceToPartOrDefault(
           pickupModule.part.transform.position, refPart);
       if (partSqrDist <= nearestSqrDistance) {
         if (!canPartAttachOnly && !canStaticAttachOnly) {
@@ -1043,7 +1045,7 @@ sealed class KISAddonPickup : MonoBehaviour {
     float maxMass = 0;
     var allPickupModules = FindObjectsOfType(typeof(ModuleKISPickup)) as ModuleKISPickup[];
     foreach (ModuleKISPickup pickupModule in allPickupModules) {
-      var partDist = KISAPI.ColliderUtils.GetSqrDistanceToPartOrDefault(
+      var partDist = Colliders2.GetSqrDistanceToPartOrDefault(
           pickupModule.part.transform.position, refPart);
       if (partDist <= pickupModule.maxDistance * pickupModule.maxDistance) {
         HostedDebugLog.Fine(
@@ -1188,7 +1190,7 @@ sealed class KISAddonPickup : MonoBehaviour {
       if (draggedItem != null) {
         icon = new KIS_IconViewer(
             draggedPart.partInfo, draggedIconResolution,
-            KISAPI.PartUtils.GetCurrentPartVariant(draggedPart.partInfo, draggedItem.partNode));
+            VariantsUtils.GetCurrentPartVariant(draggedPart.partInfo, draggedItem.partNode));
       } else {
         icon = new KIS_IconViewer(draggedPart, draggedIconResolution);
       }

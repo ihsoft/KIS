@@ -1,4 +1,5 @@
 ﻿using KISAPIv1;
+using KSPDev.PartUtils;
 using System;
 using System.Linq;
 using UnityEngine;
@@ -26,7 +27,7 @@ public sealed class KIS_IconViewer : IDisposable {
     if (part.vessel != null && part.vessel.isEVA) {
       MakeKerbalAvatar(part, resolution);
     } else {
-      MakePartIcon(part.partInfo, resolution, KISAPI.PartUtils.GetCurrentPartVariant(part));
+      MakePartIcon(part.partInfo, resolution, VariantsUtils.GetCurrentPartVariant(part));
     }
     iconCount += 1;
   }
