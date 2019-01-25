@@ -1164,9 +1164,11 @@ sealed class KISAddonPickup : MonoBehaviour {
 
   void OnGUI() {
     if (draggedPart) {
+      var mousePosition = Input.mousePosition;
+      mousePosition.y = Screen.height - mousePosition.y;
       GUI.depth = 0;
-      GUI.DrawTexture(new Rect(Event.current.mousePosition.x - (draggedIconSize / 2),
-                               Event.current.mousePosition.y - (draggedIconSize / 2),
+      GUI.DrawTexture(new Rect(mousePosition.x - (draggedIconSize / 2),
+                               mousePosition.y - (draggedIconSize / 2),
                                draggedIconSize,
                                draggedIconSize),
                       icon.texture, ScaleMode.ScaleToFit);
