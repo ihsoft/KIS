@@ -70,7 +70,7 @@
     <Compile Include="api\Utils\KISAPI.cs" />
     <Compile Include="api\Utils\PartNodeUtilsImpl.cs" />
     <Compile Include="api\Utils\PartUtilsImpl.cs" />
-    <Compile Include="controllers\ControllerPartEditorTool.cs" />
+    <Compile Include="Debug\ControllerPartEditorTool.cs" />
     <Compile Include="Debug\KISDebugAdjustableAttribute.cs" />
     <Compile Include="Debug\SpawnItemDialog.cs" />
     <Compile Include="EditorDefaultItemsAdder.cs" />
@@ -109,7 +109,6 @@
     <Folder Include="api\Utils" />
     <Folder Include="KSPDev_candidates" />
     <Folder Include="Debug" />
-    <Folder Include="controllers" />
     <Folder Include="api" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
