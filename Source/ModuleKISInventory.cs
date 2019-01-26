@@ -1047,10 +1047,30 @@ public class ModuleKISInventory : PartModule,
     srcItems.Clear();
   }
 
-  public void DeleteItem(int slot) {
+  /// <summary>Deletes an item.</summary>
+  /// <param name="slot">
+  /// The slot number. If there is no item at the slot, an error is logged but no other
+  /// consequences happen.
+  /// </param>
+  /// <param name="qty">
+  /// The quantity to delete. If greater than the available count, then an error is logged, but only
+  /// the availabe items are removed.
+  /// </param>
+  /// <returns>The number of actually deleted items from the slot.</returns>
+  public int DeleteItem(int slot, int qty = 1) {
     if (items.ContainsKey(slot)) {
-      items[slot].StackRemove(1);
+      var item = items[slot];
+      if (qty > item.quantity) {
+        HostedDebugLog.Error(
+            this, "Cannot delete the requested amount: requested={0}, available={1}",
+            qty, item.quantity);
+        qty = item.quantity;
+      }
+      item.StackRemove(qty);
+      return qty;
     }
+    HostedDebugLog.Error(this, "Cannot find item in slot: {0}", slot);
+    return 0;
   }
 
   public bool isFull() {
@@ -1504,6 +1524,10 @@ public class ModuleKISInventory : PartModule,
         DebugGui2.MakePartDebugDialog("KIS item adjustment tool",
                                       group: Debug.KISDebugAdjustableAttribute.DebugGroup,
                                       bindToPart: contextItem.availablePart.partPrefab);
+        contextItem = null;
+      }
+      if (GUILayout.Button("Dispose")) {
+        contextItem.inventory.DeleteItem(contextItem.slot, contextItem.quantity);
         contextItem = null;
       }
     }
