@@ -101,6 +101,7 @@
     <Compile Include="KIS_Item.cs" />
     <Compile Include="ModuleKISInventory.cs" />
     <Compile Include="KIS_Shared.cs" />
+    <Compile Include="modules\KISCollider.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UISounds.cs" />
     <Compile Include="VolumeLType.cs" />
@@ -110,6 +111,7 @@
     <Folder Include="KSPDev_candidates" />
     <Folder Include="Debug" />
     <Folder Include="api" />
+    <Folder Include="modules" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
