@@ -113,6 +113,9 @@
     <Folder Include="api" />
     <Folder Include="modules" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="SpecialDocTags.xml" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>IF EXIST "Q:\GameData\KIS" xcopy "$(TargetPath)" "Q:\GameData\KIS\Plugins\" /Y
