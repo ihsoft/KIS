@@ -260,7 +260,7 @@ public class ModuleKISItem : PartModule,
   }
 
   /// <inheritdoc/>
-  public void OnBeforeDebugAdjustablesUpdate() {
+  public virtual void OnBeforeDebugAdjustablesUpdate() {
     dbgEquippedItems = FlightGlobals.Vessels
         .Where(v => v.isEVA)
         .Select(v => v.rootPart)
@@ -272,7 +272,7 @@ public class ModuleKISItem : PartModule,
   }
 
   /// <inheritdoc/>
-  public void OnDebugAdjustablesUpdated() {
+  public virtual void OnDebugAdjustablesUpdated() {
     dbgEquippedItems.ForEach(item => item.Equip());
     dbgEquippedItems = null;
   }
