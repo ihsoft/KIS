@@ -1,5 +1,6 @@
 # 1.17 (pre-release):
 * KSP 1.6 support. This mod's version is not compatible with the prior versions of KSP!
+* [Enhancement] Add fun English part descriptions.
 * [Enhancement] Add Portuguese (Brazil) localization.
 * [Enhancement] Improve items&parts debug ability. See `partAlignToolKey` and `itemDebug` in the settings file.
 * [Enhancement] Add new containers: `IMiC-1500`, `ImC-3K`, `IMC-22K`, and `IGC-45K`.
