@@ -20,8 +20,8 @@ public class PartNodeUtilsImpl {
     var ratio = 1.0f;
     var tweakScaleNode = GetTweakScaleModule(partNode);
     if (tweakScaleNode != null) {
-      var defaultScale = ConfigAccessor2.GetValueByPath<float>(tweakScaleNode, "defaultScale");
-      var currentScale = ConfigAccessor2.GetValueByPath<float>(tweakScaleNode, "currentScale");
+      var defaultScale = ConfigAccessor.GetValueByPath<float>(tweakScaleNode, "defaultScale");
+      var currentScale = ConfigAccessor.GetValueByPath<float>(tweakScaleNode, "currentScale");
       if (defaultScale.HasValue && currentScale.HasValue) {
         ratio = currentScale.Value / defaultScale.Value;
       } else {
@@ -124,11 +124,11 @@ public class PartNodeUtilsImpl {
         .FirstOrDefault(r => r.GetValue("name") == name);
     double? setAmount = null;
     if (node != null) {
-      setAmount = ConfigAccessor2.GetValueByPath<double>(node, "amount") ?? 0.0f;
+      setAmount = ConfigAccessor.GetValueByPath<double>(node, "amount") ?? 0.0f;
       if (isAmountRelative) {
         setAmount += amount;
       }
-      ConfigAccessor2.SetValueByPath(node, "amount", setAmount.Value);
+      ConfigAccessor.SetValueByPath(node, "amount", setAmount.Value);
     }
     return setAmount;
   }

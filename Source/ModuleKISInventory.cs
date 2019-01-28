@@ -964,10 +964,10 @@ public class ModuleKISInventory : PartModule,
     LocalizeModule();
     var itemNodes = node.nodes.Cast<ConfigNode>().Where(n => n.name == "ITEM");
     foreach (var itemNode in itemNodes) {
-      var slot = ConfigAccessor2.GetValueByPath<int>(itemNode, "slot") ?? -1;
+      var slot = ConfigAccessor.GetValueByPath<int>(itemNode, "slot") ?? -1;
       var item = AddItem(itemNode, slot);
       if (item != null) {
-        var isEquipped = ConfigAccessor2.GetValueByPath<bool>(itemNode, "equipped") ?? false;
+        var isEquipped = ConfigAccessor.GetValueByPath<bool>(itemNode, "equipped") ?? false;
         if (isEquipped) {
           if (invType == InventoryType.Eva) {
             startEquip.Add(item);
@@ -1580,9 +1580,9 @@ public class ModuleKISInventory : PartModule,
         && !HighLogic.LoadedSceneIsEditor && invType == InventoryType.Eva) {
       noAction = false;
       if (GUILayout.Button("Debug")) {
-        DebugGui2.MakePartDebugDialog("KIS item adjustment tool",
-                                      group: Debug.KISDebugAdjustableAttribute.DebugGroup,
-                                      bindToPart: contextItem.availablePart.partPrefab);
+        DebugGui.MakePartDebugDialog("KIS item adjustment tool",
+                                     group: Debug.KISDebugAdjustableAttribute.DebugGroup,
+                                     bindToPart: contextItem.availablePart.partPrefab);
         contextItem = null;
       }
       if (GUILayout.Button("Dispose")) {
@@ -2145,7 +2145,7 @@ public class ModuleKISInventory : PartModule,
       return FlightGlobals.ActiveVessel.parts
           .SelectMany(p => p.Modules.OfType<ModuleKISPickup>())
           .Any(m => m.maxDistance * m.maxDistance
-               >= Colliders2.GetSqrDistanceToPartOrDefault(m.transform.position, part));
+               >= Colliders.GetSqrDistanceToPartOrDefault(m.transform.position, part));
     }
     return true;
   }

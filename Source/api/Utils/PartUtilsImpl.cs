@@ -215,7 +215,7 @@ public class PartUtilsImpl {
     if (partNode != null) {
       var tweakScale = KISAPI.PartNodeUtils.GetTweakScaleModule(partNode);
       if (tweakScale != null) {
-        var tweakedCost = ConfigAccessor2.GetValueByPath<float>(tweakScale, "DryCost");
+        var tweakedCost = ConfigAccessor.GetValueByPath<float>(tweakScale, "DryCost");
         if (tweakedCost.HasValue) {
           // TODO(ihsoft): Get back to this code once TweakScale supports variants.
           return tweakedCost.Value;

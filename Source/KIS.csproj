@@ -52,8 +52,8 @@
     <Reference Include="Assembly-CSharp-firstpass">
       <HintPath>Q:\KSP_x64_Data\Managed\Assembly-CSharp-firstpass.dll</HintPath>
     </Reference>
-    <Reference Include="KSPDev_Utils.1.0">
-      <HintPath>..\Binaries\KSPDev_Utils.1.0.dll</HintPath>
+    <Reference Include="KSPDev_Utils.1.1">
+      <HintPath>..\Binaries\KSPDev_Utils.1.1.dll</HintPath>
     </Reference>
     <Reference Include="System">
       <HintPath>Q:\KSP_x64_Data\Managed\System.dll</HintPath>
@@ -75,14 +75,6 @@
     <Compile Include="Debug\SpawnItemDialog.cs" />
     <Compile Include="EditorDefaultItemsAdder.cs" />
     <Compile Include="KISAddonCursor.cs" />
-    <Compile Include="KSPDev_candidates\Colliders2.cs" />
-    <Compile Include="KSPDev_candidates\ConfigAccessor2.cs" />
-    <Compile Include="KSPDev_candidates\DebugGui2.cs" />
-    <Compile Include="KSPDev_candidates\Mathf2.cs" />
-    <Compile Include="KSPDev_candidates\PartDebugAdjustmentDialog2.cs" />
-    <Compile Include="KSPDev_candidates\PartNodeUtils.cs" />
-    <Compile Include="KSPDev_candidates\PerfCounter.cs" />
-    <Compile Include="KSPDev_candidates\VariantsUtils.cs" />
     <Compile Include="MainScreenTweaker.cs" />
     <Compile Include="ModuleKISItemEvaPropellant.cs" />
     <Compile Include="KIS_IconViewer.cs" />

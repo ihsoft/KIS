@@ -253,7 +253,7 @@ public class ModuleKISItem : PartModule,
     if (FlightGlobals.ActiveVessel.isEVA) {
       var p = FlightGlobals.ActiveVessel.rootPart;
       DebugEx.Warning("Objects hierarchy in: {0}", p);
-      DebugGui2.DumpHierarchy(p.transform, p.transform);
+      DebugGui.DumpHierarchy(p.transform, p.transform);
     } else {
       DebugEx.Warning("The active vessel is not EVA!");
     }

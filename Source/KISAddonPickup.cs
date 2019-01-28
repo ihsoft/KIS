@@ -996,7 +996,7 @@ sealed class KISAddonPickup : MonoBehaviour {
     var pickupModules = FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleKISPickup>();
 
     foreach (var pickupModule in pickupModules) {
-      var partSqrDist = Colliders2.GetSqrDistanceToPartOrDefault(
+      var partSqrDist = Colliders.GetSqrDistanceToPartOrDefault(
           pickupModule.part.transform.position, refPart);
       if (partSqrDist <= nearestSqrDistance) {
         if (!canPartAttachOnly && !canStaticAttachOnly) {
@@ -1045,7 +1045,7 @@ sealed class KISAddonPickup : MonoBehaviour {
     float maxMass = 0;
     var allPickupModules = FindObjectsOfType(typeof(ModuleKISPickup)) as ModuleKISPickup[];
     foreach (ModuleKISPickup pickupModule in allPickupModules) {
-      var partDist = Colliders2.GetSqrDistanceToPartOrDefault(
+      var partDist = Colliders.GetSqrDistanceToPartOrDefault(
           pickupModule.part.transform.position, refPart);
       if (partDist <= pickupModule.maxDistance * pickupModule.maxDistance) {
         HostedDebugLog.Fine(

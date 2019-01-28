@@ -240,7 +240,7 @@ public sealed class KIS_Item {
   /// <param name="inventory">The owner inventory of the item.</param>
   /// <returns>The item instance.</returns>
   public static KIS_Item RestoreItemFromNode(ConfigNode itemNode, ModuleKISInventory inventory) {
-    var qty = ConfigAccessor2.GetValueByPath<int>(itemNode, "quantity") ?? 0;
+    var qty = ConfigAccessor.GetValueByPath<int>(itemNode, "quantity") ?? 0;
     var partName = itemNode.GetValue("partName");
     AvailablePart avPart = null;
     if (partName != null) {
