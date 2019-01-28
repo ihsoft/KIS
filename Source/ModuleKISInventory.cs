@@ -29,7 +29,7 @@ public class ModuleKISInventory : PartModule,
     // KSP interfaces.
     IPartCostModifier, IPartMassModifier, IModuleInfo,
     // KSPDev interfaces.
-    IHasContextMenu,
+    IHasContextMenu, IHasDebugAdjustables, IsLocalizableModule,
     // KSPDev syntax sugar interfaces.
     IPartModule, IsDestroyable, IKSPDevModuleInfo {
 
@@ -720,6 +720,23 @@ public class ModuleKISInventory : PartModule,
   // Sounds
   public FXGroup sndFx;
 
+  #region IsLocalizableModule implementation
+  /// <inheritdoc/>
+  public virtual void LocalizeModule() {
+    LocalizationLoader.LoadItemsInModule(this);
+  }
+  #endregion
+
+  #region IHasDebugAdjustables implementation
+  /// <inheritdoc/>
+  public void OnBeforeDebugAdjustablesUpdate() {
+  }
+
+  /// <inheritdoc/>
+  public void OnDebugAdjustablesUpdated() {
+  }
+  #endregion
+
   #region IHasContextMenu implementation
   public virtual void UpdateContextMenu() {
     var invEvent = PartModuleUtils.GetEvent(this, ToggleInventoryEvent);
@@ -834,6 +851,7 @@ public class ModuleKISInventory : PartModule,
   #region PartModule overrides
   /// <inheritdoc/>
   public override void OnAwake() {
+    base.OnAwake();
     if (HighLogic.LoadedSceneIsFlight) {
       GameEvents.onCrewTransferred.Add(OnCrewTransferred);
       GameEvents.onCrewTransferSelected.Add(OnCrewTransferSelected);
@@ -844,6 +862,7 @@ public class ModuleKISInventory : PartModule,
     if (HighLogic.LoadedSceneIsEditor) {
       GameEvents.onEditorVariantApplied.Add(OnPartVariandChanged);
     }
+    LocalizeModule();
   }
 
   /// <inheritdoc/>
@@ -903,6 +922,7 @@ public class ModuleKISInventory : PartModule,
   /// <inheritdoc/>
   public override void OnLoad(ConfigNode node) {
     base.OnLoad(node);
+    LocalizeModule();
     var itemNodes = node.nodes.Cast<ConfigNode>().Where(n => n.name == "ITEM");
     foreach (var itemNode in itemNodes) {
       var slot = ConfigAccessor2.GetValueByPath<int>(itemNode, "slot") ?? -1;
