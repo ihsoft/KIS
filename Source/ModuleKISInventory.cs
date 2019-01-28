@@ -776,7 +776,11 @@ public class ModuleKISInventory : PartModule,
     var bounds = part.gameObject.GetColliderBounds();
     var unfocusedRange = Mathf.Max(bounds.size.x, bounds.size.y, bounds.size.z) + 30.0f;
 
-    PartModuleUtils.SetupEvent(this, ToggleDoorsEvent, e => { 
+    PartModuleUtils.SetupEvent(this, ToggleDoorsEvent, e => {
+      var hasAnimation = openAnimState != null;
+      e.guiActiveEditor = hasAnimation;
+      e.guiActive = hasAnimation;
+      e.guiActiveUnfocused = hasAnimation;
       e.unfocusedRange = unfocusedRange;
       e.active = true;
     });
