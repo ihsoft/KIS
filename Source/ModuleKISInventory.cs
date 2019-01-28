@@ -11,6 +11,7 @@ using KSPDev.GUIUtils;
 using KSPDev.GUIUtils.TypeFormatters;
 using KSPDev.KSPInterfaces;
 using KSPDev.LogUtils;
+using KSPDev.MathUtils;
 using KSPDev.ModelUtils;
 using KSPDev.PartUtils;
 using KSPDev.ProcessingUtils;
@@ -494,11 +495,22 @@ public class ModuleKISInventory : PartModule,
   [KSPField]
   public int podSeat = -1;
 
-  // Animation (Not tested)
+  /// <summary>Name of the animation that opens/closes the container doors.</summary>
+  /// <remarks>
+  /// This animation will be ran each time the inventory GUI is accessed <i>externally</i>. It won't
+  /// play if the inventory of the active vessel is being accessed.
+  /// <para>This setting can be left empty to not apply any animation.</para>  
+  /// </remarks>
+  /// <include file="SpecialDocTags.xml" path="Tags/ConfigSetting/*"/>
+  /// <seealso cref="externalAccess"/>
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Doors animation: Name")]
   public string openAnimName = "";
 
+  /// <summary>Speed of the open/close animation.</summary>
+  /// <include file="SpecialDocTags.xml" path="Tags/ConfigSetting/*"/>
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Doors animation: Speed")]
   public float openAnimSpeed = 1f;
   #endregion
 
@@ -563,10 +575,7 @@ public class ModuleKISInventory : PartModule,
       foreach (KeyValuePair<int, KIS_Item> item in items) {
         item.Value.DisableIcon();
       }
-      if (openAnim) {
-        openAnim[openAnimName].speed = -openAnimSpeed;
-        openAnim.Play(openAnimName);
-      }
+      SetDoorsOpenAnimationState(false);
       DisableIcon();
       showGui = false;
       if (HighLogic.LoadedSceneIsEditor) {
@@ -617,20 +626,33 @@ public class ModuleKISInventory : PartModule,
           y = guiMainWindowPos.y + 250
         };
       }
-      if (openAnim) {
-        openAnim[openAnimName].speed = openAnimSpeed;
-        openAnim.Play(openAnimName);
-      }
       showGui = true;
-      if (HighLogic.LoadedSceneIsEditor) {
-        UISoundPlayer.instance.Play(openSndPath);
-      } else {
-        UISoundPlayer.instance.Play(openSndPath);
+      if (FlightGlobals.ActiveVessel != vessel && externalAccess
+          || HighLogic.LoadedSceneIsEditor) {
+        SetDoorsOpenAnimationState(true);
       }
+      UISoundPlayer.instance.Play(openSndPath);
       if (HighLogic.LoadedSceneIsFlight) {
         StartCoroutine(CheckInventoryGUIVisibilityCoroutine());
       }
     }
+  }
+
+  /// <summary>Toggles the inventory doors open state if there is an animation.</summary>
+  [KSPEvent(guiActiveEditor = true, guiActive = true,
+            guiActiveUnfocused = true, guiActiveUncommand = true)]
+  [LocalizableItem(tag = "#autoLOC_502060")]
+  public void ToggleDoorsEvent() {
+    if (openAnimState == null) {
+      return;
+    }
+    bool newDoorsOpenState;
+    if (openAnim.IsPlaying(openAnimName)) {
+      newDoorsOpenState = openAnimState.speed < 0;
+    } else {
+      newDoorsOpenState = Mathf2.AreSame(openAnimState.normalizedTime, 0);
+    }
+    SetDoorsOpenAnimationState(newDoorsOpenState);
   }
   #endregion
 
@@ -688,7 +710,15 @@ public class ModuleKISInventory : PartModule,
   bool contextClick;
   Rect contextRect;
 
+  /// <summary>Animation that visualizes the container doors open/close action.</summary>
+  /// <remarks>It can be <c>null</c>.</remarks>
+  /// <seealso cref="openAnimState"/>
   Animation openAnim;
+
+  /// <summary>Animation state that handles the doors.</summary>
+  /// <remarks>It can be <c>null</c>.</remarks>
+  /// <seealso cref="openAnim"/>
+  AnimationState openAnimState;
 
   float keyPressTime;
   List<KIS_Item> startEquip = new List<KIS_Item>();
@@ -730,15 +760,27 @@ public class ModuleKISInventory : PartModule,
   #region IHasDebugAdjustables implementation
   /// <inheritdoc/>
   public void OnBeforeDebugAdjustablesUpdate() {
+    SetDoorsOpenAnimationState(false, immediateReset: true);
   }
 
   /// <inheritdoc/>
   public void OnDebugAdjustablesUpdated() {
+    InitAnitmation();
+    SetDoorsOpenAnimationState(showGui, immediateReset: true);
   }
   #endregion
 
   #region IHasContextMenu implementation
   public virtual void UpdateContextMenu() {
+    // Find action menu MAX range. The distance will be fine turned in the action menu callback.
+    var bounds = part.gameObject.GetColliderBounds();
+    var unfocusedRange = Mathf.Max(bounds.size.x, bounds.size.y, bounds.size.z) + 30.0f;
+
+    PartModuleUtils.SetupEvent(this, ToggleDoorsEvent, e => { 
+      e.unfocusedRange = unfocusedRange;
+      e.active = true;
+    });
+    
     var invEvent = PartModuleUtils.GetEvent(this, ToggleInventoryEvent);
     if (invType == InventoryType.Pod) {
       if (HighLogic.LoadedSceneIsEditor) {
@@ -772,8 +814,7 @@ public class ModuleKISInventory : PartModule,
           : PartInventoryMenuTxt.Format();
     }
     // Set action menu MAX range. The distance will be fine turned in the action menu callback.
-    var bounds = part.gameObject.GetColliderBounds();
-    invEvent.unfocusedRange = Mathf.Max(bounds.size.x, bounds.size.y, bounds.size.z) + 30.0f;
+    invEvent.unfocusedRange = unfocusedRange;
     invEvent.active = true;
   }
   #endregion
@@ -887,14 +928,8 @@ public class ModuleKISInventory : PartModule,
 
     guiMainWindowPos = defaultFlightPos;
 
-    if (openAnimName != "") {
-      Animation[] anim = part.FindModelAnimators(openAnimName);
-      if (anim.Length > 0) {
-        openAnim = anim[0];
-      } else {
-        HostedDebugLog.Error(this, "Cannot find animation: {0}", openAnimName);
-      }
-    }
+    InitAnitmation();
+    SetDoorsOpenAnimationState(false, immediateReset: true);
 
     // Only equip if this is a kerbal module. Pods and command seats have POD inventory too.
     // Don't check for "isEVA", since kerbal on a command seat is not an EVA vessel.
@@ -1898,6 +1933,7 @@ public class ModuleKISInventory : PartModule,
       ToggleInventoryEvent();
     }
     PartModuleUtils.SetupEvent(this, ToggleInventoryEvent, inv => inv.active = true);
+    PartModuleUtils.SetupEvent(this, ToggleDoorsEvent, inv => inv.active = true);
   }
 
   /// <summary>Checks if target part can accept non-empty inventories.</summary>
@@ -2118,10 +2154,10 @@ public class ModuleKISInventory : PartModule,
   void OnPartActionMenuCreate(Part p) {
     if (p == part && vessel != FlightGlobals.ActiveVessel
         && lastMenuRangeCheckedTime + MenuRangeCheckThreshold < Time.time) {
-      PartModuleUtils.SetupEvent(this, ToggleInventoryEvent, inv => {
-        inv.active = CheckActionMenuVisibility();
-        lastMenuRangeCheckedTime = Time.time;
-      });
+      var isGuiActive = CheckActionMenuVisibility();
+      lastMenuRangeCheckedTime = Time.time;
+      PartModuleUtils.SetupEvent(this, ToggleInventoryEvent, e => e.active = isGuiActive);
+      PartModuleUtils.SetupEvent(this, ToggleDoorsEvent, e => e.active = isGuiActive);
     }
   }
 
@@ -2142,6 +2178,66 @@ public class ModuleKISInventory : PartModule,
         HostedDebugLog.Fine(this, "Out of distance to the nearest pickup. Closing GUI");
         ToggleInventoryEvent();
       }
+    }
+  }
+
+  /// <summary>Initializes the inventory doors animation.</summary>
+  /// <seealso cref="openAnim"/>
+  /// <seealso cref="openAnimName"/>
+  void InitAnitmation() {
+    openAnim = null;
+    openAnimState = null;
+    if (openAnimName != "") {
+      var animations = part.FindModelAnimators(openAnimName);
+      if (animations.Length > 0) {
+        openAnim = animations[0];
+        openAnimState = openAnim[openAnimName];
+        openAnimState.speed = 0f;
+        openAnimState.enabled = true;
+        openAnimState.weight = 1f;
+        openAnimState.time = 0f;  // Close the doors.
+      } else {
+        HostedDebugLog.Error(this, "Cannot find animation: {0}", openAnimName);
+      }
+    }
+  }
+
+  /// <summary>Plays teh door open animation for the selected state.</summary>
+  /// <param name="doorsOpen">Tells if the doors should be closed.</param>
+  /// <param name="immediateReset">Tells if the animations state should be set in one frame.</param>
+  /// <remarks>It's safe to call this method even if there are no animation defined.</remarks>
+  void SetDoorsOpenAnimationState(bool doorsOpen, bool immediateReset = false) {
+    if (openAnimState == null) {
+      return;  // No subject.
+    }
+    var speed = doorsOpen ? openAnimSpeed : -openAnimSpeed;
+    if (HighLogic.LoadedSceneIsEditor) {
+      speed *= 10f;
+    }
+    if (immediateReset) {
+      speed = speed > 0? openAnimState.length : -openAnimState.length;
+    }
+    openAnimState.speed = speed;
+    openAnim.Play(openAnimName);
+    StartCoroutine(WaitForAnimation());
+    UpdateContextMenu();
+  }
+
+  /// <summary>Waits for the animation and updates the state.</summary>
+  /// <remarks>
+  /// The animation state works really strange in Unity. As such, the timestamp of the played state
+  /// is not get updated once reached the terminal point. It must be tracked externally or set
+  /// explicitly.
+  /// </remarks>
+  IEnumerator WaitForAnimation() {
+    var playForward = openAnimState.speed > 0;
+    while (openAnim != null && openAnim.IsPlaying(openAnimName)
+           && (openAnimState.speed > 0 && playForward
+               || openAnimState.speed < 0 && !playForward)) {
+      yield return null;
+    }
+    if (openAnim != null && !openAnim.IsPlaying(openAnimName)) {
+      openAnimState.normalizedTime = playForward ? 1.0f : 0.0f;
     }
   }
   #endregion
