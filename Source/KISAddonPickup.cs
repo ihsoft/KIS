@@ -3,11 +3,15 @@
 // Module authors: KospY, igor.zavoychinskiy@gmail.com
 // License: Restricted
 
+using KISAPIv1;
 using KSP.UI.Screens;
 using KSPDev.ConfigUtils;
 using KSPDev.GUIUtils;
+using KSPDev.GUIUtils.TypeFormatters;
 using KSPDev.InputUtils;
 using KSPDev.LogUtils;
+using KSPDev.ModelUtils;
+using KSPDev.PartUtils;
 using System;
 using System.Collections.Generic;
 using System.Collections;
@@ -20,6 +24,7 @@ namespace KIS {
 // Next localization ID: #kisLOC_01040.
 [PersistentFieldsDatabase("KIS/settings/KISConfig")]
 sealed class KISAddonPickup : MonoBehaviour {
+
   #region Localizable GUI strings.
   static readonly Message ReDockOkStatusTooltipTxt = new Message(
       "#kisLOC_01000",
@@ -354,13 +359,13 @@ sealed class KISAddonPickup : MonoBehaviour {
   public static int draggedIconSize = 50;
   public static Part movingPart;
   public static KISAddonPickup instance;
-  public bool grabActive = false;
-  public bool detachActive = false;
+  public bool grabActive;
+  public bool detachActive;
 
-  private bool grabOk = false;
-  private bool detachOk = false;
-  private bool jetpackLock = false;
-  private bool delayedButtonUp = false;
+  bool grabOk;
+  bool detachOk;
+  bool jetpackLock;
+  bool delayedButtonUp;
 
   /// <summary>A number of parts in the currently grabbed assembly.</summary>
   public static int grabbedPartsCount;
@@ -369,9 +374,9 @@ sealed class KISAddonPickup : MonoBehaviour {
   /// <summary>A root part of the currently grabbed assembly.</summary>
   public static Part grabbedPart;
 
-  private static Part redockTarget;
-  private static string redockVesselName;
-  private static bool redockOk;
+  static Part redockTarget;
+  static string redockVesselName;
+  static bool redockOk;
 
   public enum PointerMode {
     Nothing,
@@ -464,28 +469,17 @@ sealed class KISAddonPickup : MonoBehaviour {
           if (item.allowStaticAttach == ModuleKISItem.ItemAttachMode.AllowedAlways) {
             KISAddonPointer.allowStatic = true;
           } else if (item.allowStaticAttach == ModuleKISItem.ItemAttachMode.AllowedWithKisTool) {
-            ModuleKISPickup pickupModule =
-                GetActivePickupNearest(attachPart, canStaticAttachOnly: true);
-            if (pickupModule) {
-              KISAddonPointer.allowStatic = true;
-            }
+            KISAddonPointer.allowStatic =
+                HasActivePickupInRange(attachPart, canStaticAttachOnly: true);
           }
 
           if (item.allowPartAttach == ModuleKISItem.ItemAttachMode.AllowedAlways) {
             KISAddonPointer.allowPart = true;
           } else if (item.allowPartAttach == ModuleKISItem.ItemAttachMode.AllowedWithKisTool) {
-            ModuleKISPickup pickupModule =
-                GetActivePickupNearest(attachPart, canPartAttachOnly: true);
-            if (pickupModule) {
-              KISAddonPointer.allowPart = true;
-            }
+            KISAddonPointer.allowPart = HasActivePickupInRange(attachPart, canPartAttachOnly: true);
           }
         } else {
-          ModuleKISPickup pickupModule =
-              GetActivePickupNearest(attachPart, canPartAttachOnly: true);
-          if (pickupModule) {
-            KISAddonPointer.allowPart = true;
-          }
+          KISAddonPointer.allowPart = HasActivePickupInRange(attachPart, canPartAttachOnly: true);
           KISAddonPointer.allowStatic = false;
         }
       }
@@ -629,7 +623,10 @@ sealed class KISAddonPickup : MonoBehaviour {
     if (KISAddonPointer.isRunning
         && KISAddonPointer.pointerTarget != KISAddonPointer.PointerTarget.PartMount
         && pointerMode == KISAddonPickup.PointerMode.Drop) {
-      if (CheckIsAttachable(grabbedPart, reportToConsole: true)) {
+      var refPart = grabbedPart ?? draggedItem.availablePart.partPrefab;
+      var hasFreeNodes = KIS_Shared.GetAvailableAttachNodes(
+          refPart, ignoreAttachedPart: refPart.parent).Any();
+      if (CheckIsAttachable(refPart, hasFreeNodes: hasFreeNodes, reportToConsole: true)) {
         UISounds.PlayClick();
         pointerMode = KISAddonPickup.PointerMode.Attach;
       }
@@ -706,10 +703,10 @@ sealed class KISAddonPickup : MonoBehaviour {
         }
         if (HighLogic.LoadedSceneIsFlight) {
           if (draggedItem != null) {
-            Drop(draggedItem);
+            Drop(draggedItem.inventory.part, item: draggedItem);
           } else {
             movingPart = draggedPart;
-            Drop(movingPart, movingPart);
+            Drop(movingPart);
           }
         }
       }
@@ -827,9 +824,8 @@ sealed class KISAddonPickup : MonoBehaviour {
     // Check if part is static attached
     if (item) {
       if (item.staticAttached) {
-        ModuleKISPickup pickupModule = GetActivePickupNearest(part, canStaticAttachOnly: true);
         if ((item.allowStaticAttach == ModuleKISItem.ItemAttachMode.AllowedAlways)
-            || (pickupModule
+            || (HasActivePickupInRange(part, canStaticAttachOnly: true)
                 && item.allowStaticAttach == ModuleKISItem.ItemAttachMode.AllowedWithKisTool)) {
           part.SetHighlightColor(XKCDColors.Periwinkle);
           part.SetHighlight(true, false);
@@ -858,8 +854,7 @@ sealed class KISAddonPickup : MonoBehaviour {
             KISAddonCursor.CursorEnable(
                 ForbiddenIcon, DetachNotOkStatusTootltipTxt, NotSupportedTooltipTxt);
           } else if (item.allowPartAttach == ModuleKISItem.ItemAttachMode.AllowedWithKisTool) {
-            ModuleKISPickup pickupModule = GetActivePickupNearest(part, canPartAttachOnly: true);
-            if (!pickupModule) {
+            if (!HasActivePickupInRange(part, canPartAttachOnly: true)) {
               if (FlightGlobals.ActiveVessel.isEVA) {
                 KISAddonCursor.CursorEnable(
                     NeedToolIcon, NeedToolStatusTooltipTxt, NeedToolToDetachTooltipTxt);
@@ -942,67 +937,126 @@ sealed class KISAddonPickup : MonoBehaviour {
     detachOk = false;
   }
 
-  public bool HasActivePickupInRange(Part p, bool canPartAttachOnly = false,
-                                     bool canStaticAttachOnly = false) {
-    return HasActivePickupInRange(p.transform.position, canPartAttachOnly, canStaticAttachOnly);
+  /// <summary>
+  /// Checks if there is at least one actor in range that can interact with the part, given the
+  /// capabilities restrictions.
+  /// </summary>
+  /// <param name="refPart">The real part in teh scene to check the bounds for.</param>
+  /// <param name="canPartAttachOnly">Set <c>true</c> to check the part attach capability.</param>
+  /// <param name="canStaticAttachOnly">
+  /// Set <c>true</c> to check the surafce attach capability.
+  /// </param>
+  /// <returns><c>true</c> if at least one actor found.</returns>
+  /// <seealso cref="GetActivePickupNearest"/>
+  bool HasActivePickupInRange(
+      Part refPart, bool canPartAttachOnly = false, bool canStaticAttachOnly = false) {
+    var actor = GetActivePickupNearest(
+        refPart, canPartAttachOnly: canPartAttachOnly, canStaticAttachOnly: canStaticAttachOnly);
+    return actor != null;
   }
 
-  public bool HasActivePickupInRange(Vector3 position, bool canPartAttachOnly = false,
-                                     bool canStaticAttachOnly = false) {
-    bool nearPickupModule = false;
-    var pickupModules = FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleKISPickup>();
-    foreach (var pickupModule in pickupModules) {
-      float partDist = Vector3.Distance(pickupModule.part.transform.position, position);
-      if (partDist <= pickupModule.maxDistance) {
-        if (!canPartAttachOnly && !canStaticAttachOnly) {
-          nearPickupModule = true;
-        } else if (canPartAttachOnly && pickupModule.allowPartAttach) {
-          nearPickupModule = true;
-        } else if (canStaticAttachOnly && pickupModule.allowStaticAttach) {
-          nearPickupModule = true;
-        }
-      }
-    }
-    return nearPickupModule;
-  }
-
-  public ModuleKISPickup GetActivePickupNearest(Part p, bool canPartAttachOnly = false,
-                                                bool canStaticAttachOnly = false) {
-    return GetActivePickupNearest(p.transform.position, canPartAttachOnly, canStaticAttachOnly);
-  }
-
-  public ModuleKISPickup GetActivePickupNearest(Vector3 position, bool canPartAttachOnly = false,
-                                                bool canStaticAttachOnly = false) {
+  /// <summary>Returns the nearest actor module that has the required capabilities.</summary>
+  /// <remarks>All actors on the active vessel are checked.</remarks>
+  /// <param name="refPart">
+  /// The part that is being checked. Its mesh will be used to determine the exact distance.
+  /// </param>
+  /// <param name="canPartAttachOnly">
+  /// Tells that the actor must be able to attach items to parts. This parameter is mutual exclusive
+  /// with <paramref name="canStaticAttachOnly"/>.
+  /// </param>
+  /// <param name="canStaticAttachOnly">
+  /// Tells that the actor must be able to attach items to the surface. This parameter is mutual
+  /// exclusive with <paramref name="canPartAttachOnly"/>.
+  /// </param>
+  /// <param name="probePosition">
+  /// Optional new position of the part. The distance will be checked, assuming the part is located
+  /// there. The actual position of the part won't change.
+  /// </param>
+  /// <param name="probeRotation">
+  /// Optional new rotation of the part. The distance will be checked, assuming the part is rotated
+  /// as specified. The actual rotation of the part won't change.
+  /// </param>
+  /// <returns>
+  /// The nearest actor from the active vessel or <c>null</c> if no macthign candidates found.
+  /// </returns>
+  /// TODO(ihsoft): Redesign this method. Instead of awkward "can" parameters, simply provide a filter function.
+  ModuleKISPickup GetActivePickupNearest(Part refPart,
+                                         bool canPartAttachOnly = false,
+                                         bool canStaticAttachOnly = false,
+                                         Vector3? probePosition = null,
+                                         Quaternion? probeRotation = null) {
+    // Temporarily relocate the ref part to probe the distance at the new location.
+    Vector3 oldPos = refPart.transform.position;
+    Quaternion oldRot = refPart.transform.rotation;
+    refPart.transform.position = probePosition ?? oldPos;
+    refPart.transform.rotation = probeRotation ?? oldRot;
+    
     ModuleKISPickup nearestPModule = null;
-    float nearestDistance = Mathf.Infinity;
+    float nearestSqrDistance = Mathf.Infinity;
     var pickupModules = FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleKISPickup>();
+
     foreach (var pickupModule in pickupModules) {
-      float partDist = Vector3.Distance(pickupModule.part.transform.position, position);
-      if (partDist <= nearestDistance) {
+      var partSqrDist = Colliders.GetSqrDistanceToPartOrDefault(
+          pickupModule.part.transform.position, refPart);
+      if (partSqrDist <= nearestSqrDistance) {
         if (!canPartAttachOnly && !canStaticAttachOnly) {
-          nearestDistance = partDist;
+          nearestSqrDistance = partSqrDist;
           nearestPModule = pickupModule;
         } else if (canPartAttachOnly && pickupModule.allowPartAttach) {
-          nearestDistance = partDist;
+          nearestSqrDistance = partSqrDist;
           nearestPModule = pickupModule;
         } else if (canStaticAttachOnly && pickupModule.allowStaticAttach) {
-          nearestDistance = partDist;
+          nearestSqrDistance = partSqrDist;
           nearestPModule = pickupModule;
         }
       }
     }
+
+    refPart.transform.position = oldPos;
+    refPart.transform.rotation = oldRot;
     return nearestPModule;
   }
 
-  private float GetAllPickupMaxMassInRange(Vector3 grabPosition) {
+  /// <summary>Calculates the maximum mass that actor(s) can lift.</summary>
+  /// <param name="refPart">
+  /// The part that is being checked. Its mesh will be used to determine the exact distance.
+  /// </param>
+  /// <param name="probePosition">
+  /// Optional new position of the part. The distance will be checked, assuming the part is located
+  /// there. The actual position of the part won't change.
+  /// </param>
+  /// <param name="probeRotation">
+  /// Optional new rotation of the part. The distance will be checked, assuming the part is rotated
+  /// as specified. The actual rotation of the part won't change.
+  /// </param>
+  /// <returns>
+  /// The nearest actor from the active vessel or <c>null</c> if no macthign candidates found.
+  /// </returns>
+  /// <returns>The maximum possible mas, considering all the actors in range.</returns>
+  float GetAllPickupMaxMassInRange(Part refPart,
+                                   Vector3? probePosition = null,
+                                   Quaternion? probeRotation = null) {
+    // Temporarily relocate the ref part to probe the distance at the new location.
+    Vector3 oldPos = refPart.transform.position;
+    Quaternion oldRot = refPart.transform.rotation;
+    refPart.transform.position = probePosition ?? oldPos;
+    refPart.transform.rotation = probeRotation ?? oldRot;
+
     float maxMass = 0;
     var allPickupModules = FindObjectsOfType(typeof(ModuleKISPickup)) as ModuleKISPickup[];
     foreach (ModuleKISPickup pickupModule in allPickupModules) {
-      float partDist = Vector3.Distance(pickupModule.part.transform.position, grabPosition);
-      if (partDist <= pickupModule.maxDistance) {
+      var partDist = Colliders.GetSqrDistanceToPartOrDefault(
+          pickupModule.part.transform.position, refPart);
+      if (partDist <= pickupModule.maxDistance * pickupModule.maxDistance) {
+        HostedDebugLog.Fine(
+            pickupModule, "Contribute into mass capability: mass={0}, distance={1}",
+            pickupModule.grabMaxMass, pickupModule.maxDistance);
         maxMass += pickupModule.grabMaxMass;
       }
     }
+
+    refPart.transform.position = oldPos;
+    refPart.transform.rotation = oldRot;
     return maxMass;
   }
 
@@ -1022,12 +1076,12 @@ sealed class KISAddonPickup : MonoBehaviour {
     HandlePickup(PickupMode.GrabFromInventory);
   }
 
-  private void HandlePickup(PickupMode newPickupMode) {
+  void HandlePickup(PickupMode newPickupMode) {
     DebugEx.Info("Start pickup in mode {0} from part: {1}", newPickupMode, draggedPart);
     grabbedPart = null;
     pickupMode = newPickupMode;
     cursorMode = CursorMode.Nothing;
-    EnableIcon(draggedPart, draggedIconResolution);
+    EnableIcon();
     KISAddonCursor.AbortPartDetection();
     grabActive = false;
     KISAddonCursor.CursorDisable();
@@ -1044,39 +1098,47 @@ sealed class KISAddonPickup : MonoBehaviour {
   }
 
   public void Drop(KIS_Item item) {
-    draggedItem = item;
-    Drop(item.inventory.part, item.availablePart.partPrefab, item: item);
+    Drop(item.inventory.part, item: item);
   }
 
   /// <summary>Handles part drop action.</summary>
-  /// <param name="fromPart">A part that was the source of the draggign action. If a world's part is
-  /// grabbed than it will be that part. If part is being dragged from inventory then this parameter
-  /// is an inventory reference.</param>
-  /// <param name="part">
-  /// Part being grabbed. It's always a real part. Mutial exclusive with <paramref name="item"/>.
+  /// <param name="fromPart">
+  /// The part that was the source of the dragging action. If a world's part is grabbed than it will
+  /// be that part. If part is being dragged from inventory, then this parameter is an inventory
+  /// reference.
   /// </param>
-  /// <param name="item">Item being dragged. Mutial exclusive with <paramref name="part"/>.</param>
-  void Drop(Part fromPart, Part part, KIS_Item item = null) {
-    grabbedPart = part;
-    DebugEx.Info("End pickup of {0} from part: {1}", part, fromPart);
+  /// <param name="item">The item being dragged.</param>
+  void Drop(Part fromPart, KIS_Item item = null) {
+    if (item != null) {
+      draggedItem = item;
+      DebugEx.Info("End pickup of item {0} from inventory {1}",
+                   item.availablePart.name, item.inventory);
+    } else {
+      grabbedPart = fromPart;
+      DebugEx.Info("End pickup of {0}", fromPart);
+    }
     if (!KISAddonPointer.isRunning) {
       var pickupModule = GetActivePickupNearest(fromPart);
       var grabPosition = fromPart.transform.position;
       int unusedPartsCount;
       if (pickupModule
-          && (item == null && CheckMass(grabPosition, part, out unusedPartsCount,
-                                        reportToConsole: true)
-              || item != null && CheckItemMass(grabPosition, item, reportToConsole: true))) {
+          && (item == null && CheckMass(fromPart, out unusedPartsCount, reportToConsole: true)
+              || item != null && CheckItemMass(item, reportToConsole: true))) {
         KISAddonPointer.allowPart = true;
         KISAddonPointer.allowEva = true;
         KISAddonPointer.allowMount = true;
         KISAddonPointer.allowStatic = true;
         KISAddonPointer.allowStack = pickupModule.allowPartStack;
         KISAddonPointer.maxDist = pickupModule.maxDistance;
-        KISAddonPointer.scale = draggedItem != null
-            ? KIS_Shared.GetPartExternalScaleModifier(draggedItem.partNode)
-            : 1;
-        KISAddonPointer.StartPointer(part, OnPointerAction, OnPointerState, pickupModule.transform);
+        if (item != null) {
+          KISAddonPointer.StartPointer(
+              null /* rootPart */, item,
+              OnPointerAction, OnPointerState, pickupModule.transform);
+        } else {
+          KISAddonPointer.StartPointer(
+              fromPart, null /* item */,
+              OnPointerAction, OnPointerState, pickupModule.transform);
+        }
 
         pointerMode = pickupMode == PickupMode.Undock
             ? PointerMode.ReDock
@@ -1086,7 +1148,7 @@ sealed class KISAddonPickup : MonoBehaviour {
     KISAddonCursor.StopPartDetection();
   }
 
-  private bool hoverInventoryGui() {
+  bool hoverInventoryGui() {
     // Check if hovering an inventory GUI
     var inventories = FindObjectsOfType(typeof(ModuleKISInventory)) as ModuleKISInventory[];
     bool hoverInventory = false;
@@ -1102,40 +1164,52 @@ sealed class KISAddonPickup : MonoBehaviour {
     return hoverInventory;
   }
 
-  private void OnGUI() {
+  void OnGUI() {
     if (draggedPart) {
+      var mousePosition = Input.mousePosition;
+      mousePosition.y = Screen.height - mousePosition.y;
       GUI.depth = 0;
-      GUI.DrawTexture(new Rect(Event.current.mousePosition.x - (draggedIconSize / 2),
-                               Event.current.mousePosition.y - (draggedIconSize / 2),
+      GUI.DrawTexture(new Rect(mousePosition.x - (draggedIconSize / 2),
+                               mousePosition.y - (draggedIconSize / 2),
                                draggedIconSize,
                                draggedIconSize),
                       icon.texture, ScaleMode.ScaleToFit);
     }
   }
 
-  private IEnumerator WaitAndStopDrag() {
+  IEnumerator WaitAndStopDrag() {
     yield return new WaitForFixedUpdate();
     DisableIcon();
     draggedPart = null;
   }
 
-  // Sets icon, ensuring any old icon is Disposed
-  private void EnableIcon(Part part, int resolution) {
+  /// <summary>Creates an icon for the currently dragging part or item.</summary>
+  /// <seealso cref="draggedPart"/>
+  /// <seealso cref="draggedItem"/>
+  void EnableIcon() {
     DisableIcon();
-    icon = new KIS_IconViewer(part, resolution);
+    if (draggedPart != null) {
+      if (draggedItem != null) {
+        icon = new KIS_IconViewer(
+            draggedPart.partInfo, draggedIconResolution,
+            VariantsUtils.GetCurrentPartVariant(draggedPart.partInfo, draggedItem.partNode));
+      } else {
+        icon = new KIS_IconViewer(draggedPart, draggedIconResolution);
+      }
+    }
   }
 
-  // Clears icon, ensuring it is Disposed
-  private void DisableIcon() {
+  /// <summary>Clears icon, ensuring it is Disposed</summary>
+  void DisableIcon() {
     if (icon != null) {
       icon.Dispose();
       icon = null;
     }
   }
 
-  private void OnPointerState(KISAddonPointer.PointerTarget pTarget,
-                              KISAddonPointer.PointerState pState,
-                              Part hoverPart, AttachNode hoverNode) {
+  void OnPointerState(KISAddonPointer.PointerTarget pTarget,
+                      KISAddonPointer.PointerState pState,
+                      Part hoverPart, AttachNode hoverNode) {
     if (pState == KISAddonPointer.PointerState.OnPointerStopped) {
       pointerMode = PointerMode.Nothing;
     }
@@ -1157,9 +1231,9 @@ sealed class KISAddonPickup : MonoBehaviour {
     }
   }
 
-  private void OnPointerAction(KISAddonPointer.PointerTarget pointerTarget, Vector3 pos,
-                               Quaternion rot, Part tgtPart, string srcAttachNodeID = null,
-                               AttachNode tgtAttachNode = null) {
+  void OnPointerAction(KISAddonPointer.PointerTarget pointerTarget, Vector3 pos,
+                       Quaternion rot, Part tgtPart, string srcAttachNodeID = null,
+                       AttachNode tgtAttachNode = null) {
     if (pointerTarget == KISAddonPointer.PointerTarget.PartMount) {
       if (movingPart) {
         MoveAttach(tgtPart, pos, rot, srcAttachNodeID, tgtAttachNode);
@@ -1200,8 +1274,9 @@ sealed class KISAddonPickup : MonoBehaviour {
 
   void MoveDrop(Part tgtPart, Vector3 pos, Quaternion rot) {
     DebugEx.Info("Move part");
-    ModuleKISPickup modulePickup = GetActivePickupNearest(pos);
-    if (modulePickup) {
+    var modulePickup =
+        GetActivePickupNearest(movingPart, probePosition: pos, probeRotation: rot);
+    if (modulePickup != null) {
       if (movingPart.parent) {
         bool movingPartMounted = false;
         ModuleKISPartMount partM = movingPart.parent.GetComponent<ModuleKISPartMount>();
@@ -1230,7 +1305,9 @@ sealed class KISAddonPickup : MonoBehaviour {
 
   Part CreateDrop(Part tgtPart, Vector3 pos, Quaternion rot) {
     DebugEx.Info("Create & drop part");
-    ModuleKISPickup modulePickup = GetActivePickupNearest(pos);
+    var refPart = tgtPart ?? draggedItem.availablePart.partPrefab;
+    var modulePickup =
+        GetActivePickupNearest(refPart, probePosition: pos, probeRotation: rot);
     draggedItem.StackRemove(1);
     var refVessel = tgtPart != null
         ? tgtPart.vessel
@@ -1245,7 +1322,7 @@ sealed class KISAddonPickup : MonoBehaviour {
     KISAddonPointer.StopPointer();
     draggedItem = null;
     draggedPart = null;
-    if (modulePickup) {
+    if (modulePickup != null) {
       AudioSource.PlayClipAtPoint(
           GameDatabase.Instance.GetAudioClip(modulePickup.dropSndPath), pos);
     }
@@ -1357,7 +1434,8 @@ sealed class KISAddonPickup : MonoBehaviour {
     KIS_Shared.SetHierarchySelection(redockTarget, true /* isSelected */);
 
     if (!CheckCanGrabRealPart(redockTarget) || !CheckCanDetach(redockTarget) ||
-        !CheckIsAttachable(redockTarget)) {
+        !CheckIsAttachable(redockTarget,
+                           hasFreeNodes: KIS_Shared.GetAvailableAttachNodes(redockTarget).Any())) {
       return;
     }
 
@@ -1408,22 +1486,22 @@ sealed class KISAddonPickup : MonoBehaviour {
       return false;
     }
     // Check if attached part has acceptable mass and can be detached.
-    return CheckMass(part.transform.position, part, out grabbedPartsCount) && CheckCanDetach(part);
+    return CheckMass(part, out grabbedPartsCount) && CheckCanDetach(part);
   }
 
   /// <summary>Calculates grabbed part/assembly mass and reports if it's too heavy.</summary>
-  /// <param name="grabPosition">Position to search pick up modules around.</param>
-  /// <param name="part">A part or assembly root to check mass for.</param>
-  /// <param name="grabbedPartsCount">A return parameter to give number of parts in the assembly.
+  /// <param name="srcPart">The part or assembly root to check the mass for.</param>
+  /// <param name="grabbedPartsCount">
+  /// The return parameter to store the number of the parts in the assembly.
   /// </param>
-  /// <param name="reportToConsole">If <c>true</c> then error is only reported on the screen (it's a
-  /// game's "console"). Otherwise, excess of mass only results in changing cursor icon to
-  /// <seealso cref="TooHeavyIcon"/>.</param>
+  /// <param name="reportToConsole">If <c>true</c>, then the error is only reported on the screen
+  /// (it's the game's "console"). Otherwise, the cursor status wil change to
+  /// <seealso cref="TooHeavyIcon"/>.
+  /// </param>
   /// <returns><c>true</c> if total mass is within the limits.</returns>
-  bool CheckMass(Vector3 grabPosition, Part part, out int grabbedPartsCount,
-                 bool reportToConsole = false) {
-    grabbedMass = KIS_Shared.GetAssemblyMass(part, out grabbedPartsCount);
-    float pickupMaxMass = GetAllPickupMaxMassInRange(grabPosition);
+  bool CheckMass(Part srcPart, out int grabbedPartsCount, bool reportToConsole = false) {
+    grabbedMass = KIS_Shared.GetAssemblyMass(srcPart, out grabbedPartsCount);
+    var pickupMaxMass = GetAllPickupMaxMassInRange(srcPart);
     if (grabbedMass > pickupMaxMass) {
       ReportCheckError(TooHeavyStatusTooltipTxt,
                        TooHeavyTooltipTxt.Format(grabbedMass, pickupMaxMass),
@@ -1434,17 +1512,16 @@ sealed class KISAddonPickup : MonoBehaviour {
     return true;
   }
 
-  /// <summary>Calculates grabbed part/assembly mass and reports if it's too heavy.</summary>
-  /// <param name="grabPosition">Position to search pick up modules around.</param>
-  /// <param name="item">Inventory item to check mass for.</param>
+  /// <summary>Calculates the grabbed part/assembly mass and reports if it's too heavy.</summary>
+  /// <param name="item">The inventory item to check mass for.</param>
   /// <param name="reportToConsole">
-  /// If <c>true</c> then error is only reported on the screen (it's a game's "console"). Otherwise,
-  /// excess of mass only results in changing cursor icon to <seealso cref="TooHeavyIcon"/>.
+  /// If <c>true</c>, then error is only reported on the screen. Otherwise, the cursor icon changes
+  /// to <seealso cref="TooHeavyIcon"/>.
   /// </param>
   /// <returns><c>true</c> if total mass is within the limits.</returns>
-  bool CheckItemMass(Vector3 grabPosition, KIS_Item item, bool reportToConsole = false) {
-    grabbedMass = item.totalMass;
-    float pickupMaxMass = GetAllPickupMaxMassInRange(grabPosition);
+  bool CheckItemMass(KIS_Item item, bool reportToConsole = false) {
+    grabbedMass = item.totalSlotMass;
+    var pickupMaxMass = GetAllPickupMaxMassInRange(item.inventory.part);
     if (grabbedMass > pickupMaxMass) {
       ReportCheckError(TooHeavyStatusTooltipTxt,
                        TooHeavyTooltipTxt.Format(grabbedMass, pickupMaxMass),
@@ -1474,7 +1551,7 @@ sealed class KISAddonPickup : MonoBehaviour {
         // Check if part is a ground base.
         if (item.staticAttached
             && item.allowStaticAttach == ModuleKISItem.ItemAttachMode.AllowedWithKisTool
-            && !GetActivePickupNearest(part, canStaticAttachOnly: true)) {
+            && !HasActivePickupInRange(part, canStaticAttachOnly: true)) {
           rejectText = NeedToolToStaticDetachTooltipTxt;
         }
       } else {
@@ -1488,14 +1565,14 @@ sealed class KISAddonPickup : MonoBehaviour {
         }
         if (item.allowPartAttach == ModuleKISItem.ItemAttachMode.AllowedWithKisTool) {
           // Part requires a tool to be detached.
-          if (!GetActivePickupNearest(part, canPartAttachOnly: true)) {
+          if (!HasActivePickupInRange(part, canPartAttachOnly: true)) {
             rejectText = NeedToolToDetachTooltipTxt;
           }
         }
       }
     } else {
       // Handle regular game parts.
-      if (!GetActivePickupNearest(part, canPartAttachOnly: true)) {
+      if (!HasActivePickupInRange(part, canPartAttachOnly: true)) {
         rejectText = NeedToolToDetachTooltipTxt;
       }
     }
@@ -1508,30 +1585,28 @@ sealed class KISAddonPickup : MonoBehaviour {
   }
 
   /// <summary>Checks if part can be attached. At least in theory.</summary>
-  /// <remarks>This method doesn't say if part *will* be attached if such attempt is made.</remarks>   
-  bool CheckIsAttachable(Part part, bool reportToConsole = false) {
-    var item = part.GetComponent<ModuleKISItem>();
+  /// <remarks>This method doesn't say if part *will* be attached if such attempt is made.</remarks>
+  bool CheckIsAttachable(Part refPart, bool hasFreeNodes = true, bool reportToConsole = false) {
+    var item = refPart.GetComponent<ModuleKISItem>();
 
     // Check if part has at least one free node.
-    var nodes = KIS_Shared.GetAvailableAttachNodes(part, part.parent);
-    if (!nodes.Any()) {
+    if (!hasFreeNodes) {
       // Check if it's a static attachable item. Those are not required to have nodes
       // since they attach to the ground.
-      if (!item || item.allowStaticAttach == ModuleKISItem.ItemAttachMode.Disabled) {
+      if (item == null || item.allowStaticAttach == ModuleKISItem.ItemAttachMode.Disabled) {
         ReportCheckError(AttachNotOkStatusTooltipTxt, CannotAttachTooltipTxt, reportToConsole);
         return false;
       }
     }
 
     // Check if KISItem part is allowed for attach without a tool.
-    if (item && (item.allowPartAttach == ModuleKISItem.ItemAttachMode.AllowedAlways
-                 || item.allowStaticAttach == ModuleKISItem.ItemAttachMode.AllowedAlways)) {
+    if (item != null && (item.allowPartAttach == ModuleKISItem.ItemAttachMode.AllowedAlways
+                         || item.allowStaticAttach == ModuleKISItem.ItemAttachMode.AllowedAlways)) {
       return true;
     }
 
     // Check if there is a kerbonaut with a tool to handle the task.
-    ModuleKISPickup pickupModule = GetActivePickupNearest(part, canPartAttachOnly: true);
-    if (!pickupModule) {
+    if (!HasActivePickupInRange(refPart, canPartAttachOnly: true)) {
       // Check if it's EVA engineer or a KAS item.
       if (FlightGlobals.ActiveVessel.isEVA) {
         ReportCheckError(

@@ -24,10 +24,15 @@ public class ModuleKISPartMount : PartModule,
 
   #region Part's config fields
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Sound: Container mount")]
   public string sndStorePath = "KIS/Sounds/containerMount";
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Mounted part node")]
   public string mountedPartNode = AttachNodeId.Bottom;
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Allow release")]
   public bool allowRelease = true;
   #endregion
 

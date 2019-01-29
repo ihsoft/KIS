@@ -1,3 +1,18 @@
+# 1.17 (pre-release):
+* KSP 1.6 support. This mod's version is not compatible with the prior versions of KSP!
+* [Enhancement] Add fun English part descriptions.
+* [Enhancement] Add Portuguese (Brazil) localization.
+* [Enhancement] Improve items&parts debug ability. See `partAlignToolKey` and `itemDebug` in the settings file.
+* [Enhancement] Add new containers: `IMiC-1500`, `ImC-3K`, `IMC-22K`, and `IGC-45K`.
+* [Enhancement] Big improvement in performance. Many inventories with items in one scene could slow down the game significantly (see #287 & #288).
+* [Enhancement #281] Use the stock functionality from the KIS code and properly support custom helmets.
+* [Enhancement #289] Take into account the container size when detecting its availability.
+* [Fix #160] Cannot deatch broken solar panel.
+* [Fix #163] Implement full support of TweakScale mod.
+* [Fix #267] Review container mount mass.
+* [Fix #273] Support part's variant when dealing with KIS container items.
+* [Fix #293] Fun parts in are not equipping.
+
 # 1.16 (October 29th, 2018):
 * [Fix #275] No preview meshes shown.
 

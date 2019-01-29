@@ -14,7 +14,7 @@ using UnityEngine;
 namespace KIS {
 
 // Next localization ID: #kisLOC_07007.
-public sealed class ModuleKISItemBook: ModuleKISItem,
+public sealed class ModuleKISItemBook : ModuleKISItem,
     // KSPDEV sugar interfaces.
     IPartModule {
 
@@ -60,24 +60,50 @@ public sealed class ModuleKISItemBook: ModuleKISItem,
 
   #region Part's config fields
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Page width")]
   public int pageWidth = 800;
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Page height")]
   public int pageHeight = 800;
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Sound: Book open")]
   public string bookOpenSndPath = "KIS/Sounds/bookOpen";
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Sound: Page selected")]
   public string bookPageSndPath = "KIS/Sounds/bookPage";
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Sound: Book close")]
   public string bookCloseSndPath = "KIS/Sounds/bookClose";
   #endregion
 
+  #region Helper classes
+  /// <summary>Simple class to present a GUI dialog.</summary>
+  class GuiDialog : MonoBehaviour, IHasGUI {
+    /// <summary>Main window function to call from <c>OnGUI</c> method.</summary>
+    public GUI.WindowFunction dialogFunction;
+
+    /// <summary>Current dialog size and position.</summary>
+    Rect guiMainWindowPos;
+
+    #region IHasGUI implementation
+    public void OnGUI() {
+      guiMainWindowPos = GUILayout.Window(
+          GetInstanceID(), guiMainWindowPos, dialogFunction, ModuleTitleInfo);
+    }
+    #endregion
+  }
+  #endregion
+
   #region Local fields
-  int pageIndex = 0;
-  int pageTotal = 0;
-  List<string> pageList = new List<string>();
-  bool showPage = false;
+  int pageIndex;
+  int pageTotal;
+  readonly List<string> pageList = new List<string>();
   Texture2D pageTexture;
-  Rect guiWindowPos;
+  GameObject guiObj;
   #endregion
 
   #region PartModule overrides
@@ -98,20 +124,15 @@ public sealed class ModuleKISItemBook: ModuleKISItem,
     if (pageList.Count > 0) {
       pageIndex = 0;
       pageTotal = pageList.Count;
+      guiObj = new GameObject("KISManualDialog-" + part.flightID);
+      var dlg = guiObj.AddComponent<GuiDialog>();
+      dlg.dialogFunction = GuiReader;
+      
       pageTexture = GameDatabase.Instance.GetTexture(pageList[0], false);
-      showPage = true;
       UISoundPlayer.instance.Play(bookOpenSndPath);
     } else {
       DebugEx.Info("The book has no pages configured");
     }      
-  }
-
-  /// <inheritdoc/>
-  public override void OnItemGUI(KIS_Item item) {
-    if (showPage) {
-      GUI.skin = HighLogic.Skin;
-      guiWindowPos = GUILayout.Window(GetInstanceID(), guiWindowPos, GuiReader, ReaderWindowTitle);
-    }
   }
   #endregion
   
@@ -132,7 +153,7 @@ public sealed class ModuleKISItemBook: ModuleKISItem,
           
     GUILayout.BeginHorizontal();
     if (GUILayout.Button(PreviousPageBtn)) {
-      if ((pageIndex - 1) >= 0) {
+      if (pageIndex - 1 >= 0) {
         pageIndex = pageIndex - 1;
         pageTexture = GameDatabase.Instance.GetTexture(pageList[pageIndex], false);
         UISoundPlayer.instance.Play(bookPageSndPath);
@@ -140,7 +161,7 @@ public sealed class ModuleKISItemBook: ModuleKISItem,
     }
     GUILayout.Label(CurrentPageTxt.Format(pageIndex + 1, pageTotal));
     if (GUILayout.Button(NextPageBtn)) {
-      if ((pageIndex + 1) < pageList.Count) {
+      if (pageIndex + 1 < pageTotal) {
         pageIndex = pageIndex + 1;
         pageTexture = GameDatabase.Instance.GetTexture(pageList[pageIndex], false);
         UISoundPlayer.instance.Play(bookPageSndPath);
@@ -149,8 +170,9 @@ public sealed class ModuleKISItemBook: ModuleKISItem,
     GUILayout.EndHorizontal();
 
     if (GUILayout.Button(CloseBtn)) {
-      showPage = false;
       UISoundPlayer.instance.Play(bookCloseSndPath);
+      Destroy(guiObj);
+      guiObj = null;
     }
     GUI.DragWindow();
   }
