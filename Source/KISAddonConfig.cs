@@ -107,25 +107,26 @@ sealed class KISAddonConfig : MonoBehaviour {
   }
 
   public static void AddPodInventories(Part part, int crewCapacity) {
-    for (var i = 0; i < crewCapacity; i++) {
-      var moduleInventory =
-          part.AddModule(typeof(ModuleKISInventory).Name) as ModuleKISInventory;
-      KIS_Shared.AwakePartModule(moduleInventory);
-      moduleInventory.invType = ModuleKISInventory.InventoryType.Pod;
-      DebugEx.Fine("{0}: Add pod inventory to match the capacity", part);
+    var checkInventories = part.Modules.OfType<ModuleKISInventory>()
+        .Where(m => m.invType == ModuleKISInventory.InventoryType.Pod);
+    if (checkInventories.Any()) {
+      DebugEx.Error("Part {0} has pod inventories in config. Cannot make a proper setup!", part);
     }
+
+    // Assign the seats.
     var podInventories = part.Modules.OfType<ModuleKISInventory>()
         .Where(m => m.invType == ModuleKISInventory.InventoryType.Pod)
         .ToArray();
-    for (var i = 0; i < podInventories.Length; i++) {
-      try {
-        var baseFields = new BaseFieldList(podInventories[i]);
-        baseFields.Load(evaInventory);
-        podInventories[i].podSeat = i;
-        DebugEx.Fine("{0}: Pod inventory for seat {1} loaded successfully", part, i);
-      } catch {
-        DebugEx.Error("{0}: Pod inventory module for seat {1} can't be loaded!", part, i);
-      }
+    for (var i = 0; i < crewCapacity; i++) {
+      DebugEx.Fine("{0}: Add pod inventory at seat: {0}", i);
+      var moduleNode = new ConfigNode("MODULE", "Dynamically created by KIS. Not persistant!");
+      evaInventory.CopyTo(moduleNode);
+      moduleNode.SetValue("name", typeof(ModuleKISInventory).Name, createIfNotFound: true);
+      moduleNode.SetValue(
+          "invType", ModuleKISInventory.InventoryType.Pod.ToString(), createIfNotFound: true);
+      moduleNode.SetValue("podSeat", i, createIfNotFound: true);
+      part.partInfo.partConfig.AddNode(moduleNode);
+      part.AddModule(moduleNode, forceAwake: true);
     }
   }
 
@@ -182,11 +183,6 @@ sealed class KISAddonConfig : MonoBehaviour {
     }
     if (res == null) {
       DebugEx.Error("Cannot find object for EVA item: {0}", bonePath);
-      var modelListing = Hierarchy.ListHirerahcy(root);
-      DebugEx.Fine("The following tree was available:");
-      foreach (var modelPath in modelListing) {
-        DebugEx.Fine(modelPath);
-      }
     }
     return res;
   }

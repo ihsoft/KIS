@@ -3,6 +3,7 @@
 // This software is distributed under Public domain license.
 
 using KSPDev.GUIUtils;
+using KSPDev.GUIUtils.TypeFormatters;
 
 namespace KIS.GUIUtils {
 

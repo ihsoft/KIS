@@ -11,13 +11,15 @@
     "" : [
       "/Lang",
       "/Parts",
+      "/Parts.fun",
       "/Patches",
       "/Sounds",
       "/Textures",
       "/settings.cfg",
       "/User Guide.pdf",
       "/README.md",
-      "/LICENSE.md"
+      "/LICENSE.md",
+      "/remove_fun_part_patch.txt"
     ],
     "Plugins" : [
       "{COMPILED_BINARY}",
