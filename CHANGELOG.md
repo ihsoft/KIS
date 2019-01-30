@@ -1,5 +1,6 @@
 # 1.18 (pre-release):
 * [Enhancement] Improve English part descriptions.
+* [Fix #301] "volumeOverride" is not working .
 * [Fix #302] Structurel panel has wrong nodes.
 
 # 1.17 (January 28th, 2019):

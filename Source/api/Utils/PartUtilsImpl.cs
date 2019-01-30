@@ -161,6 +161,12 @@ public class PartUtilsImpl {
   /// <returns>The volume in liters.</returns>
   public float GetPartVolume(
       AvailablePart avPart, PartVariant variant = null, ConfigNode partNode = null) {
+    var itemModule = avPart.partPrefab.Modules.OfType<KIS.ModuleKISItem>().FirstOrDefault();
+    if (itemModule != null && itemModule.volumeOverride > 0) {
+      return itemModule.volumeOverride  // Ignore geometry.
+          * KISAPI.PartNodeUtils.GetTweakScaleSizeModifier(partNode);  // But respect TweakScale.
+    }
+    
     var model = GetPartModel(avPart, variant: variant, partNode: partNode);
     var boundsSize = model.GetRendererBounds().size;
     UnityEngine.Object.DestroyImmediate(model);
