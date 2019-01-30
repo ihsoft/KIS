@@ -65,7 +65,7 @@ If you want doing EVA comfortably, you really should consider adding these mods 
     * Verify the installation: the mod's `LICENSE.md` file must be located at `<game root>/GameData/KIS/LICENSE.md`.
 * If you don't want seeing the fun parts in your game, you can remove them:
     * Find file `remove_fun_part_patch.txt` in the mod's folder.
-    * Rename it into `remove_fun_part_patch.md`.
+    * Rename it into `remove_fun_part_patch.cfg`.
     * Move it one level up in the directory structure (into the `GameData` folder).
     * Now the fun parts won't show up even if you update the mod.
 
