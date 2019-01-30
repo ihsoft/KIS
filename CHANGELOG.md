@@ -1,3 +1,5 @@
+# 1.18 (pre-release):
+
 # 1.17 (January 28th, 2019):
 * KSP 1.6 support. This mod's version is not compatible with the prior versions of KSP!
 * [Enhancement] Add fun English part descriptions.
