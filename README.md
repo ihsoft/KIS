@@ -1,4 +1,4 @@
-![Cover](https://github.com/ihsoft/KIS/raw/master/WikiImages/Cover.jpg)
+﻿![Cover](https://github.com/ihsoft/KIS/raw/master/WikiImages/Cover.jpg)
 
 KIS introduces new gameplay mechanics by adding a brand new inventory system and EVA usables items as tools. You want to build a rover on Duna from scratch? Or you've forgot to attach a solar panel to the planetary station? With KIS it's not a problem!
 
@@ -33,6 +33,8 @@ _* Goggles, hats and helmets are provided by the third-party mods. E.g. "Kerbal 
 ![简体中文](https://github.com/ihsoft/KIS/raw/master/WikiImages/Chineese-small-flag.png) 简体中文
 
 ![Português](https://github.com/ihsoft/KIS/raw/master/WikiImages/Brazil-small-flag.png) Português
+
+![Français](https://github.com/ihsoft/KIS/raw/master/WikiImages/French-small-flag.png) Français
 
 # Support
 
