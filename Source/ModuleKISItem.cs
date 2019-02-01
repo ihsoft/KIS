@@ -224,16 +224,6 @@ public class ModuleKISItem : PartModule,
   [Debug.KISDebugAdjustableAttribute("Static attach")]
   public ItemAttachMode allowStaticAttach = ItemAttachMode.Disabled;
 
-  // For KAS
-  // TODO(ihsoft): Deprecate. The new KAS can handle normal coupling logic.
-  [KSPField]
-  public bool useExternalPartAttach;
-
-  // For KAS
-  // TODO(ihsoft): Deprecate. It's not KAS function.
-  [KSPField]
-  public bool useExternalStaticAttach;
-
   [KSPField]
   [Debug.KISDebugAdjustableAttribute("Static attach break force")]
   public float staticAttachBreakForce = 10;
@@ -359,7 +349,7 @@ public class ModuleKISItem : PartModule,
 
   /// <inheritdoc/>
   public virtual void OnPartUnpack() {
-    if (allowStaticAttach == ItemAttachMode.Disabled || useExternalStaticAttach) {
+    if (allowStaticAttach == ItemAttachMode.Disabled) {
       return;
     }
     if (staticAttached) {
@@ -370,7 +360,7 @@ public class ModuleKISItem : PartModule,
   #endregion
 
   public void OnKISAction(Dictionary<string, object> eventData) {
-    if (allowStaticAttach == ItemAttachMode.Disabled || useExternalStaticAttach) {
+    if (allowStaticAttach == ItemAttachMode.Disabled) {
       return;
     }
     var action = eventData["action"].ToString();

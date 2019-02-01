@@ -970,15 +970,6 @@ public static class KIS_Shared {
     var srcAttachNode = GetAttachNodeById(assemblyRoot, srcAttachNodeId);
     SendKISMessage(assemblyRoot, MessageAction.AttachStart, srcAttachNode, tgtPart, tgtAttachNode);
 
-    // Find out if coupling with a new parent is needed/allowed.
-    var moduleItem = assemblyRoot.GetComponent<ModuleKISItem>();
-    var useExternalPartAttach = moduleItem != null && moduleItem.useExternalPartAttach;
-    if (tgtPart == null || useExternalPartAttach) {
-      // Skip coupling logic.
-      SendKISMessage(assemblyRoot, MessageAction.AttachEnd, srcAttachNode, tgtPart, tgtAttachNode);
-      yield break;
-    }
-
     // Proactively disable collisions on the moving parts since there will be a period of time when
     // they don't belong to the target vessel.
     var childColliders = assemblyRoot.GetComponentsInChildren<Collider>(includeInactive: false);

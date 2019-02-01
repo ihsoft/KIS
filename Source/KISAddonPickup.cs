@@ -1344,11 +1344,7 @@ sealed class KISAddonPickup : MonoBehaviour {
     DebugEx.Info("Create part & attach");
     Part newPart;
     draggedItem.StackRemove(1);
-    bool useExternalPartAttach = false;
-    if (draggedItem.prefabModule && draggedItem.prefabModule.useExternalPartAttach) {
-      useExternalPartAttach = true;
-    }
-    if (tgtPart && !useExternalPartAttach) {
+    if (tgtPart) {
       newPart = KIS_Shared.CreatePart(
           draggedItem.partNode, pos, rot, draggedItem.inventory.part,
           coupleToPart: tgtPart,
