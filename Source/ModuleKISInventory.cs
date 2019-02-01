@@ -868,6 +868,7 @@ public class ModuleKISInventory : PartModule,
     GameEvents.OnHelmetChanged.Remove(OnHelmetChanged);
     GameEvents.onPartActionUICreate.Remove(OnPartActionMenuCreate);
     GameEvents.onEditorVariantApplied.Remove(OnPartVariandChanged);
+    DisableIcon();  // Release the resources!
   }
   #endregion
 

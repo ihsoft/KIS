@@ -3,6 +3,7 @@
 * [Fix #301] "volumeOverride" is not working .
 * [Fix #297] IMC-15K has wrong part volume.
 * [Fix #302] Structurel panel has wrong nodes.
+* [Fix #303] Game's crashing on the new parts.
 
 # 1.17 (January 28th, 2019):
 * KSP 1.6 support. This mod's version is not compatible with the prior versions of KSP!
