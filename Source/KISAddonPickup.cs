@@ -48,7 +48,7 @@ sealed class KISAddonPickup : MonoBehaviour {
       "#kisLOC_01003",
       defaultTemplate: "Detach & Grab",
       description: "The action status to show in the tooltip when the player presses the grab"
-      + " action key while pointing on an child part, and the action is allowed.");
+      + " action key while pointing on a child part, and the action is allowed.");
 
   static readonly Message GrabNotOkStatusTooltipTxt = new Message(
       "#kisLOC_01004",
@@ -179,20 +179,20 @@ sealed class KISAddonPickup : MonoBehaviour {
   static readonly Message NeedToolToAttachTooltipTxt = new Message(
       "#kisLOC_01024",
       defaultTemplate: "This part can't be attached without a tool",
-      description: "The tooltip help string to display when the player attempts to perfrom an"
+      description: "The tooltip help string to display when the player attempts to perform an"
       + " attach action without the proper tool equipped.");
 
   static readonly Message NeedToolToDetachTooltipTxt = new Message(
       "#kisLOC_01025",
       defaultTemplate: "This part can't be detached without a tool",
-      description: "The tooltip help string to display when the player attempts to perfrom a"
+      description: "The tooltip help string to display when the player attempts to perform a"
       + " detach action without the proper tool equipped.");
 
   static readonly Message NeedToolToStaticDetachTooltipTxt = new Message(
       "#kisLOC_01026",
       defaultTemplate: "This part can't be detached from the ground without a tool",
-      description: "The tooltip help string to display when the player attempts to perfrom a"
-      + " detach action on a ground attched part without the proper tool equipped.");
+      description: "The tooltip help string to display when the player attempts to perform a"
+      + " detach action on a ground attached part without the proper tool equipped.");
 
   static readonly Message NotSupportedTooltipTxt = new Message(
       "#kisLOC_01027",
@@ -211,15 +211,15 @@ sealed class KISAddonPickup : MonoBehaviour {
       defaultTemplate: "<<1>>",
       description: "The tooltip help string to display when a single part was targeted for an"
       + " action."
-      + "\nAgrument <<1>> is a name of the target part.");
+      + "\nArgument <<1>> is a name of the target part.");
 
   static readonly Message<string, int> AssemblyTargetTooltipTxt = new Message<string, int>(
       "#kisLOC_01030",
       defaultTemplate: "<<1>>\nAttached parts: <<2>>",
       description: "The tooltip help string to display when multiple parts was targeted for an"
       + " action."
-      + "\nAgrument <<1>> is a name of the target part."
-      + "\nAgrument <<2>> is the number of the children parts attached to the target.");
+      + "\nArgument <<1>> is a name of the target part."
+      + "\nArgument <<2>> is the number of the children parts attached to the target.");
 
   static readonly Message<string, string> RollRotateKeysTooltipTxt = new Message<string, string>(
       "#kisLOC_01031",

@@ -52,14 +52,14 @@ public class ModuleKISInventory : PartModule,
       defaultTemplate: "Cannot put an assembly into inventory: <<1>> part(s) attached",
       description: "The message to present when EVA kerbal tries to put into inventory an assembly"
       + " of multiple parts."
-      + "\nArgument <<1>> is the number of the children parts atatched to the part being dragged.");
+      + "\nArgument <<1>> is the number of the children parts attached to the part being dragged.");
 
   static readonly Message<VolumeLType, VolumeLType> MaxVolumeReachedMsg =
       new Message<VolumeLType, VolumeLType>(
           "#kisLOC_00003",
           defaultTemplate: "Max destination volume reached: <<1>> (+<<2>>)",
           description: "The message to present when an item being dragged into an inventory which"
-          + "doesn't have enough free space."
+          + " doesn't have enough free space."
           + "\nArgument <<1>> is a value of type VolumeLType which specifies the volume which is"
           + " attempted to be moved."
           + "\nArgument <<2>> is a value of type VolumeLType which specifies the exceeding volume"
@@ -86,7 +86,7 @@ public class ModuleKISInventory : PartModule,
   static readonly Message InventoryFullCannotSplitMsg = new Message(
       "#kisLOC_00009",
       defaultTemplate: "Inventory is full, cannot split!",
-      description: "The message to present when a split action is attempted on the the inventory,"
+      description: "The message to present when a split action is attempted on an inventory,"
       + " but there are no empty slots available to fit the new pack.");
 
   static readonly Message CarriableItemsNotForSeatsInventoryMsg = new Message(
@@ -105,7 +105,7 @@ public class ModuleKISInventory : PartModule,
       "#kisLOC_00012",
       defaultTemplate: "The seat must be crewed at launch to acquire items",
       description: "The text to show in an inventory window in the editor to highlight the fact"
-      + " that the items added there will only be availabe in the flight if the seat is occupied"
+      + " that the items added there will only be available in the flight if the seat is occupied"
       + " at the launch.");
 
   static readonly Message RemoveHelmetMenuTxt = new Message(
@@ -117,7 +117,7 @@ public class ModuleKISInventory : PartModule,
   static readonly Message PutOnHelmetMenuTxt =new Message(
       "#kisLOC_00014",
       defaultTemplate: "Put On Helmet",
-      description: "The name of the context menu item that pust the kerbal's helmet back.");
+      description: "The name of the context menu item that puts the kerbal's helmet back.");
 
   static readonly Message<string, int> PodInventoryWindowTitle =
       new Message<string, int>(
@@ -171,13 +171,13 @@ public class ModuleKISInventory : PartModule,
   static readonly Message UnequipItemContextMenuBtn = new Message(
       "#kisLOC_00023",
       defaultTemplate: "Unequip",
-      description: "The caption of the button that triggers the uneqip action on the item in the"
+      description: "The caption of the button that triggers the unequip action on the item in the"
       + " inventory. The button is shown in a context menu of the selected item.");
 
   static readonly Message EquipItemContextBtn = new Message(
       "#kisLOC_00024",
       defaultTemplate: "Equip",
-      description: "The caption of the button that triggers the eqip action on the item in the"
+      description: "The caption of the button that triggers the equip action on the item in the"
       + " inventory. The button is shown in a context menu of the selected item.");
 
   static readonly Message DropCarriedItemContextBtn = new Message(
@@ -260,7 +260,7 @@ public class ModuleKISInventory : PartModule,
       new Message<VolumeLType, VolumeLType>(
           "#kisLOC_00037",
           defaultTemplate: "Volume: <<1>> / <<2>>",
-          description: "The volume stat of the iventory in the main inventory window."
+          description: "The volume stat of the inventory in the main inventory window."
           + "\nArgument <<1>> is the occupied volume of the inventory of type VolumeLType."
           + "\nArgument <<2>> is the maximum volume of the inventory of type VolumeLType.");
 
@@ -390,7 +390,7 @@ public class ModuleKISInventory : PartModule,
       defaultTemplate: "Max Volume: <<1>>",
       description: "The info string in the editor for the maximum allowed volume of the"
       + " inventory."
-      + "\nArgument <<1>> is the voulme of type VolumeLType");
+      + "\nArgument <<1>> is the volume of type VolumeLType");
 
   static readonly Message InternalAccessAllowedPartInfo = new Message(
       "#kisLOC_00057",

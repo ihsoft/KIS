@@ -119,7 +119,7 @@ public class ModuleKISItem : PartModule,
   static readonly Message CanBeEquippedInfo = new Message(
       "#kisLOC_06014",
       defaultTemplate: "Equippable item",
-      description: "The info string to show in the editor to state that the item can be eqipped"
+      description: "The info string to show in the editor to state that the item can be equipped"
       + " by the kerbal. I.e. it attaches on the kerbal's model and reacts to the 'use' hotkey.");
   #endregion
 
