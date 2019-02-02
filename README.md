@@ -1,4 +1,4 @@
-![Cover](https://github.com/ihsoft/KIS/raw/master/WikiImages/Cover.jpg)
+﻿![Cover](https://github.com/ihsoft/KIS/raw/master/WikiImages/Cover.jpg)
 
 KIS introduces new gameplay mechanics by adding a brand new inventory system and EVA usables items as tools. You want to build a rover on Duna from scratch? Or you've forgot to attach a solar panel to the planetary station? With KIS it's not a problem!
 
@@ -34,6 +34,8 @@ _* Goggles, hats and helmets are provided by the third-party mods. E.g. "Kerbal 
 
 ![Português](https://github.com/ihsoft/KIS/raw/master/WikiImages/Brazil-small-flag.png) Português
 
+![Français](https://github.com/ihsoft/KIS/raw/master/WikiImages/French-small-flag.png) Français
+
 # Support
 
 You can support this and the other of my mods on [Patreon](https://www.patreon.com/ihsoft). This is where I post my ideas, prototypes and the features development progress.
@@ -65,7 +67,7 @@ If you want doing EVA comfortably, you really should consider adding these mods 
     * Verify the installation: the mod's `LICENSE.md` file must be located at `<game root>/GameData/KIS/LICENSE.md`.
 * If you don't want seeing the fun parts in your game, you can remove them:
     * Find file `remove_fun_part_patch.txt` in the mod's folder.
-    * Rename it into `remove_fun_part_patch.md`.
+    * Rename it into `remove_fun_part_patch.cfg`.
     * Move it one level up in the directory structure (into the `GameData` folder).
     * Now the fun parts won't show up even if you update the mod.
 

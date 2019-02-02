@@ -1,4 +1,5 @@
 ﻿using KISAPIv1;
+using KSPDev.LogUtils;
 using KSPDev.PartUtils;
 using System;
 using System.Linq;
@@ -6,7 +7,7 @@ using UnityEngine;
 
 namespace KIS {
 
-public sealed class KIS_IconViewer : IDisposable {
+  public sealed class KIS_IconViewer {
   const float IconPosY = 0;
   const int CameraLayer = 22;
   const float LightIntensity = 0.4f;
@@ -14,14 +15,23 @@ public sealed class KIS_IconViewer : IDisposable {
   const float RotationsPerSecond = 0.20f;  // Full round in 5 seconds.
 
   Camera camera;
-  int cameraShift;
+  float cameraShift;
   GameObject iconPrefab;
+  bool disposed;
 
   static Light iconLight;
-  static int cameraGlobalShift;
   static int iconCount;
+  static float globalCameraShift;
 
-  public Texture texture { get; private set; }
+  public Texture texture {
+    get {
+      if (cameraTarget != null && !cameraTarget.IsCreated()) {
+        camera.Render();
+      }
+      return cameraTarget;
+    }
+  }
+  RenderTexture cameraTarget;
 
   public KIS_IconViewer(Part part, int resolution) {
     if (part.vessel != null && part.vessel.isEVA) {
@@ -29,39 +39,45 @@ public sealed class KIS_IconViewer : IDisposable {
     } else {
       MakePartIcon(part.partInfo, resolution, VariantsUtils.GetCurrentPartVariant(part));
     }
-    iconCount += 1;
   }
 
   public KIS_IconViewer(AvailablePart avPart, int resolution, PartVariant variant) {
     MakePartIcon(avPart, resolution, variant);
-    iconCount += 1;
   }
 
+  /// <summary>Warns if the icon is not disposed properly.</summary>
+  /// <remarks>
+  /// This method cannot release the Unity resources since teh access to them is only allowed from
+  /// the Unity main thread. The best thing this method can do is spamming log errors.
+  /// </remarks>
   ~KIS_IconViewer() {
-    if (camera != null) {
-      Dispose();
+    if (!disposed) {
+      DebugEx.Error("RESOURCES LEAK! The IconViewer was not disposed: camera={0}, iconPrefab={1}",
+                    camera, iconPrefab);
     }
   }
+    
+  /// <summary>Releases all the used resources.</summary>
+  /// <remarks>
+  /// This method <i>must</i> be called if an icon becomes unusable. Otherwise, all the cached Unity
+  /// objects will live and take memory till the scene is reloaded. Some of the internal counters
+  /// will also not get updated as expected. Simply put, jut call it!
+  /// <para>It's safe to call this method multiple times.</para>
+  /// </remarks>
+  public void Dispose() {
+    if (!disposed) {
+      if (camera != null) {
+        UnityEngine.Object.Destroy(camera.gameObject);
+      }
+      if (iconPrefab != null) {
+        UnityEngine.Object.Destroy(iconPrefab);
+      }
+      ReleaseCameraSpot();
 
-  // The Dispose() method MUST be called instead of garbage-collecting icon instances
-  // because we can only access the cam.gameObject member from the main thread.
-  public void Dispose()
-  {
-    if (camera != null) {
-      UnityEngine.Object.DestroyImmediate(camera.gameObject);
       camera = null;
-    }
-    if (iconPrefab != null) {
-      UnityEngine.Object.DestroyImmediate(iconPrefab);
       iconPrefab = null;
-    }
-    if (texture != null) {
-      (texture as RenderTexture).Release();
-      texture = null;
-    }
-    iconCount -= 1;
-    if (iconCount == 0) {
-      cameraGlobalShift = 0;
+      cameraTarget = null;
+      disposed = true;
     }
   }
 
@@ -76,10 +92,6 @@ public sealed class KIS_IconViewer : IDisposable {
     iconPrefab.transform.rotation = Quaternion.Euler(-15f, 0.0f, 0.0f);
     iconPrefab.transform.Rotate(0.0f, -30f, 0.0f);
     camera.Render();  // Update snapshot.
-  }
-
-  static void ResetCamIndex() {
-    cameraGlobalShift = 0;
   }
 
   #region Local utility methods
@@ -98,7 +110,8 @@ public sealed class KIS_IconViewer : IDisposable {
 
   void MakeKerbalAvatar(Part ownerPart, int resolution) {
     // Icon Camera
-    GameObject camGo = new GameObject("KASCamItem" + cameraGlobalShift);
+    cameraShift = ReserveCameraSpot();
+    GameObject camGo = new GameObject("KASCamItem" + cameraShift);
     camGo.transform.parent = ownerPart.transform;
     camGo.transform.localPosition = Vector3.zero + new Vector3(0, 0.35f, 0.7f);
     camGo.transform.localRotation = Quaternion.identity;
@@ -107,15 +120,10 @@ public sealed class KIS_IconViewer : IDisposable {
     camera.orthographic = true;
     camera.orthographicSize = 0.35f;
     camera.clearFlags = CameraClearFlags.Color;
-    // Render texture
-    RenderTexture tex = new RenderTexture(resolution, resolution, 8);
-    texture = tex;
-
+    cameraTarget = new RenderTexture(resolution, resolution, 8);
     camera.cullingMask = Camera.main.cullingMask;
     camera.farClipPlane = 1f;
-
-    // Texture
-    camera.targetTexture = tex;
+    camera.targetTexture = cameraTarget;
     camera.ResetAspect();
   }
 
@@ -134,18 +142,36 @@ public sealed class KIS_IconViewer : IDisposable {
     }
 
     // Icon Camera
-    GameObject camGo = new GameObject("KASCamItem" + cameraGlobalShift);
-    camGo.transform.position = new Vector3(cameraGlobalShift, IconPosY, 0);
+    cameraShift = ReserveCameraSpot();
+    GameObject camGo = new GameObject("KASCamItem" + cameraShift);
+    camGo.transform.position = new Vector3(cameraShift, IconPosY, 0);
     camGo.transform.rotation = Quaternion.identity;
     camera = camGo.AddComponent<Camera>();
     camera.orthographic = true;
     camera.orthographicSize = CameraZoom;
     camera.clearFlags = CameraClearFlags.Color;
     camera.enabled = false;
-    // Render texture
-    RenderTexture tex = new RenderTexture(resolution, resolution, 8);
-    texture = tex;
+    cameraTarget = new RenderTexture(resolution, resolution, 8);
 
+    // Layer
+    camera.cullingMask = 1 << CameraLayer;
+    SetLayerRecursively(iconPrefab, CameraLayer);
+
+    // Texture
+    camera.targetTexture = cameraTarget;
+    camera.ResetAspect();
+
+    ResetPos();
+  }
+
+  void ReleaseCameraSpot() {
+    if (--iconCount == 0) {
+      globalCameraShift = 0;
+      DebugEx.Fine("Icon camera global shift is reset to zero");
+    }
+  }
+
+  float ReserveCameraSpot() {
     //light
     if (iconLight == null && HighLogic.LoadedSceneIsFlight) {
       GameObject lightGo = new GameObject("KASLight");
@@ -157,18 +183,10 @@ public sealed class KIS_IconViewer : IDisposable {
       iconLight.renderMode = LightRenderMode.ForcePixel;
     }
 
-    // Layer
-    camera.cullingMask = 1 << CameraLayer;
-    SetLayerRecursively(iconPrefab, CameraLayer);
-
-    // Texture
-    camera.targetTexture = tex;
-    camera.ResetAspect();
-
-    // Cam index
-    cameraShift = cameraGlobalShift;
-    cameraGlobalShift += 2;
-    ResetPos();
+    iconCount++;
+    globalCameraShift += 2.0f;
+    
+    return globalCameraShift;
   }
   #endregion
 }

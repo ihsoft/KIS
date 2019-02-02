@@ -50,7 +50,7 @@ sealed class KISAddonPointer : MonoBehaviour {
       "#kisLOC_03004",
       defaultTemplate: "This node cannot be used for surface attach!",
       description: "The message to present when the source object is attempted to be attached to"
-      + " the target's surface, but the selected node on the soucre is not 'surface'.");
+      + " the target's surface, but the selected node on the source is not 'surface'.");
 
   static readonly Message<DistanceType, DistanceType> TooFarFromSourceMsg =
       new Message<DistanceType, DistanceType>(

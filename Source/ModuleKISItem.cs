@@ -119,7 +119,7 @@ public class ModuleKISItem : PartModule,
   static readonly Message CanBeEquippedInfo = new Message(
       "#kisLOC_06014",
       defaultTemplate: "Equippable item",
-      description: "The info string to show in the editor to state that the item can be eqipped"
+      description: "The info string to show in the editor to state that the item can be equipped"
       + " by the kerbal. I.e. it attaches on the kerbal's model and reacts to the 'use' hotkey.");
   #endregion
 
@@ -223,16 +223,6 @@ public class ModuleKISItem : PartModule,
   [KSPField]
   [Debug.KISDebugAdjustableAttribute("Static attach")]
   public ItemAttachMode allowStaticAttach = ItemAttachMode.Disabled;
-
-  // For KAS
-  // TODO(ihsoft): Deprecate. The new KAS can handle normal coupling logic.
-  [KSPField]
-  public bool useExternalPartAttach;
-
-  // For KAS
-  // TODO(ihsoft): Deprecate. It's not KAS function.
-  [KSPField]
-  public bool useExternalStaticAttach;
 
   [KSPField]
   [Debug.KISDebugAdjustableAttribute("Static attach break force")]
@@ -359,7 +349,7 @@ public class ModuleKISItem : PartModule,
 
   /// <inheritdoc/>
   public virtual void OnPartUnpack() {
-    if (allowStaticAttach == ItemAttachMode.Disabled || useExternalStaticAttach) {
+    if (allowStaticAttach == ItemAttachMode.Disabled) {
       return;
     }
     if (staticAttached) {
@@ -370,7 +360,7 @@ public class ModuleKISItem : PartModule,
   #endregion
 
   public void OnKISAction(Dictionary<string, object> eventData) {
-    if (allowStaticAttach == ItemAttachMode.Disabled || useExternalStaticAttach) {
+    if (allowStaticAttach == ItemAttachMode.Disabled) {
       return;
     }
     var action = eventData["action"].ToString();

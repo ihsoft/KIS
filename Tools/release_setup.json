@@ -19,7 +19,8 @@
       "/User Guide.pdf",
       "/README.md",
       "/LICENSE.md",
-      "/remove_fun_part_patch.txt"
+      "/remove_fun_part_patch.txt",
+      "/kis_physical_containers.cfg.txt"
     ],
     "Plugins" : [
       "{COMPILED_BINARY}",

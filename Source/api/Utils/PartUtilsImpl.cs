@@ -7,6 +7,7 @@ using KSPDev.ModelUtils;
 using KSPDev.LogUtils;
 using KSPDev.PartUtils;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
@@ -74,7 +75,7 @@ public class PartUtilsImpl {
     }
     GameObject modelObj = null;
     VariantsUtils.ExecuteAtPartVariant(avPart, variant, p => {
-      var partPrefabModel = Hierarchy.GetPartModelTransform(avPart.partPrefab).gameObject;
+      var partPrefabModel = Hierarchy.GetPartModelTransform(p).gameObject;
       modelObj = UnityEngine.Object.Instantiate(partPrefabModel);
       modelObj.SetActive(true);
     });
@@ -161,9 +162,19 @@ public class PartUtilsImpl {
   /// <returns>The volume in liters.</returns>
   public float GetPartVolume(
       AvailablePart avPart, PartVariant variant = null, ConfigNode partNode = null) {
-    var model = GetPartModel(avPart, variant: variant, partNode: partNode);
-    var boundsSize = model.GetRendererBounds().size;
-    UnityEngine.Object.DestroyImmediate(model);
+    var itemModule = avPart.partPrefab.Modules.OfType<KIS.ModuleKISItem>().FirstOrDefault();
+    if (itemModule != null && itemModule.volumeOverride > 0) {
+      return itemModule.volumeOverride  // Ignore geometry.
+          * KISAPI.PartNodeUtils.GetTweakScaleSizeModifier(partNode);  // But respect TweakScale.
+    }
+    var bounds = default(Bounds);
+    VariantsUtils.ExecuteAtPartVariant(avPart, variant, p => {
+      var partModel = GetSceneAssemblyModel(p).transform;
+      bounds.Encapsulate(GetMeshBounds(partModel));
+      UnityEngine.Object.DestroyImmediate(partModel.gameObject);
+    });
+    var boundsSize = bounds.size;
+    
     return boundsSize.x * boundsSize.y * boundsSize.z * 1000f;
   }
 
@@ -230,6 +241,72 @@ public class PartUtilsImpl {
     VariantsUtils.ExecuteAtPartVariant(avPart, variant,
                                        p => itemCost += p.GetModuleCosts(avPart.cost));
     return itemCost;
+  }
+
+  /// <summary>Traverses thru the hierarchy and gathers all the meshes from it.</summary>
+  /// <param name="model">The root model to start from.</param>
+  /// <param name="meshCombines">The collection to accumulate the meshes.</param>
+  /// <param name="worldTransform">
+  /// The optional world matrix to apply to the mesh. If not set, then the models world's matrix
+  /// will be taken.
+  /// </param>
+  /// <param name="considerInactive">Tells if the inactive objects must be checked as well.</param>
+  public void CollectMeshesFromModel(Transform model,
+                                     ICollection<CombineInstance> meshCombines,
+                                     Matrix4x4? worldTransform = null,
+                                     bool considerInactive = false) {
+    // Always use world transformation from the root.
+    var rootWorldTransform = worldTransform ?? model.localToWorldMatrix.inverse;
+
+    // Get all meshes from the part's model.
+    var meshFilters = model
+        .GetComponentsInChildren<MeshFilter>()
+        // Prefab models are always inactive, so ignore the check.
+        .Where(mf => considerInactive || mf.gameObject.activeInHierarchy)
+        .ToArray();
+    DebugEx.Fine("Found {0} children meshes in: {1}", meshFilters.Length, model);
+    Array.ForEach(meshFilters, meshFilter => {
+      var combine = new CombineInstance();
+      combine.mesh = meshFilter.sharedMesh;
+      combine.transform = rootWorldTransform * meshFilter.transform.localToWorldMatrix;
+      meshCombines.Add(combine);
+    });
+
+    // Skinned meshes are baked on every frame before rendering.
+    var skinnedMeshRenderers = model.GetComponentsInChildren<SkinnedMeshRenderer>();
+    if (skinnedMeshRenderers.Length > 0) {
+      DebugEx.Fine("Found {0} skinned meshes in: {1}", skinnedMeshRenderers.Length, model);
+      foreach (var skinnedMeshRenderer in skinnedMeshRenderers) {
+        var combine = new CombineInstance();
+        combine.mesh = new Mesh();
+        skinnedMeshRenderer.BakeMesh(combine.mesh);
+        combine.transform = rootWorldTransform * skinnedMeshRenderer.transform.localToWorldMatrix;
+        meshCombines.Add(combine);
+      }
+    }
+
+    // Collect meshes from the children parts.
+    for (var i = 0; i < model.childCount; i++) {
+      CollectMeshesFromModel(
+          model.GetChild(i), meshCombines, worldTransform: rootWorldTransform);
+    }
+  }
+
+  /// <summary>Calculates bounds from the actual meshes of the model.</summary>
+  /// <remarks>Note that the result depends on the model orientation.</remarks>
+  /// <param name="model">The model to find the bounds for.</param>
+  /// <param name="considerInactive">Tells if inactive meshes should be considered.</param>
+  /// <returns></returns>
+  Bounds GetMeshBounds(Transform model, bool considerInactive = false) {
+    var combines = new List<CombineInstance>();
+    CollectMeshesFromModel(model, combines, considerInactive: considerInactive);
+    var bounds = default(Bounds);
+    foreach (var combine in combines) {
+      var mesh = new Mesh();
+      mesh.CombineMeshes(new[] { combine });
+      bounds.Encapsulate(mesh.bounds);
+    }
+    return bounds;
   }
 }
 
