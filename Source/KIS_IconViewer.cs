@@ -23,7 +23,15 @@ namespace KIS {
   static int iconCount;
   static float globalCameraShift;
 
-  public Texture texture { get; private set; }
+  public Texture texture {
+    get {
+      if (cameraTarget != null && !cameraTarget.IsCreated()) {
+        camera.Render();
+      }
+      return cameraTarget;
+    }
+  }
+  RenderTexture cameraTarget;
 
   public KIS_IconViewer(Part part, int resolution) {
     if (part.vessel != null && part.vessel.isEVA) {
@@ -68,7 +76,7 @@ namespace KIS {
 
       camera = null;
       iconPrefab = null;
-      texture = null;
+      cameraTarget = null;
       disposed = true;
     }
   }
@@ -112,15 +120,10 @@ namespace KIS {
     camera.orthographic = true;
     camera.orthographicSize = 0.35f;
     camera.clearFlags = CameraClearFlags.Color;
-    // Render texture
-    RenderTexture tex = new RenderTexture(resolution, resolution, 8);
-    texture = tex;
-
+    cameraTarget = new RenderTexture(resolution, resolution, 8);
     camera.cullingMask = Camera.main.cullingMask;
     camera.farClipPlane = 1f;
-
-    // Texture
-    camera.targetTexture = tex;
+    camera.targetTexture = cameraTarget;
     camera.ResetAspect();
   }
 
@@ -148,16 +151,14 @@ namespace KIS {
     camera.orthographicSize = CameraZoom;
     camera.clearFlags = CameraClearFlags.Color;
     camera.enabled = false;
-    // Render texture
-    RenderTexture tex = new RenderTexture(resolution, resolution, 8);
-    texture = tex;
+    cameraTarget = new RenderTexture(resolution, resolution, 8);
 
     // Layer
     camera.cullingMask = 1 << CameraLayer;
     SetLayerRecursively(iconPrefab, CameraLayer);
 
     // Texture
-    camera.targetTexture = tex;
+    camera.targetTexture = cameraTarget;
     camera.ResetAspect();
 
     ResetPos();
