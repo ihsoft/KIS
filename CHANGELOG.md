@@ -1,4 +1,5 @@
 # 1.18 (pre-release):
+* [Change] Add an optional (yet) patch file to make the legacy KIS containers physics complient. See file `kis_physical_containers.cfg.txt`.
 * [Enhancement] Add French localization.
 * [Enhancement] Improve English part descriptions.
 * [Enhancement] Add IWC-4500 "Wyvern" part.

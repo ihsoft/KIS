@@ -1,0 +1,55 @@
+// Update KIS containers volume and mass to fit the physical laws.
+
+@PART[KIS_Container1]:NEEDS[KIS]:AFTER[KIS]
+{
+	%mass = 0.01
+	%MODULE[ModuleKISInventory]
+	{       %maxVolume = 280
+	}
+
+	@MODULE[ModuleKISItemEvaTweaker]
+	{
+		-volumeOverride = 0
+	}
+}
+
+@PART[KIS_ContainerMount1]:NEEDS[KIS]:AFTER[KIS]
+{
+	%mass = 0.005
+}
+
+@PART[KIS_Container2]:NEEDS[KIS]:AFTER[KIS]
+{
+	%mass = 0.5
+	%MODULE[ModuleKISInventory]
+	{
+		%maxVolume = 8800
+	}
+
+	@MODULE[ModuleKISItem]
+	{
+		-volumeOverride = 0
+	}
+}
+
+@PART[KIS_Container3]:NEEDS[KIS]:AFTER[KIS]
+{
+	%mass = 0.3
+	%MODULE[ModuleKISInventory]
+	{
+		%maxVolume = 3900
+	}
+
+	@MODULE[ModuleKISItem]
+	{
+		-volumeOverride = 0
+	}
+}
+
+@KISConfig:NEEDS[KIS]:BEFORE[KIS]
+{
+	%EvaInventory
+	{
+		%maxVolume = 110
+	}
+}
