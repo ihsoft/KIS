@@ -1,8 +1,8 @@
 # 1.18 (pre-release):
 * [Enhancement] Add French localization.
 * [Enhancement] Improve English part descriptions.
-* [Fix #301] "volumeOverride" is not working .
 * [Fix #297] IMC-15K has wrong part volume.
+* [Fix #301] "volumeOverride" is not working.
 * [Fix #302] Structurel panel has wrong nodes.
 * [Fix #303] Game's crashing on the new parts.
 
