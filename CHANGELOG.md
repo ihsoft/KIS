@@ -1,4 +1,6 @@
-# 1.18 (pre-release):
+# 1.19 (pre-release):
+
+# 1.18 (February 2nd, 2019):
 * [Change] Add an optional (yet) patch file to make the legacy KIS containers physics complient. See file `kis_physical_containers.cfg.txt`.
 * [Enhancement] Add French localization.
 * [Enhancement] Improve English part descriptions.
