@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace KIS {
 
-  public sealed class KIS_IconViewer {
+public sealed class KIS_IconViewer {
   const float IconPosY = 0;
   const int CameraLayer = 22;
   const float LightIntensity = 0.4f;
@@ -47,7 +47,7 @@ namespace KIS {
 
   /// <summary>Warns if the icon is not disposed properly.</summary>
   /// <remarks>
-  /// This method cannot release the Unity resources since teh access to them is only allowed from
+  /// This method cannot release the Unity resources since the access to them is only allowed from
   /// the Unity main thread. The best thing this method can do is spamming log errors.
   /// </remarks>
   ~KIS_IconViewer() {
