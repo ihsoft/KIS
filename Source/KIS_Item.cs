@@ -386,7 +386,11 @@ public sealed class KIS_Item {
   /// <param name="isAmountRelative">
   /// Tells if the amount must be added to the current item's amount instead of simply replacing it.
   /// </param>
-  public void UpdateResource(string name, double amount, bool isAmountRelative = false) {
+  /// <returns>
+  /// The new resource amount or <c>null</c> of resource not found. Note, that the resource amount
+  /// can be less than zero.
+  /// </returns>
+  public double? UpdateResource(string name, double amount, bool isAmountRelative = false) {
     var res = KISAPI.PartNodeUtils.UpdateResource(partNode, name, amount,
                                                   isAmountRelative: isAmountRelative);
     if (res.HasValue) {
@@ -397,6 +401,7 @@ public sealed class KIS_Item {
       HostedDebugLog.Error(
           inventory, "Cannot find resource {0} in item for {1}", name, availablePart.name);
     }
+    return res;
   }
 
   public void EnableIcon(int resolution) {
