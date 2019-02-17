@@ -274,6 +274,7 @@ public sealed class KIS_Item {
     this.inventory = inventory;
     this.quantity = quantity;
     SetPrefabModule();
+    this.stackable = CheckItemStackable(availablePart);
     this.partNode = new ConfigNode();
     itemNode.GetNode("PART").CopyTo(partNode);
     ConfigAccessor.ReadFieldsFromNode(
@@ -304,7 +305,6 @@ public sealed class KIS_Item {
                       + " oldResourceMass={0}, newResourceMass={1}, resourceCost={2}",
                       oldResourceMass, this.itemResourceMass, this.itemResourceCost);
     }
-    stackable = CheckItemStackable(availablePart);
   }
 
   /// <summary>Creates a new part from scene.</summary>
@@ -317,6 +317,7 @@ public sealed class KIS_Item {
     this.inventory = inventory;
     this.quantity = quantity;
     SetPrefabModule();
+    this.stackable = CheckItemStackable(availablePart);
     this.partNode = KISAPI.PartNodeUtils.PartSnapshot(part);
 
     this.itemVolume = KISAPI.PartUtils.GetPartVolume(part.partInfo, partNode: partNode);
@@ -357,7 +358,7 @@ public sealed class KIS_Item {
     var module = avPart.partPrefab.GetComponent<ModuleKISItem>();
     var allModulesCompatible = avPart.partPrefab.Modules.Cast<PartModule>()
         .All(m => KISAddonConfig.stackableModules.Contains(m.moduleName));
-    var hasNoResources = PartNodeUtils.GetModuleNode(avPart.partConfig, "RESOURCE") != null;
+    var hasNoResources = KISAPI.PartNodeUtils.GetResources(avPart.partConfig).Length == 0;
     return module != null && module.stackable
         || KISAddonConfig.stackableList.Contains(avPart.name.Replace('.', '_'))
         || allModulesCompatible && hasNoResources;

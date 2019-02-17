@@ -1,4 +1,5 @@
 # 1.19 (pre-release):
+* [Fix #317] Stock Parts not stacking in 1.6.1 with no other mods.
 
 # 1.18 (February 2nd, 2019):
 * [Change] Add an optional (yet) patch file to make the legacy KIS containers physics complient. See file `kis_physical_containers.cfg.txt`.
