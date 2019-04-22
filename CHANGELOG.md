@@ -1,4 +1,5 @@
 # 1.19 (pre-release):
+* [Fix #314] KIS.Container1 cannot be selected as root part.
 * [Fix #317] Stock Parts not stacking in 1.6.1 with no other mods.
 * [Fix #319] Restock part volumes is wrong when a skinned mesh is used.
 
