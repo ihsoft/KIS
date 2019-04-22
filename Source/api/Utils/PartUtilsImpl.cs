@@ -278,7 +278,12 @@ public class PartUtilsImpl {
         var combine = new CombineInstance();
         combine.mesh = new Mesh();
         skinnedMeshRenderer.BakeMesh(combine.mesh);
-        combine.transform = rootWorldTransform * skinnedMeshRenderer.transform.localToWorldMatrix;
+        // BakeMesh() gives mesh in world scale, so don't apply it twice.
+        var localToWorldMatrix = Matrix4x4.TRS(
+            skinnedMeshRenderer.transform.position,
+            skinnedMeshRenderer.transform.rotation,
+            Vector3.one);
+        combine.transform = rootWorldTransform * localToWorldMatrix;
         meshCombines.Add(combine);
       }
     }
