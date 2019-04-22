@@ -1577,14 +1577,15 @@ public class ModuleKISInventory : PartModule,
     }
 
     //Debug
-    if (debugContextMenu && contextItem != null
-        && !HighLogic.LoadedSceneIsEditor && invType == InventoryType.Eva) {
+    if (debugContextMenu && contextItem != null) {
       noAction = false;
-      if (GUILayout.Button("Debug")) {
-        DebugGui.MakePartDebugDialog("KIS item adjustment tool",
-                                     group: Debug.KISDebugAdjustableAttribute.DebugGroup,
-                                     bindToPart: contextItem.availablePart.partPrefab);
-        contextItem = null;
+      if (!HighLogic.LoadedSceneIsEditor && invType == InventoryType.Eva) {
+        if (GUILayout.Button("Debug")) {
+          DebugGui.MakePartDebugDialog("KIS item adjustment tool",
+                                       group: Debug.KISDebugAdjustableAttribute.DebugGroup,
+                                       bindToPart: contextItem.availablePart.partPrefab);
+          contextItem = null;
+        }
       }
       if (GUILayout.Button("Dispose")) {
         contextItem.inventory.DeleteItem(contextItem.slot, contextItem.quantity);
