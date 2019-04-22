@@ -174,7 +174,6 @@ public class PartUtilsImpl {
       UnityEngine.Object.DestroyImmediate(partModel.gameObject);
     });
     var boundsSize = bounds.size;
-    
     return boundsSize.x * boundsSize.y * boundsSize.z * 1000f;
   }
 
@@ -286,12 +285,6 @@ public class PartUtilsImpl {
         combine.transform = rootWorldTransform * localToWorldMatrix;
         meshCombines.Add(combine);
       }
-    }
-
-    // Collect meshes from the children parts.
-    for (var i = 0; i < model.childCount; i++) {
-      CollectMeshesFromModel(
-          model.GetChild(i), meshCombines, worldTransform: rootWorldTransform);
     }
   }
 
