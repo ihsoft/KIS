@@ -1,4 +1,5 @@
 ﻿using KISAPIv1;
+using KSPDev.ConfigUtils;
 using KSPDev.LogUtils;
 using KSPDev.ProcessingUtils;
 using KSPDev.PartUtils;
@@ -255,6 +256,8 @@ public static class KIS_Shared {
     newPart.transform.position = position;
     newPart.transform.rotation = rotation;
     newPart.missionID = fromPart.missionID;
+    newPart.launchID = ConfigAccessor.GetValueByPath<uint>(partConfig, "launchID")
+        ?? fromPart.launchID;
     newPart.UpdateOrgPosAndRot(newPart.vessel.rootPart);
 
     if (coupleToPart != null) {
