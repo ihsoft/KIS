@@ -248,7 +248,7 @@ public sealed class KIS_Item {
     }
     if (qty == 0 || partName == null || avPart == null) {
       DebugEx.Error("Bad item config:\n{0}", itemNode);
-      throw new ArgumentException("Bad item config node");
+      throw new ArgumentException("Bad item config node", "itemNode");
     }
     return new KIS_Item(avPart, itemNode, inventory, qty);
   }

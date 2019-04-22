@@ -264,7 +264,6 @@ public class PartUtilsImpl {
         // Prefab models are always inactive, so ignore the check.
         .Where(mf => considerInactive || mf.gameObject.activeInHierarchy)
         .ToArray();
-    DebugEx.Fine("Found {0} children meshes in: {1}", meshFilters.Length, model);
     Array.ForEach(meshFilters, meshFilter => {
       var combine = new CombineInstance();
       combine.mesh = meshFilter.sharedMesh;
@@ -275,7 +274,6 @@ public class PartUtilsImpl {
     // Skinned meshes are baked on every frame before rendering.
     var skinnedMeshRenderers = model.GetComponentsInChildren<SkinnedMeshRenderer>();
     if (skinnedMeshRenderers.Length > 0) {
-      DebugEx.Fine("Found {0} skinned meshes in: {1}", skinnedMeshRenderers.Length, model);
       foreach (var skinnedMeshRenderer in skinnedMeshRenderers) {
         var combine = new CombineInstance();
         combine.mesh = new Mesh();

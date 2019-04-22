@@ -977,7 +977,7 @@ sealed class KISAddonPickup : MonoBehaviour {
   /// as specified. The actual rotation of the part won't change.
   /// </param>
   /// <returns>
-  /// The nearest actor from the active vessel or <c>null</c> if no macthign candidates found.
+  /// The nearest actor from the active vessel or <c>null</c> if no matching candidates found.
   /// </returns>
   /// TODO(ihsoft): Redesign this method. Instead of awkward "can" parameters, simply provide a filter function.
   ModuleKISPickup GetActivePickupNearest(Part refPart,
@@ -1030,7 +1030,7 @@ sealed class KISAddonPickup : MonoBehaviour {
   /// as specified. The actual rotation of the part won't change.
   /// </param>
   /// <returns>
-  /// The nearest actor from the active vessel or <c>null</c> if no macthign candidates found.
+  /// The nearest actor from the active vessel or <c>null</c> if no matching candidates found.
   /// </returns>
   /// <returns>The maximum possible mas, considering all the actors in range.</returns>
   float GetAllPickupMaxMassInRange(Part refPart,
