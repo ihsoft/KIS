@@ -1,4 +1,5 @@
 # 1.19 (pre-release):
+* [Change] Update ES-ES localization.
 * [Fix #311] Container item launchID incorrect at vessel launch.
 * [Fix #314] KIS.Container1 cannot be selected as root part.
 * [Fix #317] Stock Parts not stacking in 1.6.1 with no other mods.
