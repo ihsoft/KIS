@@ -552,9 +552,6 @@ public class ModuleKISInventory : PartModule,
   [PersistentField("Global/slotHotkey8")]
   public static KeyCode slotHotkey8 = KeyCode.Alpha8;
 
-  [PersistentField("Global/kerbalDefaultMass")]
-  public static float kerbalDefaultMass = 0.094f;
-
   [PersistentField("Global/itemDebug")]
   public static bool debugContextMenu;
 
