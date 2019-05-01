@@ -423,7 +423,7 @@ public class ModuleKISItem : PartModule,
         ? EquipSlotsLookup[equipSlot].Format()
         : equipSlot;
     return new[] {
-        equipable
+        equipable && !carriable
             ? EquippableInfo.Format(slotName) : null,
         carriable
             ? CarriableInfo.Format(slotName) : null,
