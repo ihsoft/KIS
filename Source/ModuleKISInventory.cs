@@ -567,13 +567,13 @@ public class ModuleKISInventory : PartModule,
             guiActiveUnfocused = true, guiActiveUncommand = true)]
   [LocalizableItem(tag = null)]
   public void ToggleInventoryEvent() {
+    // Destroy icons viewer
+    foreach (KeyValuePair<int, KIS_Item> item in items) {
+      item.Value.DisableIcon();
+    }
+    SetDoorsOpenAnimationState(false);
+    DisableIcon();
     if (showGui) {
-      // Destroy icons viewer
-      foreach (KeyValuePair<int, KIS_Item> item in items) {
-        item.Value.DisableIcon();
-      }
-      SetDoorsOpenAnimationState(false);
-      DisableIcon();
       showGui = false;
       if (HighLogic.LoadedSceneIsEditor) {
         UISoundPlayer.instance.Play(closeSndPath);

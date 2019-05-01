@@ -473,9 +473,7 @@ public sealed class KIS_Item {
   }
 
   public void Delete() {
-    if (inventory.showGui) {
-      DisableIcon();
-    }
+    DisableIcon();
     if (equipped) {
       Unequip();
     }
