@@ -101,62 +101,62 @@ public sealed class KIS_Item {
   /// The item's part mass without the resources and content (if it's a KIS container).
   /// </summary>
   /// <value>The mass in tons.</value>
-  public float itemDryMass { get { return _itemDryMass; } }
+  public double itemDryMass { get { return _itemDryMass; } }
   [PersistentField("dryMass", group = StdPersistentGroups.PartPersistant)]
-  float _itemDryMass;
+  double _itemDryMass;
 
   /// <summary>
   /// The item's part cost without the resources and content (if it's a KIS container).
   /// </summary>
   /// <value>The cost in the game currency units.</value>
-  public float itemDryCost { get { return _itemDryCost; } }
+  public double itemDryCost { get { return _itemDryCost; } }
   [PersistentField("dryCost", group = StdPersistentGroups.PartPersistant)]
-  float _itemDryCost;
+  double _itemDryCost;
 
   /// <summary>The item's resource mass, if any.</summary>
   /// <value>The mass in tons.</value>
-  public float itemResourceMass { get { return _resourceMass; } }
+  public double itemResourceMass { get { return _resourceMass; } }
   [PersistentField("resourceMass", group = StdPersistentGroups.PartPersistant)]
-  float _resourceMass;
+  double _resourceMass;
 
   /// <summary>The item's resource cost, if any.</summary>
   /// <value>The cost in the game currency units.</value>
-  public float itemResourceCost { get { return _resourceCost; } }
+  public double itemResourceCost { get { return _resourceCost; } }
   [PersistentField("resourceCost", group = StdPersistentGroups.PartPersistant)]
-  float _resourceCost;
+  double _resourceCost;
 
   /// <summary>The item's content mass, if it's a KIS inventory.</summary>
   /// <value>The mass in tons.</value>
-  public float itemContentMass { get { return _contentMass; } }
+  public double itemContentMass { get { return _contentMass; } }
   [PersistentField("contentMass", group = StdPersistentGroups.PartPersistant)]
-  float _contentMass;
+  double _contentMass;
 
   /// <summary>The item's content cost, if any.</summary>
   /// <value>The cost in the game currency units.</value>
-  public float itemContentCost { get { return _contentCost; } }
+  public double itemContentCost { get { return _contentCost; } }
   [PersistentField("contentCost", group = StdPersistentGroups.PartPersistant)]
-  float _contentCost;
+  double _contentCost;
   #endregion
 
   #region API properties
   /// <summary>Total voulme of the item's meshes.</summary>
   /// <value>The volume in liters.</value>
-  public float itemVolume { get; private set; }
+  public double itemVolume { get; private set; }
 
   /// <summary>Total cost of the part and its content and resources.</summary>
   /// <value>The cost in the game currency untis.</value>
-  public float fullItemCost { get { return itemDryCost + itemResourceCost + itemContentCost; } }
+  public double fullItemCost { get { return itemDryCost + itemResourceCost + itemContentCost; } }
 
   /// <summary>Total mass of the part and its content and resources.</summary>
   /// <value>The mass in tons.</value>
-  public float fullItemMass { get { return itemDryMass + itemResourceMass + itemContentMass; } }
+  public double fullItemMass { get { return itemDryMass + itemResourceMass + itemContentMass; } }
   #endregion
 
   #region Slot properties
   public int slot { get { return inventory.items.FirstOrDefault(x => x.Value == this).Key; } }
-  public float stackVolume { get { return itemVolume * quantity; } }
-  public float totalSlotCost { get { return fullItemCost * quantity; } }
-  public float totalSlotMass { get { return fullItemMass * quantity; } }
+  public double stackVolume { get { return itemVolume * quantity; } }
+  public double totalSlotCost { get { return fullItemCost * quantity; } }
+  public double totalSlotMass { get { return fullItemMass * quantity; } }
   #endregion
 
   /// <summary>Inventory that owns this item.</summary>
@@ -427,7 +427,7 @@ public sealed class KIS_Item {
       UISounds.PlayBipWrong();
       return false;
     }
-    float newVolume = inventory.totalContentsVolume + (itemVolume * qty);
+    var newVolume = inventory.totalContentsVolume + (itemVolume * qty);
     if (checkVolume && newVolume > inventory.maxVolume) {
       ScreenMessaging.ShowPriorityScreenMessage(
           CannotStackMaxVolumeReachedMsg.Format(newVolume - inventory.maxVolume));

@@ -83,10 +83,10 @@ public class PartUtilsImpl {
     // Handle TweakScale settings.
     if (partNode != null) {
       var scale = KISAPI.PartNodeUtils.GetTweakScaleSizeModifier(partNode);
-      if (Mathf.Abs(1.0f - scale) > float.Epsilon) {
+      if (Math.Abs(1.0 - scale) > double.Epsilon) {
         DebugEx.Fine("Applying TweakScale size modifier: {0}", scale);
         var scaleRoot = new GameObject("TweakScale");
-        scaleRoot.transform.localScale = new Vector3(scale, scale, scale);
+        scaleRoot.transform.localScale = new Vector3((float) scale, (float) scale, (float) scale);
         modelObj.transform.SetParent(scaleRoot.transform, worldPositionStays: false);
         modelObj = scaleRoot;
       }
@@ -160,7 +160,7 @@ public class PartUtilsImpl {
   /// The part's persistent config. It will be looked up for the variant if it's not specified.
   /// </param>
   /// <returns>The volume in liters.</returns>
-  public float GetPartVolume(
+  public double GetPartVolume(
       AvailablePart avPart, PartVariant variant = null, ConfigNode partNode = null) {
     var itemModule = avPart.partPrefab.Modules.OfType<KIS.ModuleKISItem>().FirstOrDefault();
     if (itemModule != null && itemModule.volumeOverride > 0) {
@@ -184,7 +184,7 @@ public class PartUtilsImpl {
   /// </remarks>
   /// <param name="part">The actual part, that exists in the scene.</param>
   /// <returns>The volume in liters.</returns>
-  public float GetPartVolume(Part part) {
+  public double GetPartVolume(Part part) {
     var partNode = KISAPI.PartNodeUtils.PartSnapshot(part);
     return GetPartVolume(part.partInfo, partNode: partNode);
   }
@@ -199,7 +199,7 @@ public class PartUtilsImpl {
   /// The part's persistent config. It will be looked up for the variant if it's not specified.
   /// </param>
   /// <returns>The dry cost of the part.</returns>
-  public float GetPartDryMass(
+  public double GetPartDryMass(
       AvailablePart avPart, PartVariant variant = null, ConfigNode partNode = null) {
     var itemMass = avPart.partPrefab.mass;
     if (variant == null && partNode != null) {
@@ -219,13 +219,13 @@ public class PartUtilsImpl {
   /// The part's persistent config. It will be looked up for the various cost modifiers.
   /// </param>
   /// <returns>The dry cost of the part.</returns>
-  public float GetPartDryCost(
+  public double GetPartDryCost(
       AvailablePart avPart, PartVariant variant = null, ConfigNode partNode = null) {
     // TweakScale compatibility
     if (partNode != null) {
       var tweakScale = KISAPI.PartNodeUtils.GetTweakScaleModule(partNode);
       if (tweakScale != null) {
-        var tweakedCost = ConfigAccessor.GetValueByPath<float>(tweakScale, "DryCost");
+        var tweakedCost = ConfigAccessor.GetValueByPath<double>(tweakScale, "DryCost");
         if (tweakedCost.HasValue) {
           // TODO(ihsoft): Get back to this code once TweakScale supports variants.
           return tweakedCost.Value;

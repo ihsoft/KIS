@@ -16,12 +16,12 @@ public class PartNodeUtilsImpl {
   /// <summary>Gets scale modifier, applied by TweakScale mod.</summary>
   /// <param name="partNode">The part's persistent state config.</param>
   /// <returns>The scale ratio.</returns>
-  public float GetTweakScaleSizeModifier(ConfigNode partNode) {
-    var ratio = 1.0f;
+  public double GetTweakScaleSizeModifier(ConfigNode partNode) {
+    var ratio = 1.0;
     var tweakScaleNode = GetTweakScaleModule(partNode);
     if (tweakScaleNode != null) {
-      var defaultScale = ConfigAccessor.GetValueByPath<float>(tweakScaleNode, "defaultScale");
-      var currentScale = ConfigAccessor.GetValueByPath<float>(tweakScaleNode, "currentScale");
+      var defaultScale = ConfigAccessor.GetValueByPath<double>(tweakScaleNode, "defaultScale");
+      var currentScale = ConfigAccessor.GetValueByPath<double>(tweakScaleNode, "currentScale");
       if (defaultScale.HasValue && currentScale.HasValue) {
         ratio = currentScale.Value / defaultScale.Value;
       } else {

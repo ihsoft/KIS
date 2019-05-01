@@ -370,7 +370,7 @@ sealed class KISAddonPickup : MonoBehaviour {
   /// <summary>A number of parts in the currently grabbed assembly.</summary>
   public static int grabbedPartsCount;
   /// <summary>The total mass of the grabbed assembly. Tons.</summary>
-  public static float grabbedMass;
+  public static double grabbedMass;
   /// <summary>A root part of the currently grabbed assembly.</summary>
   public static Part grabbedPart;
 

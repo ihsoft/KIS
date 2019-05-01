@@ -660,17 +660,17 @@ public class ModuleKISInventory : PartModule,
   /// <summary>Total volume of the contents.</summary>
   /// <value>The volume in <c>liters</c>.</value>
   /// <seealso cref="RefreshContents"/>
-  public float totalContentsVolume { get; private set; }
+  public double totalContentsVolume { get; private set; }
   
   /// <summary>Total mass of the contents.</summary>
   /// <value>The mass in <c>tons</c>.</value>
   /// <seealso cref="RefreshContents"/>
-  public float contentsMass { get; private set; }
+  public double contentsMass { get; private set; }
 
   /// <summary>Total cost of the contents.</summary>
   /// <value>The cost in game currency.</value>
   /// <seealso cref="RefreshContents"/>
-  public float contentsCost { get; private set; }
+  public double contentsCost { get; private set; }
 
   // GUI
   public bool showGui { get; private set; }
@@ -877,7 +877,7 @@ public class ModuleKISInventory : PartModule,
 
   /// <summary>Overridden from IPartCostModifier.</summary>
   public float GetModuleCost(float defaultCost, ModifierStagingSituation sit) {
-    return contentsCost;
+    return (float) contentsCost;
   }
 
   /// <summary>Overridden from IPartMassModifier.</summary>
@@ -887,7 +887,7 @@ public class ModuleKISInventory : PartModule,
       
   /// <summary>Overridden from IPartMassModifier.</summary>
   public float GetModuleMass(float defaultMass, ModifierStagingSituation sit) {
-    return contentsMass;
+    return (float) contentsMass;
   }
   #endregion
 
@@ -2122,7 +2122,7 @@ public class ModuleKISInventory : PartModule,
   bool VolumeAvailableFor(KIS_Item item) {
     RefreshContents();
     if (KISAddonPickup.draggedItem.inventory != this) {
-      float newTotalVolume = totalContentsVolume + item.stackVolume;
+      var newTotalVolume = totalContentsVolume + item.stackVolume;
       if (newTotalVolume > maxVolume) {
         ScreenMessaging.ShowPriorityScreenMessage(
             MaxVolumeReachedMsg.Format(item.stackVolume, (newTotalVolume - maxVolume)));
