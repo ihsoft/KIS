@@ -956,7 +956,10 @@ sealed class KISAddonPickup : MonoBehaviour {
   }
 
   /// <summary>Returns the nearest actor module that has the required capabilities.</summary>
-  /// <remarks>All actors on the active vessel are checked.</remarks>
+  /// <remarks>
+  /// All actors on the active vessel are checked. The actor's range limit must be satisfied for it
+  /// to be considered in the check.
+  /// </remarks>
   /// <param name="refPart">
   /// The part that is being checked. Its mesh will be used to determine the exact distance.
   /// </param>
@@ -976,6 +979,7 @@ sealed class KISAddonPickup : MonoBehaviour {
   /// Optional new rotation of the part. The distance will be checked, assuming the part is rotated
   /// as specified. The actual rotation of the part won't change.
   /// </param>
+  /// <param name="testFunc">The function to verify if the module qualifies for the check.</param>
   /// <returns>
   /// The nearest actor from the active vessel or <c>null</c> if no matching candidates found.
   /// </returns>
@@ -984,37 +988,40 @@ sealed class KISAddonPickup : MonoBehaviour {
                                          bool canPartAttachOnly = false,
                                          bool canStaticAttachOnly = false,
                                          Vector3? probePosition = null,
-                                         Quaternion? probeRotation = null) {
+                                         Quaternion? probeRotation = null,
+                                         Func<ModuleKISPickup, bool> testFunc = null) {
     // Temporarily relocate the ref part to probe the distance at the new location.
     Vector3 oldPos = refPart.transform.position;
     Quaternion oldRot = refPart.transform.rotation;
-    refPart.transform.position = probePosition ?? oldPos;
-    refPart.transform.rotation = probeRotation ?? oldRot;
-    
-    ModuleKISPickup nearestPModule = null;
-    float nearestSqrDistance = Mathf.Infinity;
-    var pickupModules = FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleKISPickup>();
 
-    foreach (var pickupModule in pickupModules) {
-      var partSqrDist = Colliders.GetSqrDistanceToPartOrDefault(
-          pickupModule.part.transform.position, refPart);
-      if (partSqrDist <= nearestSqrDistance) {
-        if (!canPartAttachOnly && !canStaticAttachOnly) {
-          nearestSqrDistance = partSqrDist;
-          nearestPModule = pickupModule;
-        } else if (canPartAttachOnly && pickupModule.allowPartAttach) {
-          nearestSqrDistance = partSqrDist;
-          nearestPModule = pickupModule;
-        } else if (canStaticAttachOnly && pickupModule.allowStaticAttach) {
-          nearestSqrDistance = partSqrDist;
-          nearestPModule = pickupModule;
-        }
+    // Legacy code compatibility.    
+    if (testFunc == null) {
+      if (!canPartAttachOnly && !canStaticAttachOnly) {
+        testFunc = x => true;
+      } else if (canPartAttachOnly) {
+        testFunc = x => x.allowPartAttach;
+      } else if (canStaticAttachOnly) {
+        testFunc = x => x.allowStaticAttach;
+      } else {
+        throw new ArgumentException(
+            "canPartAttachOnly and canStaticAttachOnly are mutual exclusive");
       }
     }
 
+    refPart.transform.position = probePosition ?? oldPos;
+    refPart.transform.rotation = probeRotation ?? oldRot;
+    var pickup = FlightGlobals.ActiveVessel
+        .FindPartModulesImplementing<ModuleKISPickup>()
+        .Select(x => new {
+            module = x,
+            sqrDist = Colliders.GetSqrDistanceToPartOrDefault(x.part.transform.position, refPart),
+            sqrRange = x.maxDistance * x.maxDistance
+        })
+        .OrderBy(x => x.sqrDist)
+        .FirstOrDefault(x => x.sqrDist <= x.sqrRange && testFunc(x.module));
     refPart.transform.position = oldPos;
     refPart.transform.rotation = oldRot;
-    return nearestPModule;
+    return pickup != null ? pickup.module : null;
   }
 
   /// <summary>Calculates the maximum mass that actor(s) can lift.</summary>

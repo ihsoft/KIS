@@ -2,6 +2,7 @@
 * [Change] Update ES-ES localization.
 * [Fix #311] Container item launchID incorrect at vessel launch.
 * [Fix #314] KIS.Container1 cannot be selected as root part.
+* [Fix #315] When the target is too far, KIS says "too heavy".
 * [Fix #317] Stock Parts not stacking in 1.6.1 with no other mods.
 * [Fix #319] Restock part volumes is wrong when a skinned mesh is used.
 * [Fix #321] KIS Inventory and inflatable parts.
