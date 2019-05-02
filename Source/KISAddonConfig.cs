@@ -26,8 +26,6 @@ sealed class KISAddonConfig : MonoBehaviour {
   [PersistentField("EquipAliases/alias", isCollection = true)]
   public readonly static List<string> equipAliases = new List<string>();
 
-  [PersistentField("Global/breathableAtmoPressure")]
-  public static float breathableAtmoPressure = 0.5f;
 
   [PersistentField("EvaInventory")]
   readonly static PersistentConfigNode evaInventory = new PersistentConfigNode();
