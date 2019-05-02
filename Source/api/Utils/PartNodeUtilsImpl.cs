@@ -110,7 +110,7 @@ public class PartNodeUtilsImpl {
   /// The part's config or a persistent state. It can be a top-level node or the <c>PART</c> node.
   /// </param>
   /// <param name="name">The name of the resource.</param>
-  /// <param name="amount">The new amount or teh delta.</param>
+  /// <param name="amount">The new amount or the delta.</param>
   /// <param name="isAmountRelative">
   /// Tells if the amount must be added to the current item's amount instead of simply replacing it.
   /// </param>
@@ -124,11 +124,13 @@ public class PartNodeUtilsImpl {
         .FirstOrDefault(r => r.GetValue("name") == name);
     double? setAmount = null;
     if (node != null) {
-      setAmount = ConfigAccessor.GetValueByPath<double>(node, "amount") ?? 0.0f;
+      setAmount = amount;
       if (isAmountRelative) {
-        setAmount += amount;
+        setAmount += ConfigAccessor.GetValueByPath<double>(node, "amount") ?? 0.0;
       }
       ConfigAccessor.SetValueByPath(node, "amount", setAmount.Value);
+    } else {
+      DebugEx.Error("Cannot find resource '{0}' in config:\n{1}", name, partNode);
     }
     return setAmount;
   }
