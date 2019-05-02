@@ -1,5 +1,6 @@
 # 1.19 (pre-release):
 * [Change] Update ES-ES localization.
+* [Fix #305] Allow grab hints menu to be turned off in KIS `settings.cfg`.
 * [Fix #311] Container item launchID incorrect at vessel launch.
 * [Fix #314] KIS.Container1 cannot be selected as root part.
 * [Fix #315] When the target is too far, KIS says "too heavy".

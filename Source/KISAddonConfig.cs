@@ -26,6 +26,11 @@ sealed class KISAddonConfig : MonoBehaviour {
   [PersistentField("EquipAliases/alias", isCollection = true)]
   public readonly static List<string> equipAliases = new List<string>();
 
+  [PersistentField("Global/showHintText")]
+  public static bool showHintText = true;
+
+  [PersistentField("Global/hideHintKey")]
+  public static KeyCode hideHintKey = KeyCode.None;
 
   [PersistentField("EvaInventory")]
   readonly static PersistentConfigNode evaInventory = new PersistentConfigNode();
