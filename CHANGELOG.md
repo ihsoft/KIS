@@ -3,6 +3,7 @@
 * [Change] Make CB-1 volume physical (no override) and allow carrying it on the kerbal's back.
 * [Fix #305] Allow grab hints menu to be turned off in KIS `settings.cfg`.
 * [Fix #311] Container item launchID incorrect at vessel launch.
+* [Fix #313] Contained item's dry-mass is incorrect in tooltip. 
 * [Fix #314] KIS.Container1 cannot be selected as root part.
 * [Fix #315] When the target is too far, KIS says "too heavy".
 * [Fix #317] Stock Parts not stacking in 1.6.1 with no other mods.

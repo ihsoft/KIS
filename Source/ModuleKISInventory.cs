@@ -1391,7 +1391,7 @@ public class ModuleKISInventory : PartModule,
 
     var sb = new StringBuilder();
     sb.AppendLine(ItemVolumeTooltipInfo.Format(tooltipItem.itemVolume));
-    sb.AppendLine(ItemDryMassTooltipInfo.Format(tooltipItem.fullItemMass));
+    sb.AppendLine(ItemDryMassTooltipInfo.Format(tooltipItem.itemDryMass));
     if (tooltipItem.availablePart.partPrefab.Resources.Count > 0) {
       sb.AppendLine(ItemResourceMassTooltipInfo.Format(tooltipItem.itemResourceMass));
     }
