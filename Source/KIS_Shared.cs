@@ -58,25 +58,6 @@ public static class KIS_Shared {
     AudioSource.PlayClipAtPoint(GameDatabase.Instance.GetAudioClip(soundPath), position);
   }
 
-  public static bool createFXSound(Part part, FXGroup group, string sndPath, bool loop,
-                                   float maxDistance = 30f) {
-    group.audio = part.gameObject.AddComponent<AudioSource>();
-    group.audio.volume = GameSettings.SHIP_VOLUME;
-    group.audio.rolloffMode = AudioRolloffMode.Linear;
-    group.audio.dopplerLevel = 0f;
-    group.audio.spatialBlend = 1f;
-    group.audio.maxDistance = maxDistance;
-    group.audio.loop = loop;
-    group.audio.playOnAwake = false;
-    if (GameDatabase.Instance.ExistsAudioClip(sndPath)) {
-      group.audio.clip = GameDatabase.Instance.GetAudioClip(sndPath);
-      return true;
-    } else {
-      DebugEx.Error("Sound not found in the game database !");
-      return false;
-    }
-  }
-
   /// <summary>
   /// Walks thru the hierarchy and calculates the total mass of the assembly.
   /// </summary>
@@ -153,27 +134,6 @@ public static class KIS_Shared {
         part.vessel.vesselName = sourceVessel.vesselName + " 1";
       }
     }
-  }
-
-  public static ConfigNode vesselSnapshot(Vessel vessel) {
-    ProtoVessel snapshot = new ProtoVessel(vessel);
-    ConfigNode node = new ConfigNode("VESSEL");
-    snapshot.Save(node);
-    return node;
-  }
-
-  public static Collider GetEvaCollider(Vessel evaVessel, string colliderName) {
-    KerbalEVA kerbalEva = evaVessel.rootPart.gameObject.GetComponent<KerbalEVA>();
-    Collider evaCollider = null;
-    if (kerbalEva) {
-      foreach (var col in kerbalEva.characterColliders) {
-        if (col.name == colliderName) {
-          evaCollider = col;
-          break;
-        }
-      }
-    }
-    return evaCollider;
   }
 
   public static Part CreatePart(AvailablePart avPart, Vector3 position, Quaternion rotation,
@@ -516,87 +476,6 @@ public static class KIS_Shared {
       node.icon.transform.localPosition = Vector3.zero;
       node.icon.transform.localRotation = Quaternion.identity;
     }
-  }
-
-  public static void EditField(string label, ref bool value, int maxLenght = 50) {
-    value = GUILayout.Toggle(value, label);
-  }
-
-  public static Dictionary<string, string> editFields = new Dictionary<string, string>();
-
-  public static bool EditField(string label, ref Vector3 value, int maxLenght = 50) {
-    bool btnPress = false;
-    if (!editFields.ContainsKey(label + "x")) {
-      editFields.Add(label + "x", value.x.ToString());
-    }
-    if (!editFields.ContainsKey(label + "y")) {
-      editFields.Add(label + "y", value.y.ToString());
-    }
-    if (!editFields.ContainsKey(label + "z")) {
-      editFields.Add(label + "z", value.z.ToString());
-    }
-    GUILayout.BeginHorizontal();
-    GUILayout.Label(label + " : " + value + "   ");
-    editFields[label + "x"] = GUILayout.TextField(editFields[label + "x"], maxLenght);
-    editFields[label + "y"] = GUILayout.TextField(editFields[label + "y"], maxLenght);
-    editFields[label + "z"] = GUILayout.TextField(editFields[label + "z"], maxLenght);
-    if (GUILayout.Button(new GUIContent("Set", "Set vector"), GUILayout.Width(60f))) {
-      var tmpVector3 = new Vector3(float.Parse(editFields[label + "x"]),
-                                   float.Parse(editFields[label + "y"]),
-                                   float.Parse(editFields[label + "z"]));
-      value = tmpVector3;
-      btnPress = true;
-    }
-    GUILayout.EndHorizontal();
-    return btnPress;
-  }
-
-  public static bool EditField(string label, ref string value, int maxLenght = 50) {
-    bool btnPress = false;
-    if (!editFields.ContainsKey(label)) {
-      editFields.Add(label, value.ToString());
-    }
-    GUILayout.BeginHorizontal();
-    GUILayout.Label(label + " : " + value + "   ");
-    editFields[label] = GUILayout.TextField(editFields[label], maxLenght);
-    if (GUILayout.Button(new GUIContent("Set", "Set string"), GUILayout.Width(60f))) {
-      value = editFields[label];
-      btnPress = true;
-    }
-    GUILayout.EndHorizontal();
-    return btnPress;
-  }
-
-  public static bool EditField(string label, ref int value, int maxLenght = 50) {
-    bool btnPress = false;
-    if (!editFields.ContainsKey(label)) {
-      editFields.Add(label, value.ToString());
-    }
-    GUILayout.BeginHorizontal();
-    GUILayout.Label(label + " : " + value + "   ");
-    editFields[label] = GUILayout.TextField(editFields[label], maxLenght);
-    if (GUILayout.Button(new GUIContent("Set", "Set int"), GUILayout.Width(60f))) {
-      value = int.Parse(editFields[label]);
-      btnPress = true;
-    }
-    GUILayout.EndHorizontal();
-    return btnPress;
-  }
-
-  public static bool EditField(string label, ref float value, int maxLenght = 50) {
-    bool btnPress = false;
-    if (!editFields.ContainsKey(label)) {
-      editFields.Add(label, value.ToString());
-    }
-    GUILayout.BeginHorizontal();
-    GUILayout.Label(label + " : " + value + "   ");
-    editFields[label] = GUILayout.TextField(editFields[label], maxLenght);
-    if (GUILayout.Button(new GUIContent("Set", "Set float"), GUILayout.Width(60f))) {
-      value = float.Parse(editFields[label]);
-      btnPress = true;
-    }
-    GUILayout.EndHorizontal();
-    return btnPress;
   }
 
   /// <summary>Sets highlight status of the entire heierarchy.</summary>
