@@ -1,4 +1,5 @@
 # 1.19 (pre-release):
+* [Change] `KSP 1.7.*` compatibility.
 * [Change] Update ES-ES localization.
 * [Change] Make CB-1 volume physical (no override) and allow carrying it on the kerbal's back.
 * [Fix #305] Allow grab hints menu to be turned off in KIS `settings.cfg`.
