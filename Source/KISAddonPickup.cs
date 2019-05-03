@@ -607,7 +607,7 @@ sealed class KISAddonPickup : MonoBehaviour {
     }
     // Check if pickup module is present on the active vessel.
     List<ModuleKISPickup> pickupModules = 
-      FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleKISPickup>();
+        FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleKISPickup>();
     if (cursorMode != CursorMode.Nothing || !pickupModules.Any()) {
       return;
     }
@@ -615,9 +615,12 @@ sealed class KISAddonPickup : MonoBehaviour {
     if (!KISAddonPointer.isRunning && !draggedPart) {
       KISAddonCursor.StartPartDetection(OnMouseDetachPartClick, OnMouseDetachEnterPart,
                                         null, OnMouseDetachExitPart);
+      // Indicate the detach mode is active, but don't yet allow it to happen. The part focus
+      // callback will determine it.
       KISAddonCursor.CursorEnable(DetachIcon, DetachOkStatusTooltipTxt);
       detachActive = true;
       cursorMode = CursorMode.Detach;
+      return;
     }
     // Entering "attach moving part" mode.
     if (KISAddonPointer.isRunning
@@ -805,81 +808,56 @@ sealed class KISAddonPickup : MonoBehaviour {
       return;
     }
 
-    ModuleKISItem item = part.GetComponent<ModuleKISItem>();
-    ModuleKISPartMount parentMount = null;
-    if (part.parent) {
-      parentMount = part.parent.GetComponent<ModuleKISPartMount>();
-    }
-
-    // Do nothing if part is EVA
-    if (part.vessel.isEVA) {
-      return;
-    }
-
-    // Check part distance
-    if (!HasActivePickupInRange(part)) {
-      KISAddonCursor.CursorEnable(TooFarIcon, TooFarStatusTooltipTxt, TooFarTooltipTxt);
-      return;
-    }
-          
-    // Check if part is static attached
-    if (item) {
-      if (item.staticAttached) {
-        if ((item.allowStaticAttach == ModuleKISItem.ItemAttachMode.AllowedAlways)
-            || (HasActivePickupInRange(part, canStaticAttachOnly: true)
-                && item.allowStaticAttach == ModuleKISItem.ItemAttachMode.AllowedWithKisTool)) {
-          part.SetHighlightColor(XKCDColors.Periwinkle);
-          part.SetHighlight(true, false);
-          KISAddonCursor.CursorEnable(DetachOkIcon, DetachStaticOkStatusTooltipTxt,
-                                      LonePartTargetTooltipTxt.Format(part.partInfo.title));
-          detachOk = true;
-        } else {
-          if (FlightGlobals.ActiveVessel.isEVA) {
-            KISAddonCursor.CursorEnable(
-                NeedToolIcon, NeedToolStatusTooltipTxt,
-                NeedToolToStaticDetachTooltipTxt);
-          } else {
-            KISAddonCursor.CursorEnable(
-                ForbiddenIcon, NotSupportedStatusTooltipTxt, NotSupportedTooltipTxt);
-          }
-        }
-      }
-    }
-
-    // Check if part can be detached
-    if (!parentMount) {
-      if (part.children.Count > 0 || part.parent) {
-        //Part with a child or a parent
-        if (item) {
-          if (item.allowPartAttach == ModuleKISItem.ItemAttachMode.Disabled) {
-            KISAddonCursor.CursorEnable(
-                ForbiddenIcon, DetachNotOkStatusTootltipTxt, NotSupportedTooltipTxt);
-          } else if (item.allowPartAttach == ModuleKISItem.ItemAttachMode.AllowedWithKisTool) {
-            if (!HasActivePickupInRange(part, canPartAttachOnly: true)) {
-              if (FlightGlobals.ActiveVessel.isEVA) {
-                KISAddonCursor.CursorEnable(
-                    NeedToolIcon, NeedToolStatusTooltipTxt, NeedToolToDetachTooltipTxt);
-              } else {
-                KISAddonCursor.CursorEnable(
-                    ForbiddenIcon, NotSupportedStatusTooltipTxt, NotSupportedTooltipTxt);
-              }
-            }
-          }
-          return;
-        }
-        if (!CheckCanDetach(part)) {
-          return;
-        }
-      } else {
-        // Part without childs and parent
+    // Check if it's a KIS item that can be static attached.
+    var item = part.GetComponent<ModuleKISItem>();
+    if (item != null && item.staticAttached) {
+      if ((item.allowStaticAttach == ModuleKISItem.ItemAttachMode.AllowedAlways)
+          || (HasActivePickupInRange(part, canStaticAttachOnly: true)
+              && item.allowStaticAttach == ModuleKISItem.ItemAttachMode.AllowedWithKisTool)) {
+        part.SetHighlightColor(XKCDColors.Periwinkle);
+        part.SetHighlight(true, false);
+        KISAddonCursor.CursorEnable(DetachOkIcon, DetachStaticOkStatusTooltipTxt,
+                                    LonePartTargetTooltipTxt.Format(part.partInfo.title));
+        detachOk = true;
         return;
       }
+      // Cannot static attach.
+      if (FlightGlobals.ActiveVessel.isEVA) {
+        KISAddonCursor.CursorEnable(
+            NeedToolIcon, NeedToolStatusTooltipTxt, NeedToolToStaticDetachTooltipTxt);
+      } else {
+        KISAddonCursor.CursorEnable(
+            ForbiddenIcon, NotSupportedStatusTooltipTxt, NotSupportedTooltipTxt);
+      }
+      return;
     }
 
-    // Check if part is a root
-    if (!part.parent) {
+    // Check if part is a root. The root parts cannot be detached.
+    if (part.parent == null) {
       KISAddonCursor.CursorEnable(ForbiddenIcon, RootPartStatusTooltipTxt, NotSupportedTooltipTxt);
       return;
+    }
+
+    // Check if part is not mounted and can be detached.
+    var parentMount = part.parent.GetComponent<ModuleKISPartMount>();
+    if (parentMount != null) {
+      if (item != null && item.allowPartAttach == ModuleKISItem.ItemAttachMode.Disabled) {
+        KISAddonCursor.CursorEnable(
+            ForbiddenIcon, DetachNotOkStatusTootltipTxt, NotSupportedTooltipTxt);
+        return;
+      }
+      if ((item != null && item.allowPartAttach == ModuleKISItem.ItemAttachMode.AllowedWithKisTool
+           || item == null)
+          && !HasActivePickupInRange(part, canPartAttachOnly: true)) {
+        if (FlightGlobals.ActiveVessel.isEVA) {
+          KISAddonCursor.CursorEnable(
+              NeedToolIcon, NeedToolStatusTooltipTxt, NeedToolToDetachTooltipTxt);
+        } else {
+          KISAddonCursor.CursorEnable(
+              ForbiddenIcon, NotSupportedStatusTooltipTxt, NotSupportedTooltipTxt);
+        }
+        return;
+      }
     }
 
     // Detach icon
@@ -1549,7 +1527,7 @@ sealed class KISAddonPickup : MonoBehaviour {
           
     var item = part.GetComponent<ModuleKISItem>();
     string rejectText = null;  // If null then detach is allowed.
-    if (item) {
+    if (item != null) {
       // Handle KIS items.
       if (part.parent.GetComponent<ModuleKISPartMount>() != null) {
         // Check if part is a ground base.
