@@ -833,7 +833,9 @@ public static class KIS_Shared {
   /// </remarks>
   /// <param name="assemblyRoot">Root of the assembly to move.</param>
   /// <param name="srcAttachNodeId">Attach node ID on the assembly root.</param>
-  /// <param name="tgtPart">New root part.</param>
+  /// <param name="tgtPart">
+  /// The part to align to. It can be <c>null</c> when dropping on the surface.
+  /// </param>
   /// <param name="tgtAttachNode">
   /// Attach node ID on the new target. It can be <c>null</c> if assembly is attached via surface
   /// node.
@@ -851,6 +853,15 @@ public static class KIS_Shared {
 
     var srcAttachNode = GetAttachNodeById(assemblyRoot, srcAttachNodeId);
     SendKISMessage(assemblyRoot, MessageAction.AttachStart, srcAttachNode, tgtPart, tgtAttachNode);
+
+    // Check if the target is a surface.
+    if (tgtPart == null) {
+      SendKISMessage(assemblyRoot, MessageAction.AttachEnd, srcAttachNode, tgtPart, tgtAttachNode);
+      if (onReady != null) {
+        onReady(assemblyRoot);
+      }
+      yield break;
+    }
 
     // Proactively disable collisions on the moving parts since there will be a period of time when
     // they don't belong to the target vessel.
