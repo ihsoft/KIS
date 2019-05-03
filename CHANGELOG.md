@@ -1,7 +1,7 @@
-# 1.19 (pre-release):
+# 1.19 (May 2nd, 2019):
 * [Change] `KSP 1.7.*` compatibility.
 * [Change] Update ES-ES localization.
-* [Change] Make CB-1 volume physical (no override) and allow carrying it on the kerbal's back.
+* [Change] Make `CB-1` volume physical (no override) and allow carrying it on the kerbal's back.
 * [Fix #305] Allow grab hints menu to be turned off in KIS `settings.cfg`.
 * [Fix #311] Container item launchID incorrect at vessel launch.
 * [Fix #313] Contained item's dry-mass is incorrect in tooltip. 
