@@ -149,7 +149,7 @@ public class PartUtilsImpl {
   /// <summary>Returns part's volume basing on its geometrics.</summary>
   /// <remarks>
   /// The volume is calculated basing on the smallest boundary box that encapsulates all the meshes
-  /// in the part. The deployable parts can take much more space in teh deployed state.
+  /// in the part. The deployable parts can take much more space in the deployed state.
   /// </remarks>
   /// <param name="avPart">The part proto to get the models from.</param>
   /// <param name="variant">
@@ -180,7 +180,7 @@ public class PartUtilsImpl {
   /// <summary>Returns part's volume basing on its geometrics.</summary>
   /// <remarks>
   /// The volume is calculated basing on the smallest boundary box that encapsulates all the meshes
-  /// in the part. The deployable parts can take much more space in teh deployed state.
+  /// in the part. The deployable parts can take much more space in the deployed state.
   /// </remarks>
   /// <param name="part">The actual part, that exists in the scene.</param>
   /// <returns>The volume in liters.</returns>

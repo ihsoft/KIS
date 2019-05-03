@@ -941,7 +941,7 @@ sealed class KISAddonPickup : MonoBehaviour {
   /// Checks if there is at least one actor in range that can interact with the part, given the
   /// capabilities restrictions.
   /// </summary>
-  /// <param name="refPart">The real part in teh scene to check the bounds for.</param>
+  /// <param name="refPart">The real part in the scene to check the bounds for.</param>
   /// <param name="canPartAttachOnly">Set <c>true</c> to check the part attach capability.</param>
   /// <param name="canStaticAttachOnly">
   /// Set <c>true</c> to check the surafce attach capability.

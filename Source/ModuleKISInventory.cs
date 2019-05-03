@@ -1916,7 +1916,7 @@ public class ModuleKISInventory : PartModule,
     }
 
     if (KIS_Shared.IsKeyUp(evaRightHandKey)) {
-      //FIXME: make a const to teh slot name 
+      //FIXME: make a const to the slot name 
       KIS_Item rightHandItem = GetEquipedItem("rightHand");
       if (rightHandItem != null) {
         rightHandItem.Use(KIS_Item.UseFrom.KeyUp);
@@ -2205,7 +2205,7 @@ public class ModuleKISInventory : PartModule,
     }
   }
 
-  /// <summary>Plays teh door open animation for the selected state.</summary>
+  /// <summary>Plays the door open animation for the selected state.</summary>
   /// <param name="doorsOpen">Tells if the doors should be closed.</param>
   /// <param name="immediateReset">Tells if the animations state should be set in one frame.</param>
   /// <remarks>It's safe to call this method even if there are no animation defined.</remarks>

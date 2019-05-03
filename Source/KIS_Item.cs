@@ -236,7 +236,7 @@ public sealed class KIS_Item {
   }
 
   /// <summary>Creates an item, restored form the save file.</summary>
-  /// <param name="itemNode">The item config node to load teh data from.</param>
+  /// <param name="itemNode">The item config node to load the data from.</param>
   /// <param name="inventory">The owner inventory of the item.</param>
   /// <returns>The item instance.</returns>
   public static KIS_Item RestoreItemFromNode(ConfigNode itemNode, ModuleKISInventory inventory) {
@@ -343,7 +343,7 @@ public sealed class KIS_Item {
 
   /// <summary>Sets the item's equipped state.</summary>
   /// <remarks>
-  /// Changing of the state does <i>not</i> equip or unequip the item. It only changes teh state.
+  /// Changing of the state does <i>not</i> equip or unequip the item. It only changes the state.
   /// </remarks>
   /// <param name="state">The state.</param>
   /// <seealso cref="equipped"/>
