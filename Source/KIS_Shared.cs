@@ -961,7 +961,7 @@ public static class KIS_Shared {
   /// </param>
   /// <param name="pos">Position of the assembly at the new parent.</param>
   /// <param name="rot">Rotation of the assembly at the new parent.</param>
-  /// <param name="onReady">Cllaback to execute when assembly move completed.</param>
+  /// <param name="onReady">Callback to execute when assembly move completed.</param>
   /// <returns>Enumerator that can be used as coroutine target.</returns>
   public static IEnumerator AsyncMoveAssembly(
       Part assemblyRoot, string srcAttachNodeId,

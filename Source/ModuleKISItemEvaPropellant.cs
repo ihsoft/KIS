@@ -101,7 +101,7 @@ public class ModuleKISItemEvaPropellant : ModuleKISItem {
     }
   }
 
-  /// <summary>Returns KIS resource dexcription for the propellant in the part.</summary>
+  /// <summary>Returns KIS resource description for the propellant in the part.</summary>
   /// <param name="item">Item to get resource for.</param>
   /// <returns>Resource description.</returns>
   protected static ProtoPartResourceSnapshot GetCanisterFuelResource(KIS_Item item) {

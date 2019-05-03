@@ -1338,7 +1338,7 @@ sealed class KISAddonPickup : MonoBehaviour {
 
   void MoveAttach(Part tgtPart, Vector3 pos, Quaternion rot, string srcAttachNodeID = null,
                   AttachNode tgtAttachNode = null) {
-    DebugEx.Info("Move part & attach");
+    DebugEx.Info("Move part & attach: tgtPart={0}", tgtPart);
     KIS_Shared.MoveAssembly(movingPart, srcAttachNodeID, tgtPart, tgtAttachNode, pos, rot);
     KISAddonPointer.StopPointer();
     movingPart = null;
@@ -1348,7 +1348,7 @@ sealed class KISAddonPickup : MonoBehaviour {
 
   Part CreateAttach(Part tgtPart, Vector3 pos, Quaternion rot,
                     string srcAttachNodeID = null, AttachNode tgtAttachNode = null) {
-    DebugEx.Info("Create part & attach");
+    DebugEx.Info("Create part & attach: tgtPart={0}", tgtPart);
     Part newPart;
     draggedItem.StackRemove(1);
     if (tgtPart) {

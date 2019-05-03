@@ -391,8 +391,8 @@ public sealed class KIS_Item {
   /// can be less than zero.
   /// </returns>
   public double? UpdateResource(string name, double amount, bool isAmountRelative = false) {
-    var res = KISAPI.PartNodeUtils.UpdateResource(partNode, name, amount,
-                                                  isAmountRelative: isAmountRelative);
+    var res = KISAPI.PartNodeUtils.UpdateResource(
+        partNode, name, amount, isAmountRelative: isAmountRelative);
     if (res.HasValue) {
       HostedDebugLog.Fine(
           inventory, "Updated item resource: name={0}, newAmount={1}", name, res);
