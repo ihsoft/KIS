@@ -623,10 +623,11 @@ sealed class KISAddonPickup : MonoBehaviour {
     if (KISAddonPointer.isRunning
         && KISAddonPointer.pointerTarget != KISAddonPointer.PointerTarget.PartMount
         && pointerMode == KISAddonPickup.PointerMode.Drop) {
-      var refPart = grabbedPart ?? draggedItem.availablePart.partPrefab;
-      var hasFreeNodes = KIS_Shared.GetAvailableAttachNodes(
-          refPart, ignoreAttachedPart: refPart.parent).Any();
-      if (CheckIsAttachable(refPart, hasFreeNodes: hasFreeNodes, reportToConsole: true)) {
+      var checkPart = grabbedPart ?? draggedItem.availablePart.partPrefab;
+      var refPart = grabbedPart ?? draggedItem.inventory.part;
+      Func<Part, bool> checkNodesFn = p =>
+          KIS_Shared.GetAvailableAttachNodes(p, ignoreAttachedPart: p.parent).Any();
+      if (CheckIsAttachable(checkPart, refPart, checkNodesFn, reportToConsole: true)) {
         UISounds.PlayClick();
         pointerMode = KISAddonPickup.PointerMode.Attach;
       }
@@ -1437,8 +1438,8 @@ sealed class KISAddonPickup : MonoBehaviour {
     KIS_Shared.SetHierarchySelection(redockTarget, true /* isSelected */);
 
     if (!CheckCanGrabRealPart(redockTarget) || !CheckCanDetach(redockTarget) ||
-        !CheckIsAttachable(redockTarget,
-                           hasFreeNodes: KIS_Shared.GetAvailableAttachNodes(redockTarget).Any())) {
+        !CheckIsAttachable(redockTarget, redockTarget,
+                           p => KIS_Shared.GetAvailableAttachNodes(p).Any())) {
       return;
     }
 
@@ -1587,13 +1588,25 @@ sealed class KISAddonPickup : MonoBehaviour {
     return true;
   }
 
-  /// <summary>Checks if part can be attached. At least in theory.</summary>
-  /// <remarks>This method doesn't say if part *will* be attached if such attempt is made.</remarks>
-  bool CheckIsAttachable(Part refPart, bool hasFreeNodes = true, bool reportToConsole = false) {
-    var item = refPart.GetComponent<ModuleKISItem>();
+  /// <summary>Checks if part can be attached.</summary>
+  /// <param name="checkPart">The part to check. Can be a prefab.</param>
+  /// <param name="refPart">
+  /// The part to use as reference in the pickups search. Must be a real part for the scene.
+  /// </param>
+  /// <param name="checkNodesFn">
+  /// The function that verifies if the part has at least one free attach node. The input argument
+  /// is the part or assembly to check.
+  /// </param>
+  /// <param name="reportToConsole">
+  /// Tells if any found error should be reported to the debug console. Set it to <c>true</c> when
+  /// negative response from the method is not exactly expected.
+  /// </param>
+  bool CheckIsAttachable(Part checkPart, Part refPart, Func<Part, bool> checkNodesFn,
+                         bool reportToConsole = false) {
+    var item = checkPart.GetComponent<ModuleKISItem>();
 
     // Check if part has at least one free node.
-    if (!hasFreeNodes) {
+    if (!checkNodesFn(checkPart)) {
       // Check if it's a static attachable item. Those are not required to have nodes
       // since they attach to the ground.
       if (item == null || item.allowStaticAttach == ModuleKISItem.ItemAttachMode.Disabled) {
