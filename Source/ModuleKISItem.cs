@@ -300,8 +300,9 @@ public class ModuleKISItem : PartModule,
       var inventory = vessel.rootPart.GetComponent<ModuleKISInventory>();
       var item = inventory.items.Values.FirstOrDefault(i => i.equipped && i.equippedPart == part);
       if (item != null) {
-        DebugEx.Info("Item {0} has been destroyed. Drop it from inventory of {1}",
-                     item.availablePart.title, inventory.part);
+        HostedDebugLog.Warning(
+            this, "Item {0} has been destroyed. Drop it from inventory of {1}",
+            item.availablePart.title, inventory.part);
         AsyncCall.CallOnEndOfFrame(inventory, () => inventory.DeleteItem(item.slot));
       }
     }
@@ -353,7 +354,7 @@ public class ModuleKISItem : PartModule,
       return;
     }
     if (staticAttached) {
-      DebugEx.Fine("Re-attach static object (OnPartUnpack)");
+      HostedDebugLog.Warning(this, "Re-attach static object (OnPartUnpack)");
       GroundAttach();
     }
   }
@@ -383,7 +384,7 @@ public class ModuleKISItem : PartModule,
 
   public void GroundDetach() {
     if (staticAttached) {
-      DebugEx.Fine("Removing static rigidbody and fixed joint on: {0}", part);
+      HostedDebugLog.Warning(this, "Removing static rigidbody and fixed joint on: {0}", part);
       if (staticAttachJoint) {
         Destroy(staticAttachJoint);
       }
@@ -423,7 +424,7 @@ public class ModuleKISItem : PartModule,
         ? EquipSlotsLookup[equipSlot].Format()
         : equipSlot;
     return new[] {
-        equipable
+        equipable && !carriable
             ? EquippableInfo.Format(slotName) : null,
         carriable
             ? CarriableInfo.Format(slotName) : null,
@@ -477,7 +478,7 @@ public class ModuleKISItem : PartModule,
     }
     part.vessel.Landed = true;
 
-    DebugEx.Fine("Create fixed joint attached to the world");
+    HostedDebugLog.Warning(this, "Create fixed joint attached to the world");
     if (staticAttachJoint) {
       Destroy(staticAttachJoint);
     }
@@ -490,9 +491,9 @@ public class ModuleKISItem : PartModule,
   // A callback from MonoBehaviour.
   void OnJointBreak(float breakForce) {
     if (staticAttached) {
-      DebugEx.Warning("A static joint has just been broken! Force: {0}", breakForce);
+      HostedDebugLog.Warning(this, "A static joint has just been broken! Force: {0}", breakForce);
     } else {
-      DebugEx.Warning("A fixed joint has just been broken! Force: {0}", breakForce);
+      HostedDebugLog.Warning(this, "A fixed joint has just been broken! Force: {0}", breakForce);
     }
     GroundDetach();
   }

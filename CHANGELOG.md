@@ -1,4 +1,20 @@
-# 1.18 (pre-release):
+# 1.19 (May 2nd, 2019):
+* [Change] `KSP 1.7.*` compatibility.
+* [Change] Update ES-ES localization.
+* [Change] Make `CB-1` volume physical (no override) and allow carrying it on the kerbal's back.
+* [Fix #305] Allow grab hints menu to be turned off in KIS `settings.cfg`.
+* [Fix #311] Container item launchID incorrect at vessel launch.
+* [Fix #313] Contained item's dry-mass is incorrect in tooltip. 
+* [Fix #314] KIS.Container1 cannot be selected as root part.
+* [Fix #315] When the target is too far, KIS says "too heavy".
+* [Fix #317] Stock Parts not stacking in 1.6.1 with no other mods.
+* [Fix #319] Restock part volumes is wrong when a skinned mesh is used.
+* [Fix #320] Some parts refuse to get detached.
+* [Fix #321] KIS Inventory and inflatable parts.
+* [Fix #323] EVA fuel canister has infinite reserve.
+* [Fix #324] Statically attachable parts don't attach.
+
+# 1.18 (February 2nd, 2019):
 * [Change] Add an optional (yet) patch file to make the legacy KIS containers physics complient. See file `kis_physical_containers.cfg.txt`.
 * [Enhancement] Add French localization.
 * [Enhancement] Improve English part descriptions.

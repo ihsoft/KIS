@@ -370,7 +370,7 @@ sealed class KISAddonPickup : MonoBehaviour {
   /// <summary>A number of parts in the currently grabbed assembly.</summary>
   public static int grabbedPartsCount;
   /// <summary>The total mass of the grabbed assembly. Tons.</summary>
-  public static float grabbedMass;
+  public static double grabbedMass;
   /// <summary>A root part of the currently grabbed assembly.</summary>
   public static Part grabbedPart;
 
@@ -607,7 +607,7 @@ sealed class KISAddonPickup : MonoBehaviour {
     }
     // Check if pickup module is present on the active vessel.
     List<ModuleKISPickup> pickupModules = 
-      FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleKISPickup>();
+        FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleKISPickup>();
     if (cursorMode != CursorMode.Nothing || !pickupModules.Any()) {
       return;
     }
@@ -615,18 +615,22 @@ sealed class KISAddonPickup : MonoBehaviour {
     if (!KISAddonPointer.isRunning && !draggedPart) {
       KISAddonCursor.StartPartDetection(OnMouseDetachPartClick, OnMouseDetachEnterPart,
                                         null, OnMouseDetachExitPart);
+      // Indicate the detach mode is active, but don't yet allow it to happen. The part focus
+      // callback will determine it.
       KISAddonCursor.CursorEnable(DetachIcon, DetachOkStatusTooltipTxt);
       detachActive = true;
       cursorMode = CursorMode.Detach;
+      return;
     }
     // Entering "attach moving part" mode.
     if (KISAddonPointer.isRunning
         && KISAddonPointer.pointerTarget != KISAddonPointer.PointerTarget.PartMount
         && pointerMode == KISAddonPickup.PointerMode.Drop) {
-      var refPart = grabbedPart ?? draggedItem.availablePart.partPrefab;
-      var hasFreeNodes = KIS_Shared.GetAvailableAttachNodes(
-          refPart, ignoreAttachedPart: refPart.parent).Any();
-      if (CheckIsAttachable(refPart, hasFreeNodes: hasFreeNodes, reportToConsole: true)) {
+      var checkPart = grabbedPart ?? draggedItem.availablePart.partPrefab;
+      var refPart = grabbedPart ?? draggedItem.inventory.part;
+      Func<Part, bool> checkNodesFn = p =>
+          KIS_Shared.GetAvailableAttachNodes(p, ignoreAttachedPart: p.parent).Any();
+      if (CheckIsAttachable(checkPart, refPart, checkNodesFn, reportToConsole: true)) {
         UISounds.PlayClick();
         pointerMode = KISAddonPickup.PointerMode.Attach;
       }
@@ -804,81 +808,56 @@ sealed class KISAddonPickup : MonoBehaviour {
       return;
     }
 
-    ModuleKISItem item = part.GetComponent<ModuleKISItem>();
-    ModuleKISPartMount parentMount = null;
-    if (part.parent) {
-      parentMount = part.parent.GetComponent<ModuleKISPartMount>();
-    }
-
-    // Do nothing if part is EVA
-    if (part.vessel.isEVA) {
-      return;
-    }
-
-    // Check part distance
-    if (!HasActivePickupInRange(part)) {
-      KISAddonCursor.CursorEnable(TooFarIcon, TooFarStatusTooltipTxt, TooFarTooltipTxt);
-      return;
-    }
-          
-    // Check if part is static attached
-    if (item) {
-      if (item.staticAttached) {
-        if ((item.allowStaticAttach == ModuleKISItem.ItemAttachMode.AllowedAlways)
-            || (HasActivePickupInRange(part, canStaticAttachOnly: true)
-                && item.allowStaticAttach == ModuleKISItem.ItemAttachMode.AllowedWithKisTool)) {
-          part.SetHighlightColor(XKCDColors.Periwinkle);
-          part.SetHighlight(true, false);
-          KISAddonCursor.CursorEnable(DetachOkIcon, DetachStaticOkStatusTooltipTxt,
-                                      LonePartTargetTooltipTxt.Format(part.partInfo.title));
-          detachOk = true;
-        } else {
-          if (FlightGlobals.ActiveVessel.isEVA) {
-            KISAddonCursor.CursorEnable(
-                NeedToolIcon, NeedToolStatusTooltipTxt,
-                NeedToolToStaticDetachTooltipTxt);
-          } else {
-            KISAddonCursor.CursorEnable(
-                ForbiddenIcon, NotSupportedStatusTooltipTxt, NotSupportedTooltipTxt);
-          }
-        }
-      }
-    }
-
-    // Check if part can be detached
-    if (!parentMount) {
-      if (part.children.Count > 0 || part.parent) {
-        //Part with a child or a parent
-        if (item) {
-          if (item.allowPartAttach == ModuleKISItem.ItemAttachMode.Disabled) {
-            KISAddonCursor.CursorEnable(
-                ForbiddenIcon, DetachNotOkStatusTootltipTxt, NotSupportedTooltipTxt);
-          } else if (item.allowPartAttach == ModuleKISItem.ItemAttachMode.AllowedWithKisTool) {
-            if (!HasActivePickupInRange(part, canPartAttachOnly: true)) {
-              if (FlightGlobals.ActiveVessel.isEVA) {
-                KISAddonCursor.CursorEnable(
-                    NeedToolIcon, NeedToolStatusTooltipTxt, NeedToolToDetachTooltipTxt);
-              } else {
-                KISAddonCursor.CursorEnable(
-                    ForbiddenIcon, NotSupportedStatusTooltipTxt, NotSupportedTooltipTxt);
-              }
-            }
-          }
-          return;
-        }
-        if (!CheckCanDetach(part)) {
-          return;
-        }
-      } else {
-        // Part without childs and parent
+    // Check if it's a KIS item that can be static attached.
+    var item = part.GetComponent<ModuleKISItem>();
+    if (item != null && item.staticAttached) {
+      if ((item.allowStaticAttach == ModuleKISItem.ItemAttachMode.AllowedAlways)
+          || (HasActivePickupInRange(part, canStaticAttachOnly: true)
+              && item.allowStaticAttach == ModuleKISItem.ItemAttachMode.AllowedWithKisTool)) {
+        part.SetHighlightColor(XKCDColors.Periwinkle);
+        part.SetHighlight(true, false);
+        KISAddonCursor.CursorEnable(DetachOkIcon, DetachStaticOkStatusTooltipTxt,
+                                    LonePartTargetTooltipTxt.Format(part.partInfo.title));
+        detachOk = true;
         return;
       }
+      // Cannot static attach.
+      if (FlightGlobals.ActiveVessel.isEVA) {
+        KISAddonCursor.CursorEnable(
+            NeedToolIcon, NeedToolStatusTooltipTxt, NeedToolToStaticDetachTooltipTxt);
+      } else {
+        KISAddonCursor.CursorEnable(
+            ForbiddenIcon, NotSupportedStatusTooltipTxt, NotSupportedTooltipTxt);
+      }
+      return;
     }
 
-    // Check if part is a root
-    if (!part.parent) {
+    // Check if part is a root. The root parts cannot be detached.
+    if (part.parent == null) {
       KISAddonCursor.CursorEnable(ForbiddenIcon, RootPartStatusTooltipTxt, NotSupportedTooltipTxt);
       return;
+    }
+
+    // Check if part is not mounted and can be detached.
+    var parentMount = part.parent.GetComponent<ModuleKISPartMount>();
+    if (parentMount != null) {
+      if (item != null && item.allowPartAttach == ModuleKISItem.ItemAttachMode.Disabled) {
+        KISAddonCursor.CursorEnable(
+            ForbiddenIcon, DetachNotOkStatusTootltipTxt, NotSupportedTooltipTxt);
+        return;
+      }
+      if ((item != null && item.allowPartAttach == ModuleKISItem.ItemAttachMode.AllowedWithKisTool
+           || item == null)
+          && !HasActivePickupInRange(part, canPartAttachOnly: true)) {
+        if (FlightGlobals.ActiveVessel.isEVA) {
+          KISAddonCursor.CursorEnable(
+              NeedToolIcon, NeedToolStatusTooltipTxt, NeedToolToDetachTooltipTxt);
+        } else {
+          KISAddonCursor.CursorEnable(
+              ForbiddenIcon, NotSupportedStatusTooltipTxt, NotSupportedTooltipTxt);
+        }
+        return;
+      }
     }
 
     // Detach icon
@@ -941,7 +920,7 @@ sealed class KISAddonPickup : MonoBehaviour {
   /// Checks if there is at least one actor in range that can interact with the part, given the
   /// capabilities restrictions.
   /// </summary>
-  /// <param name="refPart">The real part in teh scene to check the bounds for.</param>
+  /// <param name="refPart">The real part in the scene to check the bounds for.</param>
   /// <param name="canPartAttachOnly">Set <c>true</c> to check the part attach capability.</param>
   /// <param name="canStaticAttachOnly">
   /// Set <c>true</c> to check the surafce attach capability.
@@ -956,7 +935,10 @@ sealed class KISAddonPickup : MonoBehaviour {
   }
 
   /// <summary>Returns the nearest actor module that has the required capabilities.</summary>
-  /// <remarks>All actors on the active vessel are checked.</remarks>
+  /// <remarks>
+  /// All actors on the active vessel are checked. The actor's range limit must be satisfied for it
+  /// to be considered in the check.
+  /// </remarks>
   /// <param name="refPart">
   /// The part that is being checked. Its mesh will be used to determine the exact distance.
   /// </param>
@@ -976,45 +958,49 @@ sealed class KISAddonPickup : MonoBehaviour {
   /// Optional new rotation of the part. The distance will be checked, assuming the part is rotated
   /// as specified. The actual rotation of the part won't change.
   /// </param>
+  /// <param name="testFunc">The function to verify if the module qualifies for the check.</param>
   /// <returns>
-  /// The nearest actor from the active vessel or <c>null</c> if no macthign candidates found.
+  /// The nearest actor from the active vessel or <c>null</c> if no matching candidates found.
   /// </returns>
   /// TODO(ihsoft): Redesign this method. Instead of awkward "can" parameters, simply provide a filter function.
   ModuleKISPickup GetActivePickupNearest(Part refPart,
                                          bool canPartAttachOnly = false,
                                          bool canStaticAttachOnly = false,
                                          Vector3? probePosition = null,
-                                         Quaternion? probeRotation = null) {
+                                         Quaternion? probeRotation = null,
+                                         Func<ModuleKISPickup, bool> testFunc = null) {
     // Temporarily relocate the ref part to probe the distance at the new location.
     Vector3 oldPos = refPart.transform.position;
     Quaternion oldRot = refPart.transform.rotation;
-    refPart.transform.position = probePosition ?? oldPos;
-    refPart.transform.rotation = probeRotation ?? oldRot;
-    
-    ModuleKISPickup nearestPModule = null;
-    float nearestSqrDistance = Mathf.Infinity;
-    var pickupModules = FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleKISPickup>();
 
-    foreach (var pickupModule in pickupModules) {
-      var partSqrDist = Colliders.GetSqrDistanceToPartOrDefault(
-          pickupModule.part.transform.position, refPart);
-      if (partSqrDist <= nearestSqrDistance) {
-        if (!canPartAttachOnly && !canStaticAttachOnly) {
-          nearestSqrDistance = partSqrDist;
-          nearestPModule = pickupModule;
-        } else if (canPartAttachOnly && pickupModule.allowPartAttach) {
-          nearestSqrDistance = partSqrDist;
-          nearestPModule = pickupModule;
-        } else if (canStaticAttachOnly && pickupModule.allowStaticAttach) {
-          nearestSqrDistance = partSqrDist;
-          nearestPModule = pickupModule;
-        }
+    // Legacy code compatibility.    
+    if (testFunc == null) {
+      if (!canPartAttachOnly && !canStaticAttachOnly) {
+        testFunc = x => true;
+      } else if (canPartAttachOnly) {
+        testFunc = x => x.allowPartAttach;
+      } else if (canStaticAttachOnly) {
+        testFunc = x => x.allowStaticAttach;
+      } else {
+        throw new ArgumentException(
+            "canPartAttachOnly and canStaticAttachOnly are mutual exclusive");
       }
     }
 
+    refPart.transform.position = probePosition ?? oldPos;
+    refPart.transform.rotation = probeRotation ?? oldRot;
+    var pickup = FlightGlobals.ActiveVessel
+        .FindPartModulesImplementing<ModuleKISPickup>()
+        .Select(x => new {
+            module = x,
+            sqrDist = Colliders.GetSqrDistanceToPartOrDefault(x.part.transform.position, refPart),
+            sqrRange = x.maxDistance * x.maxDistance
+        })
+        .OrderBy(x => x.sqrDist)
+        .FirstOrDefault(x => x.sqrDist <= x.sqrRange && testFunc(x.module));
     refPart.transform.position = oldPos;
     refPart.transform.rotation = oldRot;
-    return nearestPModule;
+    return pickup != null ? pickup.module : null;
   }
 
   /// <summary>Calculates the maximum mass that actor(s) can lift.</summary>
@@ -1030,7 +1016,7 @@ sealed class KISAddonPickup : MonoBehaviour {
   /// as specified. The actual rotation of the part won't change.
   /// </param>
   /// <returns>
-  /// The nearest actor from the active vessel or <c>null</c> if no macthign candidates found.
+  /// The nearest actor from the active vessel or <c>null</c> if no matching candidates found.
   /// </returns>
   /// <returns>The maximum possible mas, considering all the actors in range.</returns>
   float GetAllPickupMaxMassInRange(Part refPart,
@@ -1331,7 +1317,7 @@ sealed class KISAddonPickup : MonoBehaviour {
 
   void MoveAttach(Part tgtPart, Vector3 pos, Quaternion rot, string srcAttachNodeID = null,
                   AttachNode tgtAttachNode = null) {
-    DebugEx.Info("Move part & attach");
+    DebugEx.Info("Move part & attach: tgtPart={0}", tgtPart);
     KIS_Shared.MoveAssembly(movingPart, srcAttachNodeID, tgtPart, tgtAttachNode, pos, rot);
     KISAddonPointer.StopPointer();
     movingPart = null;
@@ -1341,7 +1327,7 @@ sealed class KISAddonPickup : MonoBehaviour {
 
   Part CreateAttach(Part tgtPart, Vector3 pos, Quaternion rot,
                     string srcAttachNodeID = null, AttachNode tgtAttachNode = null) {
-    DebugEx.Info("Create part & attach");
+    DebugEx.Info("Create part & attach: tgtPart={0}", tgtPart);
     Part newPart;
     draggedItem.StackRemove(1);
     if (tgtPart) {
@@ -1430,8 +1416,8 @@ sealed class KISAddonPickup : MonoBehaviour {
     KIS_Shared.SetHierarchySelection(redockTarget, true /* isSelected */);
 
     if (!CheckCanGrabRealPart(redockTarget) || !CheckCanDetach(redockTarget) ||
-        !CheckIsAttachable(redockTarget,
-                           hasFreeNodes: KIS_Shared.GetAvailableAttachNodes(redockTarget).Any())) {
+        !CheckIsAttachable(redockTarget, redockTarget,
+                           p => KIS_Shared.GetAvailableAttachNodes(p).Any())) {
       return;
     }
 
@@ -1541,7 +1527,7 @@ sealed class KISAddonPickup : MonoBehaviour {
           
     var item = part.GetComponent<ModuleKISItem>();
     string rejectText = null;  // If null then detach is allowed.
-    if (item) {
+    if (item != null) {
       // Handle KIS items.
       if (part.parent.GetComponent<ModuleKISPartMount>() != null) {
         // Check if part is a ground base.
@@ -1580,13 +1566,25 @@ sealed class KISAddonPickup : MonoBehaviour {
     return true;
   }
 
-  /// <summary>Checks if part can be attached. At least in theory.</summary>
-  /// <remarks>This method doesn't say if part *will* be attached if such attempt is made.</remarks>
-  bool CheckIsAttachable(Part refPart, bool hasFreeNodes = true, bool reportToConsole = false) {
-    var item = refPart.GetComponent<ModuleKISItem>();
+  /// <summary>Checks if part can be attached.</summary>
+  /// <param name="checkPart">The part to check. Can be a prefab.</param>
+  /// <param name="refPart">
+  /// The part to use as reference in the pickups search. Must be a real part for the scene.
+  /// </param>
+  /// <param name="checkNodesFn">
+  /// The function that verifies if the part has at least one free attach node. The input argument
+  /// is the part or assembly to check.
+  /// </param>
+  /// <param name="reportToConsole">
+  /// Tells if any found error should be reported to the debug console. Set it to <c>true</c> when
+  /// negative response from the method is not exactly expected.
+  /// </param>
+  bool CheckIsAttachable(Part checkPart, Part refPart, Func<Part, bool> checkNodesFn,
+                         bool reportToConsole = false) {
+    var item = checkPart.GetComponent<ModuleKISItem>();
 
     // Check if part has at least one free node.
-    if (!hasFreeNodes) {
+    if (!checkNodesFn(checkPart)) {
       // Check if it's a static attachable item. Those are not required to have nodes
       // since they attach to the ground.
       if (item == null || item.allowStaticAttach == ModuleKISItem.ItemAttachMode.Disabled) {

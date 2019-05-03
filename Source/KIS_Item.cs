@@ -101,62 +101,62 @@ public sealed class KIS_Item {
   /// The item's part mass without the resources and content (if it's a KIS container).
   /// </summary>
   /// <value>The mass in tons.</value>
-  public float itemDryMass { get { return _itemDryMass; } }
+  public double itemDryMass { get { return _itemDryMass; } }
   [PersistentField("dryMass", group = StdPersistentGroups.PartPersistant)]
-  float _itemDryMass;
+  double _itemDryMass;
 
   /// <summary>
   /// The item's part cost without the resources and content (if it's a KIS container).
   /// </summary>
   /// <value>The cost in the game currency units.</value>
-  public float itemDryCost { get { return _itemDryCost; } }
+  public double itemDryCost { get { return _itemDryCost; } }
   [PersistentField("dryCost", group = StdPersistentGroups.PartPersistant)]
-  float _itemDryCost;
+  double _itemDryCost;
 
   /// <summary>The item's resource mass, if any.</summary>
   /// <value>The mass in tons.</value>
-  public float itemResourceMass { get { return _resourceMass; } }
+  public double itemResourceMass { get { return _resourceMass; } }
   [PersistentField("resourceMass", group = StdPersistentGroups.PartPersistant)]
-  float _resourceMass;
+  double _resourceMass;
 
   /// <summary>The item's resource cost, if any.</summary>
   /// <value>The cost in the game currency units.</value>
-  public float itemResourceCost { get { return _resourceCost; } }
+  public double itemResourceCost { get { return _resourceCost; } }
   [PersistentField("resourceCost", group = StdPersistentGroups.PartPersistant)]
-  float _resourceCost;
+  double _resourceCost;
 
   /// <summary>The item's content mass, if it's a KIS inventory.</summary>
   /// <value>The mass in tons.</value>
-  public float itemContentMass { get { return _contentMass; } }
+  public double itemContentMass { get { return _contentMass; } }
   [PersistentField("contentMass", group = StdPersistentGroups.PartPersistant)]
-  float _contentMass;
+  double _contentMass;
 
   /// <summary>The item's content cost, if any.</summary>
   /// <value>The cost in the game currency units.</value>
-  public float itemContentCost { get { return _contentCost; } }
+  public double itemContentCost { get { return _contentCost; } }
   [PersistentField("contentCost", group = StdPersistentGroups.PartPersistant)]
-  float _contentCost;
+  double _contentCost;
   #endregion
 
   #region API properties
   /// <summary>Total voulme of the item's meshes.</summary>
   /// <value>The volume in liters.</value>
-  public float itemVolume { get; private set; }
+  public double itemVolume { get; private set; }
 
   /// <summary>Total cost of the part and its content and resources.</summary>
   /// <value>The cost in the game currency untis.</value>
-  public float fullItemCost { get { return itemDryCost + itemResourceCost + itemContentCost; } }
+  public double fullItemCost { get { return itemDryCost + itemResourceCost + itemContentCost; } }
 
   /// <summary>Total mass of the part and its content and resources.</summary>
   /// <value>The mass in tons.</value>
-  public float fullItemMass { get { return itemDryMass + itemResourceMass + itemContentMass; } }
+  public double fullItemMass { get { return itemDryMass + itemResourceMass + itemContentMass; } }
   #endregion
 
   #region Slot properties
   public int slot { get { return inventory.items.FirstOrDefault(x => x.Value == this).Key; } }
-  public float stackVolume { get { return itemVolume * quantity; } }
-  public float totalSlotCost { get { return fullItemCost * quantity; } }
-  public float totalSlotMass { get { return fullItemMass * quantity; } }
+  public double stackVolume { get { return itemVolume * quantity; } }
+  public double totalSlotCost { get { return fullItemCost * quantity; } }
+  public double totalSlotMass { get { return fullItemMass * quantity; } }
   #endregion
 
   /// <summary>Inventory that owns this item.</summary>
@@ -236,7 +236,7 @@ public sealed class KIS_Item {
   }
 
   /// <summary>Creates an item, restored form the save file.</summary>
-  /// <param name="itemNode">The item config node to load teh data from.</param>
+  /// <param name="itemNode">The item config node to load the data from.</param>
   /// <param name="inventory">The owner inventory of the item.</param>
   /// <returns>The item instance.</returns>
   public static KIS_Item RestoreItemFromNode(ConfigNode itemNode, ModuleKISInventory inventory) {
@@ -248,7 +248,7 @@ public sealed class KIS_Item {
     }
     if (qty == 0 || partName == null || avPart == null) {
       DebugEx.Error("Bad item config:\n{0}", itemNode);
-      throw new ArgumentException("Bad item config node");
+      throw new ArgumentException("Bad item config node", "itemNode");
     }
     return new KIS_Item(avPart, itemNode, inventory, qty);
   }
@@ -274,6 +274,7 @@ public sealed class KIS_Item {
     this.inventory = inventory;
     this.quantity = quantity;
     SetPrefabModule();
+    this.stackable = CheckItemStackable(availablePart);
     this.partNode = new ConfigNode();
     itemNode.GetNode("PART").CopyTo(partNode);
     ConfigAccessor.ReadFieldsFromNode(
@@ -304,7 +305,6 @@ public sealed class KIS_Item {
                       + " oldResourceMass={0}, newResourceMass={1}, resourceCost={2}",
                       oldResourceMass, this.itemResourceMass, this.itemResourceCost);
     }
-    stackable = CheckItemStackable(availablePart);
   }
 
   /// <summary>Creates a new part from scene.</summary>
@@ -317,6 +317,7 @@ public sealed class KIS_Item {
     this.inventory = inventory;
     this.quantity = quantity;
     SetPrefabModule();
+    this.stackable = CheckItemStackable(availablePart);
     this.partNode = KISAPI.PartNodeUtils.PartSnapshot(part);
 
     this.itemVolume = KISAPI.PartUtils.GetPartVolume(part.partInfo, partNode: partNode);
@@ -342,7 +343,7 @@ public sealed class KIS_Item {
 
   /// <summary>Sets the item's equipped state.</summary>
   /// <remarks>
-  /// Changing of the state does <i>not</i> equip or unequip the item. It only changes teh state.
+  /// Changing of the state does <i>not</i> equip or unequip the item. It only changes the state.
   /// </remarks>
   /// <param name="state">The state.</param>
   /// <seealso cref="equipped"/>
@@ -357,7 +358,7 @@ public sealed class KIS_Item {
     var module = avPart.partPrefab.GetComponent<ModuleKISItem>();
     var allModulesCompatible = avPart.partPrefab.Modules.Cast<PartModule>()
         .All(m => KISAddonConfig.stackableModules.Contains(m.moduleName));
-    var hasNoResources = PartNodeUtils.GetModuleNode(avPart.partConfig, "RESOURCE") != null;
+    var hasNoResources = KISAPI.PartNodeUtils.GetResources(avPart.partConfig).Length == 0;
     return module != null && module.stackable
         || KISAddonConfig.stackableList.Contains(avPart.name.Replace('.', '_'))
         || allModulesCompatible && hasNoResources;
@@ -385,9 +386,13 @@ public sealed class KIS_Item {
   /// <param name="isAmountRelative">
   /// Tells if the amount must be added to the current item's amount instead of simply replacing it.
   /// </param>
-  public void UpdateResource(string name, double amount, bool isAmountRelative = false) {
-    var res = KISAPI.PartNodeUtils.UpdateResource(partNode, name, amount,
-                                                  isAmountRelative: isAmountRelative);
+  /// <returns>
+  /// The new resource amount or <c>null</c> of resource not found. Note, that the resource amount
+  /// can be less than zero.
+  /// </returns>
+  public double? UpdateResource(string name, double amount, bool isAmountRelative = false) {
+    var res = KISAPI.PartNodeUtils.UpdateResource(
+        partNode, name, amount, isAmountRelative: isAmountRelative);
     if (res.HasValue) {
       HostedDebugLog.Fine(
           inventory, "Updated item resource: name={0}, newAmount={1}", name, res);
@@ -396,6 +401,7 @@ public sealed class KIS_Item {
       HostedDebugLog.Error(
           inventory, "Cannot find resource {0} in item for {1}", name, availablePart.name);
     }
+    return res;
   }
 
   public void EnableIcon(int resolution) {
@@ -421,7 +427,7 @@ public sealed class KIS_Item {
       UISounds.PlayBipWrong();
       return false;
     }
-    float newVolume = inventory.totalContentsVolume + (itemVolume * qty);
+    var newVolume = inventory.totalContentsVolume + (itemVolume * qty);
     if (checkVolume && newVolume > inventory.maxVolume) {
       ScreenMessaging.ShowPriorityScreenMessage(
           CannotStackMaxVolumeReachedMsg.Format(newVolume - inventory.maxVolume));
@@ -467,9 +473,7 @@ public sealed class KIS_Item {
   }
 
   public void Delete() {
-    if (inventory.showGui) {
-      DisableIcon();
-    }
+    DisableIcon();
     if (equipped) {
       Unequip();
     }

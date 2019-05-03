@@ -79,8 +79,7 @@ public class ModuleKISItemEvaPropellant : ModuleKISItem {
   /// <param name="item">Item to get fuel from.</param>
   protected virtual void RefillEVAPack(KIS_Item item) {
     var canisterFuelResource = GetCanisterFuelResource(item);
-    var evaFuelResource = item.inventory.part.Resources.Get(
-        item.inventory.part.GetComponent<KerbalEVA>().propellantResourceName);
+    var evaFuelResource = item.inventory.part.Resources.Get(StockResourceNames.EvaPropellant);
     var needsFuel = evaFuelResource.maxAmount - evaFuelResource.amount;
     if (needsFuel < double.Epsilon) {
       ScreenMessaging.ShowPriorityScreenMessage(NoNeedToRefillMsg);
@@ -90,7 +89,7 @@ public class ModuleKISItemEvaPropellant : ModuleKISItem {
         UISounds.PlayBipWrong();
       } else {
         var canRefuel = Math.Min(needsFuel, canisterFuelResource.amount);
-        item.UpdateResource(StockResourceNames.EvaPropellant, canisterFuelResource.amount - canRefuel);
+        item.UpdateResource(StockResourceNames.EvaPropellant, -canRefuel, isAmountRelative: true);
         evaFuelResource.amount += canRefuel;
         if (canRefuel < needsFuel) {
           ScreenMessaging.ShowPriorityScreenMessage(NotEnoughPropellantMsg);
@@ -102,7 +101,7 @@ public class ModuleKISItemEvaPropellant : ModuleKISItem {
     }
   }
 
-  /// <summary>Returns KIS resource dexcription for the propellant in the part.</summary>
+  /// <summary>Returns KIS resource description for the propellant in the part.</summary>
   /// <param name="item">Item to get resource for.</param>
   /// <returns>Resource description.</returns>
   protected static ProtoPartResourceSnapshot GetCanisterFuelResource(KIS_Item item) {

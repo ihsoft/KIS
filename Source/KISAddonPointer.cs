@@ -270,7 +270,7 @@ sealed class KISAddonPointer : MonoBehaviour {
             VariantsUtils.GetCurrentPartVariant(item.availablePart, item.partNode),
             MakePointer);
         pointer.transform.localScale *=
-            KISAPI.PartNodeUtils.GetTweakScaleSizeModifier(item.partNode);
+            (float) KISAPI.PartNodeUtils.GetTweakScaleSizeModifier(item.partNode);
       }
              
       LockUI();

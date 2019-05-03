@@ -26,8 +26,11 @@ sealed class KISAddonConfig : MonoBehaviour {
   [PersistentField("EquipAliases/alias", isCollection = true)]
   public readonly static List<string> equipAliases = new List<string>();
 
-  [PersistentField("Global/breathableAtmoPressure")]
-  public static float breathableAtmoPressure = 0.5f;
+  [PersistentField("Global/showHintText")]
+  public static bool showHintText = true;
+
+  [PersistentField("Global/hideHintKey")]
+  public static KeyCode hideHintKey = KeyCode.None;
 
   [PersistentField("EvaInventory")]
   readonly static PersistentConfigNode evaInventory = new PersistentConfigNode();
@@ -77,7 +80,7 @@ sealed class KISAddonConfig : MonoBehaviour {
               || !avPart.partPrefab || avPart.partPrefab.CrewCapacity < 1)) {
           DebugEx.Fine("Found part with crew: {0}, CrewCapacity={1}",
                        avPart.name, avPart.partPrefab.CrewCapacity);
-          AddPodInventories(avPart.partPrefab, avPart.partPrefab.CrewCapacity);
+          AddPodInventories(avPart.partPrefab);
         }
       }
     }
@@ -106,27 +109,34 @@ sealed class KISAddonConfig : MonoBehaviour {
     }
   }
 
-  public static void AddPodInventories(Part part, int crewCapacity) {
+  /// <summary>Adds seat inventories to cover the maximum pod occupancy.</summary>
+  /// <remarks>
+  /// If the part already has seat inventories, they will be adjusted to have the unique seat
+  /// indexes. This is usefull if the part's config provides the needed number of modules. If number
+  /// of the existing modules is not enough to cover <c>CrewCapacity</c>, extra modules are added.
+  /// </remarks>
+  /// <param name="part">The part to add seat inventorties for.</param>
+  public static void AddPodInventories(Part part) {
     var checkInventories = part.Modules.OfType<ModuleKISInventory>()
-        .Where(m => m.invType == ModuleKISInventory.InventoryType.Pod);
-    if (checkInventories.Any()) {
-      DebugEx.Error("Part {0} has pod inventories in config. Cannot make a proper setup!", part);
-    }
-
-    // Assign the seats.
-    var podInventories = part.Modules.OfType<ModuleKISInventory>()
         .Where(m => m.invType == ModuleKISInventory.InventoryType.Pod)
         .ToArray();
-    for (var i = 0; i < crewCapacity; i++) {
-      DebugEx.Fine("{0}: Add pod inventory at seat: {0}", i);
-      var moduleNode = new ConfigNode("MODULE", "Dynamically created by KIS. Not persistant!");
+    var seatIndex = 0;
+    foreach (var inventory in checkInventories) {
+      HostedDebugLog.Info(
+          inventory, "Assinging seat to a pre-configured pod inventory: {0}", seatIndex);
+      inventory.podSeat = seatIndex++;
+    }
+    while (seatIndex < part.CrewCapacity) {
+      var moduleNode = new ConfigNode("MODULE", "Dynamically created by KIS.");
       evaInventory.CopyTo(moduleNode);
       moduleNode.SetValue("name", typeof(ModuleKISInventory).Name, createIfNotFound: true);
       moduleNode.SetValue(
           "invType", ModuleKISInventory.InventoryType.Pod.ToString(), createIfNotFound: true);
-      moduleNode.SetValue("podSeat", i, createIfNotFound: true);
+      moduleNode.SetValue("podSeat", seatIndex, createIfNotFound: true);
       part.partInfo.partConfig.AddNode(moduleNode);
-      part.AddModule(moduleNode, forceAwake: true);
+      var inventory = part.AddModule(moduleNode, forceAwake: true);
+      HostedDebugLog.Info(inventory, "Dynamically created pod inventory at seat: {0}", seatIndex);
+      seatIndex++;
     }
   }
 

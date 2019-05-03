@@ -552,9 +552,6 @@ public class ModuleKISInventory : PartModule,
   [PersistentField("Global/slotHotkey8")]
   public static KeyCode slotHotkey8 = KeyCode.Alpha8;
 
-  [PersistentField("Global/kerbalDefaultMass")]
-  public static float kerbalDefaultMass = 0.094f;
-
   [PersistentField("Global/itemDebug")]
   public static bool debugContextMenu;
 
@@ -570,13 +567,13 @@ public class ModuleKISInventory : PartModule,
             guiActiveUnfocused = true, guiActiveUncommand = true)]
   [LocalizableItem(tag = null)]
   public void ToggleInventoryEvent() {
+    // Destroy icons viewer
+    foreach (KeyValuePair<int, KIS_Item> item in items) {
+      item.Value.DisableIcon();
+    }
+    SetDoorsOpenAnimationState(false);
+    DisableIcon();
     if (showGui) {
-      // Destroy icons viewer
-      foreach (KeyValuePair<int, KIS_Item> item in items) {
-        item.Value.DisableIcon();
-      }
-      SetDoorsOpenAnimationState(false);
-      DisableIcon();
       showGui = false;
       if (HighLogic.LoadedSceneIsEditor) {
         UISoundPlayer.instance.Play(closeSndPath);
@@ -663,17 +660,17 @@ public class ModuleKISInventory : PartModule,
   /// <summary>Total volume of the contents.</summary>
   /// <value>The volume in <c>liters</c>.</value>
   /// <seealso cref="RefreshContents"/>
-  public float totalContentsVolume { get; private set; }
+  public double totalContentsVolume { get; private set; }
   
   /// <summary>Total mass of the contents.</summary>
   /// <value>The mass in <c>tons</c>.</value>
   /// <seealso cref="RefreshContents"/>
-  public float contentsMass { get; private set; }
+  public double contentsMass { get; private set; }
 
   /// <summary>Total cost of the contents.</summary>
   /// <value>The cost in game currency.</value>
   /// <seealso cref="RefreshContents"/>
-  public float contentsCost { get; private set; }
+  public double contentsCost { get; private set; }
 
   // GUI
   public bool showGui { get; private set; }
@@ -880,7 +877,7 @@ public class ModuleKISInventory : PartModule,
 
   /// <summary>Overridden from IPartCostModifier.</summary>
   public float GetModuleCost(float defaultCost, ModifierStagingSituation sit) {
-    return contentsCost;
+    return (float) contentsCost;
   }
 
   /// <summary>Overridden from IPartMassModifier.</summary>
@@ -890,7 +887,7 @@ public class ModuleKISInventory : PartModule,
       
   /// <summary>Overridden from IPartMassModifier.</summary>
   public float GetModuleMass(float defaultMass, ModifierStagingSituation sit) {
-    return contentsMass;
+    return (float) contentsMass;
   }
   #endregion
 
@@ -1394,7 +1391,7 @@ public class ModuleKISInventory : PartModule,
 
     var sb = new StringBuilder();
     sb.AppendLine(ItemVolumeTooltipInfo.Format(tooltipItem.itemVolume));
-    sb.AppendLine(ItemDryMassTooltipInfo.Format(tooltipItem.fullItemMass));
+    sb.AppendLine(ItemDryMassTooltipInfo.Format(tooltipItem.itemDryMass));
     if (tooltipItem.availablePart.partPrefab.Resources.Count > 0) {
       sb.AppendLine(ItemResourceMassTooltipInfo.Format(tooltipItem.itemResourceMass));
     }
@@ -1577,14 +1574,15 @@ public class ModuleKISInventory : PartModule,
     }
 
     //Debug
-    if (debugContextMenu && contextItem != null
-        && !HighLogic.LoadedSceneIsEditor && invType == InventoryType.Eva) {
+    if (debugContextMenu && contextItem != null) {
       noAction = false;
-      if (GUILayout.Button("Debug")) {
-        DebugGui.MakePartDebugDialog("KIS item adjustment tool",
-                                     group: Debug.KISDebugAdjustableAttribute.DebugGroup,
-                                     bindToPart: contextItem.availablePart.partPrefab);
-        contextItem = null;
+      if (!HighLogic.LoadedSceneIsEditor && invType == InventoryType.Eva) {
+        if (GUILayout.Button("Debug")) {
+          DebugGui.MakePartDebugDialog("KIS item adjustment tool",
+                                       group: Debug.KISDebugAdjustableAttribute.DebugGroup,
+                                       bindToPart: contextItem.availablePart.partPrefab);
+          contextItem = null;
+        }
       }
       if (GUILayout.Button("Dispose")) {
         contextItem.inventory.DeleteItem(contextItem.slot, contextItem.quantity);
@@ -1918,7 +1916,7 @@ public class ModuleKISInventory : PartModule,
     }
 
     if (KIS_Shared.IsKeyUp(evaRightHandKey)) {
-      //FIXME: make a const to teh slot name 
+      //FIXME: make a const to the slot name 
       KIS_Item rightHandItem = GetEquipedItem("rightHand");
       if (rightHandItem != null) {
         rightHandItem.Use(KIS_Item.UseFrom.KeyUp);
@@ -2124,7 +2122,7 @@ public class ModuleKISInventory : PartModule,
   bool VolumeAvailableFor(KIS_Item item) {
     RefreshContents();
     if (KISAddonPickup.draggedItem.inventory != this) {
-      float newTotalVolume = totalContentsVolume + item.stackVolume;
+      var newTotalVolume = totalContentsVolume + item.stackVolume;
       if (newTotalVolume > maxVolume) {
         ScreenMessaging.ShowPriorityScreenMessage(
             MaxVolumeReachedMsg.Format(item.stackVolume, (newTotalVolume - maxVolume)));
@@ -2207,7 +2205,7 @@ public class ModuleKISInventory : PartModule,
     }
   }
 
-  /// <summary>Plays teh door open animation for the selected state.</summary>
+  /// <summary>Plays the door open animation for the selected state.</summary>
   /// <param name="doorsOpen">Tells if the doors should be closed.</param>
   /// <param name="immediateReset">Tells if the animations state should be set in one frame.</param>
   /// <remarks>It's safe to call this method even if there are no animation defined.</remarks>

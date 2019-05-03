@@ -83,10 +83,10 @@ public class PartUtilsImpl {
     // Handle TweakScale settings.
     if (partNode != null) {
       var scale = KISAPI.PartNodeUtils.GetTweakScaleSizeModifier(partNode);
-      if (Mathf.Abs(1.0f - scale) > float.Epsilon) {
+      if (Math.Abs(1.0 - scale) > double.Epsilon) {
         DebugEx.Fine("Applying TweakScale size modifier: {0}", scale);
         var scaleRoot = new GameObject("TweakScale");
-        scaleRoot.transform.localScale = new Vector3(scale, scale, scale);
+        scaleRoot.transform.localScale = new Vector3((float) scale, (float) scale, (float) scale);
         modelObj.transform.SetParent(scaleRoot.transform, worldPositionStays: false);
         modelObj = scaleRoot;
       }
@@ -149,7 +149,7 @@ public class PartUtilsImpl {
   /// <summary>Returns part's volume basing on its geometrics.</summary>
   /// <remarks>
   /// The volume is calculated basing on the smallest boundary box that encapsulates all the meshes
-  /// in the part. The deployable parts can take much more space in teh deployed state.
+  /// in the part. The deployable parts can take much more space in the deployed state.
   /// </remarks>
   /// <param name="avPart">The part proto to get the models from.</param>
   /// <param name="variant">
@@ -160,7 +160,7 @@ public class PartUtilsImpl {
   /// The part's persistent config. It will be looked up for the variant if it's not specified.
   /// </param>
   /// <returns>The volume in liters.</returns>
-  public float GetPartVolume(
+  public double GetPartVolume(
       AvailablePart avPart, PartVariant variant = null, ConfigNode partNode = null) {
     var itemModule = avPart.partPrefab.Modules.OfType<KIS.ModuleKISItem>().FirstOrDefault();
     if (itemModule != null && itemModule.volumeOverride > 0) {
@@ -174,18 +174,17 @@ public class PartUtilsImpl {
       UnityEngine.Object.DestroyImmediate(partModel.gameObject);
     });
     var boundsSize = bounds.size;
-    
     return boundsSize.x * boundsSize.y * boundsSize.z * 1000f;
   }
 
   /// <summary>Returns part's volume basing on its geometrics.</summary>
   /// <remarks>
   /// The volume is calculated basing on the smallest boundary box that encapsulates all the meshes
-  /// in the part. The deployable parts can take much more space in teh deployed state.
+  /// in the part. The deployable parts can take much more space in the deployed state.
   /// </remarks>
   /// <param name="part">The actual part, that exists in the scene.</param>
   /// <returns>The volume in liters.</returns>
-  public float GetPartVolume(Part part) {
+  public double GetPartVolume(Part part) {
     var partNode = KISAPI.PartNodeUtils.PartSnapshot(part);
     return GetPartVolume(part.partInfo, partNode: partNode);
   }
@@ -200,7 +199,7 @@ public class PartUtilsImpl {
   /// The part's persistent config. It will be looked up for the variant if it's not specified.
   /// </param>
   /// <returns>The dry cost of the part.</returns>
-  public float GetPartDryMass(
+  public double GetPartDryMass(
       AvailablePart avPart, PartVariant variant = null, ConfigNode partNode = null) {
     var itemMass = avPart.partPrefab.mass;
     if (variant == null && partNode != null) {
@@ -220,13 +219,13 @@ public class PartUtilsImpl {
   /// The part's persistent config. It will be looked up for the various cost modifiers.
   /// </param>
   /// <returns>The dry cost of the part.</returns>
-  public float GetPartDryCost(
+  public double GetPartDryCost(
       AvailablePart avPart, PartVariant variant = null, ConfigNode partNode = null) {
     // TweakScale compatibility
     if (partNode != null) {
       var tweakScale = KISAPI.PartNodeUtils.GetTweakScaleModule(partNode);
       if (tweakScale != null) {
-        var tweakedCost = ConfigAccessor.GetValueByPath<float>(tweakScale, "DryCost");
+        var tweakedCost = ConfigAccessor.GetValueByPath<double>(tweakScale, "DryCost");
         if (tweakedCost.HasValue) {
           // TODO(ihsoft): Get back to this code once TweakScale supports variants.
           return tweakedCost.Value;
@@ -264,7 +263,6 @@ public class PartUtilsImpl {
         // Prefab models are always inactive, so ignore the check.
         .Where(mf => considerInactive || mf.gameObject.activeInHierarchy)
         .ToArray();
-    DebugEx.Fine("Found {0} children meshes in: {1}", meshFilters.Length, model);
     Array.ForEach(meshFilters, meshFilter => {
       var combine = new CombineInstance();
       combine.mesh = meshFilter.sharedMesh;
@@ -275,20 +273,18 @@ public class PartUtilsImpl {
     // Skinned meshes are baked on every frame before rendering.
     var skinnedMeshRenderers = model.GetComponentsInChildren<SkinnedMeshRenderer>();
     if (skinnedMeshRenderers.Length > 0) {
-      DebugEx.Fine("Found {0} skinned meshes in: {1}", skinnedMeshRenderers.Length, model);
       foreach (var skinnedMeshRenderer in skinnedMeshRenderers) {
         var combine = new CombineInstance();
         combine.mesh = new Mesh();
         skinnedMeshRenderer.BakeMesh(combine.mesh);
-        combine.transform = rootWorldTransform * skinnedMeshRenderer.transform.localToWorldMatrix;
+        // BakeMesh() gives mesh in world scale, so don't apply it twice.
+        var localToWorldMatrix = Matrix4x4.TRS(
+            skinnedMeshRenderer.transform.position,
+            skinnedMeshRenderer.transform.rotation,
+            Vector3.one);
+        combine.transform = rootWorldTransform * localToWorldMatrix;
         meshCombines.Add(combine);
       }
-    }
-
-    // Collect meshes from the children parts.
-    for (var i = 0; i < model.childCount; i++) {
-      CollectMeshesFromModel(
-          model.GetChild(i), meshCombines, worldTransform: rootWorldTransform);
     }
   }
 
