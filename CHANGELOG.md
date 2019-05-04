@@ -1,4 +1,4 @@
-# 1.20 (pre-release):
+# 1.20 (May 3rd, 2019)):
 * [Fix #326] Text formating in PAW menu.
 
 # 1.19 (May 2nd, 2019):
