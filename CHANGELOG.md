@@ -1,3 +1,5 @@
+# 1.20 (pre-release):
+
 # 1.19 (May 2nd, 2019):
 * [Change] `KSP 1.7.*` compatibility.
 * [Change] Update ES-ES localization.
