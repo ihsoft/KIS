@@ -1,4 +1,5 @@
 # 1.21 (pre-release):
+* [Fix #328] KIS fails on every new DLC or major patch that changes kerbal models.
 
 # 1.20 (May 3rd, 2019):
 * [Fix #326] Text formating in PAW menu.

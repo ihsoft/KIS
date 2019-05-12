@@ -38,12 +38,6 @@ sealed class KISAddonConfig : MonoBehaviour {
   [PersistentField("EvaPickup")]
   readonly static PersistentConfigNode evaPickup = new PersistentConfigNode();
 
-  const string MaleKerbalEva = "kerbalEVA";
-  const string FemaleKerbalEva = "kerbalEVAfemale";
-  const string MaleKerbalEvaVintage = "kerbalEVAVintage";
-  const string FemaleKerbalEvaVintage = "kerbalEVAfemaleVintage";
-  const string RdKerbalEva = "kerbalEVA_RD";
-
   /// <summary>Instantly loads the KIS global settings.</summary>
   class KISConfigLoader: LoadingSystem {
     public override bool IsReady() {
@@ -64,25 +58,27 @@ sealed class KISAddonConfig : MonoBehaviour {
     }
 
     public override void StartLoad() {
-      // Kerbal parts.
-      UpdateEvaPrefab(MaleKerbalEva);
-      UpdateEvaPrefab(MaleKerbalEvaVintage);
-      UpdateEvaPrefab(FemaleKerbalEva);
-      UpdateEvaPrefab(FemaleKerbalEvaVintage);
-
       // Set inventory module for every pod with crew capacity.
-      DebugEx.Info("Loading pod inventories...");
+      DebugEx.Info("Adding KIS modules to the parts...");
       for (var i = 0; i < PartLoader.LoadedPartsList.Count; i++) {
         var avPart = PartLoader.LoadedPartsList[i];
-        if (!(avPart.name == MaleKerbalEva || avPart.name == FemaleKerbalEva
-              || avPart.name == MaleKerbalEvaVintage || avPart.name == FemaleKerbalEvaVintage
-              || avPart.name == RdKerbalEva
-              || !avPart.partPrefab || avPart.partPrefab.CrewCapacity < 1)) {
-          DebugEx.Fine("Found part with crew: {0}, CrewCapacity={1}",
-                       avPart.name, avPart.partPrefab.CrewCapacity);
+        var hasEvaModules = avPart.partPrefab.Modules.OfType<KerbalEVA>().Any();
+        if (hasEvaModules) {
+          var invModule = AddModule<ModuleKISInventory>(avPart.partPrefab, evaInventory);
+          invModule.invType = ModuleKISInventory.InventoryType.Eva;
+          AddModule<ModuleKISPickup>(avPart.partPrefab, evaPickup);
+        } else if (avPart.partPrefab.CrewCapacity > 0) {
           AddPodInventories(avPart.partPrefab);
         }
       }
+    }
+
+    /// <summary>Adds a custom part module and loads its fields from the config.</summary>
+    T AddModule<T>(Part prefab, ConfigNode node) where T : PartModule {
+      var module = prefab.AddModule(typeof(T).Name, forceAwake: true) as T;
+      HostedDebugLog.Fine(module, "Add module and load config: type={0}", typeof(T));
+      module.Fields.Load(node);
+      return module;
     }
   }
 
