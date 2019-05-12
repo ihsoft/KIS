@@ -1062,7 +1062,6 @@ public class ModuleKISInventory : PartModule,
   }
 
   public KIS_Item AddItem(Part p, int qty = 1, int slot = -1) {
-    KIS_Item item = null;
     if (items.ContainsKey(slot)) {
       slot = -1;
     }
@@ -1075,7 +1074,7 @@ public class ModuleKISInventory : PartModule,
         return null;
       }
     }
-    item = KIS_Item.CreateItemFromScenePart(p, this, qty);
+    var item = KIS_Item.CreateItemFromScenePart(p, this, qty);
     items.Add(slot, item);
     if (showGui) {
       items[slot].EnableIcon(itemIconResolution);

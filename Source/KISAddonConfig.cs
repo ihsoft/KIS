@@ -123,7 +123,7 @@ sealed class KISAddonConfig : MonoBehaviour {
     var seatIndex = 0;
     foreach (var inventory in checkInventories) {
       HostedDebugLog.Info(
-          inventory, "Assinging seat to a pre-configured pod inventory: {0}", seatIndex);
+          inventory, "Assing seat to a pre-configured pod inventory: {0}", seatIndex);
       inventory.podSeat = seatIndex++;
     }
     while (seatIndex < part.CrewCapacity) {
@@ -135,7 +135,7 @@ sealed class KISAddonConfig : MonoBehaviour {
       moduleNode.SetValue("podSeat", seatIndex, createIfNotFound: true);
       part.partInfo.partConfig.AddNode(moduleNode);
       var inventory = part.AddModule(moduleNode, forceAwake: true);
-      HostedDebugLog.Info(inventory, "Dynamically created pod inventory at seat: {0}", seatIndex);
+      HostedDebugLog.Info(inventory, "Dynamically create pod inventory at seat: {0}", seatIndex);
       seatIndex++;
     }
   }
@@ -154,7 +154,7 @@ sealed class KISAddonConfig : MonoBehaviour {
     }
   }
 
-  /// <summary>Loads config values for the part's module fro the provided config node.</summary>
+  /// <summary>Loads config values for the part's module from the provided config node.</summary>
   /// <returns><c>true</c> if loaded successfully.</returns>
   static bool LoadModuleConfig(Part p, Type moduleType, ConfigNode node) {
     var module = p.GetComponent(moduleType);
