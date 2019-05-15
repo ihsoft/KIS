@@ -1874,7 +1874,8 @@ public class ModuleKISInventory : PartModule,
   }
 
   void UpdateKey() {
-    if (!HighLogic.LoadedSceneIsFlight
+    if (invType != InventoryType.Eva
+        || !HighLogic.LoadedSceneIsFlight
         || FlightGlobals.ActiveVessel != part.vessel
         || !FlightGlobals.ActiveVessel.isEVA) {
       return;
