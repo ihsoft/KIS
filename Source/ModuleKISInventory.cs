@@ -964,15 +964,8 @@ public class ModuleKISInventory : PartModule,
     foreach (var itemNode in itemNodes) {
       var slot = ConfigAccessor.GetValueByPath<int>(itemNode, "slot") ?? -1;
       var item = AddItem(itemNode, slot);
-      if (item != null) {
-        var isEquipped = ConfigAccessor.GetValueByPath<bool>(itemNode, "equipped") ?? false;
-        if (isEquipped) {
-          if (invType == InventoryType.Eva) {
-            startEquip.Add(item);
-          } else {
-            item.SetEquipedState(true);
-          }
-        }
+      if (invType == InventoryType.Eva && item != null && (item.equipped || item.carried)) {
+        startEquip.Add(item);
       }
     }
   }
