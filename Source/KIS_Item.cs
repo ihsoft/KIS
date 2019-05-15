@@ -541,7 +541,7 @@ public sealed class KIS_Item {
     // Check if slot is already occupied.
     if (equipSlot != null) {
       KIS_Item equippedItem = inventory.GetEquipedItem(equipSlot);
-      if (equippedItem != null) {
+      if (equippedItem != null && equippedItem != this) {
         if (equippedItem.carriable && actorType == ActorType.Player) {
           ScreenMessaging.ShowPriorityScreenMessage(
               CannotEquipAlreadyCarryingMsg.Format(equipSlot, equippedItem.availablePart.title));
