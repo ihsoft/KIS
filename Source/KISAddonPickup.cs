@@ -1029,8 +1029,8 @@ sealed class KISAddonPickup : MonoBehaviour {
     refPart.transform.rotation = probeRotation ?? oldRot;
 
     float maxMass = 0;
-    var allPickupModules = FindObjectsOfType(typeof(ModuleKISPickup)) as ModuleKISPickup[];
-    foreach (ModuleKISPickup pickupModule in allPickupModules) {
+    var allPickupModules = FindObjectsOfType(typeof(ModuleKISPickup)).Cast<ModuleKISPickup>();
+    foreach (var pickupModule in allPickupModules) {
       var partDist = Colliders.GetSqrDistanceToPartOrDefault(
           pickupModule.part.transform.position, refPart);
       if (partDist <= pickupModule.maxDistance * pickupModule.maxDistance) {
@@ -1104,13 +1104,12 @@ sealed class KISAddonPickup : MonoBehaviour {
       grabbedPart = fromPart;
       HostedDebugLog.Info(fromPart, "End part pickup");
     }
-    if (!KISAddonPointer.isRunning) {
-      var pickupModule = GetActivePickupNearest(fromPart);
+    var pickupModule = GetActivePickupNearest(fromPart);
+    if (!KISAddonPointer.isRunning && pickupModule != null) {
       var grabPosition = fromPart.transform.position;
       int unusedPartsCount;
-      if (pickupModule
-          && (item == null && CheckMass(fromPart, out unusedPartsCount, reportToConsole: true)
-              || item != null && CheckItemMass(item, reportToConsole: true))) {
+      if (item == null && CheckMass(fromPart, out unusedPartsCount, reportToConsole: true)
+          || item != null && CheckItemMass(item, reportToConsole: true)) {
         KISAddonPointer.allowPart = true;
         KISAddonPointer.allowEva = true;
         KISAddonPointer.allowMount = true;

@@ -935,7 +935,7 @@ public class ModuleKISInventory : PartModule,
 
     // Only equip if this is a kerbal module. Pods and command seats have POD inventory too.
     // Don't check for "isEVA", since kerbal on a command seat is not an EVA vessel.
-    if (invType == InventoryType.Eva && part.FindModuleImplementing<KerbalEVA>() != null) {
+    if (invType == InventoryType.Eva && kerbalModule != null) {
       var protoCrewMember = part.protoModuleCrew[0];
       kerbalTrait = protoCrewMember.experienceTrait.Title;
       foreach (var item in startEquip) {
