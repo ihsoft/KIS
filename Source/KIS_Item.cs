@@ -514,7 +514,7 @@ public sealed class KIS_Item {
       UISounds.PlayBipWrong();
       return;
     }
-    DebugEx.Info("Equip item {0} in mode {1}", availablePart.title, equipMode);
+    DebugEx.Info("Equip item: partName={0}, mode={1}", availablePart.title, equipMode);
 
     // Check if the skill is needed. Skip the check in the sandbox modes.
     if (HighLogic.CurrentGame.Mode != Game.Modes.SANDBOX
@@ -629,7 +629,7 @@ public sealed class KIS_Item {
       UnityEngine.Object.Destroy(equippedGameObj);
     }
     if (equipMode == EquipMode.Part || equipMode == EquipMode.Physic) {
-      DebugEx.Info("Update config node of equipped part: {0}", availablePart.title);
+      HostedDebugLog.Info(inventory, "Update config node of the equipped part: {0}", equippedPart);
       partNode = KISAPI.PartNodeUtils.PartSnapshot(equippedPart);
       equippedPart.Die();
     }
@@ -706,7 +706,7 @@ public sealed class KIS_Item {
   }
 
   #region Local utility methods
-  /// <summary>Coroutine to align the equipped atems to the kerbal model.</summary>
+  /// <summary>Coroutine to align the equipped item to the kerbal model.</summary>
   IEnumerator AlignEquippedPart() {
     while (equippedGameObj != null && evaTransform != null) {
       equippedGameObj.transform.rotation =

@@ -1063,7 +1063,7 @@ public class ModuleKISInventory : PartModule,
 
   public KIS_Item AddItem(Part p, int qty = 1, int slot = -1) {
     if (items.ContainsKey(slot)) {
-      slot = -1;
+      slot = -1;  // Choose automatically if the slot is already occupied.
     }
     int maxSlot = (slotsX * slotsY) - 1;
     if (slot < 0 || slot > maxSlot) {
@@ -1345,7 +1345,7 @@ public class ModuleKISInventory : PartModule,
 
     var sb = new StringBuilder();
     sb.AppendLine(InventoryVolumeInfo.Format(totalContentsVolume, maxVolume));
-    sb.AppendLine(InventoryMassInfo.Format(part.mass));  // Part's mass includes EVERYTHING!
+    sb.AppendLine(InventoryMassInfo.Format(part.mass));
     sb.AppendLine(InventoryCostInfo.Format(contentsCost + part.partInfo.cost));
     GUILayout.Box(sb.ToString(), boxStyle,
                   GUILayout.Width(Width), GUILayout.Height(45 + extraSpace));

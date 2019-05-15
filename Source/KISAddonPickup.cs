@@ -973,7 +973,7 @@ sealed class KISAddonPickup : MonoBehaviour {
     Vector3 oldPos = refPart.transform.position;
     Quaternion oldRot = refPart.transform.rotation;
 
-    // Legacy code compatibility.    
+    // Legacy code compatibility.
     if (testFunc == null) {
       if (!canPartAttachOnly && !canStaticAttachOnly) {
         testFunc = x => true;
@@ -1097,11 +1097,12 @@ sealed class KISAddonPickup : MonoBehaviour {
   void Drop(Part fromPart, KIS_Item item = null) {
     if (item != null) {
       draggedItem = item;
-      DebugEx.Info("End pickup of item {0} from inventory {1}",
-                   item.availablePart.name, item.inventory);
+      HostedDebugLog.Info(
+          item.inventory,
+          "End item pickup: item={0}, fromPart={1}", item.availablePart.title, fromPart);
     } else {
       grabbedPart = fromPart;
-      DebugEx.Info("End pickup of {0}", fromPart);
+      HostedDebugLog.Info(fromPart, "End part pickup");
     }
     if (!KISAddonPointer.isRunning) {
       var pickupModule = GetActivePickupNearest(fromPart);
