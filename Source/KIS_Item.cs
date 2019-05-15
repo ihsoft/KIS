@@ -678,8 +678,8 @@ public sealed class KIS_Item {
       rot = inventory.part.transform.rotation;
       pos = inventory.part.transform.position + new Vector3(0, 1, 0);
     }
+    StackRemove(1);  // This may update partNode!
     KIS_Shared.CreatePart(partNode, pos, rot, fromPart);
-    StackRemove(1);
   }
 
   public void OnMove(ModuleKISInventory srcInventory, ModuleKISInventory destInventory) {
