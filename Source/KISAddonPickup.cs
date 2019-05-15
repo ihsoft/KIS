@@ -707,7 +707,7 @@ sealed class KISAddonPickup : MonoBehaviour {
         }
         if (HighLogic.LoadedSceneIsFlight) {
           if (draggedItem != null) {
-            Drop(draggedItem.inventory.part, item: draggedItem);
+            Drop(null, item: draggedItem);
           } else {
             movingPart = draggedPart;
             Drop(movingPart);
@@ -1084,17 +1084,18 @@ sealed class KISAddonPickup : MonoBehaviour {
   }
 
   public void Drop(KIS_Item item) {
-    Drop(item.inventory.part, item: item);
+    Drop(null, item: item);
   }
 
   /// <summary>Handles part drop action.</summary>
   /// <param name="fromPart">
   /// The part that was the source of the dragging action. If a world's part is grabbed than it will
-  /// be that part. If part is being dragged from inventory, then this parameter is an inventory
-  /// reference.
+  /// be that part. This part must have active physical colliders! As a last resort, leave it
+  /// <c>null</c>, and the root part of the currently active vessel will be used.
   /// </param>
   /// <param name="item">The item being dragged.</param>
   void Drop(Part fromPart, KIS_Item item = null) {
+    fromPart = fromPart ?? FlightGlobals.ActiveVessel.rootPart;  // A very bad workaround!
     if (item != null) {
       draggedItem = item;
       HostedDebugLog.Info(
@@ -1503,7 +1504,10 @@ sealed class KISAddonPickup : MonoBehaviour {
   /// <returns><c>true</c> if total mass is within the limits.</returns>
   bool CheckItemMass(KIS_Item item, bool reportToConsole = false) {
     grabbedMass = item.totalSlotMass;
-    var pickupMaxMass = GetAllPickupMaxMassInRange(item.inventory.part);
+    var refPart = item.inventory.vessel.isEVA
+        ? item.inventory.vessel.rootPart  // Inventories on EVA kerbal may not have colliders.
+        : item.inventory.part;
+    var pickupMaxMass = GetAllPickupMaxMassInRange(refPart);
     if (grabbedMass > pickupMaxMass) {
       ReportCheckError(TooHeavyStatusTooltipTxt,
                        TooHeavyTooltipTxt.Format(grabbedMass, pickupMaxMass),
