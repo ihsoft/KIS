@@ -3,7 +3,6 @@
 // Module authors: KospY, igor.zavoychinskiy@gmail.com
 // License: Restricted
 
-using KISAPIv1;
 using KSP.UI.Screens;
 using KSPDev.ConfigUtils;
 using KSPDev.GUIUtils;
