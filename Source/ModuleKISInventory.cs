@@ -593,11 +593,6 @@ public class ModuleKISInventory : PartModule,
         // Don't allow access to the container being carried by a kerbal. Its state is
         // serialized in the kerbal's invenotry so, any changes will be reverted once
         // the container is dropped.
-        // TODO: Find a way to update serialized state and remove this check (#89). 
-        if (GetComponent<ModuleKISItemEvaTweaker>() && vessel.isEVA) {
-          ScreenMessaging.ShowPriorityScreenMessage(NotAccessibleWhileCarriedMsg);
-          return;
-        }
         if (FlightGlobals.ActiveVessel.isEVA && !externalAccess) {
           ScreenMessaging.ShowPriorityScreenMessage(NotAccessibleFromOutsideMsg);
           return;

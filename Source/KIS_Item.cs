@@ -8,6 +8,7 @@ using KIS.GUIUtils;
 using KSPDev.ConfigUtils;
 using KSPDev.GUIUtils;
 using KSPDev.LogUtils;
+using KSPDev.MathUtils;
 using KSPDev.PartUtils;
 using KSPDev.ProcessingUtils;
 using System;
@@ -321,24 +322,7 @@ public sealed class KIS_Item {
     this.partNode = KISAPI.PartNodeUtils.PartSnapshot(part);
 
     this.itemVolume = KISAPI.PartUtils.GetPartVolume(part.partInfo, partNode: partNode);
-    // Don't trust the part's mass. It can be affected by too many factors.
-    this._itemDryMass = 
-        part.partInfo.partPrefab.mass + part.GetModuleMass(part.partInfo.partPrefab.mass);
-    this._itemDryCost = part.partInfo.cost + part.GetModuleCosts(part.partInfo.cost);
-    foreach (var resource in part.Resources) {
-      this._resourceMass += (float)resource.amount * resource.info.density;
-      this._resourceCost += (float)resource.amount * resource.info.unitCost;
-    }
-
-    // Handle the case when the item is a container.
-    var itemInventories = part.Modules.OfType<ModuleKISInventory>();
-    foreach (var itemInventory in itemInventories) {
-      this._contentMass += itemInventory.contentsMass;
-      this._contentCost += itemInventory.contentsCost;
-    }
-    // Fix dry mass/cost since it's reported by the container modules.
-    this._itemDryMass -= this._contentMass;
-    this._itemDryCost -= this._contentCost;
+    CaptureItemStateFromPart(part);
   }
 
   /// <summary>Sets the item's equipped state.</summary>
@@ -708,7 +692,19 @@ public sealed class KIS_Item {
   #region Local utility methods
   /// <summary>Coroutine to align the equipped item to the kerbal model.</summary>
   IEnumerator AlignEquippedPart() {
+    var lastUpdated = 0f;
+    var lastMass = totalSlotMass;
+    var lastCost = totalSlotCost;
     while (equippedGameObj != null && evaTransform != null) {
+      if (carried && lastUpdated + 0.1f < Time.unscaledTime) {
+        lastUpdated = Time.unscaledTime;
+        CaptureItemStateFromPart(equippedPart);
+        if (!Mathd.AreSame(lastMass, totalSlotMass) || !Mathd.AreSame(lastCost, totalSlotCost)) {
+          inventory.RefreshContents();
+        }
+        lastMass = totalSlotMass;
+        lastCost = totalSlotCost;
+      }
       equippedGameObj.transform.rotation =
           evaTransform.rotation * Quaternion.Euler(prefabModule.equipDir);
       equippedGameObj.transform.position = evaTransform.TransformPoint(prefabModule.equipPos);
@@ -729,6 +725,32 @@ public sealed class KIS_Item {
       usableFromEditor = prefabModule.usableFromEditor;
       carriable = prefabModule.carriable;
     }
+  }
+
+  /// <summary>Updates the item state so that it matches a part's state.</summary>
+  /// <param name="copyFrom">The part to copy state from.</param>
+  void CaptureItemStateFromPart(Part copyFrom) {
+    // Don't trust the part's mass. It can be affected by too many factors.
+    _itemDryMass = copyFrom.partInfo.partPrefab.mass
+        + copyFrom.GetModuleMass(copyFrom.partInfo.partPrefab.mass);
+    _itemDryCost = copyFrom.partInfo.cost
+        + copyFrom.GetModuleCosts(copyFrom.partInfo.cost);
+    foreach (var resource in copyFrom.Resources) {
+      _resourceMass += (float)resource.amount * resource.info.density;
+      _resourceCost += (float)resource.amount * resource.info.unitCost;
+    }
+
+    // Handle the case when the item is a container.
+    var itemInventories = copyFrom.Modules.OfType<ModuleKISInventory>();
+    _contentMass = 0;
+    _contentCost = 0;
+    foreach (var itemInventory in itemInventories) {
+      _contentMass += itemInventory.contentsMass;
+      _contentCost += itemInventory.contentsCost;
+    }
+    // Fix dry mass/cost since it's reported by the container modules.
+    _itemDryMass -= _contentMass;
+    _itemDryCost -= _contentCost;
   }
   #endregion
 }
