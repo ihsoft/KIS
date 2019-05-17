@@ -113,6 +113,16 @@ sealed class KISAddonConfig : MonoBehaviour {
   /// </remarks>
   /// <param name="part">The part to add seat inventorties for.</param>
   public static void AddPodInventories(Part part) {
+    // Check the fields that once had unexpected values.
+    if (part.partInfo == null) {
+      HostedDebugLog.Error(part, "Unexpected part configuration: partInfo=<NULL>");
+      return;
+    }
+    if (part.partInfo.partConfig == null) {
+      HostedDebugLog.Error(part, "Unexpected part configuration: partConfig=<NULL>");
+      return;
+    }
+
     var checkInventories = part.Modules.OfType<ModuleKISInventory>()
         .Where(m => m.invType == ModuleKISInventory.InventoryType.Pod)
         .ToArray();
