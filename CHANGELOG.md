@@ -1,4 +1,4 @@
-# 1.21 (pre-release):
+# 1.21 (May 16th, 2019):
 * [Fix #89] Portable containers revert to previous content when dropped. 
 * [Fix #328] KIS fails on every new DLC or major patch that changes kerbal models.
 * [Fix #330] KIS containers mass and volume physically realistic. __Read the issue description for details!__
