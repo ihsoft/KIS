@@ -3,7 +3,6 @@
 // Module authors: KospY, igor.zavoychinskiy@gmail.com
 // License: Restricted
 
-using KISAPIv1;
 using KSP.UI.Screens;
 using KSPDev.ConfigUtils;
 using KSPDev.GUIUtils;
@@ -707,7 +706,7 @@ sealed class KISAddonPickup : MonoBehaviour {
         }
         if (HighLogic.LoadedSceneIsFlight) {
           if (draggedItem != null) {
-            Drop(draggedItem.inventory.part, item: draggedItem);
+            Drop(null, item: draggedItem);
           } else {
             movingPart = draggedPart;
             Drop(movingPart);
@@ -973,7 +972,7 @@ sealed class KISAddonPickup : MonoBehaviour {
     Vector3 oldPos = refPart.transform.position;
     Quaternion oldRot = refPart.transform.rotation;
 
-    // Legacy code compatibility.    
+    // Legacy code compatibility.
     if (testFunc == null) {
       if (!canPartAttachOnly && !canStaticAttachOnly) {
         testFunc = x => true;
@@ -1029,8 +1028,8 @@ sealed class KISAddonPickup : MonoBehaviour {
     refPart.transform.rotation = probeRotation ?? oldRot;
 
     float maxMass = 0;
-    var allPickupModules = FindObjectsOfType(typeof(ModuleKISPickup)) as ModuleKISPickup[];
-    foreach (ModuleKISPickup pickupModule in allPickupModules) {
+    var allPickupModules = FindObjectsOfType(typeof(ModuleKISPickup)).Cast<ModuleKISPickup>();
+    foreach (var pickupModule in allPickupModules) {
       var partDist = Colliders.GetSqrDistanceToPartOrDefault(
           pickupModule.part.transform.position, refPart);
       if (partDist <= pickupModule.maxDistance * pickupModule.maxDistance) {
@@ -1084,32 +1083,33 @@ sealed class KISAddonPickup : MonoBehaviour {
   }
 
   public void Drop(KIS_Item item) {
-    Drop(item.inventory.part, item: item);
+    Drop(null, item: item);
   }
 
   /// <summary>Handles part drop action.</summary>
   /// <param name="fromPart">
   /// The part that was the source of the dragging action. If a world's part is grabbed than it will
-  /// be that part. If part is being dragged from inventory, then this parameter is an inventory
-  /// reference.
+  /// be that part. This part must have active physical colliders! As a last resort, leave it
+  /// <c>null</c>, and the root part of the currently active vessel will be used.
   /// </param>
   /// <param name="item">The item being dragged.</param>
   void Drop(Part fromPart, KIS_Item item = null) {
+    fromPart = fromPart ?? FlightGlobals.ActiveVessel.rootPart;  // A very bad workaround!
     if (item != null) {
       draggedItem = item;
-      DebugEx.Info("End pickup of item {0} from inventory {1}",
-                   item.availablePart.name, item.inventory);
+      HostedDebugLog.Info(
+          item.inventory,
+          "End item pickup: item={0}, fromPart={1}", item.availablePart.title, fromPart);
     } else {
       grabbedPart = fromPart;
-      DebugEx.Info("End pickup of {0}", fromPart);
+      HostedDebugLog.Info(fromPart, "End part pickup");
     }
-    if (!KISAddonPointer.isRunning) {
-      var pickupModule = GetActivePickupNearest(fromPart);
+    var pickupModule = GetActivePickupNearest(fromPart);
+    if (!KISAddonPointer.isRunning && pickupModule != null) {
       var grabPosition = fromPart.transform.position;
       int unusedPartsCount;
-      if (pickupModule
-          && (item == null && CheckMass(fromPart, out unusedPartsCount, reportToConsole: true)
-              || item != null && CheckItemMass(item, reportToConsole: true))) {
+      if (item == null && CheckMass(fromPart, out unusedPartsCount, reportToConsole: true)
+          || item != null && CheckItemMass(item, reportToConsole: true)) {
         KISAddonPointer.allowPart = true;
         KISAddonPointer.allowEva = true;
         KISAddonPointer.allowMount = true;
@@ -1503,7 +1503,10 @@ sealed class KISAddonPickup : MonoBehaviour {
   /// <returns><c>true</c> if total mass is within the limits.</returns>
   bool CheckItemMass(KIS_Item item, bool reportToConsole = false) {
     grabbedMass = item.totalSlotMass;
-    var pickupMaxMass = GetAllPickupMaxMassInRange(item.inventory.part);
+    var refPart = item.inventory.vessel.isEVA
+        ? item.inventory.vessel.rootPart  // Inventories on EVA kerbal may not have colliders.
+        : item.inventory.part;
+    var pickupMaxMass = GetAllPickupMaxMassInRange(refPart);
     if (grabbedMass > pickupMaxMass) {
       ReportCheckError(TooHeavyStatusTooltipTxt,
                        TooHeavyTooltipTxt.Format(grabbedMass, pickupMaxMass),

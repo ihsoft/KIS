@@ -20,7 +20,7 @@
       "/README.md",
       "/LICENSE.md",
       "/remove_fun_part_patch.txt",
-      "/kis_physical_containers.cfg.txt"
+      "/kis_legacy_containers.txt"
     ],
     "Plugins" : [
       "{COMPILED_BINARY}",

@@ -593,11 +593,6 @@ public class ModuleKISInventory : PartModule,
         // Don't allow access to the container being carried by a kerbal. Its state is
         // serialized in the kerbal's invenotry so, any changes will be reverted once
         // the container is dropped.
-        // TODO: Find a way to update serialized state and remove this check (#89). 
-        if (GetComponent<ModuleKISItemEvaTweaker>() && vessel.isEVA) {
-          ScreenMessaging.ShowPriorityScreenMessage(NotAccessibleWhileCarriedMsg);
-          return;
-        }
         if (FlightGlobals.ActiveVessel.isEVA && !externalAccess) {
           ScreenMessaging.ShowPriorityScreenMessage(NotAccessibleFromOutsideMsg);
           return;
@@ -935,7 +930,7 @@ public class ModuleKISInventory : PartModule,
 
     // Only equip if this is a kerbal module. Pods and command seats have POD inventory too.
     // Don't check for "isEVA", since kerbal on a command seat is not an EVA vessel.
-    if (invType == InventoryType.Eva && part.FindModuleImplementing<KerbalEVA>() != null) {
+    if (invType == InventoryType.Eva && kerbalModule != null) {
       var protoCrewMember = part.protoModuleCrew[0];
       kerbalTrait = protoCrewMember.experienceTrait.Title;
       foreach (var item in startEquip) {
@@ -964,15 +959,8 @@ public class ModuleKISInventory : PartModule,
     foreach (var itemNode in itemNodes) {
       var slot = ConfigAccessor.GetValueByPath<int>(itemNode, "slot") ?? -1;
       var item = AddItem(itemNode, slot);
-      if (item != null) {
-        var isEquipped = ConfigAccessor.GetValueByPath<bool>(itemNode, "equipped") ?? false;
-        if (isEquipped) {
-          if (invType == InventoryType.Eva) {
-            startEquip.Add(item);
-          } else {
-            item.SetEquipedState(true);
-          }
-        }
+      if (invType == InventoryType.Eva && item != null && (item.equipped || item.carried)) {
+        startEquip.Add(item);
       }
     }
   }
@@ -1062,9 +1050,8 @@ public class ModuleKISInventory : PartModule,
   }
 
   public KIS_Item AddItem(Part p, int qty = 1, int slot = -1) {
-    KIS_Item item = null;
     if (items.ContainsKey(slot)) {
-      slot = -1;
+      slot = -1;  // Choose automatically if the slot is already occupied.
     }
     int maxSlot = (slotsX * slotsY) - 1;
     if (slot < 0 || slot > maxSlot) {
@@ -1075,7 +1062,7 @@ public class ModuleKISInventory : PartModule,
         return null;
       }
     }
-    item = KIS_Item.CreateItemFromScenePart(p, this, qty);
+    var item = KIS_Item.CreateItemFromScenePart(p, this, qty);
     items.Add(slot, item);
     if (showGui) {
       items[slot].EnableIcon(itemIconResolution);
@@ -1346,7 +1333,7 @@ public class ModuleKISInventory : PartModule,
 
     var sb = new StringBuilder();
     sb.AppendLine(InventoryVolumeInfo.Format(totalContentsVolume, maxVolume));
-    sb.AppendLine(InventoryMassInfo.Format(part.mass));  // Part's mass includes EVERYTHING!
+    sb.AppendLine(InventoryMassInfo.Format(part.mass));
     sb.AppendLine(InventoryCostInfo.Format(contentsCost + part.partInfo.cost));
     GUILayout.Box(sb.ToString(), boxStyle,
                   GUILayout.Width(Width), GUILayout.Height(45 + extraSpace));
@@ -1882,7 +1869,8 @@ public class ModuleKISInventory : PartModule,
   }
 
   void UpdateKey() {
-    if (!HighLogic.LoadedSceneIsFlight
+    if (invType != InventoryType.Eva
+        || !HighLogic.LoadedSceneIsFlight
         || FlightGlobals.ActiveVessel != part.vessel
         || !FlightGlobals.ActiveVessel.isEVA) {
       return;

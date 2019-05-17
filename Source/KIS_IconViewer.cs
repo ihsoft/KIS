@@ -34,7 +34,7 @@ public sealed class KIS_IconViewer {
   RenderTexture cameraTarget;
 
   public KIS_IconViewer(Part part, int resolution) {
-    if (part.vessel != null && part.vessel.isEVA) {
+    if (part.Modules.OfType<KerbalEVA>().Any()) {
       MakeKerbalAvatar(part, resolution);
     } else {
       MakePartIcon(part.partInfo, resolution, VariantsUtils.GetCurrentPartVariant(part));
