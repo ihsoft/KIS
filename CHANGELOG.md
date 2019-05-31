@@ -4,6 +4,7 @@
 * [Change] Disable the default remove helmet hotkey `J` as it conflicts with "Breaking ground" DLC.
 * [Enhancement] Add medium portable cargo to carry 6 experiments.
 * [Fix #333] Robotics part trigger physics when making a hover model.
+* [Fix #334] Action icons are blurred.
 
 # 1.21 (May 16th, 2019):
 * [Fix #89] Portable containers revert to previous content when dropped. 
