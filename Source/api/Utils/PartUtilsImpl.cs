@@ -118,21 +118,41 @@ public class PartUtilsImpl {
         Hierarchy.GetPartModelTransform(rootPart).gameObject);
     modelObj.SetActive(true);
 
-    // This piece of code was stolen from PartLoader.CreatePartIcon (alas, it's private).
-    PartLoader.StripComponent<EffectBehaviour>(modelObj);
-    PartLoader.StripGameObject<Collider>(modelObj, "collider");
-    PartLoader.StripComponent<Collider>(modelObj);
-    PartLoader.StripComponent<WheelCollider>(modelObj);
-    PartLoader.StripComponent<SmokeTrailControl>(modelObj);
-    PartLoader.StripComponent<FXPrefab>(modelObj);
-    PartLoader.StripComponent<ParticleSystem>(modelObj);
-    PartLoader.StripComponent<Light>(modelObj);
-    PartLoader.StripComponent<Animation>(modelObj);
-    PartLoader.StripComponent<DAE>(modelObj);
+    // Drop stuff that is not intended to show up in flight.
     PartLoader.StripComponent<MeshRenderer>(modelObj, "Icon_Hidden", true);
     PartLoader.StripComponent<MeshFilter>(modelObj, "Icon_Hidden", true);
     PartLoader.StripComponent<SkinnedMeshRenderer>(modelObj, "Icon_Hidden", true);
-    
+
+    // Strip anything that is not mesh related.
+    var joints = new List<Joint>();
+    var rbs = new List<Rigidbody>();
+    foreach (var component in modelObj.GetComponentsInChildren(typeof(Component))) {
+      if (component is Transform) {
+        continue;  // Transforms belong to the GameObject.
+      }
+      var rb = component as Rigidbody;
+      if (rb != null) {
+        rbs.Add(rb);
+        continue;  // It can be tied with a joint, which must be deleted first.
+      }
+      var joint = component as Joint;
+      if (joint != null) {
+        joints.Add(joint);
+        continue;  // They must be handled before the connected RBs handled.
+      }
+      if (!(component is Renderer || component is MeshFilter)) {
+        UnityEngine.Object.DestroyImmediate(component);
+      }
+    }
+    // Drop joints before rigidbodies.
+    foreach (var joint in joints) {
+      UnityEngine.Object.DestroyImmediate(joint);
+    }
+    // Drop rigidbodies once it's safe to do so.
+    foreach (var rb in rbs) {
+      UnityEngine.Object.DestroyImmediate(rb);
+    }
+
     if (goThruChildren) {
       foreach (var childPart in rootPart.children) {
         var childObj = GetSceneAssemblyModel(childPart);
