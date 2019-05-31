@@ -24,7 +24,7 @@ using UnityEngine;
 
 namespace KIS {
 
-// Next localization ID: #kisLOC_00061.
+// Next localization ID: #kisLOC_00062.
 [PersistentFieldsDatabase("KIS/settings/KISConfig")]
 public class ModuleKISInventory : PartModule,
     // KSP interfaces.
@@ -415,6 +415,12 @@ public class ModuleKISInventory : PartModule,
       defaultTemplate: "<color=#FFA500>Cannot be accessed from EVA</color>",
       description: "The info string in the editor to present if kerbals cannot access the items in"
       + " the inventory when going EVA.");
+
+  static readonly Message CannotAddGroundSciencePartMsg = new Message(
+      "#kisLOC_00061",
+      defaultTemplate: "Use stock game abilities to handle this part",
+      description: "The message to present when a stock game ground experiment part is attempted to"
+      + " be stored into inventory in the editor. Such parts cannot be handled by KIS.");
   #endregion
 
   #region Public types
@@ -1049,7 +1055,20 @@ public class ModuleKISInventory : PartModule,
     return item;
   }
 
+  /// <summary>Adds and item, created from a real part.</summary>
+  /// <param name="p">The part to capture the state from.</param>
+  /// <param name="qty">The number of items to create in the slot.</param>
+  /// <param name="slot">
+  /// The slot to put the items into. If it's <c>-1</c>, then the slot will be selected
+  /// automatically.
+  /// </param>
+  /// <returns>The created slot or <c>null</c> if part cannot be added to the inventory.</returns>
   public KIS_Item AddItem(Part p, int qty = 1, int slot = -1) {
+    if (p.Modules.OfType<ModuleCargoPart>().Any()) {
+      ScreenMessaging.ShowPriorityScreenMessage(CannotAddGroundSciencePartMsg);
+      UISounds.PlayBipWrong();
+      return null;
+    }
     if (items.ContainsKey(slot)) {
       slot = -1;  // Choose automatically if the slot is already occupied.
     }
@@ -1424,7 +1443,7 @@ public class ModuleKISInventory : PartModule,
     }
 
     // Show science data
-    var sciences = KISAPI.PartNodeUtils.GetSciences(tooltipItem.partNode);
+    var sciences = KISAPI.PartNodeUtils.GetScience(tooltipItem.partNode);
     if (sciences.Length > 0) {
       foreach (ScienceData scienceData in sciences) {
         text2.AppendLine(ItemScienceDataTooltipInfo.Format(
@@ -1912,7 +1931,7 @@ public class ModuleKISInventory : PartModule,
     }
 
     // Put/remove helmet
-    if (KIS_Shared.IsKeyDown(evaHelmetKey)) {
+    if (!string.IsNullOrEmpty(evaHelmetKey) && KIS_Shared.IsKeyDown(evaHelmetKey)) {
       // If HelmetChange event haven't fired till this momemnt, then the helmet is ON.
       helmetEquippedState = helmetEquippedState ?? true;
       SetHelmet(!helmetEquippedState.Value);

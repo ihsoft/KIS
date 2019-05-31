@@ -1,3 +1,12 @@
+# 1.22 (May 30th, 2019):
+* [Change] "Breaking ground" DLC support.
+* [Change] Don't allow `KIS` to deploy or move the ground experiments.
+* [Change] Allow the small cargo to be carried by kerbal.
+* [Change] Disable the default remove helmet hotkey `J` as it conflicts with "Breaking ground" DLC.
+* [Enhancement] Add medium portable cargo to carry 6 experiments.
+* [Fix #333] Robotics part trigger physics when making a hover model.
+* [Fix #334] Action icons are blurred.
+
 # 1.21 (May 16th, 2019):
 * [Fix #89] Portable containers revert to previous content when dropped. 
 * [Fix #328] KIS fails on every new DLC or major patch that changes kerbal models.
