@@ -1044,7 +1044,7 @@ public static class KIS_Shared {
       if (item == null || !item.vesselAutoRename) {
         newVessel.vesselName = newPart.partInfo.title;
       } else {
-        newVessel.vesselName = Vessel.AutoRename (newVessel, originatingVesselName);
+        newVessel.vesselName = Vessel.AutoRename(newVessel, originatingVesselName);
       }
       newVessel.IgnoreGForces(10);
       newVessel.currentStage = StageManager.RecalculateVesselStaging(newVessel);
