@@ -1424,7 +1424,7 @@ public class ModuleKISInventory : PartModule,
     }
 
     // Show science data
-    var sciences = KISAPI.PartNodeUtils.GetSciences(tooltipItem.partNode);
+    var sciences = KISAPI.PartNodeUtils.GetScience(tooltipItem.partNode);
     if (sciences.Length > 0) {
       foreach (ScienceData scienceData in sciences) {
         text2.AppendLine(ItemScienceDataTooltipInfo.Format(

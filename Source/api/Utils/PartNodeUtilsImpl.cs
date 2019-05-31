@@ -140,7 +140,7 @@ public class PartNodeUtilsImpl {
   /// The persistent part's state. It can be a top-level node or the <c>PART</c> node.
   /// </param>
   /// <returns>The found science.</returns>
-  public ScienceData[] GetSciences(ConfigNode partNode) {
+  public ScienceData[] GetScience(ConfigNode partNode) {
     return partNode.GetNodes("MODULE")
         .SelectMany(m => m.GetNodes("ScienceData"))
         .Select(n => new ScienceData(n))
