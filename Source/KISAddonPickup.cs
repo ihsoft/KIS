@@ -20,7 +20,7 @@ using UnityEngine.EventSystems;
 
 namespace KIS {
 
-// Next localization ID: #kisLOC_01040.
+// Next localization ID: #kisLOC_01041.
 [PersistentFieldsDatabase("KIS/settings/KISConfig")]
 sealed class KISAddonPickup : MonoBehaviour {
 
@@ -277,6 +277,12 @@ sealed class KISAddonPickup : MonoBehaviour {
       "#kisLOC_01039",
       defaultTemplate: "[Escape] to cancel",
       description: "The tooltip help string for the key binding to cancel the operation.");
+
+  static readonly Message CannotPickupGroundExperimentTooltipTxt = new Message(
+      "#kisLOC_01040",
+      defaultTemplate: "KIS cannot pickup deployed ground experiments.\nAccess the part's menu!",
+      description: "The action status to show in the tooltip when the player tries to pick up a"
+      + " ground experment from the scene. These parts must be handled via their menus.");
   #endregion
 
   /// <summary>A helper class to handle mouse clicks in the editor.</summary>
@@ -1460,6 +1466,11 @@ sealed class KISAddonPickup : MonoBehaviour {
     // Don't grab kerbals. It's weird, and they don't have the attachment nodes anyways.
     if (part.vessel.isEVA) {
       ReportCheckError(GrabNotOkStatusTooltipTxt, CannotMoveKerbonautTooltipTxt);
+      return false;
+    }
+    // Don't grab stock game's ground experiments.
+    if (part.Modules.OfType<ModuleGroundPart>().Any()) {
+      ReportCheckError(GrabNotOkStatusTooltipTxt, CannotPickupGroundExperimentTooltipTxt);
       return false;
     }
     // Check if there are kerbals in range.
