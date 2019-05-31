@@ -4,4 +4,4 @@
 --changelog=../CHANGELOG.md
 --as_draft
 --title=KIS v{tag}
---archive=../KIS_v1.21.zip
+--archive=../KIS_v1.22.zip
