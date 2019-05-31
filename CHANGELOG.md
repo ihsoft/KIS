@@ -1,5 +1,6 @@
 # 1.22 (pre-release):
 * [Change] Don't allow `KIS` to deploy or move the ground experiments.
+* [Change] Allow the small cargo to be carried by kerbal.
 
 # 1.21 (May 16th, 2019):
 * [Fix #89] Portable containers revert to previous content when dropped. 
