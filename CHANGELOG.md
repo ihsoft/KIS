@@ -1,6 +1,7 @@
 # 1.22 (pre-release):
 * [Change] Don't allow `KIS` to deploy or move the ground experiments.
 * [Change] Allow the small cargo to be carried by kerbal.
+* [Change] Disable the default remove helmet hotkey `J` as it conflicts with "Breaking ground" DLC.
 * [Enhancement] Add medium portable cargo to carry 6 experiments.
 
 # 1.21 (May 16th, 2019):

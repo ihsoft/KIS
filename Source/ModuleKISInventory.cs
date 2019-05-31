@@ -1931,7 +1931,7 @@ public class ModuleKISInventory : PartModule,
     }
 
     // Put/remove helmet
-    if (KIS_Shared.IsKeyDown(evaHelmetKey)) {
+    if (!string.IsNullOrEmpty(evaHelmetKey) && KIS_Shared.IsKeyDown(evaHelmetKey)) {
       // If HelmetChange event haven't fired till this momemnt, then the helmet is ON.
       helmetEquippedState = helmetEquippedState ?? true;
       SetHelmet(!helmetEquippedState.Value);
