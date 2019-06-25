@@ -1176,37 +1176,43 @@ public class ModuleKISInventory : PartModule,
 
   #region GUI methods
   void GUIStyles() {
+    int pad = (int)Math.Round(4.0 * GameSettings.UI_SCALE * GameSettings.UI_SCALE_APPS);
+    int f9 = (int)Math.Round(9.0 * GameSettings.UI_SCALE * GameSettings.UI_SCALE_APPS);
+    int f10 = (int)Math.Round(10.0 * GameSettings.UI_SCALE * GameSettings.UI_SCALE_APPS);
+    int f11 = (int)Math.Round(11.0 * GameSettings.UI_SCALE * GameSettings.UI_SCALE_APPS);
     GUI.skin = HighLogic.Skin;
     GUI.skin.button.alignment = TextAnchor.MiddleCenter;
 
     boxStyle = new GUIStyle(GUI.skin.box);
-    boxStyle.fontSize = 11;
-    boxStyle.padding.top = GUI.skin.box.padding.bottom = GUI.skin.box.padding.left = 5;
+    boxStyle.fontSize = f11;
+    boxStyle.padding.top = GUI.skin.box.padding.bottom = GUI.skin.box.padding.left = pad;
     boxStyle.alignment = TextAnchor.UpperLeft;
 
     upperRightStyle = new GUIStyle(GUI.skin.label);
     upperRightStyle.alignment = TextAnchor.UpperRight;
-    upperRightStyle.fontSize = 9;
-    upperRightStyle.padding = new RectOffset(4, 4, 4, 4);
+    upperRightStyle.fontSize = f9;
+    upperRightStyle.padding = new RectOffset(pad, pad, pad, pad);
     upperRightStyle.normal.textColor = Color.yellow;
 
     upperLeftStyle = new GUIStyle(GUI.skin.label);
     upperLeftStyle.alignment = TextAnchor.UpperLeft;
-    upperLeftStyle.fontSize = 11;
-    upperLeftStyle.padding = new RectOffset(4, 4, 4, 4);
+    upperLeftStyle.fontSize = f11;
+    upperLeftStyle.padding = new RectOffset(pad, pad, pad, pad);
     upperLeftStyle.normal.textColor = Color.green;
 
     lowerRightStyle = new GUIStyle(GUI.skin.label);
     lowerRightStyle.alignment = TextAnchor.LowerRight;
-    lowerRightStyle.fontSize = 10;
-    lowerRightStyle.padding = new RectOffset(4, 4, 4, 4);
+    lowerRightStyle.fontSize = f10;
+    lowerRightStyle.padding = new RectOffset(pad, pad, pad, pad);
     lowerRightStyle.normal.textColor = Color.white;
 
     noWrapLabelStyle = new GUIStyle(GUI.skin.label);
+    noWrapLabelStyle.fontSize = f11;
     noWrapLabelStyle.wordWrap = false;
 
     buttonStyle = new GUIStyle(GUI.skin.button);
-    buttonStyle.padding = new RectOffset(4, 4, 4, 4);
+    buttonStyle.padding = new RectOffset(pad, pad, pad, pad);
+    buttonStyle.fontSize = f11;
     buttonStyle.alignment = TextAnchor.MiddleCenter;
   }
 
@@ -1235,14 +1241,16 @@ public class ModuleKISInventory : PartModule,
       title = ContainerInventoryWindowTitle.Format(part.partInfo.title, invName);
     }
 
-    guiMainWindowPos = GUILayout.Window(GetInstanceID(), guiMainWindowPos, GuiMain, title);
+    GUIStyle currentStyle = GUI.skin.GetStyle("Window");
+    currentStyle.fontSize = (int)Math.Round(11.0 * GameSettings.UI_SCALE * GameSettings.UI_SCALE_APPS);
+    guiMainWindowPos = GUILayout.Window(GetInstanceID(), guiMainWindowPos, GuiMain, title, currentStyle);
 
     if (tooltipItem != null) {
       if (contextItem == null) {
         GUILayout.Window(GetInstanceID() + 780,
                          new Rect(Event.current.mousePosition.x + 5,
                                   Event.current.mousePosition.y + 5, 400, 1),
-                         GuiTooltip, tooltipItem.availablePart.title);
+                         GuiTooltip, tooltipItem.availablePart.title, currentStyle);
       }
     }
     if (contextItem != null) {
@@ -1251,7 +1259,7 @@ public class ModuleKISInventory : PartModule,
           guiMainWindowPos.y + contextRect.y + (contextRect.height / 2),
           0, 0);
       GUILayout.Window(
-          GetInstanceID() + 781, contextRelativeRect, GuiContextMenu, ItemActionMenuWindowTitle);
+          GetInstanceID() + 781, contextRelativeRect, GuiContextMenu, ItemActionMenuWindowTitle, currentStyle);
       if (contextClick) {
         contextClick = false;
         splitQty = 1;
@@ -1291,7 +1299,7 @@ public class ModuleKISInventory : PartModule,
       var warningStyle = new GUIStyle();
       warningStyle.normal.textColor = Color.yellow;
       warningStyle.fontStyle = FontStyle.Bold;
-      warningStyle.fontSize = 11;
+      warningStyle.fontSize = (int)Math.Round(11.0 * GameSettings.UI_SCALE * GameSettings.UI_SCALE_APPS);
       warningStyle.alignment = TextAnchor.MiddleCenter;
       warningStyle.wordWrap = true;
       GUILayout.Label(MustBeCrewedAtLaunchMsg, warningStyle);
@@ -1301,8 +1309,10 @@ public class ModuleKISInventory : PartModule,
     GUILayout.BeginHorizontal();
 
     GUILayout.BeginVertical();
-    const int Width = 160;
-    GUILayout.Box("", GUILayout.Width(Width), GUILayout.Height(100));
+            
+	int Width = (int)Math.Round(160.0 * GameSettings.UI_SCALE * GameSettings.UI_SCALE_APPS);
+    int Height = (int)Math.Round(100.0 * GameSettings.UI_SCALE * GameSettings.UI_SCALE_APPS);
+    GUILayout.Box("", GUILayout.Width(Width), GUILayout.Height(Height));
     Rect textureRect = GUILayoutUtility.GetLastRect();
     if (invType != InventoryType.Pod) {
       GUI.DrawTexture(textureRect, icon.texture, ScaleMode.ScaleToFit);
@@ -1318,27 +1328,31 @@ public class ModuleKISInventory : PartModule,
 
     int extraSpace = 0;
     //Set inventory name
+            Height = (int)Math.Round(22.0 * GameSettings.UI_SCALE * GameSettings.UI_SCALE_APPS);
     if (invType == InventoryType.Container) {
       if (guiSetName) {
         GUILayout.BeginHorizontal();
-        invName = GUILayout.TextField(invName, 14, GUILayout.Height(22));
-        if (GUILayout.Button(AcceptNameChangeBtn, GUILayout.Width(30), GUILayout.Height(22))) {
+        Width = (int)Math.Round(30.0 * GameSettings.UI_SCALE * GameSettings.UI_SCALE_APPS);
+        invName = GUILayout.TextField(invName, 14, GUILayout.Height(Height));
+        if (GUILayout.Button(AcceptNameChangeBtn, buttonStyle, GUILayout.Width(Width), GUILayout.Height(Height))) {
           guiSetName = false;
         }
         GUILayout.EndHorizontal();
       } else {
-        if (GUILayout.Button(SetInventoryNameBtn,
-                             GUILayout.Width(Width), GUILayout.Height(22))) {
+        Width = (int)Math.Round(160.0 * GameSettings.UI_SCALE * GameSettings.UI_SCALE_APPS);
+        if (GUILayout.Button(SetInventoryNameBtn, buttonStyle,
+                             GUILayout.Width(Width), GUILayout.Height(Height))) {
           guiSetName = true;
         }
       }
     } else if (invType == InventoryType.Eva && kerbalModule.helmetTransform != null) {
+      Width = (int)Math.Round(160.0 * GameSettings.UI_SCALE * GameSettings.UI_SCALE_APPS);
       if (kerbalModule.helmetTransform.gameObject.activeSelf) {
-        if (GUILayout.Button(RemoveHelmetMenuTxt, GUILayout.Width(Width), GUILayout.Height(22))) {
+        if (GUILayout.Button(RemoveHelmetMenuTxt, buttonStyle, GUILayout.Width(Width), GUILayout.Height(Height))) {
           SetHelmet(false);
         }
       } else {
-        if (GUILayout.Button(PutOnHelmetMenuTxt, GUILayout.Width(Width), GUILayout.Height(22))) {
+        if (GUILayout.Button(PutOnHelmetMenuTxt, buttonStyle, GUILayout.Width(Width), GUILayout.Height(Height))) {
           SetHelmet(true);
         }
       }
@@ -1354,16 +1368,18 @@ public class ModuleKISInventory : PartModule,
     sb.AppendLine(InventoryVolumeInfo.Format(totalContentsVolume, maxVolume));
     sb.AppendLine(InventoryMassInfo.Format(part.mass));
     sb.AppendLine(InventoryCostInfo.Format(contentsCost + part.partInfo.cost));
+    Width = (int)Math.Round(160.0 * GameSettings.UI_SCALE * GameSettings.UI_SCALE_APPS);
+    Height = (int)Math.Round((45+extraSpace) * GameSettings.UI_SCALE * GameSettings.UI_SCALE_APPS);
     GUILayout.Box(sb.ToString(), boxStyle,
-                  GUILayout.Width(Width), GUILayout.Height(45 + extraSpace));
+                  GUILayout.Width(Width), GUILayout.Height(Height));
     bool closeInv = false;
-
-    if (GUILayout.Button(CloseInventoryBtn, GUILayout.Width(Width), GUILayout.Height(21))) {
+    Height = (int)Math.Round((21) * GameSettings.UI_SCALE * GameSettings.UI_SCALE_APPS);
+    if (GUILayout.Button(CloseInventoryBtn, buttonStyle, GUILayout.Width(Width), GUILayout.Height(Height))) {
       closeInv = true;
     }
 
     // DEBUG: Spawn inventory item functionality. 
-    if (debugContextMenu && GUILayout.Button("Spawn item", GUILayout.Height(21))) {
+    if (debugContextMenu && GUILayout.Button("Spawn item", buttonStyle, GUILayout.Width(Width), GUILayout.Height(Height))) {
       Debug.SpawnItemDialog.ShowDialog(this);
     }
     GUILayout.EndVertical();
@@ -1375,7 +1391,9 @@ public class ModuleKISInventory : PartModule,
     GUILayout.EndHorizontal();
 
     if (contextItem == null) {
-      GUI.DragWindow(new Rect(0, 0, 10000, 30));
+      Width = (int)Math.Round(10000 * GameSettings.UI_SCALE * GameSettings.UI_SCALE_APPS);
+      Height = (int)Math.Round(30 * GameSettings.UI_SCALE * GameSettings.UI_SCALE_APPS);
+      GUI.DragWindow(new Rect(0, 0, Width, Height));
     }
     if (closeInv) {
       ToggleInventoryEvent();
@@ -1390,7 +1408,9 @@ public class ModuleKISInventory : PartModule,
     GUILayout.BeginHorizontal();
 
     GUILayout.BeginVertical();
-    GUILayout.Box("", GUILayout.Width(100), GUILayout.Height(100));
+    int Width = (int)Math.Round(100 * GameSettings.UI_SCALE * GameSettings.UI_SCALE_APPS);
+    int Height = (int)Math.Round(100 * GameSettings.UI_SCALE * GameSettings.UI_SCALE_APPS);
+    GUILayout.Box("", GUILayout.Width(Width), GUILayout.Height(Height));
     Rect textureRect = GUILayoutUtility.GetLastRect();
     GUI.DrawTexture(textureRect, tooltipItem.icon.texture, ScaleMode.ScaleToFit);
     GUILayout.EndVertical();
@@ -1415,7 +1435,9 @@ public class ModuleKISInventory : PartModule,
       }
     }
     GUILayout.BeginVertical();
-    GUILayout.Box(sb.ToString(), boxStyle, GUILayout.Width(150), GUILayout.Height(100));
+    Width = (int)Math.Round(150 * GameSettings.UI_SCALE * GameSettings.UI_SCALE_APPS);
+    Height = (int)Math.Round(100 * GameSettings.UI_SCALE * GameSettings.UI_SCALE_APPS);
+    GUILayout.Box(sb.ToString(), boxStyle, GUILayout.Width(Width), GUILayout.Height(Height));
     GUILayout.EndVertical();
 
     GUILayout.BeginVertical();
@@ -1455,13 +1477,17 @@ public class ModuleKISInventory : PartModule,
       text2.AppendLine(ItemNoScienceDataTooltipInfo);
     }
 
-    GUILayout.Box(text2.ToString(), boxStyle, GUILayout.Width(200), GUILayout.Height(100));
+    Width = (int)Math.Round(200 * GameSettings.UI_SCALE * GameSettings.UI_SCALE_APPS);
+    Height = (int)Math.Round(100 * GameSettings.UI_SCALE * GameSettings.UI_SCALE_APPS);
+    GUILayout.Box(text2.ToString(), boxStyle, GUILayout.Width(Width), GUILayout.Height(Height));
     GUILayout.EndVertical();
 
     GUILayout.EndHorizontal();
     GUILayout.Space(10);
+    Width = (int)Math.Round(450 * GameSettings.UI_SCALE * GameSettings.UI_SCALE_APPS);
+    Height = (int)Math.Round(100 * GameSettings.UI_SCALE * GameSettings.UI_SCALE_APPS);
     GUILayout.Box(tooltipItem.availablePart.description, boxStyle,
-                  GUILayout.Width(450), GUILayout.Height(100));
+                  GUILayout.Width(Width), GUILayout.Height(Height));
   }
 
   void GuiContextMenu(int windowID) {
@@ -1583,14 +1609,14 @@ public class ModuleKISInventory : PartModule,
     if (debugContextMenu && contextItem != null) {
       noAction = false;
       if (!HighLogic.LoadedSceneIsEditor && invType == InventoryType.Eva) {
-        if (GUILayout.Button("Debug")) {
+        if (GUILayout.Button("Debug",buttonStyle)) {
           DebugGui.MakePartDebugDialog("KIS item adjustment tool",
                                        group: Debug.KISDebugAdjustableAttribute.DebugGroup,
                                        bindToPart: contextItem.availablePart.partPrefab);
           contextItem = null;
         }
       }
-      if (GUILayout.Button("Dispose")) {
+      if (GUILayout.Button("Dispose",buttonStyle)) {
         contextItem.inventory.DeleteItem(contextItem.slot, contextItem.quantity);
         contextItem = null;
       }
@@ -1603,10 +1629,11 @@ public class ModuleKISInventory : PartModule,
   void GuiInventory() {
     int slotIndex = 0;
     KIS_Item mouseOverItem = null;
+    int scaledSlotSize = (int)Math.Round(slotSize * GameSettings.UI_SCALE * GameSettings.UI_SCALE_APPS);
     for (var x = 0; x < slotsY; x++) {
       GUILayout.BeginHorizontal();
       for (var y = 0; y < slotsX; y++) {
-        GUILayout.Box("", GUILayout.Width(slotSize), GUILayout.Height(slotSize));
+        GUILayout.Box("", GUILayout.Width(scaledSlotSize), GUILayout.Height(scaledSlotSize));
         Rect textureRect = GUILayoutUtility.GetLastRect();
         if (items.ContainsKey(slotIndex)) {
           GuiHandleUsedSlot(textureRect, slotIndex);

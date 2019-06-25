@@ -21,11 +21,6 @@ sealed class KISAddonCursor : MonoBehaviour {
   static OnMousePartAction delegateOnMouseHoverPart;
   static OnMousePartAction delegateOnMouseExitPart;
 
-  // Cursor hint text settings.
-  const int ActionIconSize = 24;
-  // It's quare.
-  const int HintFontSize = 10;
-  const int HintTextLeftMargin = 4;
   // A gap between action icon and the text.
   static Color hintBackground = new Color(0.0f, 0.0f, 0.0f, 0.5f);
   static GUIStyle hintWindowStyle = null;
@@ -83,6 +78,7 @@ sealed class KISAddonCursor : MonoBehaviour {
   }
 
   void Awake() {
+    int HintFontSize = (int)Math.Round(10 * GameSettings.UI_SCALE * GameSettings.UI_SCALE_APPS);
     hintWindowStyle = new GUIStyle {
         normal = {
             background = CreateTextureFromColour(hintBackground),
@@ -139,6 +135,8 @@ sealed class KISAddonCursor : MonoBehaviour {
       var mousePosition = Input.mousePosition;
       mousePosition.y = Screen.height - mousePosition.y;
       // Display action icon.
+      int ActionIconSize = (int)Math.Round(24 * GameSettings.UI_SCALE * GameSettings.UI_SCALE_APPS);
+      int HintTextLeftMargin = (int)Math.Round(4 * GameSettings.UI_SCALE * GameSettings.UI_SCALE_APPS);
       GUI.DrawTexture(
           new Rect(mousePosition.x - ActionIconSize / 2,
                   mousePosition.y - ActionIconSize / 2,

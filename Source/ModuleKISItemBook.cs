@@ -91,8 +91,10 @@ public sealed class ModuleKISItemBook : ModuleKISItem,
 
     #region IHasGUI implementation
     public void OnGUI() {
+      GUIStyle currentStyle = GUI.skin.GetStyle("Window");
+      currentStyle.fontSize = (int)Math.Round(11.0 * GameSettings.UI_SCALE * GameSettings.UI_SCALE_APPS);
       guiMainWindowPos = GUILayout.Window(
-          GetInstanceID(), guiMainWindowPos, dialogFunction, ModuleTitleInfo);
+          GetInstanceID(), guiMainWindowPos, dialogFunction, ModuleTitleInfo,currentStyle);
     }
     #endregion
   }
@@ -152,15 +154,19 @@ public sealed class ModuleKISItemBook : ModuleKISItem,
     GUI.DrawTexture(textureRect, pageTexture, ScaleMode.ScaleToFit);
           
     GUILayout.BeginHorizontal();
-    if (GUILayout.Button(PreviousPageBtn)) {
+    GUIStyle buttonStyle = GUI.skin.GetStyle("Button");
+    buttonStyle.fontSize = (int)Math.Round(11.0 * GameSettings.UI_SCALE * GameSettings.UI_SCALE_APPS);
+    if (GUILayout.Button(PreviousPageBtn, buttonStyle)) {
       if (pageIndex - 1 >= 0) {
         pageIndex = pageIndex - 1;
         pageTexture = GameDatabase.Instance.GetTexture(pageList[pageIndex], false);
         UISoundPlayer.instance.Play(bookPageSndPath);
       }
     }
-    GUILayout.Label(CurrentPageTxt.Format(pageIndex + 1, pageTotal));
-    if (GUILayout.Button(NextPageBtn)) {
+    GUIStyle labelStyle = GUI.skin.GetStyle("Label");
+    labelStyle.fontSize = (int)Math.Round(11.0 * GameSettings.UI_SCALE * GameSettings.UI_SCALE_APPS);
+    GUILayout.Label(CurrentPageTxt.Format(pageIndex + 1, pageTotal),labelStyle);
+    if (GUILayout.Button(NextPageBtn, buttonStyle)) {
       if (pageIndex + 1 < pageTotal) {
         pageIndex = pageIndex + 1;
         pageTexture = GameDatabase.Instance.GetTexture(pageList[pageIndex], false);
@@ -169,7 +175,7 @@ public sealed class ModuleKISItemBook : ModuleKISItem,
     }
     GUILayout.EndHorizontal();
 
-    if (GUILayout.Button(CloseBtn)) {
+    if (GUILayout.Button(CloseBtn, buttonStyle)) {
       UISoundPlayer.instance.Play(bookCloseSndPath);
       Destroy(guiObj);
       guiObj = null;

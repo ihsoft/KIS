@@ -194,6 +194,8 @@ public sealed class ModuleKISItemBomb : ModuleKISItem,
   public void OnGUI() {
     if (showSetup && !activated) {
       GUI.skin = HighLogic.Skin;
+      GUIStyle currentStyle = GUI.skin.GetStyle("Window");
+      currentStyle.fontSize = (int)Math.Round(11.0 * GameSettings.UI_SCALE * GameSettings.UI_SCALE_APPS);
       guiWindowPos = GUILayout.Window(GetInstanceID(), guiWindowPos, GuiSetup, SetupWindowTitle);
     }
   }
@@ -213,25 +215,31 @@ public sealed class ModuleKISItemBomb : ModuleKISItem,
     GUIStyle centeredStyle = GUI.skin.GetStyle("Label");
     centeredStyle.alignment = TextAnchor.MiddleCenter;
     centeredStyle.wordWrap = false;
+    centeredStyle.fontSize = (int)Math.Round(11.0 * GameSettings.UI_SCALE * GameSettings.UI_SCALE_APPS);
+    GUIStyle buttonStyle = GUI.skin.GetStyle("Button");
+    buttonStyle.fontSize = (int)Math.Round(11.0 * GameSettings.UI_SCALE * GameSettings.UI_SCALE_APPS);
+    int width = (int)Math.Round(30.0 * GameSettings.UI_SCALE * GameSettings.UI_SCALE_APPS);
+    int height= (int)Math.Round(21.0 * GameSettings.UI_SCALE * GameSettings.UI_SCALE_APPS);
+
     // TIMER
     GUILayout.Label(TimerSettingsSectionTxt, centeredStyle);
     using (new GUILayout.HorizontalScope()) {
-      if (GUILayout.Button("--", GUILayout.Width(30))) {
+      if (GUILayout.Button("--", buttonStyle, GUILayout.Width(width), GUILayout.Width(height))) {
         if (delay > 10) {
           delay = delay - 10;
         }
       }
-      if (GUILayout.Button("-", GUILayout.Width(30))) {
+      if (GUILayout.Button("-", buttonStyle, GUILayout.Width(width), GUILayout.Width(height))) {
         if (delay > 0) {
           delay--;
         }
       }
       GUILayout.Label(
           TimerDelayInSecondsTxt.Format((int)delay), centeredStyle, GUILayout.ExpandWidth(true));
-      if (GUILayout.Button("+", GUILayout.Width(30))) {
+      if (GUILayout.Button("+", buttonStyle, GUILayout.Width(width), GUILayout.Width(height))) {
         delay++;
       }
-      if (GUILayout.Button("++", GUILayout.Width(30))) {
+      if (GUILayout.Button("++", buttonStyle, GUILayout.Width(width), GUILayout.Width(height))) {
         delay = delay + 10;
       }
     }
@@ -241,33 +249,33 @@ public sealed class ModuleKISItemBomb : ModuleKISItem,
     // Explosion radius
     GUILayout.Label(RadiusSettingsSectionTxt, centeredStyle);
     using (new GUILayout.HorizontalScope()) {
-      if (GUILayout.Button(" -- ", GUILayout.Width(30))) {
+      if (GUILayout.Button(" -- ", buttonStyle, GUILayout.Width(width), GUILayout.Width(height))) {
         if (radius > 1f) {
           radius = radius - 1f;
         }
       }
-      if (GUILayout.Button(" - ", GUILayout.Width(30))) {
+      if (GUILayout.Button(" - ", buttonStyle, GUILayout.Width(width), GUILayout.Width(height))) {
         if (radius > 0.5f) {
           radius = radius - 0.5f;
         }
       }
       GUILayout.Label(ExplosionRadiusTxt.Format(radius, maxRadius), centeredStyle);
-      if (GUILayout.Button(" + ", GUILayout.Width(30))) {
+      if (GUILayout.Button(" + ", buttonStyle, GUILayout.Width(width), GUILayout.Width(height))) {
         if ((radius + 0.5f) <= maxRadius) {
           radius = radius + 0.5f;
         }
       }
-      if (GUILayout.Button(" ++ ", GUILayout.Width(30))) {
+      if (GUILayout.Button(" ++ ", buttonStyle, GUILayout.Width(width), GUILayout.Width(height))) {
         if ((radius + 1f) <= maxRadius) {
           radius = radius + 1f;
         }
       }
     }
 
-    if (GUILayout.Button(ActivateExplosionDialogTxt)) {
+    if (GUILayout.Button(ActivateExplosionDialogTxt, buttonStyle)) {
       ActivateEvent();
     }
-    if (GUILayout.Button(CloseSetupDialogTxt)) {
+    if (GUILayout.Button(CloseSetupDialogTxt, buttonStyle)) {
       showSetup = false;
     }
     GUI.DragWindow();
