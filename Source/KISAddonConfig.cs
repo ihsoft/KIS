@@ -71,6 +71,9 @@ sealed class KISAddonConfig : MonoBehaviour {
           AddPodInventories(avPart.partPrefab);
         }
       }
+      for (var i = 0; i < QueuedPodInventoryParts.Count; i++) {
+        AddPodInventories(QueuedPodInventoryParts[i]);
+      }
     }
 
     /// <summary>Adds a custom part module and loads its fields from the config.</summary>
@@ -103,6 +106,24 @@ sealed class KISAddonConfig : MonoBehaviour {
         }
       }
     }
+  }
+
+  static List<Part> QueuedPodInventoryParts = new List<Part> ();
+  /// <summary>Queues parts to have their pod inventories initialized</summary>
+  /// <remarks>
+  /// This is neccessary only when the part's initial CrewCapacity is 0 but has
+  /// pod inventories that need to be initialized. Calling this for parts that
+  /// have non-zero CrewCapacity is effectively a nop, and calling for parts
+  /// that have no pod inventories should be harmless but best avoided.
+  /// <remarks>
+  /// <param name="part">The part to be queued.</param>
+  public static void QueuePodInventoryPart (Part part)
+  {
+    if (part.CrewCapacity > 0) {
+      // the part will be picked up automatically, no need to queue
+      return;
+    }
+    QueuedPodInventoryParts.Add (part);
   }
 
   /// <summary>Adds seat inventories to cover the maximum pod occupancy.</summary>
