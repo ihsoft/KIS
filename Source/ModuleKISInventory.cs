@@ -1064,7 +1064,7 @@ public class ModuleKISInventory : PartModule,
   /// </param>
   /// <returns>The created slot or <c>null</c> if part cannot be added to the inventory.</returns>
   public KIS_Item AddItem(Part p, int qty = 1, int slot = -1) {
-    if (p.Modules.OfType<ModuleCargoPart>().Any()) {
+    if (p.Modules.Contains("ModuleCargoPart")) {    
       ScreenMessaging.ShowPriorityScreenMessage(CannotAddGroundSciencePartMsg);
       UISounds.PlayBipWrong();
       return null;
