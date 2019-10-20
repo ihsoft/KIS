@@ -1,4 +1,6 @@
 # 1.23 (pre-release):
+* [Fix #339] Inflatable habitat parts have unreasonable inventories.
+* [Fix #341] AddPodInventories not called for initial crew capacity 0.
 
 # 1.22 (May 30th, 2019):
 * [Change] "Breaking ground" DLC support.
