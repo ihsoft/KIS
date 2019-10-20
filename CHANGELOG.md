@@ -1,3 +1,5 @@
+# 1.23 (pre-release):
+
 # 1.22 (May 30th, 2019):
 * [Change] "Breaking ground" DLC support.
 * [Change] Don't allow `KIS` to deploy or move the ground experiments.
