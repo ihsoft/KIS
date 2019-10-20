@@ -130,6 +130,9 @@ sealed class KISAddonConfig : MonoBehaviour {
     foreach (var inventory in checkInventories) {
       HostedDebugLog.Info(
           inventory, "Assing seat to a pre-configured pod inventory: {0}", seatIndex);
+      evaInventory.TryGetValue ("slotsX", ref inventory.slotsX);
+      evaInventory.TryGetValue ("slotsY", ref inventory.slotsY);
+      evaInventory.TryGetValue ("maxVolume", ref inventory.maxVolume);
       inventory.podSeat = seatIndex++;
     }
     while (seatIndex < part.CrewCapacity) {
