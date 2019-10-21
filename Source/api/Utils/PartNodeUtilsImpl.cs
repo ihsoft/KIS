@@ -57,14 +57,19 @@ public class PartNodeUtilsImpl {
       CleanupModuleFieldsInPart(part);
     }
 
-    var partNode = new ConfigNode("PART");
-    var snapshot = new ProtoPartSnapshot(part, null);
-
-    snapshot.attachNodes = new List<AttachNodeSnapshot>();
-    snapshot.srfAttachNode = new AttachNodeSnapshot("attach,-1");
-    snapshot.symLinks = new List<ProtoPartSnapshot>();
-    snapshot.symLinkIdxs = new List<int>();
-    snapshot.Save(partNode);
+    ConfigNode partNode;
+    if (ReferenceEquals(part, part.partInfo.partPrefab)) {
+      partNode = ProtoVessel.CreatePartNode(
+          part.partInfo.name, FlightGlobals.GetUniquepersistentId());
+    } else {
+      partNode = new ConfigNode("PART");
+      var snapshot = new ProtoPartSnapshot(part, null);
+      snapshot.attachNodes = new List<AttachNodeSnapshot>();
+      snapshot.srfAttachNode = new AttachNodeSnapshot("attach,-1");
+      snapshot.symLinks = new List<ProtoPartSnapshot>();
+      snapshot.symLinkIdxs = new List<int>();
+      snapshot.Save(partNode);
+    }
 
     // Prune unimportant data.
     partNode.RemoveValues("parent");
