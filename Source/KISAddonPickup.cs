@@ -391,7 +391,7 @@ sealed class KISAddonPickup : MonoBehaviour {
     Attach,
     ReDock
   }
-  private PointerMode _pointerMode = PointerMode.Drop;
+  PointerMode _pointerMode = PointerMode.Drop;
 
   public enum CursorMode {
     Nothing,
@@ -399,7 +399,7 @@ sealed class KISAddonPickup : MonoBehaviour {
     Grab,
     ReDock
   }
-  private CursorMode cursorMode = CursorMode.Nothing;
+  CursorMode cursorMode = CursorMode.Nothing;
 
   public enum PickupMode {
     Nothing,
@@ -407,7 +407,7 @@ sealed class KISAddonPickup : MonoBehaviour {
     Move,
     Undock
   }
-  private PickupMode pickupMode = PickupMode.Nothing;
+  PickupMode pickupMode = PickupMode.Nothing;
 
   public PointerMode pointerMode {
     get {
