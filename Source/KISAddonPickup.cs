@@ -289,12 +289,10 @@ sealed class KISAddonPickup : MonoBehaviour {
   class EditorClickListener : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler {
     EditorPartIcon partIcon;
     bool dragStarted;
-    const PointerEventData.InputButton PartDragButton = PointerEventData.InputButton.Left;
 
     public virtual void OnBeginDrag(PointerEventData eventData) {
       // Start dargging for KIS or delegate event to the editor.
-      if (eventData.button == PartDragButton
-          && EventChecker.IsModifierCombinationPressed(editorGrabPartModifiers)) {
+      if (EventChecker.CheckClickEvent(editorPartGrabEvent, eventData.button)) {
         dragStarted = true;
         KISAddonPickup.instance.OnMouseGrabPartClick(partIcon.partInfo.partPrefab);
       } else {
@@ -317,7 +315,7 @@ sealed class KISAddonPickup : MonoBehaviour {
       // TODO: Handle KIS parts dropping here.
       if (!dragStarted) {
         EditorPartList.Instance.partListScrollRect.OnEndDrag(eventData);
-      } else if (eventData.button == PartDragButton) {
+      } else {
         dragStarted = false;
       }
     }
@@ -343,8 +341,8 @@ sealed class KISAddonPickup : MonoBehaviour {
   const string MountIcon = "KIS/Textures/mount";
   #endregion
 
-  [PersistentField("Editor/partGrabModifiers")]
-  static KeyModifiers editorGrabPartModifiers = KeyModifiers.None;
+  [PersistentField("Editor/editorPartGrabAction")]
+  public static string editorPartGrabAction = "mouse0";
 
   [PersistentField("EvaPickup/grabKey")]
   public static string grabKey = "g";
@@ -371,6 +369,10 @@ sealed class KISAddonPickup : MonoBehaviour {
   bool detachOk;
   bool jetpackLock;
   bool delayedButtonUp;
+
+  /// <summary>Mouse/keyboard event that grabs a part from the editor's panel.</summary>
+  /// <seealso cref="editorPartGrabAction"/>
+  static Event editorPartGrabEvent;
 
   /// <summary>A number of parts in the currently grabbed assembly.</summary>
   public static int grabbedPartsCount;
@@ -508,6 +510,7 @@ sealed class KISAddonPickup : MonoBehaviour {
 
   void Awake() {
     instance = this;
+    editorPartGrabEvent = Event.KeyboardEvent(editorPartGrabAction);
     if (HighLogic.LoadedSceneIsEditor) {
       if (EditorPartList.Instance) {
         var iconPrefab = EditorPartList.Instance.partPrefab.gameObject;
