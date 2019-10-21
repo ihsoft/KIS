@@ -1,4 +1,4 @@
-# 1.23 (pre-release):
+# 1.23 (October 21st, 2019):
 * [Change] `KSP 1.8` compatibility. __WARNING__: the mod won't work with version lower than `KSP 1.8`!
 * [Change] Replace `Editor/partGrabModifiers` setting with `Editor/editorPartGrabAction`.
 * [Enhancement] Allow dropping KIS items on the kerbal: [Dragging equipped items](https://youtu.be/udTj7_pO2hc). Thanks to [sleepyquelea](https://github.com/sleepyquelea)!
