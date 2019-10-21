@@ -3,7 +3,9 @@
 // Module authors: KospY, igor.zavoychinskiy@gmail.com
 // License: Restricted
 
+using KSPDev.DebugUtils;
 using KSPDev.GUIUtils;
+using KSPDev.GUIUtils.TypeFormatters;
 using KSPDev.KSPInterfaces;
 using KSPDev.LogUtils;
 using KSPDev.ProcessingUtils;
@@ -11,7 +13,6 @@ using System.Collections.Generic;
 using System.Collections;
 using System;
 using System.Linq;
-using System.Text;
 using UnityEngine;
 
 namespace KIS {
@@ -21,7 +22,7 @@ public class ModuleKISItem : PartModule,
     // KSP interfaces.
     IModuleInfo,
     // KSPDEV interfaces.
-    IsPartDeathListener, IsPackable,
+    IsPartDeathListener, IsPackable, IHasDebugAdjustables,
     // KSPDEV sugar interfaces.
     IKSPDevModuleInfo {
 
@@ -118,7 +119,7 @@ public class ModuleKISItem : PartModule,
   static readonly Message CanBeEquippedInfo = new Message(
       "#kisLOC_06014",
       defaultTemplate: "Equippable item",
-      description: "The info string to show in the editor to state that the item can be eqipped"
+      description: "The info string to show in the editor to state that the item can be equipped"
       + " by the kerbal. I.e. it attaches on the kerbal's model and reacts to the 'use' hotkey.");
   #endregion
 
@@ -139,60 +140,133 @@ public class ModuleKISItem : PartModule,
 
   #region Part's config fields
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Sound: item moved")]
   public string moveSndPath = "KIS/Sounds/itemMove";
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Key action")]
   public string shortcutKeyAction = "drop";
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Usable from EVA")]
   public bool usableFromEva;
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Usable from container")]
   public bool usableFromContainer;
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Usable from pod")]
   public bool usableFromPod;
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Usable from editor")]
   public bool usableFromEditor;
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Vessel auto-rename")]
   public bool vesselAutoRename;
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Use menu name")]
   public string useName = "use";
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Stackable")]
   public bool stackable;
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Equipable")]
   public bool equipable;
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Equip mode")]
   public string equipMode = "model";
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Equip slot")]
   public string equipSlot = "";
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Equip skill")]
   public string equipSkill = "";
+
+  //FIXME: deprecate?
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Equip remove helmet")]
   public bool equipRemoveHelmet;
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Equip bone")]
   public string equipBoneName = "";
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Equip position (metres)")]
   public Vector3 equipPos = new Vector3(0f, 0f, 0f);
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Equip direction (euler degrees)")]
   public Vector3 equipDir = new Vector3(0f, 0f, 0f);
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Volume override")]
   public float volumeOverride;
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Carriable")]
   public bool carriable;
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Part attach")]
   public ItemAttachMode allowPartAttach = ItemAttachMode.AllowedWithKisTool;
+
   [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Static attach")]
   public ItemAttachMode allowStaticAttach = ItemAttachMode.Disabled;
+
   [KSPField]
-  public bool useExternalPartAttach;
-  // For KAS
-  [KSPField]
-  public bool useExternalStaticAttach;
-  // For KAS
-  [KSPField]
+  [Debug.KISDebugAdjustableAttribute("Static attach break force")]
   public float staticAttachBreakForce = 10;
+
   [KSPField(isPersistant = true)]
   public bool staticAttached;
   #endregion
 
   FixedJoint staticAttachJoint;
+
+  #region IHasDebugAdjustables implementation
+  List<KIS_Item> dbgEquippedItems;
+
+  /// <summary>Logs all the part's model objects.</summary>
+  [Debug.KISDebugAdjustable("Dump active kerbal's model hierarchy")]
+  public void ShowHirerachyDbgAction() {
+    if (FlightGlobals.ActiveVessel.isEVA) {
+      var p = FlightGlobals.ActiveVessel.rootPart;
+      DebugEx.Warning("Objects hierarchy in: {0}", p);
+      DebugGui.DumpHierarchy(p.transform, p.transform);
+    } else {
+      DebugEx.Warning("The active vessel is not EVA!");
+    }
+  }
+
+  /// <inheritdoc/>
+  public virtual void OnBeforeDebugAdjustablesUpdate() {
+    dbgEquippedItems = FlightGlobals.Vessels
+        .Where(v => v.isEVA)
+        .Select(v => v.rootPart)
+        .SelectMany(p => p.Modules.OfType<ModuleKISInventory>())
+        .SelectMany(inv => inv.items.Values)
+        .Where(item => item.carried || item.equipped)
+        .ToList();
+    dbgEquippedItems.ForEach(item => item.Unequip());
+  }
+
+  /// <inheritdoc/>
+  public virtual void OnDebugAdjustablesUpdated() {
+    dbgEquippedItems.ForEach(item => item.Equip());
+    dbgEquippedItems = null;
+  }
+  #endregion
 
   #region IModuleInfo implementation
   /// <inheritdoc/>
@@ -226,24 +300,17 @@ public class ModuleKISItem : PartModule,
       var inventory = vessel.rootPart.GetComponent<ModuleKISInventory>();
       var item = inventory.items.Values.FirstOrDefault(i => i.equipped && i.equippedPart == part);
       if (item != null) {
-        DebugEx.Info("Item {0} has been destroyed. Drop it from inventory of {1}",
-                     item.availablePart.title, inventory.part);
+        HostedDebugLog.Warning(
+            this, "Item {0} has been destroyed. Drop it from inventory of {1}",
+            item.availablePart.title, inventory.part);
         AsyncCall.CallOnEndOfFrame(inventory, () => inventory.DeleteItem(item.slot));
       }
     }
   }
   #endregion
 
-  #region IInventoryItem candidate
+  #region IKISInventoryItem candidates
   public virtual void OnItemUse(KIS_Item item, KIS_Item.UseFrom useFrom) {
-  }
-
-  // TODO(ihsoft): Deprecate it. Too expensive.
-  public virtual void OnItemUpdate(KIS_Item item) {
-  }
-
-  // TODO(ihsoft): Deprecate it. Too expensive.
-  public virtual void OnItemGUI(KIS_Item item) {
   }
 
   public virtual void OnDragToPart(KIS_Item item, Part destPart) {
@@ -253,9 +320,25 @@ public class ModuleKISItem : PartModule,
                                         int destSlot) {
   }
 
+  /// <summary>Called when an item equips.</summary>
+  /// <remarks>
+  /// Note, that the module that gets the callback is not be the actual module of the equipped
+  /// part (e.g. when the equip mode is "model"). It's a prefab module. Use <paramref name="item"/>
+  /// to reach to the actual part/module of the item. Note, that in some equipping modes there may
+  /// be no live part for the item.
+  /// </remarks>
+  /// <param name="item">The item the action is executed for.</param>
   public virtual void OnEquip(KIS_Item item) {
   }
 
+  /// <summary>Called when the item unequips.</summary>
+  /// <remarks>
+  /// Note, that the module that gets the callback is not be the actual module of the equipped
+  /// part (e.g. when the equip mode is "model"). It's a prefab module. Use <paramref name="item"/>
+  /// to reach to the actual part/module of the item. Note, that in some equipping modes there may
+  /// be no live part for the item.
+  /// </remarks>
+  /// <param name="item">The item the action is executed for.</param>
   public virtual void OnUnEquip(KIS_Item item) {
   }
   #endregion
@@ -267,18 +350,18 @@ public class ModuleKISItem : PartModule,
 
   /// <inheritdoc/>
   public virtual void OnPartUnpack() {
-    if (allowStaticAttach == ItemAttachMode.Disabled || useExternalStaticAttach) {
+    if (allowStaticAttach == ItemAttachMode.Disabled) {
       return;
     }
     if (staticAttached) {
-      DebugEx.Fine("Re-attach static object (OnPartUnpack)");
+      HostedDebugLog.Warning(this, "Re-attach static object (OnPartUnpack)");
       GroundAttach();
     }
   }
   #endregion
 
   public void OnKISAction(Dictionary<string, object> eventData) {
-    if (allowStaticAttach == ItemAttachMode.Disabled || useExternalStaticAttach) {
+    if (allowStaticAttach == ItemAttachMode.Disabled) {
       return;
     }
     var action = eventData["action"].ToString();
@@ -288,17 +371,9 @@ public class ModuleKISItem : PartModule,
         || action == KIS_Shared.MessageAction.DropEnd.ToString()
         || action == KIS_Shared.MessageAction.AttachStart.ToString()) {
       GroundDetach();
-      var modulePickup = KISAddonPickup.instance.GetActivePickupNearest(this.transform.position);
-      if (modulePickup) {
-        KIS_Shared.PlaySoundAtPoint(modulePickup.detachStaticSndPath, this.transform.position);
-      }
     }
     if (action == KIS_Shared.MessageAction.AttachEnd.ToString() && tgtPart == null) {
       GroundAttach();
-      var modulePickup = KISAddonPickup.instance.GetActivePickupNearest(this.transform.position);
-      if (modulePickup) {
-        KIS_Shared.PlaySoundAtPoint(modulePickup.attachStaticSndPath, this.transform.position);
-      }
     }
   }
 
@@ -309,7 +384,7 @@ public class ModuleKISItem : PartModule,
 
   public void GroundDetach() {
     if (staticAttached) {
-      DebugEx.Fine("Removing static rigidbody and fixed joint on: {0}", part);
+      HostedDebugLog.Warning(this, "Removing static rigidbody and fixed joint on: {0}", part);
       if (staticAttachJoint) {
         Destroy(staticAttachJoint);
       }
@@ -349,7 +424,7 @@ public class ModuleKISItem : PartModule,
         ? EquipSlotsLookup[equipSlot].Format()
         : equipSlot;
     return new[] {
-        equipable
+        equipable && !carriable
             ? EquippableInfo.Format(slotName) : null,
         carriable
             ? CarriableInfo.Format(slotName) : null,
@@ -403,7 +478,7 @@ public class ModuleKISItem : PartModule,
     }
     part.vessel.Landed = true;
 
-    DebugEx.Fine("Create fixed joint attached to the world");
+    HostedDebugLog.Warning(this, "Create fixed joint attached to the world");
     if (staticAttachJoint) {
       Destroy(staticAttachJoint);
     }
@@ -416,9 +491,9 @@ public class ModuleKISItem : PartModule,
   // A callback from MonoBehaviour.
   void OnJointBreak(float breakForce) {
     if (staticAttached) {
-      DebugEx.Warning("A static joint has just been broken! Force: {0}", breakForce);
+      HostedDebugLog.Warning(this, "A static joint has just been broken! Force: {0}", breakForce);
     } else {
-      DebugEx.Warning("A fixed joint has just been broken! Force: {0}", breakForce);
+      HostedDebugLog.Warning(this, "A fixed joint has just been broken! Force: {0}", breakForce);
     }
     GroundDetach();
   }

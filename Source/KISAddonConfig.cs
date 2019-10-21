@@ -26,20 +26,17 @@ sealed class KISAddonConfig : MonoBehaviour {
   [PersistentField("EquipAliases/alias", isCollection = true)]
   public readonly static List<string> equipAliases = new List<string>();
 
-  [PersistentField("Global/breathableAtmoPressure")]
-  public static float breathableAtmoPressure = 0.5f;
+  [PersistentField("Global/showHintText")]
+  public static bool showHintText = true;
+
+  [PersistentField("Global/hideHintKey")]
+  public static KeyCode hideHintKey = KeyCode.None;
 
   [PersistentField("EvaInventory")]
   readonly static PersistentConfigNode evaInventory = new PersistentConfigNode();
 
   [PersistentField("EvaPickup")]
   readonly static PersistentConfigNode evaPickup = new PersistentConfigNode();
-
-  const string MaleKerbalEva = "kerbalEVA";
-  const string FemaleKerbalEva = "kerbalEVAfemale";
-  const string MaleKerbalEvaVintage = "kerbalEVAVintage";
-  const string FemaleKerbalEvaVintage = "kerbalEVAfemaleVintage";
-  const string RdKerbalEva = "kerbalEVA_RD";
 
   /// <summary>Instantly loads the KIS global settings.</summary>
   class KISConfigLoader: LoadingSystem {
@@ -61,25 +58,30 @@ sealed class KISAddonConfig : MonoBehaviour {
     }
 
     public override void StartLoad() {
-      // Kerbal parts.
-      UpdateEvaPrefab(MaleKerbalEva);
-      UpdateEvaPrefab(MaleKerbalEvaVintage);
-      UpdateEvaPrefab(FemaleKerbalEva);
-      UpdateEvaPrefab(FemaleKerbalEvaVintage);
-
       // Set inventory module for every pod with crew capacity.
-      DebugEx.Info("Loading pod inventories...");
+      DebugEx.Info("Adding KIS modules to the parts...");
       for (var i = 0; i < PartLoader.LoadedPartsList.Count; i++) {
         var avPart = PartLoader.LoadedPartsList[i];
-        if (!(avPart.name == MaleKerbalEva || avPart.name == FemaleKerbalEva
-              || avPart.name == MaleKerbalEvaVintage || avPart.name == FemaleKerbalEvaVintage
-              || avPart.name == RdKerbalEva
-              || !avPart.partPrefab || avPart.partPrefab.CrewCapacity < 1)) {
-          DebugEx.Fine("Found part with crew: {0}, CrewCapacity={1}",
-                       avPart.name, avPart.partPrefab.CrewCapacity);
-          AddPodInventories(avPart.partPrefab, avPart.partPrefab.CrewCapacity);
+        var hasEvaModules = avPart.partPrefab.Modules.OfType<KerbalEVA>().Any();
+        if (hasEvaModules) {
+          var invModule = AddModule<ModuleKISInventory>(avPart.partPrefab, evaInventory);
+          invModule.invType = ModuleKISInventory.InventoryType.Eva;
+          AddModule<ModuleKISPickup>(avPart.partPrefab, evaPickup);
+        } else if (avPart.partPrefab.CrewCapacity > 0) {
+          AddPodInventories(avPart.partPrefab);
         }
       }
+      for (var i = 0; i < QueuedPodInventoryParts.Count; i++) {
+        AddPodInventories(QueuedPodInventoryParts[i]);
+      }
+    }
+
+    /// <summary>Adds a custom part module and loads its fields from the config.</summary>
+    T AddModule<T>(Part prefab, ConfigNode node) where T : PartModule {
+      var module = prefab.AddModule(typeof(T).Name, forceAwake: true) as T;
+      HostedDebugLog.Fine(module, "Add module and load config: type={0}", typeof(T));
+      module.Fields.Load(node);
+      return module;
     }
   }
 
@@ -106,26 +108,65 @@ sealed class KISAddonConfig : MonoBehaviour {
     }
   }
 
-  public static void AddPodInventories(Part part, int crewCapacity) {
-    for (var i = 0; i < crewCapacity; i++) {
-      var moduleInventory =
-          part.AddModule(typeof(ModuleKISInventory).Name) as ModuleKISInventory;
-      KIS_Shared.AwakePartModule(moduleInventory);
-      moduleInventory.invType = ModuleKISInventory.InventoryType.Pod;
-      DebugEx.Fine("{0}: Add pod inventory to match the capacity", part);
+  static List<Part> QueuedPodInventoryParts = new List<Part> ();
+  /// <summary>Queues parts to have their pod inventories initialized</summary>
+  /// <remarks>
+  /// This is neccessary only when the part's initial CrewCapacity is 0 but has
+  /// pod inventories that need to be initialized. Calling this for parts that
+  /// have non-zero CrewCapacity is effectively a nop, and calling for parts
+  /// that have no pod inventories should be harmless but best avoided.
+  /// <remarks>
+  /// <param name="part">The part to be queued.</param>
+  public static void QueuePodInventoryPart (Part part)
+  {
+    if (part.CrewCapacity > 0) {
+      // the part will be picked up automatically, no need to queue
+      return;
     }
-    var podInventories = part.Modules.OfType<ModuleKISInventory>()
+    QueuedPodInventoryParts.Add (part);
+  }
+
+  /// <summary>Adds seat inventories to cover the maximum pod occupancy.</summary>
+  /// <remarks>
+  /// If the part already has seat inventories, they will be adjusted to have the unique seat
+  /// indexes. This is usefull if the part's config provides the needed number of modules. If number
+  /// of the existing modules is not enough to cover <c>CrewCapacity</c>, extra modules are added.
+  /// </remarks>
+  /// <param name="part">The part to add seat inventorties for.</param>
+  public static void AddPodInventories(Part part) {
+    // Check the fields that once had unexpected values.
+    if (part.partInfo == null) {
+      HostedDebugLog.Error(part, "Unexpected part configuration: partInfo=<NULL>");
+      return;
+    }
+    if (part.partInfo.partConfig == null) {
+      HostedDebugLog.Error(part, "Unexpected part configuration: partConfig=<NULL>");
+      return;
+    }
+
+    var checkInventories = part.Modules.OfType<ModuleKISInventory>()
         .Where(m => m.invType == ModuleKISInventory.InventoryType.Pod)
         .ToArray();
-    for (var i = 0; i < podInventories.Length; i++) {
-      try {
-        var baseFields = new BaseFieldList(podInventories[i]);
-        baseFields.Load(evaInventory);
-        podInventories[i].podSeat = i;
-        DebugEx.Fine("{0}: Pod inventory for seat {1} loaded successfully", part, i);
-      } catch {
-        DebugEx.Error("{0}: Pod inventory module for seat {1} can't be loaded!", part, i);
-      }
+    var seatIndex = 0;
+    foreach (var inventory in checkInventories) {
+      HostedDebugLog.Info(
+          inventory, "Assing seat to a pre-configured pod inventory: {0}", seatIndex);
+      evaInventory.TryGetValue ("slotsX", ref inventory.slotsX);
+      evaInventory.TryGetValue ("slotsY", ref inventory.slotsY);
+      evaInventory.TryGetValue ("maxVolume", ref inventory.maxVolume);
+      inventory.podSeat = seatIndex++;
+    }
+    while (seatIndex < part.CrewCapacity) {
+      var moduleNode = new ConfigNode("MODULE", "Dynamically created by KIS.");
+      evaInventory.CopyTo(moduleNode);
+      moduleNode.SetValue("name", typeof(ModuleKISInventory).Name, createIfNotFound: true);
+      moduleNode.SetValue(
+          "invType", ModuleKISInventory.InventoryType.Pod.ToString(), createIfNotFound: true);
+      moduleNode.SetValue("podSeat", seatIndex, createIfNotFound: true);
+      part.partInfo.partConfig.AddNode(moduleNode);
+      var inventory = part.AddModule(moduleNode, forceAwake: true);
+      HostedDebugLog.Info(inventory, "Dynamically create pod inventory at seat: {0}", seatIndex);
+      seatIndex++;
     }
   }
 
@@ -143,7 +184,7 @@ sealed class KISAddonConfig : MonoBehaviour {
     }
   }
 
-  /// <summary>Loads config values for the part's module fro the provided config node.</summary>
+  /// <summary>Loads config values for the part's module from the provided config node.</summary>
   /// <returns><c>true</c> if loaded successfully.</returns>
   static bool LoadModuleConfig(Part p, Type moduleType, ConfigNode node) {
     var module = p.GetComponent(moduleType);
@@ -182,11 +223,6 @@ sealed class KISAddonConfig : MonoBehaviour {
     }
     if (res == null) {
       DebugEx.Error("Cannot find object for EVA item: {0}", bonePath);
-      var modelListing = Hierarchy.ListHirerahcy(root);
-      DebugEx.Fine("The following tree was available:");
-      foreach (var modelPath in modelListing) {
-        DebugEx.Fine(modelPath);
-      }
     }
     return res;
   }

@@ -11,20 +11,23 @@
     "" : [
       "/Lang",
       "/Parts",
+      "/Parts.fun",
       "/Patches",
       "/Sounds",
       "/Textures",
       "/settings.cfg",
       "/User Guide.pdf",
       "/README.md",
-      "/LICENSE.md"
+      "/LICENSE.md",
+      "/remove_fun_part_patch.txt",
+      "/kis_legacy_containers.txt"
     ],
     "Plugins" : [
       "{COMPILED_BINARY}",
       "?{MINIAVC_VERSION_FILE}",
       "/Binaries/MiniAVC.dll",
       "/Binaries/KSPDev_Utils*",
-      "-*.xml"
+      "-KSP-AVC.version"
     ]
   }
 }

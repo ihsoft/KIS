@@ -4,6 +4,7 @@
 // License: Restricted
 
 using KSPDev.GUIUtils;
+using KSPDev.GUIUtils.TypeFormatters;
 using KSPDev.PartUtils;
 using KSPDev.SoundsUtils;
 using KSPDev.KSPInterfaces;
@@ -43,7 +44,7 @@ public sealed class ModuleKISItemBomb : ModuleKISItem,
   static readonly Message TimerSettingsSectionTxt = new Message(
       "#kisLOC_05003",
       defaultTemplate: "Timer",
-      description: "The GUI section title for settig up the explosion timer.");
+      description: "The GUI section title for setting up the explosion timer.");
 
   static readonly Message<int> TimerDelayInSecondsTxt = new Message<int>(
       "#kisLOC_05004",
@@ -53,7 +54,7 @@ public sealed class ModuleKISItemBomb : ModuleKISItem,
   static readonly Message RadiusSettingsSectionTxt = new Message(
       "#kisLOC_05005",
       defaultTemplate: "Explosion radius",
-      description: "The GUI section title for settig up the explosion area.");
+      description: "The GUI section title for setting up the explosion area.");
 
   static readonly Message<DistanceType, DistanceType> ExplosionRadiusTxt =
       new Message<DistanceType, DistanceType>(
@@ -77,7 +78,7 @@ public sealed class ModuleKISItemBomb : ModuleKISItem,
   static readonly Message<int> TimeToEscapeMsg = new Message<int>(
       "#kisLOC_05011",
       defaultTemplate: "You have <<1>> seconds to escape!",
-      description: "The mesasge to display when the bomb is activated. It's show nonly once and"
+      description: "The message to display when the bomb is activated. It's shown only once and"
       + " doesn't update as the bomb is ticking."
       + "\nArgument <<1>> is the timer setting in seconds.");
   #endregion

@@ -1,0 +1,26 @@
+// Rename this file to `remove_fun_part_patch.cfg` and move it into
+// `GameData` folder to have the fun KIS parts hidden from the game.
+
+!PART[KIS_basketball]
+{
+}
+
+!PART[KIS_beer]
+{
+}
+
+!PART[KIS_ghettoblaster]
+{
+}
+
+!PART[KIS_golfclub]
+{
+}
+
+!PART[KIS_guitar]
+{
+}
+
+!PART[KIS_taco]
+{
+}

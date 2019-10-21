@@ -3,6 +3,7 @@
 // Module authors: KospY, igor.zavoychinskiy@gmail.com
 // License: Restricted
 
+using KISAPIv1;
 using KSPDev.GUIUtils;
 using KSPDev.ResourceUtils;
 using System;
@@ -67,7 +68,7 @@ public class ModuleKISItemEvaPropellant : ModuleKISItem {
   /// <summary>Fills up canister to the maximum capacity.</summary>
   /// <param name="item">Item to refill.</param>
   protected virtual void RefillCanister(KIS_Item item) {
-    item.SetResource(StockResourceNames.EvaPropellant, GetCanisterFuelResource(item).maxAmount);
+    item.UpdateResource(StockResourceNames.EvaPropellant, GetCanisterFuelResource(item).maxAmount);
     ScreenMessaging.ShowPriorityScreenMessage(CanisterRefilledMsg);
     UISoundPlayer.instance.Play(refuelSndPath);
   }
@@ -78,8 +79,7 @@ public class ModuleKISItemEvaPropellant : ModuleKISItem {
   /// <param name="item">Item to get fuel from.</param>
   protected virtual void RefillEVAPack(KIS_Item item) {
     var canisterFuelResource = GetCanisterFuelResource(item);
-    var evaFuelResource = item.inventory.part.Resources.Get(
-        item.inventory.part.GetComponent<KerbalEVA>().propellantResourceName);
+    var evaFuelResource = item.inventory.part.Resources.Get(StockResourceNames.EvaPropellant);
     var needsFuel = evaFuelResource.maxAmount - evaFuelResource.amount;
     if (needsFuel < double.Epsilon) {
       ScreenMessaging.ShowPriorityScreenMessage(NoNeedToRefillMsg);
@@ -89,7 +89,7 @@ public class ModuleKISItemEvaPropellant : ModuleKISItem {
         UISounds.PlayBipWrong();
       } else {
         var canRefuel = Math.Min(needsFuel, canisterFuelResource.amount);
-        item.SetResource(StockResourceNames.EvaPropellant, canisterFuelResource.amount - canRefuel);
+        item.UpdateResource(StockResourceNames.EvaPropellant, -canRefuel, isAmountRelative: true);
         evaFuelResource.amount += canRefuel;
         if (canRefuel < needsFuel) {
           ScreenMessaging.ShowPriorityScreenMessage(NotEnoughPropellantMsg);
@@ -101,11 +101,12 @@ public class ModuleKISItemEvaPropellant : ModuleKISItem {
     }
   }
 
-  /// <summary>Returns KIS resource dexcription for the propellant in the part.</summary>
+  /// <summary>Returns KIS resource description for the propellant in the part.</summary>
   /// <param name="item">Item to get resource for.</param>
   /// <returns>Resource description.</returns>
-  protected static KIS_Item.ResourceInfo GetCanisterFuelResource(KIS_Item item) {
-    return item.GetResources().First(x => x.resourceName == StockResourceNames.EvaPropellant);
+  protected static ProtoPartResourceSnapshot GetCanisterFuelResource(KIS_Item item) {
+    return KISAPI.PartNodeUtils.GetResources(item.partNode)
+        .FirstOrDefault(x => x.resourceName == StockResourceNames.EvaPropellant);
   }
   #endregion
 }

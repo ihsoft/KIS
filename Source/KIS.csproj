@@ -52,8 +52,8 @@
     <Reference Include="Assembly-CSharp-firstpass">
       <HintPath>Q:\KSP_x64_Data\Managed\Assembly-CSharp-firstpass.dll</HintPath>
     </Reference>
-    <Reference Include="KSPDev_Utils.0.37">
-      <HintPath>..\Binaries\KSPDev_Utils.0.37.dll</HintPath>
+    <Reference Include="KSPDev_Utils.1.2">
+      <HintPath>..\Binaries\KSPDev_Utils.1.2.dll</HintPath>
     </Reference>
     <Reference Include="System">
       <HintPath>Q:\KSP_x64_Data\Managed\System.dll</HintPath>
@@ -67,10 +67,14 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DebugUtils\PartAlignTool.cs" />
+    <Compile Include="api\Utils\KISAPI.cs" />
+    <Compile Include="api\Utils\PartNodeUtilsImpl.cs" />
+    <Compile Include="api\Utils\PartUtilsImpl.cs" />
+    <Compile Include="Debug\ControllerPartEditorTool.cs" />
+    <Compile Include="Debug\KISDebugAdjustableAttribute.cs" />
+    <Compile Include="Debug\SpawnItemDialog.cs" />
     <Compile Include="EditorDefaultItemsAdder.cs" />
     <Compile Include="KISAddonCursor.cs" />
-    <Compile Include="KSPDev_candidates\GUILayoutTextField.cs" />
     <Compile Include="MainScreenTweaker.cs" />
     <Compile Include="ModuleKISItemEvaPropellant.cs" />
     <Compile Include="KIS_IconViewer.cs" />
@@ -90,13 +94,20 @@
     <Compile Include="KIS_Item.cs" />
     <Compile Include="ModuleKISInventory.cs" />
     <Compile Include="KIS_Shared.cs" />
+    <Compile Include="modules\KISCollider.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UISounds.cs" />
     <Compile Include="VolumeLType.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="api\Utils" />
     <Folder Include="KSPDev_candidates" />
-    <Folder Include="DebugUtils" />
+    <Folder Include="Debug" />
+    <Folder Include="api" />
+    <Folder Include="modules" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="SpecialDocTags.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

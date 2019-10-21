@@ -1,3 +1,63 @@
+# 1.23 (pre-release):
+
+# 1.22 (May 30th, 2019):
+* [Change] "Breaking ground" DLC support.
+* [Change] Don't allow `KIS` to deploy or move the ground experiments.
+* [Change] Allow the small cargo to be carried by kerbal.
+* [Change] Disable the default remove helmet hotkey `J` as it conflicts with "Breaking ground" DLC.
+* [Enhancement] Add medium portable cargo to carry 6 experiments.
+* [Fix #333] Robotics part trigger physics when making a hover model.
+* [Fix #334] Action icons are blurred.
+
+# 1.21 (May 16th, 2019):
+* [Fix #89] Portable containers revert to previous content when dropped. 
+* [Fix #328] KIS fails on every new DLC or major patch that changes kerbal models.
+* [Fix #330] KIS containers mass and volume physically realistic. __Read the issue description for details!__
+
+# 1.20 (May 3rd, 2019):
+* [Fix #326] Text formating in PAW menu.
+
+# 1.19 (May 2nd, 2019):
+* [Change] `KSP 1.7.*` compatibility.
+* [Change] Update ES-ES localization.
+* [Change] Make `CB-1` volume physical (no override) and allow carrying it on the kerbal's back.
+* [Fix #305] Allow grab hints menu to be turned off in KIS `settings.cfg`.
+* [Fix #311] Container item launchID incorrect at vessel launch.
+* [Fix #313] Contained item's dry-mass is incorrect in tooltip. 
+* [Fix #314] KIS.Container1 cannot be selected as root part.
+* [Fix #315] When the target is too far, KIS says "too heavy".
+* [Fix #317] Stock Parts not stacking in 1.6.1 with no other mods.
+* [Fix #319] Restock part volumes is wrong when a skinned mesh is used.
+* [Fix #320] Some parts refuse to get detached.
+* [Fix #321] KIS Inventory and inflatable parts.
+* [Fix #323] EVA fuel canister has infinite reserve.
+* [Fix #324] Statically attachable parts don't attach.
+
+# 1.18 (February 2nd, 2019):
+* [Change] Add an optional (yet) patch file to make the legacy KIS containers physics complient. See file `kis_physical_containers.cfg.txt`.
+* [Enhancement] Add French localization.
+* [Enhancement] Improve English part descriptions.
+* [Enhancement] Add IWC-4500 "Wyvern" part.
+* [Fix #297] IMC-15K has wrong part volume.
+* [Fix #301] "volumeOverride" is not working.
+* [Fix #302] Structurel panel has wrong nodes.
+* [Fix #303] Game's crashing on the new parts.
+
+# 1.17 (January 28th, 2019):
+* KSP 1.6 support. This mod's version is not compatible with the prior versions of KSP!
+* [Enhancement] Add fun English part descriptions.
+* [Enhancement] Add Portuguese (Brazil) localization.
+* [Enhancement] Improve items&parts debug ability. See `partAlignToolKey` and `itemDebug` in the settings file.
+* [Enhancement] Add new containers: `IMiC-1500`, `ImC-3K`, `IMC-22K`, and `IGC-45K`.
+* [Enhancement] Big improvement in performance. Many inventories with items in one scene could slow down the game significantly (see #287 & #288).
+* [Enhancement #281] Use the stock functionality from the KIS code and properly support custom helmets.
+* [Enhancement #289] Take into account the container size when detecting its availability.
+* [Fix #160] Cannot deatch broken solar panel.
+* [Fix #163] Implement full support of TweakScale mod.
+* [Fix #267] Review container mount mass.
+* [Fix #273] Support part's variant when dealing with KIS container items.
+* [Fix #293] Fun parts in are not equipping.
+
 # 1.16 (October 29th, 2018):
 * [Fix #275] No preview meshes shown.
 

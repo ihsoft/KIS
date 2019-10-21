@@ -134,29 +134,34 @@ sealed class KISAddonCursor : MonoBehaviour {
   }
 
   void OnGUI() {
-    if (cursorShow) {
+    if (cursorShow
+        && (!KISAddonPointer.isRunning || !Input.GetKey(KISAddonConfig.hideHintKey))) {
+      var mousePosition = Input.mousePosition;
+      mousePosition.y = Screen.height - mousePosition.y;
       // Display action icon.
       GUI.DrawTexture(
-          new Rect(Event.current.mousePosition.x - ActionIconSize / 2,
-                  Event.current.mousePosition.y - ActionIconSize / 2,
+          new Rect(mousePosition.x - ActionIconSize / 2,
+                  mousePosition.y - ActionIconSize / 2,
                   ActionIconSize, ActionIconSize),
           cursorTexture, ScaleMode.ScaleToFit);
-              
-      // Compile the whole hint text.
-      var allLines = new List<String>{ cursorText };
-      if (cursorAdditionalTexts != null && cursorAdditionalTexts.Any()) {
-        allLines.Add("");  // A linefeed between status and hint text. 
-        allLines.AddRange(cursorAdditionalTexts);
-      }
-      var hintText = String.Join("\n", allLines.ToArray());
-      // Calculate the label region.
-      Vector2 textSize = hintWindowStyle.CalcSize(new GUIContent(hintText));
-      var hintLabelRect = new Rect(
-          Event.current.mousePosition.x + ActionIconSize / 2 + HintTextLeftMargin,
-          Event.current.mousePosition.y - ActionIconSize / 2,
-          textSize.x, textSize.y);
 
-      GUI.Label(hintLabelRect, hintText, hintWindowStyle);
+      if (KISAddonConfig.showHintText) {
+        // Compile the whole hint text.
+        var allLines = new List<String>{ cursorText };
+        if (cursorAdditionalTexts != null && cursorAdditionalTexts.Any()) {
+          allLines.Add("");  // A linefeed between status and hint text. 
+          allLines.AddRange(cursorAdditionalTexts);
+        }
+        var hintText = String.Join("\n", allLines.ToArray());
+        // Calculate the label region.
+        Vector2 textSize = hintWindowStyle.CalcSize(new GUIContent(hintText));
+        var hintLabelRect = new Rect(
+            mousePosition.x + ActionIconSize / 2 + HintTextLeftMargin,
+            mousePosition.y - ActionIconSize / 2,
+            textSize.x, textSize.y);
+  
+        GUI.Label(hintLabelRect, hintText, hintWindowStyle);
+      }
     }
   }
 

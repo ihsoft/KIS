@@ -1,4 +1,5 @@
-﻿using KSPDev.ConfigUtils;
+﻿using KISAPIv1;
+using KSPDev.ConfigUtils;
 using KSPDev.LogUtils;
 using KSPDev.ProcessingUtils;
 using KSPDev.PartUtils;
@@ -7,7 +8,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections;
 using System.Linq;
-using System.Reflection;
 using System.Text.RegularExpressions;
 using UnityEngine;
 
@@ -56,25 +56,6 @@ public static class KIS_Shared {
 
   public static void PlaySoundAtPoint(string soundPath, Vector3 position) {
     AudioSource.PlayClipAtPoint(GameDatabase.Instance.GetAudioClip(soundPath), position);
-  }
-
-  public static bool createFXSound(Part part, FXGroup group, string sndPath, bool loop,
-                                   float maxDistance = 30f) {
-    group.audio = part.gameObject.AddComponent<AudioSource>();
-    group.audio.volume = GameSettings.SHIP_VOLUME;
-    group.audio.rolloffMode = AudioRolloffMode.Linear;
-    group.audio.dopplerLevel = 0f;
-    group.audio.spatialBlend = 1f;
-    group.audio.maxDistance = maxDistance;
-    group.audio.loop = loop;
-    group.audio.playOnAwake = false;
-    if (GameDatabase.Instance.ExistsAudioClip(sndPath)) {
-      group.audio.clip = GameDatabase.Instance.GetAudioClip(sndPath);
-      return true;
-    } else {
-      DebugEx.Error("Sound not found in the game database !");
-      return false;
-    }
   }
 
   /// <summary>
@@ -155,94 +136,9 @@ public static class KIS_Shared {
     }
   }
 
-  public static ConfigNode PartSnapshot(Part part) {
-    if (ReferenceEquals(part, part.partInfo.partPrefab)) {
-      // HACK: Prefab may have fields initialized to "null". Such fields cannot be saved via
-      //   BaseFieldList when making a snapshot. So, go thru the persistent fields of all prefab
-      //   modules and replace nulls with a default value of the type. It's unlikely we break
-      //   something since by design such fields are not assumed to be used until loaded, and it's
-      //   impossible to have "null" value read from a config.
-      CleanupModuleFieldsInPart(part);
-    }
-
-    var node = new ConfigNode("PART");
-    var snapshot = new ProtoPartSnapshot(part, null);
-
-    snapshot.attachNodes = new List<AttachNodeSnapshot>();
-    snapshot.srfAttachNode = new AttachNodeSnapshot("attach,-1");
-    snapshot.symLinks = new List<ProtoPartSnapshot>();
-    snapshot.symLinkIdxs = new List<int>();
-    snapshot.Save(node);
-
-    // Prune unimportant data
-    node.RemoveValues("parent");
-    node.RemoveValues("position");
-    node.RemoveValues("rotation");
-    node.RemoveValues("istg");
-    node.RemoveValues("dstg");
-    node.RemoveValues("sqor");
-    node.RemoveValues("sidx");
-    node.RemoveValues("attm");
-    node.RemoveValues("srfN");
-    node.RemoveValues("attN");
-    node.RemoveValues("connected");
-    node.RemoveValues("attached");
-    node.RemoveValues("flag");
-
-    node.RemoveNodes("ACTIONS");
-
-    // Remove modules that are not in prefab since they won't load anyway
-    var module_nodes = node.GetNodes("MODULE");
-    var prefab_modules = part.partInfo.partPrefab.GetComponents<PartModule>();
-    node.RemoveNodes("MODULE");
-
-    for (int i = 0; i < prefab_modules.Length && i < module_nodes.Length; i++) {
-      var module = module_nodes[i];
-      var name = module.GetValue("name") ?? "";
-
-      node.AddNode(module);
-
-      if (name == "KASModuleContainer") {
-        // Containers get to keep their contents
-        module.RemoveNodes("EVENTS");
-      } else if (name.StartsWith("KASModule")) {
-        // Prune the state of the KAS modules completely
-        module.ClearData();
-        module.AddValue("name", name);
-        continue;
-      }
-
-      module.RemoveNodes("ACTIONS");
-    }
-
-    return node;
-  }
-
-  public static ConfigNode vesselSnapshot(Vessel vessel) {
-    ProtoVessel snapshot = new ProtoVessel(vessel);
-    ConfigNode node = new ConfigNode("VESSEL");
-    snapshot.Save(node);
-    return node;
-  }
-
-  public static Collider GetEvaCollider(Vessel evaVessel, string colliderName) {
-    KerbalEVA kerbalEva = evaVessel.rootPart.gameObject.GetComponent<KerbalEVA>();
-    Collider evaCollider = null;
-    if (kerbalEva) {
-      foreach (var col in kerbalEva.characterColliders) {
-        if (col.name == colliderName) {
-          evaCollider = col;
-          break;
-        }
-      }
-    }
-    return evaCollider;
-  }
-
   public static Part CreatePart(AvailablePart avPart, Vector3 position, Quaternion rotation,
                                 Part fromPart) {
-    var partNode = new ConfigNode();
-    PartSnapshot(avPart.partPrefab).CopyTo(partNode);
+    var partNode = KISAPI.PartNodeUtils.PartSnapshot(avPart.partPrefab);
     return CreatePart(partNode, position, rotation, fromPart);
   }
 
@@ -320,6 +216,8 @@ public static class KIS_Shared {
     newPart.transform.position = position;
     newPart.transform.rotation = rotation;
     newPart.missionID = fromPart.missionID;
+    newPart.launchID = ConfigAccessor.GetValueByPath<uint>(partConfig, "launchID")
+        ?? fromPart.launchID;
     newPart.UpdateOrgPosAndRot(newPart.vessel.rootPart);
 
     if (coupleToPart != null) {
@@ -515,59 +413,6 @@ public static class KIS_Shared {
     }
   }
 
-  /// <summary>Returns part's volume basing on its geometrics.</summary>
-  /// <remarks>Geometry of a part depends on the state (e.g. solar panel can be deployed and take
-  /// more space). It's not possible (nor practical) for KIS to figure out which state of the part
-  /// is the most compact one. So, when calculating part's volume the initial state of the mesh
-  /// renderers in the prefab is considered the right ones. If parts's initial state is deployed
-  /// (e.g. Drill-O-Matic) then it will take more space than it could have.</remarks>
-  /// <param name="partInfo">A part to get volume for.</param>
-  /// <returns>Volume in liters.</returns>
-  public static float GetPartVolume(AvailablePart partInfo) {
-    var p = partInfo.partPrefab;
-    float volume;
-
-    // If there is a KIS item volume then use it but still apply scale tweaks. 
-    var kisItem = p.GetComponent<ModuleKISItem>();
-    if (kisItem && kisItem.volumeOverride > 0) {
-      volume = kisItem.volumeOverride;
-    } else {
-      var boundsSize = PartGeometryUtil.MergeBounds(p.GetRendererBounds(), p.transform).size;
-      volume = boundsSize.x * boundsSize.y * boundsSize.z * 1000f;
-    }
-
-    // Apply cube of the scale modifier since volume involves all 3 axis.
-    return (float) (volume * Math.Pow(GetPartExternalScaleModifier(partInfo), 3));
-  }
-
-  /// <summary>Returns external part's scale for a default part configuration.</summary>
-  /// <param name="avPart">A part info to check modules for.</param>
-  /// <returns>Multiplier to a model's scale on one axis.</returns>
-  public static float GetPartExternalScaleModifier(AvailablePart avPart) {
-    return GetPartExternalScaleModifier(avPart.partConfig);
-  }
-
-  /// <summary>Returns external part's scale given a config.</summary>
-  /// <remarks>This is a scale applied on the module by the other mods. I.e. it's a "runtime" scale,
-  /// not the one specified in the common part's config.
-  /// <para>The only mod supported till now is <c>TweakScale</c>.</para>
-  /// </remarks>
-  /// <param name="partNode">A config to get values from.</param>
-  /// <returns>Multiplier to a model's scale on one axis.</returns>
-  public static float GetPartExternalScaleModifier(ConfigNode partNode) {
-    // TweakScale compatibility.
-    foreach (var node in partNode.GetNodes("MODULE")) {
-      if (node.GetValue("name") == "TweakScale") {
-        double defaultScale = 1.0f;
-        ConfigAccessor.GetValueByPath(node, "defaultScale", ref defaultScale);
-        double currentScale = 1.0f;
-        ConfigAccessor.GetValueByPath(node, "currentScale", ref currentScale);
-        return (float) (currentScale / defaultScale);
-      }
-    }
-    return 1.0f;
-  }
-
   public static ConfigNode GetBaseConfigNode(PartModule partModule) {
     UrlDir.UrlConfig pConfig = null;
     foreach (UrlDir.UrlConfig uc in GameDatabase.Instance.GetConfigs("PART")) {
@@ -633,87 +478,6 @@ public static class KIS_Shared {
     }
   }
 
-  public static void EditField(string label, ref bool value, int maxLenght = 50) {
-    value = GUILayout.Toggle(value, label);
-  }
-
-  public static Dictionary<string, string> editFields = new Dictionary<string, string>();
-
-  public static bool EditField(string label, ref Vector3 value, int maxLenght = 50) {
-    bool btnPress = false;
-    if (!editFields.ContainsKey(label + "x")) {
-      editFields.Add(label + "x", value.x.ToString());
-    }
-    if (!editFields.ContainsKey(label + "y")) {
-      editFields.Add(label + "y", value.y.ToString());
-    }
-    if (!editFields.ContainsKey(label + "z")) {
-      editFields.Add(label + "z", value.z.ToString());
-    }
-    GUILayout.BeginHorizontal();
-    GUILayout.Label(label + " : " + value + "   ");
-    editFields[label + "x"] = GUILayout.TextField(editFields[label + "x"], maxLenght);
-    editFields[label + "y"] = GUILayout.TextField(editFields[label + "y"], maxLenght);
-    editFields[label + "z"] = GUILayout.TextField(editFields[label + "z"], maxLenght);
-    if (GUILayout.Button(new GUIContent("Set", "Set vector"), GUILayout.Width(60f))) {
-      var tmpVector3 = new Vector3(float.Parse(editFields[label + "x"]),
-                                   float.Parse(editFields[label + "y"]),
-                                   float.Parse(editFields[label + "z"]));
-      value = tmpVector3;
-      btnPress = true;
-    }
-    GUILayout.EndHorizontal();
-    return btnPress;
-  }
-
-  public static bool EditField(string label, ref string value, int maxLenght = 50) {
-    bool btnPress = false;
-    if (!editFields.ContainsKey(label)) {
-      editFields.Add(label, value.ToString());
-    }
-    GUILayout.BeginHorizontal();
-    GUILayout.Label(label + " : " + value + "   ");
-    editFields[label] = GUILayout.TextField(editFields[label], maxLenght);
-    if (GUILayout.Button(new GUIContent("Set", "Set string"), GUILayout.Width(60f))) {
-      value = editFields[label];
-      btnPress = true;
-    }
-    GUILayout.EndHorizontal();
-    return btnPress;
-  }
-
-  public static bool EditField(string label, ref int value, int maxLenght = 50) {
-    bool btnPress = false;
-    if (!editFields.ContainsKey(label)) {
-      editFields.Add(label, value.ToString());
-    }
-    GUILayout.BeginHorizontal();
-    GUILayout.Label(label + " : " + value + "   ");
-    editFields[label] = GUILayout.TextField(editFields[label], maxLenght);
-    if (GUILayout.Button(new GUIContent("Set", "Set int"), GUILayout.Width(60f))) {
-      value = int.Parse(editFields[label]);
-      btnPress = true;
-    }
-    GUILayout.EndHorizontal();
-    return btnPress;
-  }
-
-  public static bool EditField(string label, ref float value, int maxLenght = 50) {
-    bool btnPress = false;
-    if (!editFields.ContainsKey(label)) {
-      editFields.Add(label, value.ToString());
-    }
-    GUILayout.BeginHorizontal();
-    GUILayout.Label(label + " : " + value + "   ");
-    editFields[label] = GUILayout.TextField(editFields[label], maxLenght);
-    if (GUILayout.Button(new GUIContent("Set", "Set float"), GUILayout.Width(60f))) {
-      value = float.Parse(editFields[label]);
-      btnPress = true;
-    }
-    GUILayout.EndHorizontal();
-    return btnPress;
-  }
-
   /// <summary>Sets highlight status of the entire heierarchy.</summary>
   /// <param name="hierarchyRoot">A root part of the hierarchy.</param>
   /// <param name="isSelected">The status.</param>
@@ -739,8 +503,9 @@ public static class KIS_Shared {
   /// doesn't return the nodes that may result in collision.
   /// </remarks>
   /// <param name="p">A part to get nodes for.</param>
-  /// <param name="ignoreAttachedPart">Don't consider attachment node occupied if it's
-  /// attached to this part.</param>
+  /// <param name="ignoreAttachedPart">
+  /// Don't consider an attachment node if it's occupied ans attached to this part.
+  /// </param>
   /// <param name="needSrf">If <c>true</c> then free surface node should be retruned as well.
   /// Otherwise, only the stack nodes are returned.</param>
   /// <returns>A list of nodes that are available for attaching. First nodes in the list are the
@@ -792,92 +557,6 @@ public static class KIS_Shared {
       result.Insert(0, srfNode);
     }
     return result;
-  }
-
-  /// <summary>Walks thru all modules in the part and fixes null persistent fields.</summary>
-  /// <remarks>Used to prevent NREs in methods that persist KSP fields.
-  /// <para>Bad modules that cannot be fixed will be dropped which may make the part to be not
-  /// behaving as expected. It's guaranteed that <i>stock</i> modules that need fixing will be
-  /// fixed successfully. So, failures are only expected on the modules from the third-parties mods.
-  /// </para></remarks>
-  /// <param name="part">Prefab to fix.</param>
-  public static void CleanupModuleFieldsInPart(Part part) {
-    var badModules = new List<PartModule>();
-    foreach (var moduleObj in part.Modules) {
-      var module = moduleObj as PartModule;
-      try {
-        CleanupFieldsInModule(module);
-      } catch {
-        badModules.Add(module);
-      }
-    }
-    // Cleanup modules that block KIS. It's a bad thing to do but not working KIS is worse.
-    foreach (var moduleToDrop in badModules) {
-      DebugEx.Error(
-          "Module on part prefab {0} is setup improperly: name={1}. Drop it!", part, moduleToDrop);
-      part.RemoveModule(moduleToDrop);
-    }
-  }
-
-  /// <summary>Fixes null persistent fields in the module.</summary>
-  /// <remarks>Used to prevent NREs in methods that persist KSP fields.</remarks>
-  /// <param name="module">Module to fix.</param>
-  public static void CleanupFieldsInModule(PartModule module) {
-    // HACK: Fix uninitialized fields in science lab module.
-    var scienceModule = module as ModuleScienceLab;
-    if (scienceModule != null) {
-      scienceModule.ExperimentData = new List<string>();
-      DebugEx.Warning(
-          "WORKAROUND. Fix null field in ModuleScienceLab module on the part prefab: {0}", module);
-    }
-    
-    // Ensure the module is awaken. Otherwise, any access to base fields list will result in NRE.
-    // HACK: Accessing Fields property of a non-awaken module triggers NRE. If it happens then do
-    // explicit awakening of the *base* module class.
-    try {
-      module.Fields.GetEnumerator();
-    } catch {
-      DebugEx.Warning(
-          "WORKAROUND. Module {0} on part prefab is not awaken. Call Awake on it", module);
-      AwakePartModule(module);
-    }
-    foreach (var field in module.Fields) {
-      var baseField = field as BaseField;
-      if (baseField.isPersistant && baseField.GetValue(module) == null) {
-        var proto = new StandardOrdinaryTypesProto();
-        var defValue = proto.ParseFromString("", baseField.FieldInfo.FieldType);
-        DebugEx.Warning("WORKAROUND. Found null field {0} in module prefab {1},"
-                        + " fixing to default value of type {2}: {3}",
-                        baseField.name, module, baseField.FieldInfo.FieldType, defValue);
-        baseField.SetValue(defValue, module);
-      }
-    }
-  }
-
-  /// <summary>Makes a call to <c>Awake()</c> method of the part module.</summary>
-  /// <remarks>Modules added to prefab via <c>AddModule()</c> call are not get activated as they
-  /// would if activated by the Unity core. As a result some vital fields may be left uninitialized
-  /// which may result in an NRE later when working with the prefab (e.g. making a part snapshot).
-  /// This method finds and invokes method <c>Awake</c> via reflection which is normally done by
-  /// Unity.
-  /// <para><b>IMPORTANT!</b> This method cannot awake a module! To make the things right every
-  /// class in the hierarchy should get its <c>Awake</c> called. This method only calls <c>Awake</c>
-  /// method on <c>PartModule</c> parent class which is not enough to do a complete awakening.
-  /// </para>
-  /// <para>This is a HACK since <c>Awake()</c> method is not supposed to be called by anyone but
-  /// Unity. For now it works fine but one day it may awake the kraken.</para>
-  /// </remarks>
-  /// <param name="module">Module instance to awake.</param>
-  public static void AwakePartModule(PartModule module) {
-    // Private method can only be accessed via reflection when requested on the class that declares
-    // it. So, don't use type of the argument and specify it explicitly. 
-    var moduleAwakeMethod = typeof(PartModule).GetMethod(
-        "Awake", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-    if (moduleAwakeMethod != null) {
-      moduleAwakeMethod.Invoke(module, new object[] {});
-    } else {
-      DebugEx.Error("Cannot find Awake() method on {0}. Skip awakening", module);
-    }
   }
 
   /// <summary>
@@ -1154,14 +833,16 @@ public static class KIS_Shared {
   /// </remarks>
   /// <param name="assemblyRoot">Root of the assembly to move.</param>
   /// <param name="srcAttachNodeId">Attach node ID on the assembly root.</param>
-  /// <param name="tgtPart">New root part.</param>
+  /// <param name="tgtPart">
+  /// The part to align to. It can be <c>null</c> when dropping on the surface.
+  /// </param>
   /// <param name="tgtAttachNode">
   /// Attach node ID on the new target. It can be <c>null</c> if assembly is attached via surface
   /// node.
   /// </param>
   /// <param name="pos">Position of the assembly at the new parent.</param>
   /// <param name="rot">Rotation of the assembly at the new parent.</param>
-  /// <param name="onReady">Cllaback to execute when assembly move completed.</param>
+  /// <param name="onReady">Callback to execute when assembly move completed.</param>
   /// <returns>Enumerator that can be used as coroutine target.</returns>
   public static IEnumerator AsyncMoveAssembly(
       Part assemblyRoot, string srcAttachNodeId,
@@ -1173,12 +854,12 @@ public static class KIS_Shared {
     var srcAttachNode = GetAttachNodeById(assemblyRoot, srcAttachNodeId);
     SendKISMessage(assemblyRoot, MessageAction.AttachStart, srcAttachNode, tgtPart, tgtAttachNode);
 
-    // Find out if coupling with a new parent is needed/allowed.
-    var moduleItem = assemblyRoot.GetComponent<ModuleKISItem>();
-    var useExternalPartAttach = moduleItem != null && moduleItem.useExternalPartAttach;
-    if (tgtPart == null || useExternalPartAttach) {
-      // Skip coupling logic.
+    // Check if the target is a surface.
+    if (tgtPart == null) {
       SendKISMessage(assemblyRoot, MessageAction.AttachEnd, srcAttachNode, tgtPart, tgtAttachNode);
+      if (onReady != null) {
+        onReady(assemblyRoot);
+      }
       yield break;
     }
 
@@ -1359,11 +1040,11 @@ public static class KIS_Shared {
     Vessel newVessel = newPart.gameObject.AddComponent<Vessel>();
     newVessel.id = Guid.NewGuid();
     if (newVessel.Initialize(false)) {
-      var item = newPart.FindModuleImplementing <ModuleKISItem> ();
+      var item = newPart.FindModuleImplementing<ModuleKISItem>();
       if (item == null || !item.vesselAutoRename) {
         newVessel.vesselName = newPart.partInfo.title;
       } else {
-        newVessel.vesselName = Vessel.AutoRename (newVessel, originatingVesselName);
+        newVessel.vesselName = Vessel.AutoRename(newVessel, originatingVesselName);
       }
       newVessel.IgnoreGForces(10);
       newVessel.currentStage = StageManager.RecalculateVesselStaging(newVessel);

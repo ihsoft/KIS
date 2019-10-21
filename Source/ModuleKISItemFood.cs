@@ -1,5 +1,6 @@
 ﻿using KSPDev.GUIUtils;
 using KSPDev.LogUtils;
+using KSPDev.ProcessingUtils;
 using System;
 using System.Linq;
 
@@ -14,14 +15,14 @@ public sealed class ModuleKISItemFood : ModuleKISItem {
 
   public override void OnItemUse(KIS_Item item, KIS_Item.UseFrom useFrom) {
     if (useFrom != KIS_Item.UseFrom.KeyUp) {
-      item.StackRemove();
+      item.StackRemove(1);
       eatCount++;
 
       if (eatCount > 3) {
         DebugEx.Fine("Burp incoming...");
-        System.Random rnd = new System.Random();
+        Random rnd = new System.Random();
         int delay = rnd.Next(1, 5);
-        item.inventory.DelayedAction(Burp, item, delay);
+        AsyncCall.CallOnTimeout(item.inventory, delay, () => Burp(item));
         eatCount = 0;
       }
       UISoundPlayer.instance.Play(eatSndPath);

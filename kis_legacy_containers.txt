@@ -1,0 +1,55 @@
+// Update KIS containers volume and mass to the legacy values.
+
+@PART[KIS_Container1]:NEEDS[KIS]:AFTER[KIS]
+{
+	%mass = 0.1
+	%MODULE[ModuleKISInventory]
+		%maxVolume = 1000
+	}
+
+	@MODULE[ModuleKISItemEvaTweaker]
+	{
+		%volumeOverride = 1100
+	}
+}
+
+@PART[KIS_ContainerMount1]:NEEDS[KIS]:AFTER[KIS]
+{
+	%mass = 0.25
+}
+
+@PART[KIS_Container2]:NEEDS[KIS]:AFTER[KIS]
+{
+	%mass = 1.5
+	%MODULE[ModuleKISInventory]
+	{
+		%maxVolume = 18000
+	}
+
+	MODULE[ModuleKISItem]
+	{
+		volumeOverride = 19000
+	}
+}
+
+@PART[KIS_Container3]:NEEDS[KIS]:AFTER[KIS]
+{
+	%mass = 0.5
+	%MODULE[ModuleKISInventory]
+	{
+		%maxVolume = 6000
+	}
+
+	MODULE[ModuleKISItem]
+	{
+		volumeOverride = 7000
+	}
+}
+
+@KISConfig:NEEDS[KIS]:BEFORE[KIS]
+{
+	%EvaInventory
+	{
+		%maxVolume = 300
+	}
+}

@@ -3,13 +3,18 @@
 // Module authors: KospY, igor.zavoychinskiy@gmail.com
 // License: Restricted
 
+using KISAPIv1;
 using KIS.GUIUtils;
+using KSPDev.ConfigUtils;
 using KSPDev.GUIUtils;
 using KSPDev.LogUtils;
+using KSPDev.MathUtils;
+using KSPDev.PartUtils;
 using KSPDev.ProcessingUtils;
 using System;
-using System.Linq;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace KIS {
@@ -55,25 +60,114 @@ public sealed class KIS_Item {
       + " existing slot stack, but the item being added is currently equipped.");
   #endregion
 
+  /// <summary>Name for the helmet slot.</summary>
+  /// <remarks>
+  /// While the other slots are simply arbitrary strings, the helmet slot is special. When an item
+  /// equips to it, the stock helmet becomes hidden, and it becomes visible gains on unequip. 
+  /// </remarks>
+  public const string HelmetSlotName = "helmet";
+
   public ConfigNode partNode;
   public AvailablePart availablePart;
-  public int quantity;
-  public KIS_IconViewer icon = null;
-  public bool stackable = false;
+  public KIS_IconViewer icon;
+  public bool stackable;
   public string equipSlot;
-  public bool usableFromEva = false;
-  public bool usableFromContainer = false;
-  public bool usableFromPod = false;
-  public bool usableFromEditor = false;
-  public bool carriable = false;
-  public float volume;
-  public float cost;
-  public bool equipable = false;
-  public bool equipped = false;
+  public bool usableFromEva;
+  public bool usableFromContainer;
+  public bool usableFromPod;
+  public bool usableFromEditor;
+  public bool carriable;
+  public bool equipable;
+
+  #region Persisted properties
+  /// <summary>The number of items in the inventory slot.</summary>
+  /// <value>The number of items.</value>
+  public int quantity {
+    get { return _quantity; }
+    private set { _quantity = value; }
+  }
+  [PersistentField("quantity", group = StdPersistentGroups.PartPersistant)]
+  int _quantity;
+
+  /// <summary>Tells if the item is equipped on the kerbal.</summary>
+  /// <value><c>true</c> if equipped.</value>
+  public bool equipped {
+    get { return _equipped; }
+    private set { _equipped = value; }
+  }
+  [PersistentField("equipped", group = StdPersistentGroups.PartPersistant)]
+  bool _equipped;
+
+  /// <summary>
+  /// The item's part mass without the resources and content (if it's a KIS container).
+  /// </summary>
+  /// <value>The mass in tons.</value>
+  public double itemDryMass { get { return _itemDryMass; } }
+  [PersistentField("dryMass", group = StdPersistentGroups.PartPersistant)]
+  double _itemDryMass;
+
+  /// <summary>
+  /// The item's part cost without the resources and content (if it's a KIS container).
+  /// </summary>
+  /// <value>The cost in the game currency units.</value>
+  public double itemDryCost { get { return _itemDryCost; } }
+  [PersistentField("dryCost", group = StdPersistentGroups.PartPersistant)]
+  double _itemDryCost;
+
+  /// <summary>The item's resource mass, if any.</summary>
+  /// <value>The mass in tons.</value>
+  public double itemResourceMass { get { return _resourceMass; } }
+  [PersistentField("resourceMass", group = StdPersistentGroups.PartPersistant)]
+  double _resourceMass;
+
+  /// <summary>The item's resource cost, if any.</summary>
+  /// <value>The cost in the game currency units.</value>
+  public double itemResourceCost { get { return _resourceCost; } }
+  [PersistentField("resourceCost", group = StdPersistentGroups.PartPersistant)]
+  double _resourceCost;
+
+  /// <summary>The item's content mass, if it's a KIS inventory.</summary>
+  /// <value>The mass in tons.</value>
+  public double itemContentMass { get { return _contentMass; } }
+  [PersistentField("contentMass", group = StdPersistentGroups.PartPersistant)]
+  double _contentMass;
+
+  /// <summary>The item's content cost, if any.</summary>
+  /// <value>The cost in the game currency units.</value>
+  public double itemContentCost { get { return _contentCost; } }
+  [PersistentField("contentCost", group = StdPersistentGroups.PartPersistant)]
+  double _contentCost;
+  #endregion
+
+  #region API properties
+  /// <summary>Total voulme of the item's meshes.</summary>
+  /// <value>The volume in liters.</value>
+  public double itemVolume { get; private set; }
+
+  /// <summary>Total cost of the part and its content and resources.</summary>
+  /// <value>The cost in the game currency untis.</value>
+  public double fullItemCost { get { return itemDryCost + itemResourceCost + itemContentCost; } }
+
+  /// <summary>Total mass of the part and its content and resources.</summary>
+  /// <value>The mass in tons.</value>
+  public double fullItemMass { get { return itemDryMass + itemResourceMass + itemContentMass; } }
+  #endregion
+
+  #region Slot properties
+  public int slot { get { return inventory.items.FirstOrDefault(x => x.Value == this).Key; } }
+  public double stackVolume { get { return itemVolume * quantity; } }
+  public double totalSlotCost { get { return fullItemCost * quantity; } }
+  public double totalSlotMass { get { return fullItemMass * quantity; } }
+  #endregion
+
+  /// <summary>Inventory that owns this item.</summary>
   public ModuleKISInventory inventory;
-  public ModuleKISItem prefabModule;
+
+  /// <summary>Part module that implements this item.</summary>
+  public ModuleKISItem prefabModule { get; private set; }
+
   GameObject equippedGameObj;
-  public Part equippedPart;
+  public Part equippedPart { get; private set; }
   Transform evaTransform;
   public enum ActionType {
     Drop,
@@ -100,17 +194,6 @@ public sealed class KIS_Item {
     Player,
     /// <summary>Physics effect have trigegred the action.</summary>
     Physics,
-  }
-
-  public float resourceMass = 0;
-  public float contentMass = 0;
-  public float contentCost = 0;
-  public string inventoryName = "";
-
-  public struct ResourceInfo {
-    public string resourceName;
-    public double amount;
-    public double maxAmount;
   }
 
   public EquipMode equipMode {
@@ -153,210 +236,169 @@ public sealed class KIS_Item {
     }
   }
 
-  public int slot { get { return inventory.items.FirstOrDefault(x => x.Value == this).Key; } }
-  public float stackVolume { get { return volume * quantity; } }
-  public float dryMass { get { return availablePart.partPrefab.mass; } }
-  public float stackDryMass { get { return dryMass * quantity; } }
-  public float totalCost { get { return (cost + contentCost) * quantity; } }
-  public float totalMass { get { return stackDryMass + resourceMass + contentMass; } }
+  /// <summary>Creates an item, restored form the save file.</summary>
+  /// <param name="itemNode">The item config node to load the data from.</param>
+  /// <param name="inventory">The owner inventory of the item.</param>
+  /// <returns>The item instance.</returns>
+  public static KIS_Item RestoreItemFromNode(ConfigNode itemNode, ModuleKISInventory inventory) {
+    var qty = ConfigAccessor.GetValueByPath<int>(itemNode, "quantity") ?? 0;
+    var partName = itemNode.GetValue("partName");
+    AvailablePart avPart = null;
+    if (partName != null) {
+      avPart = PartLoader.getPartInfoByName(partName);
+    }
+    if (qty == 0 || partName == null || avPart == null) {
+      DebugEx.Error("Bad item config:\n{0}", itemNode);
+      throw new ArgumentException("Bad item config node", "itemNode");
+    }
+    return new KIS_Item(avPart, itemNode, inventory, qty);
+  }
 
-  /// <summary>A breaking force of a joint that attaches equipped item to the kerbal.</summary>
-  /// TODO: Read it from the items's config. See #128.
-  const float EqippedPartJointBreakForce = 50.0f;
+  /// <summary>Creates an item from a part in the scene.</summary>
+  /// <param name="part">The part to clone. It must be fully initialized.</param>
+  /// <param name="inventory">The owner inventory of the item.</param>
+  /// <param name="quantity">The number of items in the slot.</param>
+  /// <returns>The item instance.</returns>
+  public static KIS_Item CreateItemFromScenePart(Part part, ModuleKISInventory inventory,
+                                                 int quantity = 1) {
+    return new KIS_Item(part, inventory, quantity);
+  }
 
-  /// <summary>Creates a new part from save.</summary>
-  public KIS_Item(AvailablePart availablePart, ConfigNode itemNode, ModuleKISInventory inventory,
-                  int quantity = 1) {
-    // Get part node
+  /// <summary>Creates a new item, given a saved state.</summary>
+  /// <remarks>
+  /// It's intentionally private. The items must be restored thru the factory methods.
+  /// </remarks>
+  /// <seealso cref="RestoreItemFromNode"/>
+  KIS_Item(AvailablePart availablePart, ConfigNode itemNode,
+           ModuleKISInventory inventory, int quantity) {
     this.availablePart = availablePart;
-    partNode = new ConfigNode();
+    this.inventory = inventory;
+    this.quantity = quantity;
+    SetPrefabModule();
+    this.stackable = CheckItemStackable(availablePart);
+    this.partNode = new ConfigNode();
     itemNode.GetNode("PART").CopyTo(partNode);
-    // init config
-    this.InitConfig(availablePart, inventory, quantity);
-    // Get mass
-    if (itemNode.HasValue("resourceMass")) {
-      resourceMass = float.Parse(itemNode.GetValue("resourceMass"));
-    } else {
-      resourceMass = availablePart.partPrefab.GetResourceMass();
+    ConfigAccessor.ReadFieldsFromNode(
+        itemNode, GetType(), this, group: StdPersistentGroups.PartPersistant);
+    this.itemVolume = KISAPI.PartUtils.GetPartVolume(availablePart, partNode: partNode);
+
+    // COMPATIBILITY: Set/restore the dry cost and mass. 
+    // TODO(ihsoft): This code is only needed for the pre-1.17 KIS version saves. Drop it one day.  
+    if (this.itemDryMass < float.Epsilon || this.itemDryCost < float.Epsilon) {
+      this._itemDryMass = KISAPI.PartUtils.GetPartDryMass(availablePart, partNode: partNode);
+      this._itemDryCost = KISAPI.PartUtils.GetPartDryCost(availablePart, partNode: partNode);
+      DebugEx.Warning("Calculated values for a pre 1.17 version save: dryMass={0}, dryCost={1}",
+                      this.itemDryMass, this.itemDryCost);
     }
-    if (itemNode.HasValue("contentMass")) {
-      contentMass = float.Parse(itemNode.GetValue("contentMass"));
-    }
-    if (itemNode.HasValue("contentCost")) {
-      contentCost = float.Parse(itemNode.GetValue("contentCost"));
-    }
-    if (itemNode.HasValue("inventoryName")) {
-      inventoryName = itemNode.GetValue("inventoryName");
+
+    // COMPATIBILITY: Set/restore the resources cost and mass.
+    // TODO(ihsoft): This code is only needed for the pre-1.17 KIS version saves. Drop it one day.  
+    var resourceNodes = PartNodeUtils.GetModuleNodes(partNode, "RESOURCE");
+    if (resourceNodes.Any()
+        && (this.itemResourceMass < float.Epsilon || this.itemResourceCost < float.Epsilon)) {
+      var oldResourceMass = this.itemResourceMass;
+      foreach (var resourceNode in resourceNodes) {
+        var resource = new ProtoPartResourceSnapshot(resourceNode);
+        this._resourceMass += (float)resource.amount * resource.definition.density;
+        this._resourceCost += (float)resource.amount * resource.definition.unitCost;
+      }
+      DebugEx.Warning("Calculated values for a pre 1.17 version save:"
+                      + " oldResourceMass={0}, newResourceMass={1}, resourceCost={2}",
+                      oldResourceMass, this.itemResourceMass, this.itemResourceCost);
     }
   }
 
   /// <summary>Creates a new part from scene.</summary>
-  public KIS_Item(Part part, ModuleKISInventory inventory, int quantity = 1) {
-    // Get part node
-    this.availablePart = PartLoader.getPartInfoByName(part.partInfo.name);
-    this.partNode = new ConfigNode();
-    KIS_Shared.PartSnapshot(part).CopyTo(this.partNode);
-    // init config
-    this.InitConfig(availablePart, inventory, quantity);
-    // Get mass
-    this.resourceMass = part.GetResourceMass();
-    ModuleKISInventory itemInventory = part.GetComponent<ModuleKISInventory>();
-    if (itemInventory) {
-      this.contentMass = itemInventory.GetContentMass();
-      this.contentCost = itemInventory.GetContentCost();
-      if (itemInventory.invName != "") {
-        this.inventoryName = itemInventory.invName;
-      }
-    }
-  }
-
-  void InitConfig(AvailablePart availablePart, ModuleKISInventory inventory, int quantity) {
+  /// <remarks>
+  /// It's intentionally private. The items must be created thru the factory methods.
+  /// </remarks>
+  /// <seealso cref="CreateItemFromScenePart"/>
+  KIS_Item(Part part, ModuleKISInventory inventory, int quantity) {
+    this.availablePart = part.partInfo;
     this.inventory = inventory;
     this.quantity = quantity;
-    prefabModule = availablePart.partPrefab.GetComponent<ModuleKISItem>();
-    volume = KIS_Shared.GetPartVolume(availablePart);
-    cost = GetCost();
+    SetPrefabModule();
+    this.stackable = CheckItemStackable(availablePart);
+    this.partNode = KISAPI.PartNodeUtils.PartSnapshot(part);
 
-    // Set launchID
-    if (partNode.HasValue("launchID")) {
-      if (int.Parse(this.partNode.GetValue("launchID")) == 0) {
-        partNode.SetValue("launchID", this.inventory.part.launchID.ToString(), true);
-      }
-    } else {
-      partNode.SetValue("launchID", this.inventory.part.launchID.ToString(), true);
-    }
+    this.itemVolume = KISAPI.PartUtils.GetPartVolume(part.partInfo, partNode: partNode);
+    CaptureItemStateFromPart(part);
+  }
 
-    if (prefabModule) {
-      equipable = prefabModule.equipable;
-      stackable = prefabModule.stackable;
-      equipSlot = prefabModule.equipSlot;
-      usableFromEva = prefabModule.usableFromEva;
-      usableFromContainer = prefabModule.usableFromContainer;
-      usableFromPod = prefabModule.usableFromPod;
-      usableFromEditor = prefabModule.usableFromEditor;
-      carriable = prefabModule.carriable;
-    }
-    int nonStackableModule = 0;
-    foreach (PartModule pModule in availablePart.partPrefab.Modules) {
-      if (!KISAddonConfig.stackableModules.Contains(pModule.moduleName)) {
-        nonStackableModule++;
-      }
-    }
-    if (nonStackableModule == 0 && GetResources().Count == 0) {
-      DebugEx.Info(
-          "No non-stackable module or a resource found on the part, set the item as stackable");
-      stackable = true;
-    }
-    if (KISAddonConfig.stackableList.Contains(availablePart.name)
-        || availablePart.name.IndexOf('.') != -1
-        && KISAddonConfig.stackableList.Contains(availablePart.name.Replace('.', '_'))) {
-      DebugEx.Info("Part name present in settings.cfg (node StackableItemOverride),"
-                   + " force item as stackable");
-      stackable = true;
-    }
+  /// <summary>Sets the item's equipped state.</summary>
+  /// <remarks>
+  /// Changing of the state does <i>not</i> equip or unequip the item. It only changes the state.
+  /// </remarks>
+  /// <param name="state">The state.</param>
+  /// <seealso cref="equipped"/>
+  public void SetEquipedState(bool state) {
+    equipped = state;
+  }
+
+  /// <summary>Tells if the part can be stacked in the inventory.</summary>
+  /// <param name="avPart">The part proto to check.</param>
+  /// <returns><c>true</c> if it can stack.</returns>
+  public static bool CheckItemStackable(AvailablePart avPart) {
+    var module = avPart.partPrefab.GetComponent<ModuleKISItem>();
+    var allModulesCompatible = avPart.partPrefab.Modules.Cast<PartModule>()
+        .All(m => KISAddonConfig.stackableModules.Contains(m.moduleName));
+    var hasNoResources = KISAPI.PartNodeUtils.GetResources(avPart.partConfig).Length == 0;
+    return module != null && module.stackable
+        || KISAddonConfig.stackableList.Contains(avPart.name.Replace('.', '_'))
+        || allModulesCompatible && hasNoResources;
   }
 
   public void OnSave(ConfigNode node) {
-    node.AddValue("partName", this.availablePart.name);
+    node.AddValue("partName", availablePart.name);
     node.AddValue("slot", slot);
-    node.AddValue("quantity", quantity);
-    node.AddValue("equipped", equipped);
-    node.AddValue("resourceMass", resourceMass);
-    node.AddValue("contentMass", contentMass);
-    node.AddValue("contentCost", contentCost);
-    if (inventoryName != "") {
-      node.AddValue("inventoryName", inventoryName);
-    }
+    ConfigAccessor.WriteFieldsIntoNode(
+        node, GetType(), this, group: StdPersistentGroups.PartPersistant);
     // Items in pod and container may have equipped status True but they are not actually equipped,
     // so there is no equipped part.
     if (equipped && equippedPart != null
         && (equipMode == EquipMode.Part || equipMode == EquipMode.Physic)) {
-      DebugEx.Info("Update config node of equipped part: {0}", availablePart.title);
-      partNode.ClearData();
-      KIS_Shared.PartSnapshot(equippedPart).CopyTo(partNode);
+      HostedDebugLog.Info(
+          inventory, "Update config node of equipped part: {0}", availablePart.name);
+      partNode = KISAPI.PartNodeUtils.PartSnapshot(equippedPart);
     }
     partNode.CopyTo(node.AddNode("PART"));
   }
 
-  public List<ResourceInfo> GetResources() {
-    var resources = new List<ResourceInfo>();
-    foreach (ConfigNode node in this.partNode.GetNodes("RESOURCE")) {
-      if (node.HasValue("name") && node.HasValue("amount") && node.HasValue("maxAmount")) {
-        var rInfo = new ResourceInfo();
-        rInfo.resourceName = node.GetValue("name");
-        rInfo.amount = double.Parse(node.GetValue("amount"));
-        rInfo.maxAmount = double.Parse(node.GetValue("maxAmount"));
-        resources.Add(rInfo);
-      }
+  /// <summary>Updates the item's resource.</summary>
+  /// <param name="name">The new of the resource.</param>
+  /// <param name="amount">The new amount or delta.</param>
+  /// <param name="isAmountRelative">
+  /// Tells if the amount must be added to the current item's amount instead of simply replacing it.
+  /// </param>
+  /// <returns>
+  /// The new resource amount or <c>null</c> of resource not found. Note, that the resource amount
+  /// can be less than zero.
+  /// </returns>
+  public double? UpdateResource(string name, double amount, bool isAmountRelative = false) {
+    var res = KISAPI.PartNodeUtils.UpdateResource(
+        partNode, name, amount, isAmountRelative: isAmountRelative);
+    if (res.HasValue) {
+      HostedDebugLog.Fine(
+          inventory, "Updated item resource: name={0}, newAmount={1}", name, res);
+      inventory.RefreshContents();
+    } else {
+      HostedDebugLog.Error(
+          inventory, "Cannot find resource {0} in item for {1}", name, availablePart.name);
     }
-    return resources;
-  }
-
-  public List<ScienceData> GetSciences() {
-    var sciences = new List<ScienceData>();
-    foreach (ConfigNode module in this.partNode.GetNodes("MODULE")) {
-      foreach (ConfigNode experiment in module.GetNodes("ScienceData")) {
-        var scienceData = new ScienceData(experiment);
-        sciences.Add(scienceData);
-      }
-    }
-    return sciences;
-  }
-
-  // TODO(ihsoft): Move to KIS_Shared.
-  public float GetCost() {
-    // TweakScale compatibility
-    foreach (ConfigNode node in this.partNode.GetNodes("MODULE")) {
-      if (node.HasValue("name") && node.GetValue("name") == "TweakScale"
-          && node.HasValue("DryCost")) {
-        double ressourcesCost = 0;
-        foreach (ResourceInfo resource in GetResources()) {
-          var pRessourceDef = PartResourceLibrary.Instance.GetDefinition(resource.resourceName);
-          ressourcesCost += resource.amount * pRessourceDef.unitCost;
-        }
-        return float.Parse(node.GetValue("DryCost")) + (float)ressourcesCost;
-      }
-    }
-    return availablePart.cost;
-  }
-
-  public void SetResource(string name, double amount) {
-    foreach (ConfigNode node in this.partNode.GetNodes("RESOURCE")) {
-      if (node.HasValue("name") && node.GetValue("name") == name
-          && node.HasValue("amount") && node.HasValue("maxAmount")) {
-        node.SetValue("amount", amount.ToString());
-        return;
-      }
-    }
+    return res;
   }
 
   public void EnableIcon(int resolution) {
     DisableIcon();
-    icon = new KIS_IconViewer(availablePart.partPrefab, resolution);
+    icon = new KIS_IconViewer(
+        availablePart, resolution,
+        VariantsUtils.GetCurrentPartVariant(availablePart, partNode));
   }
 
   public void DisableIcon() {
     if (icon != null) {
       icon.Dispose();
       icon = null;
-    }
-  }
-
-  //TODO(ihsoft): It's too expensive to call it for every item.
-  public void Update() {
-    if (equippedGameObj != null) {
-      equippedGameObj.transform.rotation =
-          evaTransform.rotation * Quaternion.Euler(prefabModule.equipDir);
-      equippedGameObj.transform.position = evaTransform.TransformPoint(prefabModule.equipPos);
-    }
-    if (prefabModule != null) {
-      prefabModule.OnItemUpdate(this);
-    }
-  }
-
-  public void GUIUpdate() {
-    if (prefabModule) {
-      prefabModule.OnItemGUI(this);
     }
   }
 
@@ -369,7 +411,7 @@ public sealed class KIS_Item {
       UISounds.PlayBipWrong();
       return false;
     }
-    float newVolume = inventory.totalVolume + (volume * qty);
+    var newVolume = inventory.totalContentsVolume + (itemVolume * qty);
     if (checkVolume && newVolume > inventory.maxVolume) {
       ScreenMessaging.ShowPriorityScreenMessage(
           CannotStackMaxVolumeReachedMsg.Format(newVolume - inventory.maxVolume));
@@ -381,34 +423,46 @@ public sealed class KIS_Item {
   public bool StackAdd(int qty, bool checkVolume = true) {
     if (CanStackAdd(qty, checkVolume)) {
       quantity += qty;
-      inventory.RefreshMassAndVolume();
+      inventory.RefreshContents();
       return true;
     }
     return false;
   }
 
-  public bool StackRemove(int qty = 1) {
+  /// <summary>Removes items form the stack.</summary>
+  /// <remarks>
+  /// This method does its best. If it cannot remove the desired number of items, then it removes as
+  /// many is there are avaiable in the slot.
+  /// </remarks>
+  /// <param name="qty">The number of items to remove.</param>
+  /// <returns>The actual number of items removed.</returns>
+  public int StackRemove(int qty) {
     if (qty <= 0) {
-      return false;
+      return 0;
     }
-    if (quantity - qty <= 0) {
+    int removeQty;
+    if (quantity - qty < 0) {
+      removeQty = quantity;
+      HostedDebugLog.Fine(inventory, "Exhausted item quantity: name={0}, removeExactly={1}",
+                          availablePart.name, removeQty);
+    } else {
+      removeQty = qty;
+    }
+    quantity -= removeQty;
+    inventory.RefreshContents();
+    if (quantity == 0) {
       Delete();
-      return false;
     }
-    quantity -= qty;
-    inventory.RefreshMassAndVolume();
-    return true;
+    return removeQty;
   }
 
   public void Delete() {
-    if (inventory.showGui) {
-      DisableIcon();
-    }
+    DisableIcon();
     if (equipped) {
       Unequip();
     }
     inventory.items.Remove(slot);
-    inventory.RefreshMassAndVolume();
+    inventory.RefreshContents();
   }
 
   public void ShortcutKeyPress() {
@@ -444,7 +498,7 @@ public sealed class KIS_Item {
       UISounds.PlayBipWrong();
       return;
     }
-    DebugEx.Info("Equip item {0} in mode {1}", availablePart.title, equipMode);
+    DebugEx.Info("Equip item: partName={0}, mode={1}", availablePart.title, equipMode);
 
     // Check if the skill is needed. Skip the check in the sandbox modes.
     if (HighLogic.CurrentGame.Mode != Game.Modes.SANDBOX
@@ -471,7 +525,7 @@ public sealed class KIS_Item {
     // Check if slot is already occupied.
     if (equipSlot != null) {
       KIS_Item equippedItem = inventory.GetEquipedItem(equipSlot);
-      if (equippedItem != null) {
+      if (equippedItem != null && equippedItem != this) {
         if (equippedItem.carriable && actorType == ActorType.Player) {
           ScreenMessaging.ShowPriorityScreenMessage(
               CannotEquipAlreadyCarryingMsg.Format(equipSlot, equippedItem.availablePart.title));
@@ -526,15 +580,27 @@ public sealed class KIS_Item {
       }
     }
 
-    if (prefabModule.equipRemoveHelmet) {
-      // Presumably, it's a helmet replacement.
-      inventory.SetHelmet(false, playSound: false);
+    // Hide the stock meshes if the custom helmet is equipped.
+    if (equipSlot == HelmetSlotName) {
+      var kerbalModule = inventory.part.FindModuleImplementing<KerbalEVA>();
+      if (kerbalModule.helmetTransform != null) {
+        for (var i = 0; i < kerbalModule.helmetTransform.childCount; i++) {
+          kerbalModule.helmetTransform.GetChild(i).gameObject.SetActive(false);
+        }
+        if (equippedGameObj != null) {
+          equippedGameObj.transform.parent = kerbalModule.helmetTransform;
+        }
+      } else {
+        DebugEx.Warning("Kerbal model doesn't have helmet transform: {0}", inventory);
+      }
     }
+
     if (actorType == ActorType.Player) {
       UISoundPlayer.instance.Play(prefabModule.moveSndPath);
     }
     equipped = true;
     prefabModule.OnEquip(this);
+    inventory.StartCoroutine(AlignEquippedPart());
   }
 
   public void Unequip(ActorType actorType = ActorType.API) {
@@ -545,14 +611,10 @@ public sealed class KIS_Item {
     equipped = false;
     if (equipMode == EquipMode.Model) {
       UnityEngine.Object.Destroy(equippedGameObj);
-      if (prefabModule.equipRemoveHelmet) {
-        inventory.SetHelmet(true, playSound: false);
-      }
     }
     if (equipMode == EquipMode.Part || equipMode == EquipMode.Physic) {
-      DebugEx.Info("Update config node of equipped part: {0}", availablePart.title);
-      partNode.ClearData();
-      KIS_Shared.PartSnapshot(equippedPart).CopyTo(partNode);
+      HostedDebugLog.Info(inventory, "Update config node of the equipped part: {0}", equippedPart);
+      partNode = KISAPI.PartNodeUtils.PartSnapshot(equippedPart);
       equippedPart.Die();
     }
     evaTransform = null;
@@ -562,6 +624,18 @@ public sealed class KIS_Item {
       UISoundPlayer.instance.Play(prefabModule.moveSndPath);
     }
     prefabModule.OnUnEquip(this);
+
+    // Return back the stock meshes if the custom helmet is unequipped.
+    if (equipSlot == HelmetSlotName) {
+      var kerbalModule = inventory.part.FindModuleImplementing<KerbalEVA>();
+      if (kerbalModule.helmetTransform != null) {
+        for (var i = 0; i < kerbalModule.helmetTransform.childCount; i++) {
+          kerbalModule.helmetTransform.GetChild(i).gameObject.SetActive(true);
+        }
+      } else {
+        DebugEx.Warning("Kerbal model doesn't have helmet transform: {0}", inventory.part);
+      }
+    }
   }
 
   public void OnEquippedPartReady(Part createdPart) {
@@ -588,15 +662,8 @@ public sealed class KIS_Item {
       rot = inventory.part.transform.rotation;
       pos = inventory.part.transform.position + new Vector3(0, 1, 0);
     }
+    StackRemove(1);  // This may update partNode!
     KIS_Shared.CreatePart(partNode, pos, rot, fromPart);
-    StackRemove(1);
-  }
-
-  public void ReEquip() {
-    if (equipped) {
-      Unequip();
-      Equip();
-    }
   }
 
   public void OnMove(ModuleKISInventory srcInventory, ModuleKISInventory destInventory) {
@@ -621,6 +688,71 @@ public sealed class KIS_Item {
       prefabModule.OnDragToInventory(this, destInventory, destSlot);
     }
   }
+
+  #region Local utility methods
+  /// <summary>Coroutine to align the equipped item to the kerbal model.</summary>
+  IEnumerator AlignEquippedPart() {
+    var lastUpdated = 0f;
+    var lastMass = totalSlotMass;
+    var lastCost = totalSlotCost;
+    while (equippedGameObj != null && evaTransform != null) {
+      if (carried && lastUpdated + 0.1f < Time.unscaledTime) {
+        lastUpdated = Time.unscaledTime;
+        CaptureItemStateFromPart(equippedPart);
+        if (!Mathd.AreSame(lastMass, totalSlotMass) || !Mathd.AreSame(lastCost, totalSlotCost)) {
+          inventory.RefreshContents();
+        }
+        lastMass = totalSlotMass;
+        lastCost = totalSlotCost;
+      }
+      equippedGameObj.transform.rotation =
+          evaTransform.rotation * Quaternion.Euler(prefabModule.equipDir);
+      equippedGameObj.transform.position = evaTransform.TransformPoint(prefabModule.equipPos);
+      yield return new WaitForEndOfFrame();
+    }
+  }
+
+  /// <summary>Extracts the KIS module item from the part.</summary>
+  void SetPrefabModule() {
+    prefabModule = availablePart.partPrefab.GetComponent<ModuleKISItem>();
+    if (prefabModule) {
+      equipable = prefabModule.equipable;
+      stackable = prefabModule.stackable;
+      equipSlot = prefabModule.equipSlot;
+      usableFromEva = prefabModule.usableFromEva;
+      usableFromContainer = prefabModule.usableFromContainer;
+      usableFromPod = prefabModule.usableFromPod;
+      usableFromEditor = prefabModule.usableFromEditor;
+      carriable = prefabModule.carriable;
+    }
+  }
+
+  /// <summary>Updates the item state so that it matches a part's state.</summary>
+  /// <param name="copyFrom">The part to copy state from.</param>
+  void CaptureItemStateFromPart(Part copyFrom) {
+    // Don't trust the part's mass. It can be affected by too many factors.
+    _itemDryMass = copyFrom.partInfo.partPrefab.mass
+        + copyFrom.GetModuleMass(copyFrom.partInfo.partPrefab.mass);
+    _itemDryCost = copyFrom.partInfo.cost
+        + copyFrom.GetModuleCosts(copyFrom.partInfo.cost);
+    foreach (var resource in copyFrom.Resources) {
+      _resourceMass += (float)resource.amount * resource.info.density;
+      _resourceCost += (float)resource.amount * resource.info.unitCost;
+    }
+
+    // Handle the case when the item is a container.
+    var itemInventories = copyFrom.Modules.OfType<ModuleKISInventory>();
+    _contentMass = 0;
+    _contentCost = 0;
+    foreach (var itemInventory in itemInventories) {
+      _contentMass += itemInventory.contentsMass;
+      _contentCost += itemInventory.contentsCost;
+    }
+    // Fix dry mass/cost since it's reported by the container modules.
+    _itemDryMass -= _contentMass;
+    _itemDryCost -= _contentCost;
+  }
+  #endregion
 }
 
 }  // namespace
