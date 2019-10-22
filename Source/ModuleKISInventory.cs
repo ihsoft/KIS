@@ -1745,7 +1745,7 @@ public class ModuleKISInventory : PartModule,
   }
 
   /// <summary>Handles storing an item in an empty slot.</summary>
-  /// Only call this for empty slots!
+  /// <remarks>Only call it for an empty slots!</remarks>
   /// <param name="slotIndex">Slot's index in inventory.</param>
   void PutDraggedItemIntoEmptySlot(int slotIndex) {
     // Check if part can be carried
@@ -1756,7 +1756,7 @@ public class ModuleKISInventory : PartModule,
       draggedItemModule = KISAddonPickup.draggedItem.prefabModule;
     }
 
-    if (draggedItemModule && draggedItemModule.carriable) {
+    if (draggedItemModule != null && draggedItemModule.carriable) {
       if (HighLogic.LoadedSceneIsEditor && podSeat != -1) {
         ScreenMessaging.ShowPriorityScreenMessage(CarriableItemsNotForSeatsInventoryMsg);
         storePart = false;
