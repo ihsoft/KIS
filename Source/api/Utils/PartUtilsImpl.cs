@@ -114,14 +114,18 @@ public class PartUtilsImpl {
   /// needed anymore.
   /// </returns>
   public GameObject GetSceneAssemblyModel(Part rootPart, bool goThruChildren = true) {
-    var modelObj = UnityEngine.Object.Instantiate<GameObject>(
-        Hierarchy.GetPartModelTransform(rootPart).gameObject);
+    var modelObj = new GameObject("KisAssemblyRoot");
     modelObj.SetActive(true);
 
+    // Add a root object with scale 1.0 to account any part model adjustments.
+    var partModelObj = UnityEngine.Object.Instantiate<GameObject>(
+        Hierarchy.GetPartModelTransform(rootPart).gameObject);
+    partModelObj.transform.SetParent(modelObj.transform, worldPositionStays: false);
+    partModelObj.SetActive(true);
     // Drop stuff that is not intended to show up in flight.
-    PartLoader.StripComponent<MeshRenderer>(modelObj, "Icon_Hidden", true);
-    PartLoader.StripComponent<MeshFilter>(modelObj, "Icon_Hidden", true);
-    PartLoader.StripComponent<SkinnedMeshRenderer>(modelObj, "Icon_Hidden", true);
+    PartLoader.StripComponent<MeshRenderer>(partModelObj, "Icon_Hidden", true);
+    PartLoader.StripComponent<MeshFilter>(partModelObj, "Icon_Hidden", true);
+    PartLoader.StripComponent<SkinnedMeshRenderer>(partModelObj, "Icon_Hidden", true);
 
     // Strip anything that is not mesh related.
     var joints = new List<Joint>();
@@ -187,13 +191,7 @@ public class PartUtilsImpl {
       return itemModule.volumeOverride  // Ignore geometry.
           * KISAPI.PartNodeUtils.GetTweakScaleSizeModifier(partNode);  // But respect TweakScale.
     }
-    var bounds = default(Bounds);
-    VariantsUtils.ExecuteAtPartVariant(avPart, variant, p => {
-      var partModel = GetSceneAssemblyModel(p).transform;
-      bounds.Encapsulate(GetMeshBounds(partModel));
-      UnityEngine.Object.DestroyImmediate(partModel.gameObject);
-    });
-    var boundsSize = bounds.size;
+    var boundsSize = GetPartBounds(avPart, variant: variant, partNode: partNode);
     return boundsSize.x * boundsSize.y * boundsSize.z * 1000f;
   }
 
@@ -207,6 +205,31 @@ public class PartUtilsImpl {
   public double GetPartVolume(Part part) {
     var partNode = KISAPI.PartNodeUtils.PartSnapshot(part);
     return GetPartVolume(part.partInfo, partNode: partNode);
+  }
+
+  /// <summary>Returns part's boundary box basing on its geometrics.</summary>
+  /// <remarks>The size is calculated from the part prefab model.</remarks>
+  /// <param name="avPart">The part proto to get the models from.</param>
+  /// <param name="variant">
+  /// The part's variant. If it's <c>null</c>, then the variant will be attempted to read from
+  /// <paramref name="partNode"/>.
+  /// </param>
+  /// <param name="partNode">
+  /// The part's persistent config. It will be looked up for the variant if it's not specified.
+  /// </param>
+  /// <returns>The volume in liters.</returns>
+  public Vector3 GetPartBounds(
+      AvailablePart avPart, PartVariant variant = null, ConfigNode partNode = null) {
+    var bounds = default(Bounds);
+    if (variant == null && partNode != null) {
+      variant = VariantsUtils.GetCurrentPartVariant(avPart, partNode);
+    }
+    VariantsUtils.ExecuteAtPartVariant(avPart, variant, p => {
+      var partModel = GetSceneAssemblyModel(p).transform;
+      bounds.Encapsulate(GetMeshBounds(partModel));
+      UnityEngine.Object.DestroyImmediate(partModel.gameObject);
+    });
+    return bounds.size;
   }
 
   /// <summary>Calculates part's dry mass given the config and the variant.</summary>
