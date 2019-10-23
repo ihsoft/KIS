@@ -6,6 +6,7 @@ using KSPDev.ConfigUtils;
 using KSPDev.LogUtils;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 
 namespace KISAPIv1 {
 
@@ -57,14 +58,32 @@ public class PartNodeUtilsImpl {
       CleanupModuleFieldsInPart(part);
     }
 
-    var partNode = new ConfigNode("PART");
-    var snapshot = new ProtoPartSnapshot(part, null);
+    // Persist the old part's proto state to not affect it after the snapshot.
+    var oldVessel = part.vessel;
+    var oldPartSnapshot = part.protoPartSnapshot;
+    var oldCrewSnapshot = part.protoModuleCrew;
+    if (oldVessel == null) {
+      part.vessel = part.gameObject.AddComponent<Vessel>();
+      DebugEx.Fine("Making a fake vessel for the part to make a snapshot: part={0}, vessel={1}",
+                   part, part.vessel);
+    }
 
+    var snapshot = new ProtoPartSnapshot(part, null);
     snapshot.attachNodes = new List<AttachNodeSnapshot>();
     snapshot.srfAttachNode = new AttachNodeSnapshot("attach,-1");
     snapshot.symLinks = new List<ProtoPartSnapshot>();
     snapshot.symLinkIdxs = new List<int>();
+    var partNode = new ConfigNode("PART");
     snapshot.Save(partNode);
+
+    // Rollback the part's proto state to the original settings.
+    if (oldVessel != part.vessel) {
+      DebugEx.Fine("Destroying the fake vessel: part={0}, vessel={1}", part, part.vessel);
+      Object.DestroyImmediate(part.vessel);
+    }
+    part.vessel = oldVessel;
+    part.protoPartSnapshot = oldPartSnapshot;
+    part.protoModuleCrew = oldCrewSnapshot;
 
     // Prune unimportant data.
     partNode.RemoveValues("parent");

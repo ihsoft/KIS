@@ -289,12 +289,10 @@ sealed class KISAddonPickup : MonoBehaviour {
   class EditorClickListener : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler {
     EditorPartIcon partIcon;
     bool dragStarted;
-    const PointerEventData.InputButton PartDragButton = PointerEventData.InputButton.Left;
 
     public virtual void OnBeginDrag(PointerEventData eventData) {
       // Start dargging for KIS or delegate event to the editor.
-      if (eventData.button == PartDragButton
-          && EventChecker.IsModifierCombinationPressed(editorGrabPartModifiers)) {
+      if (EventChecker.CheckClickEvent(editorPartGrabEvent, eventData.button)) {
         dragStarted = true;
         KISAddonPickup.instance.OnMouseGrabPartClick(partIcon.partInfo.partPrefab);
       } else {
@@ -317,7 +315,7 @@ sealed class KISAddonPickup : MonoBehaviour {
       // TODO: Handle KIS parts dropping here.
       if (!dragStarted) {
         EditorPartList.Instance.partListScrollRect.OnEndDrag(eventData);
-      } else if (eventData.button == PartDragButton) {
+      } else {
         dragStarted = false;
       }
     }
@@ -343,8 +341,8 @@ sealed class KISAddonPickup : MonoBehaviour {
   const string MountIcon = "KIS/Textures/mount";
   #endregion
 
-  [PersistentField("Editor/partGrabModifiers")]
-  static KeyModifiers editorGrabPartModifiers = KeyModifiers.None;
+  [PersistentField("Editor/editorPartGrabAction")]
+  public static string editorPartGrabAction = "mouse0";
 
   [PersistentField("EvaPickup/grabKey")]
   public static string grabKey = "g";
@@ -372,6 +370,10 @@ sealed class KISAddonPickup : MonoBehaviour {
   bool jetpackLock;
   bool delayedButtonUp;
 
+  /// <summary>Mouse/keyboard event that grabs a part from the editor's panel.</summary>
+  /// <seealso cref="editorPartGrabAction"/>
+  static Event editorPartGrabEvent;
+
   /// <summary>A number of parts in the currently grabbed assembly.</summary>
   public static int grabbedPartsCount;
   /// <summary>The total mass of the grabbed assembly. Tons.</summary>
@@ -389,7 +391,7 @@ sealed class KISAddonPickup : MonoBehaviour {
     Attach,
     ReDock
   }
-  private PointerMode _pointerMode = PointerMode.Drop;
+  PointerMode _pointerMode = PointerMode.Drop;
 
   public enum CursorMode {
     Nothing,
@@ -397,7 +399,7 @@ sealed class KISAddonPickup : MonoBehaviour {
     Grab,
     ReDock
   }
-  private CursorMode cursorMode = CursorMode.Nothing;
+  CursorMode cursorMode = CursorMode.Nothing;
 
   public enum PickupMode {
     Nothing,
@@ -405,7 +407,7 @@ sealed class KISAddonPickup : MonoBehaviour {
     Move,
     Undock
   }
-  private PickupMode pickupMode = PickupMode.Nothing;
+  PickupMode pickupMode = PickupMode.Nothing;
 
   public PointerMode pointerMode {
     get {
@@ -508,6 +510,7 @@ sealed class KISAddonPickup : MonoBehaviour {
 
   void Awake() {
     instance = this;
+    editorPartGrabEvent = Event.KeyboardEvent(editorPartGrabAction);
     if (HighLogic.LoadedSceneIsEditor) {
       if (EditorPartList.Instance) {
         var iconPrefab = EditorPartList.Instance.partPrefab.gameObject;
@@ -711,11 +714,13 @@ sealed class KISAddonPickup : MonoBehaviour {
           draggedItem.Delete();
         }
         if (HighLogic.LoadedSceneIsFlight) {
-          if (draggedItem != null) {
-            Drop(null, item: draggedItem);
-          } else {
-            movingPart = draggedPart;
-            Drop(movingPart);
+          if (!TryPutDraggedPartIntoInventory()) {
+            if (draggedItem != null) {
+              Drop(null, item: draggedItem);
+            } else {
+              movingPart = draggedPart;
+              Drop(movingPart);
+            }
           }
         }
       }
@@ -723,6 +728,43 @@ sealed class KISAddonPickup : MonoBehaviour {
       draggedPart = null;
     }
     KISAddonCursor.StopPartDetection();
+  }
+
+  bool TryPutDraggedPartIntoInventory() {
+    // While dragging a part KISAddonCursor and KISAddonPointer are not running, so neither will work here.
+    // TODO: Would be nice to have KISAddonCursor to provide better feedback. Or maybe create something like KISDragCursor?
+    KerbalEVA eva = null;
+    var hoveredPart = Mouse.HoveredPart;
+    if (hoveredPart != null) {
+      eva = hoveredPart.GetComponent<KerbalEVA>();
+    }
+    if (eva == null) {
+      return false;
+    }
+
+    var distance = Vector3.Distance(FlightGlobals.ActiveVessel.transform.position, eva.transform.position);
+    var maxDist = KISAddonPointer.maxDist;
+    if (draggedItem != null) {
+      // TODO: How to get max distance for item?
+    } else if (draggedPart != null) {
+      var modulePickup = draggedPart.FindModuleImplementing<ModuleKISPickup>();
+      if (modulePickup != null) {
+        maxDist = modulePickup.maxDistance;
+      }
+    }
+    if (distance > maxDist) {
+      // TODO: Show message here?
+      //ScreenMessaging.ShowInfoScreenMessage(TooFarFromTargetMsg.Format(distance, maxDist));
+      //UISounds.PlayBipWrong();
+      return false;
+    }
+
+    var inventory = eva.GetComponent<ModuleKISInventory>();
+    if (inventory == null) {
+      return false;
+    }
+
+    return inventory.PutDraggedItemIntoEmptySlot();
   }
 
   void OnMouseGrabEnterPart(Part part) {
@@ -774,13 +816,34 @@ sealed class KISAddonPickup : MonoBehaviour {
     }
     if (HighLogic.LoadedSceneIsFlight) {
       if (grabOk) {
-        Pickup(part);
+        var pickedUp = TryPickupFromInventory(part);
+        if (!pickedUp) {
+          Pickup(part);
+        }
       }
     } else if (HighLogic.LoadedSceneIsEditor) {
       if (ModuleKISInventory.GetAllOpenInventories().Count > 0) {
         Pickup(part);
       }
     }
+  }
+
+  bool TryPickupFromInventory(Part part) {
+    // Get the equipped item for the part:
+    var moduleItem = part.FindModuleImplementing<ModuleKISItem>();
+    if (!moduleItem) {
+        return false;
+    }
+    // TODO: This is a bit awkward. Is there a better way to get the corresponding KIS_Item for an equipped ModuleKISItem?
+    // Maybe store it in ModuleKISItem#OnEquip? Will this work when loading save games?
+    var item = part.vessel.FindPartModulesImplementing<ModuleKISInventory>()
+        .SelectMany(inventory => inventory.items.Values).ToList()
+        .Find(candidate => candidate.equipped && candidate.equippedPart == part);
+    if (item != null) {
+      Pickup(item);
+      return true;
+    }
+    return false;
   }
 
   void OnMouseGrabExitPart(Part p) {
@@ -998,7 +1061,7 @@ sealed class KISAddonPickup : MonoBehaviour {
         .FindPartModulesImplementing<ModuleKISPickup>()
         .Select(x => new {
             module = x,
-            sqrDist = Colliders.GetSqrDistanceToPartOrDefault(x.part.transform.position, refPart),
+            sqrDist = GetDistanceToPart(x, refPart),
             sqrRange = x.maxDistance * x.maxDistance
         })
         .OrderBy(x => x.sqrDist)
@@ -1006,6 +1069,16 @@ sealed class KISAddonPickup : MonoBehaviour {
     refPart.transform.position = oldPos;
     refPart.transform.rotation = oldRot;
     return pickup != null ? pickup.module : null;
+  }
+
+  /// <summary>Calculates the distance between the module and the part of the interest.</summary>
+  /// <param name="pickup">The module that tries to pickup the part.</param>
+  /// <param name="checkedPart">The part being picked up.</param>
+  /// <returns><c>true</c> if the designated pick up module can do it.</returns>
+  double GetDistanceToPart(PartModule pickup, Part checkedPart) {
+    return checkedPart.rb != null
+        ? Colliders.GetSqrDistanceToPartOrDefault(pickup.part.transform.position, checkedPart)
+        : Vector3.Distance(pickup.part.transform.position, checkedPart.transform.position);
   }
 
   /// <summary>Calculates the maximum mass that actor(s) can lift.</summary>
@@ -1036,8 +1109,7 @@ sealed class KISAddonPickup : MonoBehaviour {
     float maxMass = 0;
     var allPickupModules = FindObjectsOfType(typeof(ModuleKISPickup)).Cast<ModuleKISPickup>();
     foreach (var pickupModule in allPickupModules) {
-      var partDist = Colliders.GetSqrDistanceToPartOrDefault(
-          pickupModule.part.transform.position, refPart);
+      var partDist = GetDistanceToPart(pickupModule, refPart);
       if (partDist <= pickupModule.maxDistance * pickupModule.maxDistance) {
         HostedDebugLog.Fine(
             pickupModule, "Contribute into mass capability: mass={0}, distance={1}",
@@ -1465,8 +1537,11 @@ sealed class KISAddonPickup : MonoBehaviour {
   bool CheckCanGrabRealPart(Part part) {
     // Don't grab kerbals. It's weird, and they don't have the attachment nodes anyways.
     if (part.vessel.isEVA) {
-      ReportCheckError(GrabNotOkStatusTooltipTxt, CannotMoveKerbonautTooltipTxt);
-      return false;
+      // Double-check if we actually grabbed a kerbal or maybe an equipped item.
+      if (part.FindModuleImplementing<ModuleKISItem>() == null) {
+        ReportCheckError(GrabNotOkStatusTooltipTxt, CannotMoveKerbonautTooltipTxt);
+        return false;
+      }
     }
     // Don't grab stock game's ground experiments.
     if (part.Modules.OfType<ModuleGroundPart>().Any()) {
@@ -1479,7 +1554,9 @@ sealed class KISAddonPickup : MonoBehaviour {
       return false;
     }
     // Check if attached part has acceptable mass and can be detached.
-    return CheckMass(part, out grabbedPartsCount) && CheckCanDetach(part);
+    return CheckMass(part, out grabbedPartsCount)
+      && (part.vessel.isEVA && part != part.vessel.rootPart  // Equipped part.
+          || CheckCanDetach(part));
   }
 
   /// <summary>Calculates grabbed part/assembly mass and reports if it's too heavy.</summary>

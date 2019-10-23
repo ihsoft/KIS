@@ -1,4 +1,5 @@
-﻿using System;
+﻿using KSPDev.GUIUtils;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -25,10 +26,9 @@ sealed class KISAddonCursor : MonoBehaviour {
   const int ActionIconSize = 24;
   // It's quare.
   const int HintFontSize = 10;
-  const int HintTextLeftMargin = 4;
   // A gap between action icon and the text.
   static Color hintBackground = new Color(0.0f, 0.0f, 0.0f, 0.5f);
-  static GUIStyle hintWindowStyle = null;
+  HintOverlay hintOverlay;
 
   public static void AbortPartDetection() {
     StartPartDetection(null, null, null, null);
@@ -83,14 +83,7 @@ sealed class KISAddonCursor : MonoBehaviour {
   }
 
   void Awake() {
-    hintWindowStyle = new GUIStyle {
-        normal = {
-            background = CreateTextureFromColour(hintBackground),
-            textColor = Color.white
-        },
-        padding = new RectOffset(3, 3, 3, 3),
-        fontSize = HintFontSize
-    };
+    hintOverlay = new HintOverlay(HintFontSize, 3, Color.white, hintBackground);
   }
 
   void Update() {
@@ -153,14 +146,8 @@ sealed class KISAddonCursor : MonoBehaviour {
           allLines.AddRange(cursorAdditionalTexts);
         }
         var hintText = String.Join("\n", allLines.ToArray());
-        // Calculate the label region.
-        Vector2 textSize = hintWindowStyle.CalcSize(new GUIContent(hintText));
-        var hintLabelRect = new Rect(
-            mousePosition.x + ActionIconSize / 2 + HintTextLeftMargin,
-            mousePosition.y - ActionIconSize / 2,
-            textSize.x, textSize.y);
-  
-        GUI.Label(hintLabelRect, hintText, hintWindowStyle);
+        hintOverlay.text = hintText;
+        hintOverlay.ShowAtCursor();
       }
     }
   }

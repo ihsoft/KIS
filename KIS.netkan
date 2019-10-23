@@ -9,7 +9,7 @@
         "bugtracker": "https://github.com/ihsoft/KIS/issues",
         "manual": "https://github.com/ihsoft/KIS/raw/master/User%20Guide.pdf"
     },
-    "recommends"      : [
+    "depends"      : [
         { "name": "CommunityCategoryKit" },
         { "name": "ModuleManager" }
     ],
