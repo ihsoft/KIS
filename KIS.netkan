@@ -20,6 +20,5 @@
     "license"         : "restricted",
     "author"          : [ "IgorZ", "KospY", "Winn75"],
     "$vref"           : "#/ckan/ksp-avc",
-    "$kref"           : "#/ckan/curse/228561",
-    "x_netkan_version_edit" : "^v(?<version>.+)$"
+    "$kref"           : "#/ckan/spacedock/1909"
 }
