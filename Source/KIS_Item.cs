@@ -735,6 +735,8 @@ public sealed class KIS_Item {
         + copyFrom.GetModuleMass(copyFrom.partInfo.partPrefab.mass);
     _itemDryCost = copyFrom.partInfo.cost
         + copyFrom.GetModuleCosts(copyFrom.partInfo.cost);
+    _resourceMass = 0;
+    _resourceCost = 0;
     foreach (var resource in copyFrom.Resources) {
       _resourceMass += (float)resource.amount * resource.info.density;
       _resourceCost += (float)resource.amount * resource.info.unitCost;
