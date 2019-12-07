@@ -1,3 +1,5 @@
+# 1.24 (pre-release):
+
 # 1.23 (October 23rd, 2019):
 * [Change] `KSP 1.8` compatibility. __WARNING__: the mod won't work with version lower than `KSP 1.8`!
 * [Change] Replace `Editor/partGrabModifiers` setting with `Editor/editorPartGrabAction`.
