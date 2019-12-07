@@ -1,4 +1,5 @@
 # 1.24 (pre-release):
+* [Change] Add a workaround for #354 to not get GUI freezed.
 * [Fix #352] Incorrect calculation of resources on the equipped items.
 
 # 1.23 (October 23rd, 2019):
