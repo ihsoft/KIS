@@ -1,4 +1,5 @@
 # 1.25 (pre-release):
+* [Change] Update ES-ES localization.
 
 # 1.24 (December 6th, 2019):
 * [Change] Add a workaround for #354 to not get GUI freezed.
