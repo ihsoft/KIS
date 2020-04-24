@@ -292,7 +292,7 @@ sealed class KISAddonPickup : MonoBehaviour {
 
     public virtual void OnBeginDrag(PointerEventData eventData) {
       // Start dragging for KIS or delegate event to the editor.
-      if (EventChecker.CheckClickEvent(editorPartGrabEvent)) {
+      if (EventChecker.CheckClickEvent(editorPartGrabEvent, button: eventData.button)) {
         dragStarted = true;
         KISAddonPickup.instance.OnMouseGrabPartClick(partIcon.partInfo.partPrefab);
       } else {
