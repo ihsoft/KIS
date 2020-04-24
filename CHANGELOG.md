@@ -1,4 +1,5 @@
 # 1.25 (pre-release):
+* [Change] Stop complaining about KSP minor version change.
 * [Change] Update ES-ES localization.
 
 # 1.24 (December 6th, 2019):
