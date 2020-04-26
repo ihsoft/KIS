@@ -25,7 +25,7 @@
     "Plugins" : [
       "{COMPILED_BINARY}",
       "?{MINIAVC_VERSION_FILE}",
-      "/Binaries/MiniAVC-no-prune.dll",
+      "/Binaries/MiniAVC.dll",
       "/Binaries/KSPDev_Utils*",
       "-KSP-AVC.version"
     ]
