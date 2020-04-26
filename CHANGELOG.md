@@ -1,4 +1,8 @@
-# 1.24 (pre-release):
+# 1.25 (April 25th, 2020):
+* [Change] Stop complaining about KSP minor version change.
+* [Change] Update ES-ES localization.
+
+# 1.24 (December 6th, 2019):
 * [Change] Add a workaround for #354 to not get GUI freezed.
 * [Fix #352] Incorrect calculation of resources on the equipped items.
 

@@ -119,8 +119,7 @@ public class PartUtilsImpl {
 
     // Add a root object with scale 1.0 to account any part model adjustments.
     var partModelObj = UnityEngine.Object.Instantiate<GameObject>(
-        Hierarchy.GetPartModelTransform(rootPart).gameObject);
-    partModelObj.transform.SetParent(modelObj.transform, worldPositionStays: false);
+        Hierarchy.GetPartModelTransform(rootPart).gameObject, modelObj.transform, false);
     partModelObj.SetActive(true);
     // Drop stuff that is not intended to show up in flight.
     PartLoader.StripComponent<MeshRenderer>(partModelObj, "Icon_Hidden", true);

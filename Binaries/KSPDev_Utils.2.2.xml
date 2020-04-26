@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <doc>
     <assembly>
-        <name>KSPDev_Utils.2.1</name>
+        <name>KSPDev_Utils.2.2</name>
     </assembly>
     <members>
         <member name="T:KSPDev.ConfigUtils.AbstractCollectionTypeProto">
@@ -4594,7 +4594,7 @@
             The button or <c>null</c> if event doesn't have any recognizable mouse button.
             </returns>
         </member>
-        <member name="M:KSPDev.InputUtils.EventChecker.CheckClickEvent(UnityEngine.Event,System.Nullable{UnityEngine.EventSystems.PointerEventData.InputButton})">
+        <member name="M:KSPDev.InputUtils.EventChecker.CheckClickEvent(UnityEngine.Event,System.Nullable{UnityEngine.EventSystems.PointerEventData.InputButton},System.Boolean)">
             <summary>Checks if the mouse click event has happen during the frame.</summary>
             <remarks>
             This check treats "left" and "right" modifiers equally. And it doesn't consider any of the
@@ -4602,14 +4602,23 @@
             </remarks>
             <param name="ev">The event to match for.</param>
             <param name="button">
-            The mouse button that was clicked. If this parameter is omitted, then only the event modifiers
-            are checked. It can be used to check the "pre-condition".
+            The mouse button from the Unity <c>EventSystem</c> which is known to be pressed in this frame.
+            The <c>EventSystem</c> logic is not in sync with <c>MonoBehaviour.Update</c>, so the event
+            system handlers should provide the pressed <c>button</c> explicitly. The callers from the
+            <c>Update</c> method don't need to do so since the right action button can be extracted from
+            <paramref name="ev"/>.
+            </param>
+            <param name="onlyCheckModifiers">
+            Tells if only the modifiers in the event need to be checked. This is how a "precondition" can
+            be verified when the GUI is interactive and depends on the pressed keys.
             </param>
             <returns>
             <c>true</c> if the requested combination has matched the current frame state.
             </returns>
-            <seealso cref="M:KSPDev.InputUtils.EventChecker.GetInputButtonFromEvent(UnityEngine.Event)"/>
             <seealso cref="M:KSPDev.InputUtils.EventChecker.CheckAnySymmetricalModifiers(UnityEngine.Event)"/>
+            <seealso href="https://docs.unity3d.com/ScriptReference/Input.GetKeyDown.html">
+            Input.GetKeyDown
+            </seealso>
         </member>
         <member name="T:KSPDev.InputUtils.KeyboardInputSwitch">
              <summary>
@@ -5055,7 +5064,7 @@
              </item>
              <item>
              <term><see cref="M:KSPDev.KSPInterfaces.IPartModule.OnLoad(ConfigNode)"/></term>
-             <description>Is <b>not called</b> for the new parts since they are clonned. When a saved vessel
+             <description>Is <b>not called</b> for the new parts since they are cloned. When a saved vessel
              is loaded in the editor every part on the vessel gets this method called with the values from
              the save file. The annotated fields are populated from the file <i>before</i> this method gets
              control, so it's safe to use them.
@@ -5063,7 +5072,7 @@
              </item>
              <item>
              <term><see cref="M:KSPDev.KSPInterfaces.IPartModule.OnInitialize"/></term>
-             <description>Hard to say what it means for the edtior, but important difference from the flight
+             <description>Hard to say what it means for the editor, but important difference from the flight
              scenes is that this method is called before <see cref="M:KSPDev.KSPInterfaces.IPartModule.OnStart(PartModule.StartState)"/>.
              </description>
              </item>
@@ -5075,7 +5084,7 @@
              </item>
              </list>
             
-             <para>In the <i>fligth scenes</i> the callbacks are executed in the following order:</para>
+             <para>In the <i>flight scenes</i> the callbacks are executed in the following order:</para>
              <list type="table">
              <item>
              <term><see cref="M:KSPDev.KSPInterfaces.IPartModule.OnAwake"/></term>
