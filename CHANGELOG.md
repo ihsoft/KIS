@@ -1,4 +1,4 @@
-# 1.25 (pre-release):
+# 1.25 (April 25th, 2020):
 * [Change] Stop complaining about KSP minor version change.
 * [Change] Update ES-ES localization.
 
