@@ -1,4 +1,5 @@
 # 1.26 (pre-release):
+* [Fix #364] KSP 1.10: Carriable items cannot be equipped.
 
 # 1.25 (April 25th, 2020):
 * [Change] Stop complaining about KSP minor version change.
