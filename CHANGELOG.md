@@ -3,7 +3,7 @@
 * [Enhancement] Add a new fun part: Snacks!
 * [Enhancement] Add storage lockers parts. They used to be a part of the defunc SEP mod.
 * [Enhancement #360] Use fuel type from the config for the EVA fuel canister.
-* [Fix #362] Tab Key in Map View.
+* [Fix #362] Tab Key in Map View crashes the game.
 * [Fix #364] KSP 1.10: Carriable items cannot be equipped.
 
 # 1.25 (April 25th, 2020):
