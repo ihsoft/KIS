@@ -1,4 +1,5 @@
 # 1.26 (pre-release):
+* [Change] Switch to `MiniAVC-V2`.
 * [Enhancement] Add a new fun part: Snacks!
 * [Enhancement #360] Use fuel type from the config for the EVA fuel canister.
 * [Fix #362] Tab Key in Map View.
