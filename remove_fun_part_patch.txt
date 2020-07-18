@@ -24,3 +24,7 @@
 !PART[KIS_taco]
 {
 }
+
+!PART[SEP_FallenKerbonaut]
+{
+}
