@@ -25,6 +25,10 @@
 {
 }
 
+!PART[SEP_FallenKerbonaut]
+{
+}
+
 !PART[KIS_snacks]
 {
 }
