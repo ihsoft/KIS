@@ -5,16 +5,18 @@
 
 using KISAPIv1;
 using KSPDev.GUIUtils;
+using KSPDev.GUIUtils.TypeFormatters;
 using KSPDev.ResourceUtils;
 using System;
-using System.Linq;
+using KSPDev.LogUtils;
 
 namespace KIS {
 
-// Next localization ID: kisLOC_08005.
-public class ModuleKISItemEvaPropellant : ModuleKISItem {
+// Next localization ID: kisLOC_08009.
+// ReSharper disable once InconsistentNaming
+public sealed class ModuleKISItemEvaPropellant : ModuleKISItem {
   #region Localizable GUI strings
-  static readonly Message NoNeedToRefillMsg = new Message(
+  static readonly Message NoNeedToRefillJetpackMsg = new Message(
       "#kisLOC_08000",
       defaultTemplate: "The jetpack is full. No need to refill",
       description: "The message to present when the jetpack is attempted to be refilled, but its'"
@@ -26,23 +28,50 @@ public class ModuleKISItemEvaPropellant : ModuleKISItem {
       description: "The message to present when the EVA kerbals has attempted to refill the"
       + " jetpack, but the tank is empty.");
 
-  static readonly Message CanisterRefilledMsg = new Message(
+  static readonly Message CanisterFullyRefilledMsg = new Message(
       "#kisLOC_08002",
       defaultTemplate: "Fuel canister refilled",
-      description: "The message to present when a non-full tank has successfully refilled from the"
-      + " pod's resource.");
+      description: "The message to present when a non-full tank has successfully refilled to the"
+      + " top.");
 
-  static readonly Message NotEnoughPropellantMsg = new Message(
-      "#kisLOC_08003",
-      defaultTemplate: "Not enough fuel in the canister. The jetpack is partially refueled",
-      description: "The message to present when the EVA kerbals has attempted to refill the"
-      + " jetpack, but the tank didn't have enough fuel to fill the jetpack to full.");
-
-  static readonly Message JetpackRefueledMsg = new Message(
+  static readonly Message JetpackFullyRefueledMsg = new Message(
       "#kisLOC_08004",
       defaultTemplate: "Jetpack fully refueled",
       description: "The message to present when the EVA kerbals has attempted to refill the"
       + " jetpack, and the jetpack has successfully refilled to full.");
+
+  static readonly Message<SmallNumberType> JetpackPartiallyRefueledMsg =
+      new Message<SmallNumberType>(
+          "#kisLOC_08005",
+          defaultTemplate: "Added <<1>> units of fuel to the jetpack",
+          description: "The message to present when the EVA kerbals has attempted to refill the"
+          + " jetpack, but there was not enough fuel in the canister to fill the jetpack up to the"
+          + " top."
+          + "\nArgument <<1>> is the amount of the resource added to the jetpack."
+          + " Format: SmallNumberType.");
+
+  static readonly Message NoNeedToRefillCanisterMsg = new Message(
+      "#kisLOC_08006",
+      defaultTemplate: "The canister is full. No need to refill",
+      description: "The message to present when the canister is attempted to be refilled, but its'"
+      + " already full.");
+
+  static readonly Message<ResourceType, SmallNumberType> CanisterPartialRefilledMsg =
+      new Message<ResourceType, SmallNumberType>(
+          "#kisLOC_08007",
+          defaultTemplate: "Consumed <<2>> units of <<1>> from the vessel",
+          description: "The message to present when the canister have been refilled from the"
+          + " vessel's reserve with a consumable fuel type."
+          + "\nArgument <<1>> is the name of the resource. Format: ResourceType."
+          + "\nArgument <<2>> is the amount of the resource taken from the vessel."
+          + " Format: SmallNumberType.");
+
+  static readonly Message<ResourceType> NoResourceInVesselMsg = new Message<ResourceType>(
+      "#kisLOC_08008",
+      defaultTemplate: "Vessel doesn't have a spare reserve of <<1>>",
+      description: "The message to present when the canister have been attempted to refill from"
+      + " the vessel's reserve with a consumable fuel type, and there were no resource."
+      + "\nArgument <<1>> is the name of the resource. Format: ResourceType.");
   #endregion
 
   #region Part's config fields
@@ -51,14 +80,38 @@ public class ModuleKISItemEvaPropellant : ModuleKISItem {
   public string refuelSndPath = "KIS/Sounds/refuelEva";
   #endregion
 
+  #region Local fields and properties
+  /// <summary>Name of the resource that the canister holds.</summary>
+  /// <remarks>
+  /// Regardless to this name, in the jetpack the canister always refills the "EVA propellant" fuel.
+  /// </remarks>
+  string _mainResourceName;
+  #endregion
+  
   #region ModuleKISItem overrides
+  /// <inheritdoc/>
+  public override void OnLoad(ConfigNode node) {
+    base.OnLoad(node);
+    if (part.Resources.Count == 0) {
+      HostedDebugLog.Error(this, "No resources on the canister! This won't work.");
+      return;
+    }
+    if (part.Resources.Count > 1) {
+      HostedDebugLog.Error(this, "Too many resources on the canister! The first one will be used.");
+    }
+    _mainResourceName = part.Resources[0].resourceName;
+    if (_mainResourceName != StockResourceNames.EvaPropellant) {
+      HostedDebugLog.Info(this, "Using a customized resource type: {0}", _mainResourceName);
+    }
+  }
+
   /// <inheritdoc/>
   public override void OnItemUse(KIS_Item item, KIS_Item.UseFrom useFrom) {
     if (useFrom != KIS_Item.UseFrom.KeyUp) {
       if (item.inventory.invType == ModuleKISInventory.InventoryType.Pod) {
         RefillCanister(item);  // Refuel canister item.
       } else  if (item.inventory.invType == ModuleKISInventory.InventoryType.Eva) {
-        RefillEVAPack(item);  // Refuel EVA pack from canister.
+        RefillEvaPack(item);  // Refuel EVA pack from canister.
       }
     }
   }
@@ -67,9 +120,30 @@ public class ModuleKISItemEvaPropellant : ModuleKISItem {
   #region Inheritable & customization methods
   /// <summary>Fills up canister to the maximum capacity.</summary>
   /// <param name="item">Item to refill.</param>
-  protected virtual void RefillCanister(KIS_Item item) {
-    item.UpdateResource(StockResourceNames.EvaPropellant, GetCanisterFuelResource(item).maxAmount);
-    ScreenMessaging.ShowPriorityScreenMessage(CanisterRefilledMsg);
+  void RefillCanister(KIS_Item item) {
+    var canisterResource = GetCanisterFuelResource(item);
+    var needResource = canisterResource.maxAmount - canisterResource.amount;
+    if (needResource <= double.Epsilon) {
+      ScreenMessaging.ShowPriorityScreenMessage(NoNeedToRefillCanisterMsg);
+      return;
+    }
+    double newAmount;
+    if (_mainResourceName != StockResourceNames.EvaPropellant) {
+      var hasAmount = item.inventory.part.RequestResource(_mainResourceName, needResource);
+      if (hasAmount <= double.Epsilon) {
+        ScreenMessaging.ShowPriorityScreenMessage(
+            NoResourceInVesselMsg.Format(canisterResource.resourceName));
+        UISounds.PlayBipWrong();
+        return;
+      }
+      newAmount = canisterResource.amount + hasAmount;
+      ScreenMessaging.ShowPriorityScreenMessage(
+          CanisterPartialRefilledMsg.Format(canisterResource.resourceName, hasAmount));
+    } else {
+      newAmount = canisterResource.maxAmount;
+      ScreenMessaging.ShowPriorityScreenMessage(CanisterFullyRefilledMsg);
+    }
+    item.UpdateResource(_mainResourceName, newAmount);
     UISoundPlayer.instance.Play(refuelSndPath);
   }
 
@@ -77,36 +151,52 @@ public class ModuleKISItemEvaPropellant : ModuleKISItem {
   /// Refuels kerbal's EVA pack up to the maximum, and decreases canister reserve.
   /// </summary>
   /// <param name="item">Item to get fuel from.</param>
-  protected virtual void RefillEVAPack(KIS_Item item) {
-    var canisterFuelResource = GetCanisterFuelResource(item);
+  void RefillEvaPack(KIS_Item item) {
     var evaFuelResource = item.inventory.part.Resources.Get(StockResourceNames.EvaPropellant);
     var needsFuel = evaFuelResource.maxAmount - evaFuelResource.amount;
     if (needsFuel < double.Epsilon) {
-      ScreenMessaging.ShowPriorityScreenMessage(NoNeedToRefillMsg);
-    } else {
-      if (canisterFuelResource.amount < double.Epsilon) {
-        ScreenMessaging.ShowPriorityScreenMessage(CanisterIsEmptyMsg);
-        UISounds.PlayBipWrong();
-      } else {
-        var canRefuel = Math.Min(needsFuel, canisterFuelResource.amount);
-        item.UpdateResource(StockResourceNames.EvaPropellant, -canRefuel, isAmountRelative: true);
-        evaFuelResource.amount += canRefuel;
-        if (canRefuel < needsFuel) {
-          ScreenMessaging.ShowPriorityScreenMessage(NotEnoughPropellantMsg);
-        } else {
-          ScreenMessaging.ShowPriorityScreenMessage(JetpackRefueledMsg);
-        }
-        UISoundPlayer.instance.Play(refuelSndPath);
-      }
+      ScreenMessaging.ShowPriorityScreenMessage(NoNeedToRefillJetpackMsg);
+      return;
     }
+    var canisterFuelResource = GetCanisterFuelResource(item);
+    if (canisterFuelResource.amount < double.Epsilon) {
+      ScreenMessaging.ShowPriorityScreenMessage(CanisterIsEmptyMsg);
+      UISounds.PlayBipWrong();
+      return;
+    }
+    var canRefuel = Math.Min(needsFuel, canisterFuelResource.amount);
+    item.UpdateResource(_mainResourceName, -canRefuel, isAmountRelative: true);
+    evaFuelResource.amount += canRefuel;
+    if (canRefuel < needsFuel) {
+      ScreenMessaging.ShowPriorityScreenMessage(JetpackPartiallyRefueledMsg.Format(canRefuel));
+    } else {
+      ScreenMessaging.ShowPriorityScreenMessage(JetpackFullyRefueledMsg);
+    }
+    UISoundPlayer.instance.Play(refuelSndPath);
   }
 
   /// <summary>Returns KIS resource description for the propellant in the part.</summary>
   /// <param name="item">Item to get resource for.</param>
   /// <returns>Resource description.</returns>
-  protected static ProtoPartResourceSnapshot GetCanisterFuelResource(KIS_Item item) {
-    return KISAPI.PartNodeUtils.GetResources(item.partNode)
-        .FirstOrDefault(x => x.resourceName == StockResourceNames.EvaPropellant);
+  ProtoPartResourceSnapshot GetCanisterFuelResource(KIS_Item item) {
+    var resources = KISAPI.PartNodeUtils.GetResources(item.partNode);
+    if (resources.Length == 0) {
+      throw new Exception("Bad save state: no resource on the part");
+    }
+    var itemResource = resources[0];  // Always use the first one.
+    if (itemResource.resourceName == _mainResourceName) {
+      return itemResource;
+    }
+    // A mod that changes the default resource has been installed or removed. Update the part state.
+    DebugEx.Warning(
+        "Fixing saved state of the resource: oldName={0}, newName={1}",
+        itemResource.resourceName, _mainResourceName);
+    KISAPI.PartNodeUtils.DeleteResource(item.partNode, itemResource.resourceName);
+    itemResource = new ProtoPartResourceSnapshot(part.Resources[0]) {
+        amount = itemResource.amount
+    };
+    KISAPI.PartNodeUtils.AddResource(item.partNode, itemResource);
+    return itemResource;
   }
   #endregion
 }

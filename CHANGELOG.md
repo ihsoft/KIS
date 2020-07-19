@@ -1,3 +1,12 @@
+# 1.26 (July 18th, 2020):
+* [Change] Switch to `MiniAVC-V2`.
+* [Enhancement] Add a new fun part: Snacks!
+* [Enhancement] Add a new fun part: Fallen Kerbonaut. FYI, there is a real life prototype for this part.
+* [Enhancement] Add storage lockers parts. They used to be a part of the defunc SEP mod.
+* [Enhancement #360] Use fuel type from the config for the EVA fuel canister.
+* [Fix #362] Tab Key in Map View crashes the game.
+* [Fix #364] KSP 1.10: Carriable items cannot be equipped.
+
 # 1.25 (April 25th, 2020):
 * [Change] Stop complaining about KSP minor version change.
 * [Change] Update ES-ES localization.

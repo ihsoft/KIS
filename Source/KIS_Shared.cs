@@ -211,7 +211,17 @@ public static class KIS_Shared {
     snapshot.attached = true;
     snapshot.flagURL = fromPart.flagURL;
 
+    // In KSP 1.10 proto part load does weird stuff if the reference vessel is EVA.
+    // So, workaround it in a crazy way: by changing the type of the vessel for the load time.
+    // This may have bad consequences to the mods that react on the proto part load event.
+    var savedRefVesselType = refVessel.vesselType;
+    if (refVessel.isEVA) {
+      DebugEx.Warning("WORKAROUND! Temporarily disabling the EVA type of vessel {0}", refVessel);
+      refVessel.vesselType = VesselType.Probe;
+    }
     var newPart = snapshot.Load(refVessel, false);
+    refVessel.vesselType = savedRefVesselType;
+
     refVessel.Parts.Add(newPart);
     newPart.transform.position = position;
     newPart.transform.rotation = rotation;

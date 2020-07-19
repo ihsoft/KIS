@@ -1896,7 +1896,8 @@ public class ModuleKISInventory : PartModule,
     if (invType != InventoryType.Eva
         || !HighLogic.LoadedSceneIsFlight
         || FlightGlobals.ActiveVessel != part.vessel
-        || !FlightGlobals.ActiveVessel.isEVA) {
+        || !FlightGlobals.ActiveVessel.isEVA
+        || PlanetariumCamera.fetch.enabled) {
       return;
     }
 

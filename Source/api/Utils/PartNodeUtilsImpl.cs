@@ -154,6 +154,45 @@ public class PartNodeUtilsImpl {
     return setAmount;
   }
 
+  /// <summary>Deletes the resource from the config node.</summary>
+  /// <param name="partNode">
+  /// The part's config or a persistent state. It can be a top-level node or the <c>PART</c> node.
+  /// </param>
+  /// <param name="name">The name of the resource.</param>
+  /// <returns><c>true</c> if the resource was found and removed.</returns>
+  public bool DeleteResource(ConfigNode partNode, string name) {
+    if (partNode.HasNode("PART")) {
+      partNode = partNode.GetNode("PART");
+    }
+    var nodes = partNode.GetNodes("RESOURCE");
+    for (var i = 0; i < partNode.nodes.Count; i++) {
+      var testNode = partNode.nodes[i];
+      if (testNode.name == "RESOURCE" && testNode.GetValue("name") == name) {
+        partNode.nodes.Remove(testNode);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /// <summary>Adds a new resource into the config node.</summary>
+  /// <param name="partNode">
+  /// The part's config or a persistent state. It can be a top-level node or the <c>PART</c> node.
+  /// </param>
+  /// <param name="resource">
+  /// The resource definition. If there is a resource with the same name in the node, it will be
+  /// replaced.
+  /// </param>
+  public void AddResource(ConfigNode partNode, ProtoPartResourceSnapshot resource) {
+    if (partNode.HasNode("PART")) {
+      partNode = partNode.GetNode("PART");
+    }
+    DeleteResource(partNode, resource.resourceName);
+    var resourceNode = new ConfigNode("RESOURCE");
+    resource.Save(resourceNode);
+    partNode.AddNode(resourceNode);
+  }
+
   /// <summary>Returns all the science from the part's saved state.</summary>
   /// <param name="partNode">
   /// The persistent part's state. It can be a top-level node or the <c>PART</c> node.

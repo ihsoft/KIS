@@ -27,6 +27,6 @@ using System.Runtime.InteropServices;
 //
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
-[assembly: AssemblyVersion ("1.25.*")]
+[assembly: AssemblyVersion ("1.26.*")]
 [assembly: AssemblyInformationalVersion ("1.25 for KSP v1")]
-[assembly: KSPAssembly ("KIS", 1, 25)]
+[assembly: KSPAssembly ("KIS", 1, 26)]
