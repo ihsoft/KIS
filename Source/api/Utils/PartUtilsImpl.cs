@@ -143,7 +143,7 @@ public class PartUtilsImpl {
         joints.Add(joint);
         continue;  // They must be handled before the connected RBs handled.
       }
-      if (!(component is Renderer || component is MeshFilter)) {
+      if (!(component is Renderer || component is MeshFilter || component is Collider)) {
         UnityEngine.Object.DestroyImmediate(component);
       }
     }
@@ -167,6 +167,18 @@ public class PartUtilsImpl {
       }
     }
     return modelObj;
+  }
+
+  public List<Collider> FindColliders (GameObject modelObj)
+  {
+    var colliders = new List<Collider> ();
+
+    foreach (var component in modelObj.GetComponentsInChildren(typeof(Component))) {
+      if (component is Collider) {
+        colliders.Add (component as Collider);
+      }
+    }
+    return colliders;
   }
 
   /// <summary>Returns part's volume basing on its geometrics.</summary>

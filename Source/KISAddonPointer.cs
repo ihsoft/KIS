@@ -179,8 +179,10 @@ sealed class KISAddonPointer : MonoBehaviour {
   static readonly List<Renderer> allModelRenderers = new List<Renderer>();
   static Vector3 customRot = new Vector3(0f, 0f, 0f);
   static float aboveDistance = 0;
+  static float aboveAutoOffset = 0;
   static Transform pointerNodeTransform;
   static List<AttachNode> attachNodes = new List<AttachNode>();
+  static float []autoOffsets;
 
   /// <summary>Index of the current node on the picked up part to attach with.</summary>
   /// <remarks>
@@ -199,6 +201,10 @@ sealed class KISAddonPointer : MonoBehaviour {
         _attachNodeIndex = value;
       }
       currentAttachNode = attachNodes[value];
+      aboveAutoOffset = 0;
+      if (autoOffsets != null) {
+        aboveAutoOffset = autoOffsets[value];
+      }
     }
   }
   static int _attachNodeIndex;
@@ -567,7 +573,7 @@ sealed class KISAddonPointer : MonoBehaviour {
           aboveDistance = 0;
         }
         pointer.transform.position =
-            pointer.transform.position + (hit.normal.normalized * aboveDistance);
+            pointer.transform.position + (hit.normal.normalized * (aboveDistance + aboveAutoOffset));
       }
     }
 
@@ -720,6 +726,34 @@ sealed class KISAddonPointer : MonoBehaviour {
     DebugEx.Fine("Pointer state set to: visibility={0}", isVisible);
   }
 
+  static int CompareDistance(RaycastHit a, RaycastHit b)
+  {
+    return a.distance.CompareTo(b.distance);
+  }
+
+  static void CreateAutoOffsets(List<Collider> colliders) {
+    float distance = 1;
+    int layerMask = 1 << 0;
+    int index = 0;
+    var triggers = QueryTriggerInteraction.Ignore;
+
+    autoOffsets = new float[attachNodes.Count];
+    foreach (var node in attachNodes) {
+      autoOffsets[index] = 0;
+
+      var ray = new Ray(node.position + distance * node.orientation, -node.orientation);
+      var hits = Physics.RaycastAll(ray, distance, layerMask, triggers);
+      Array.Sort(hits, CompareDistance);
+      foreach (var hit in hits) {
+        if (colliders.Contains (hit.collider)) {
+          autoOffsets[index] = distance - hit.distance;
+          break;
+        }
+      }
+      index++;
+    }
+  }
+
   /// <summary>Makes a game object to represent currently dragging assembly.</summary>
   /// <remarks>It's a very expensive operation.</remarks>
   static void MakePointer(Part rootPart) {
@@ -750,6 +784,12 @@ sealed class KISAddonPointer : MonoBehaviour {
     // Collect models from all the part in the assembly.
     pointer = new GameObject("KISPointer");
     var model = KISAPI.PartUtils.GetSceneAssemblyModel(rootPart);
+    var colliders = KISAPI.PartUtils.FindColliders (model);
+    CreateAutoOffsets (colliders);
+    aboveAutoOffset = autoOffsets[attachNodeIndex];
+    foreach (var collider in colliders) {
+      UnityEngine.Object.DestroyImmediate (collider);
+    }
     model.transform.parent = pointer.transform;
     model.transform.position = Vector3.zero;
     model.transform.rotation = Quaternion.identity;
