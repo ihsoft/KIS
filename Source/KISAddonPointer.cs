@@ -783,8 +783,8 @@ sealed class KISAddonPointer : MonoBehaviour {
 
     // Collect models from all the part in the assembly.
     pointer = new GameObject("KISPointer");
-    var model = KISAPI.PartUtils.GetSceneAssemblyModel(rootPart);
-    var colliders = KISAPI.PartUtils.FindColliders (model);
+    var model = KISAPI.PartUtils.GetSceneAssemblyModel(rootPart, true, true);
+    var colliders = model.GetComponentsInChildren<Collider>().ToList();
     CreateAutoOffsets (colliders);
     aboveAutoOffset = autoOffsets[attachNodeIndex];
     foreach (var collider in colliders) {

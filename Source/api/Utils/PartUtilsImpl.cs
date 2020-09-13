@@ -113,7 +113,7 @@ public class PartUtilsImpl {
   /// The root game object of the new hirerarchy. This object must be explicitly disposed when not
   /// needed anymore.
   /// </returns>
-  public GameObject GetSceneAssemblyModel(Part rootPart, bool goThruChildren = true) {
+  public GameObject GetSceneAssemblyModel(Part rootPart, bool goThruChildren = true, bool keepColliders = false) {
     var modelObj = new GameObject("KisAssemblyRoot");
     modelObj.SetActive(true);
 
@@ -143,7 +143,7 @@ public class PartUtilsImpl {
         joints.Add(joint);
         continue;  // They must be handled before the connected RBs handled.
       }
-      if (!(component is Renderer || component is MeshFilter || component is Collider)) {
+      if (!(component is Renderer || component is MeshFilter || (keepColliders && component is Collider))) {
         UnityEngine.Object.DestroyImmediate(component);
       }
     }
@@ -167,18 +167,6 @@ public class PartUtilsImpl {
       }
     }
     return modelObj;
-  }
-
-  public List<Collider> FindColliders (GameObject modelObj)
-  {
-    var colliders = new List<Collider> ();
-
-    foreach (var component in modelObj.GetComponentsInChildren(typeof(Component))) {
-      if (component is Collider) {
-        colliders.Add (component as Collider);
-      }
-    }
-    return colliders;
   }
 
   /// <summary>Returns part's volume basing on its geometrics.</summary>
