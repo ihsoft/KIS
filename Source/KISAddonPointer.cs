@@ -731,7 +731,7 @@ sealed class KISAddonPointer : MonoBehaviour {
     return a.distance.CompareTo(b.distance);
   }
 
-  static void CreateAutoOffsets(List<Collider> colliders) {
+  static void CreateAutoOffsets(Part part, List<Collider> colliders) {
     float distance = 1;
     int layerMask = (int)KspLayerMask.Part;
     int index = 0;
@@ -740,8 +740,10 @@ sealed class KISAddonPointer : MonoBehaviour {
     autoOffsets = new float[attachNodes.Count];
     foreach (var node in attachNodes) {
       autoOffsets[index] = 0;
+      Vector3 pos = part.transform.TransformPoint(node.position);
+      Vector3 dir = part.transform.TransformDirection(node.orientation);
 
-      var ray = new Ray(node.position + distance * node.orientation, -node.orientation);
+      var ray = new Ray(pos + distance * dir, -dir);
       var hits = Physics.RaycastAll(ray, distance, layerMask, triggers);
       Array.Sort(hits, CompareDistance);
       foreach (var hit in hits) {
@@ -785,7 +787,7 @@ sealed class KISAddonPointer : MonoBehaviour {
     pointer = new GameObject("KISPointer");
     var model = KISAPI.PartUtils.GetSceneAssemblyModel(rootPart, keepColliders: true);
     var colliders = model.GetComponentsInChildren<Collider>().ToList();
-    CreateAutoOffsets (colliders);
+    CreateAutoOffsets (rootPart, colliders);
     aboveAutoOffset = autoOffsets[attachNodeIndex];
     foreach (var collider in colliders) {
       UnityEngine.Object.DestroyImmediate (collider);
