@@ -109,6 +109,9 @@ public class PartUtilsImpl {
   /// <param name="goThruChildren">
   /// Tells if the parts down the hierarchy need to be captured too.
   /// </param>
+  /// <param name="keepColliders">
+  /// Keep the part colliders if true, otherwise they will be removed from the assembly.
+  /// </param>
   /// <returns>
   /// The root game object of the new hirerarchy. This object must be explicitly disposed when not
   /// needed anymore.

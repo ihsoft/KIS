@@ -733,7 +733,7 @@ sealed class KISAddonPointer : MonoBehaviour {
 
   static void CreateAutoOffsets(List<Collider> colliders) {
     float distance = 1;
-    int layerMask = 1 << 0;
+    int layerMask = (int)KspLayerMask.Part;
     int index = 0;
     var triggers = QueryTriggerInteraction.Ignore;
 
@@ -783,7 +783,7 @@ sealed class KISAddonPointer : MonoBehaviour {
 
     // Collect models from all the part in the assembly.
     pointer = new GameObject("KISPointer");
-    var model = KISAPI.PartUtils.GetSceneAssemblyModel(rootPart, true, true);
+    var model = KISAPI.PartUtils.GetSceneAssemblyModel(rootPart, keepColliders: true);
     var colliders = model.GetComponentsInChildren<Collider>().ToList();
     CreateAutoOffsets (colliders);
     aboveAutoOffset = autoOffsets[attachNodeIndex];
