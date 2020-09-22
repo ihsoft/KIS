@@ -731,26 +731,50 @@ sealed class KISAddonPointer : MonoBehaviour {
     return a.distance.CompareTo(b.distance);
   }
 
-  static void CreateAutoOffsets(Part part, List<Collider> colliders) {
+  static float CastRay(Vector3 pos, Vector3 dir, List<Collider> colliders) {
     float distance = 1;
     int layerMask = (int)KspLayerMask.Part;
-    int index = 0;
     var triggers = QueryTriggerInteraction.Ignore;
+
+    var ray = new Ray(pos + distance * dir, -dir);
+    var hits = Physics.RaycastAll(ray, distance, layerMask, triggers);
+
+    Array.Sort(hits, CompareDistance);
+    foreach (var hit in hits) {
+      if (colliders.Contains (hit.collider)) {
+        float offset = distance - hit.distance;
+        return offset;
+      }
+    }
+    return 0;
+  }
+
+  static void CreateAutoOffsets(GameObject model, List<Collider> colliders) {
+    int index = 0;
 
     autoOffsets = new float[attachNodes.Count];
     foreach (var node in attachNodes) {
       autoOffsets[index] = 0;
-      Vector3 pos = part.transform.TransformPoint(node.position);
-      Vector3 dir = part.transform.TransformDirection(node.orientation);
+      Vector3 pos = node.position;
+      Vector3 dir = node.orientation.normalized;
 
-      var ray = new Ray(pos + distance * dir, -dir);
-      var hits = Physics.RaycastAll(ray, distance, layerMask, triggers);
-      Array.Sort(hits, CompareDistance);
-      foreach (var hit in hits) {
-        if (colliders.Contains (hit.collider)) {
-          autoOffsets[index] = distance - hit.distance;
-          break;
-        }
+      pos = model.transform.TransformPoint(pos);
+      dir = model.transform.TransformDirection(dir);
+
+      if (node.nodeType == AttachNode.NodeType.Surface) {
+          // Surface nodes are black magic: regardless of their direction (in
+          // or out), the part is always oriented correctly in the editor, and
+          // there's no consistency between parts (even stock: eg, z400 battery
+          // vs small fuel cell). Thus, find the offsets looking in both
+          // directions and take the _smaller_ of the two on the assumption
+          // that the node is at least positioned correctly.
+          float offs1 = CastRay(pos, dir, colliders);
+          float offs2 = CastRay(pos, -dir, colliders);
+          autoOffsets[index] = Mathf.Min(offs1, offs2);
+      } else {
+          // Stack nodes are assumed to point in the correct direction because
+          // they would otherwise pose problems in the editor
+          autoOffsets[index] = CastRay(pos, dir, colliders);
       }
       index++;
     }
@@ -787,7 +811,7 @@ sealed class KISAddonPointer : MonoBehaviour {
     pointer = new GameObject("KISPointer");
     var model = KISAPI.PartUtils.GetSceneAssemblyModel(rootPart, keepColliders: true);
     var colliders = model.GetComponentsInChildren<Collider>().ToList();
-    CreateAutoOffsets (rootPart, colliders);
+    CreateAutoOffsets (model, colliders);
     aboveAutoOffset = autoOffsets[attachNodeIndex];
     foreach (var collider in colliders) {
       UnityEngine.Object.DestroyImmediate (collider);
