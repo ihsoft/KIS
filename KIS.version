@@ -19,9 +19,9 @@
     "NAME": "Kerbal Inventory System", 
     "URL": "https://raw.githubusercontent.com/ihsoft/KIS/master/KIS.version", 
     "VERSION": {
-        "BUILD": 42051, 
+        "BUILD": 37622, 
         "MAJOR": 1, 
-        "MINOR": 26, 
-        "PATCH": 7504
+        "MINOR": 27, 
+        "PATCH": 7662
     }
 }
