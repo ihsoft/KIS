@@ -1544,7 +1544,7 @@ sealed class KISAddonPickup : MonoBehaviour {
       }
     }
     // Don't grab stock game's ground experiments.
-    if (part.Modules.OfType<ModuleGroundPart>().Any()) {
+    if (ModuleKISInventory.forbiddenParts.Contains(part.name)) {
       ReportCheckError(GrabNotOkStatusTooltipTxt, CannotPickupGroundExperimentTooltipTxt);
       return false;
     }

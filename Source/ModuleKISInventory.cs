@@ -562,10 +562,13 @@ public class ModuleKISInventory : PartModule,
   public static bool debugContextMenu;
 
   [PersistentField("Editor/PodInventory/addToAllSeats", isCollection = true)]
-  public static List<String> defaultItemsForAllSeats = new List<string>();
+  public static List<string> defaultItemsForAllSeats = new List<string>();
 
   [PersistentField("Editor/PodInventory/addToTheFirstSeatOnly", isCollection = true)]
-  public static List<String> defaultItemsForTheFirstSeat = new List<string>();
+  public static List<string> defaultItemsForTheFirstSeat = new List<string>();
+
+  [PersistentField("Compatibility/forbiddenPart", isCollection = true)]
+  public static List<string> forbiddenParts = new List<string>();
   #endregion
 
   #region Context menu events/actions
@@ -1064,7 +1067,7 @@ public class ModuleKISInventory : PartModule,
   /// </param>
   /// <returns>The created slot or <c>null</c> if part cannot be added to the inventory.</returns>
   public KIS_Item AddItem(Part p, int qty = 1, int slot = -1) {
-    if (p.Modules.OfType<ModuleCargoPart>().Any()) {
+    if (forbiddenParts.Contains(p.name)) {
       ScreenMessaging.ShowPriorityScreenMessage(CannotAddGroundSciencePartMsg);
       UISounds.PlayBipWrong();
       return null;
