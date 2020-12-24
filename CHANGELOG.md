@@ -1,4 +1,5 @@
 # 1.27 (pre-release):
+* [Enhancement] Check for colliders when node attaching a part.
 
 # 1.26 (July 18th, 2020):
 * [Change] Switch to `MiniAVC-V2`.
