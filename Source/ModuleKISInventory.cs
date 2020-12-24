@@ -562,10 +562,10 @@ public class ModuleKISInventory : PartModule,
   public static bool debugContextMenu;
 
   [PersistentField("Editor/PodInventory/addToAllSeats", isCollection = true)]
-  public static List<String> defaultItemsForAllSeats = new List<string>();
+  public static List<string> defaultItemsForAllSeats = new List<string>();
 
   [PersistentField("Editor/PodInventory/addToTheFirstSeatOnly", isCollection = true)]
-  public static List<String> defaultItemsForTheFirstSeat = new List<string>();
+  public static List<string> defaultItemsForTheFirstSeat = new List<string>();
   #endregion
 
   #region Context menu events/actions
