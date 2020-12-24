@@ -109,11 +109,14 @@ public class PartUtilsImpl {
   /// <param name="goThruChildren">
   /// Tells if the parts down the hierarchy need to be captured too.
   /// </param>
+  /// <param name="keepColliders">
+  /// Keep the part colliders if true, otherwise they will be removed from the assembly.
+  /// </param>
   /// <returns>
   /// The root game object of the new hirerarchy. This object must be explicitly disposed when not
   /// needed anymore.
   /// </returns>
-  public GameObject GetSceneAssemblyModel(Part rootPart, bool goThruChildren = true) {
+  public GameObject GetSceneAssemblyModel(Part rootPart, bool goThruChildren = true, bool keepColliders = false) {
     var modelObj = new GameObject("KisAssemblyRoot");
     modelObj.SetActive(true);
 
@@ -143,7 +146,7 @@ public class PartUtilsImpl {
         joints.Add(joint);
         continue;  // They must be handled before the connected RBs handled.
       }
-      if (!(component is Renderer || component is MeshFilter)) {
+      if (!(component is Renderer || component is MeshFilter || (keepColliders && component is Collider))) {
         UnityEngine.Object.DestroyImmediate(component);
       }
     }
