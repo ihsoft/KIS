@@ -1068,9 +1068,7 @@ public static class KIS_Shared {
     }
     newVessel.vesselType = VesselType.DroppedPart;
 
-    if (onPartReady != null) {
-      onPartReady(newPart);
-    }
+    onPartReady?.Invoke(newPart);
   }
 }
 
