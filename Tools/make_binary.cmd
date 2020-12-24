@@ -1,4 +1,3 @@
 @echo off
-REM Until new major version of C# is released the build number in the path will keep counting.
-REM KIS *requires* .NET compiler version 4.0 or higher. Don't get confused with KSP run-time requirement of 3.5.
-C:\Windows\Microsoft.NET\Framework\v4.0.30319\MSBuild ..\Source\KIS.csproj /t:Clean,Build /p:Configuration=Release
+REM To get the latest MSBuild command line compiler go to: https://visualstudio.microsoft.com/thank-you-downloading-visual-studio/?sku=BuildTools&rel=16
+"C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\MSBuild\Current\Bin\amd64\MSBuild.exe" ..\Source\KIS.csproj /t:Clean,Build /p:Configuration=Release
