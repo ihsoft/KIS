@@ -179,10 +179,8 @@ sealed class KISAddonPointer : MonoBehaviour {
   static readonly List<Renderer> allModelRenderers = new List<Renderer>();
   static Vector3 customRot = new Vector3(0f, 0f, 0f);
   static float aboveDistance = 0;
-  static float aboveAutoOffset = 0;
   static Transform pointerNodeTransform;
   static List<AttachNode> attachNodes = new List<AttachNode>();
-  static float []autoOffsets;
 
   /// <summary>Index of the current node on the picked up part to attach with.</summary>
   /// <remarks>
@@ -201,10 +199,6 @@ sealed class KISAddonPointer : MonoBehaviour {
         _attachNodeIndex = value;
       }
       currentAttachNode = attachNodes[value];
-      aboveAutoOffset = 0;
-      if (autoOffsets != null) {
-        aboveAutoOffset = autoOffsets[value];
-      }
     }
   }
   static int _attachNodeIndex;
@@ -573,7 +567,7 @@ sealed class KISAddonPointer : MonoBehaviour {
           aboveDistance = 0;
         }
         pointer.transform.position =
-            pointer.transform.position + (hit.normal.normalized * (aboveDistance + aboveAutoOffset));
+            pointer.transform.position + (hit.normal.normalized * aboveDistance);
       }
     }
 
@@ -726,60 +720,6 @@ sealed class KISAddonPointer : MonoBehaviour {
     DebugEx.Fine("Pointer state set to: visibility={0}", isVisible);
   }
 
-  static int CompareDistance(RaycastHit a, RaycastHit b)
-  {
-    return a.distance.CompareTo(b.distance);
-  }
-
-  static float CastRay(Vector3 pos, Vector3 dir, List<Collider> colliders) {
-    float distance = 1;
-    int layerMask = (int)KspLayerMask.Part;
-    var triggers = QueryTriggerInteraction.Ignore;
-
-    var ray = new Ray(pos + distance * dir, -dir);
-    var hits = Physics.RaycastAll(ray, distance, layerMask, triggers);
-
-    Array.Sort(hits, CompareDistance);
-    foreach (var hit in hits) {
-      if (colliders.Contains (hit.collider)) {
-        float offset = distance - hit.distance;
-        return offset;
-      }
-    }
-    return 0;
-  }
-
-  static void CreateAutoOffsets(GameObject model, List<Collider> colliders) {
-    int index = 0;
-
-    autoOffsets = new float[attachNodes.Count];
-    foreach (var node in attachNodes) {
-      autoOffsets[index] = 0;
-      Vector3 pos = node.position;
-      Vector3 dir = node.orientation.normalized;
-
-      pos = model.transform.TransformPoint(pos);
-      dir = model.transform.TransformDirection(dir);
-
-      if (node.nodeType == AttachNode.NodeType.Surface) {
-          // Surface nodes are black magic: regardless of their direction (in
-          // or out), the part is always oriented correctly in the editor, and
-          // there's no consistency between parts (even stock: eg, z400 battery
-          // vs small fuel cell). Thus, find the offsets looking in both
-          // directions and take the _smaller_ of the two on the assumption
-          // that the node is at least positioned correctly.
-          float offs1 = CastRay(pos, dir, colliders);
-          float offs2 = CastRay(pos, -dir, colliders);
-          autoOffsets[index] = Mathf.Min(offs1, offs2);
-      } else {
-          // Stack nodes are assumed to point in the correct direction because
-          // they would otherwise pose problems in the editor
-          autoOffsets[index] = CastRay(pos, dir, colliders);
-      }
-      index++;
-    }
-  }
-
   /// <summary>Makes a game object to represent currently dragging assembly.</summary>
   /// <remarks>It's a very expensive operation.</remarks>
   static void MakePointer(Part rootPart) {
@@ -809,13 +749,7 @@ sealed class KISAddonPointer : MonoBehaviour {
 
     // Collect models from all the part in the assembly.
     pointer = new GameObject("KISPointer");
-    var model = KISAPI.PartUtils.GetSceneAssemblyModel(rootPart, keepColliders: true);
-    var colliders = model.GetComponentsInChildren<Collider>().ToList();
-    CreateAutoOffsets (model, colliders);
-    aboveAutoOffset = autoOffsets[attachNodeIndex];
-    foreach (var collider in colliders) {
-      UnityEngine.Object.DestroyImmediate (collider);
-    }
+    var model = KISAPI.PartUtils.GetSceneAssemblyModel(rootPart);
     model.transform.parent = pointer.transform;
     model.transform.position = Vector3.zero;
     model.transform.rotation = Quaternion.identity;
