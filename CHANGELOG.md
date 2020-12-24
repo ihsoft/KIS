@@ -1,3 +1,5 @@
+# 1.27 (pre-release):
+
 # 1.26 (July 18th, 2020):
 * [Change] Switch to `MiniAVC-V2`.
 * [Enhancement] Add a new fun part: Snacks!
