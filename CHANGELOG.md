@@ -2,7 +2,7 @@
 * [Enhancement] Check for colliders when node attaching a part.
 * [Enhancement] Add KIS inventory to the stock inventory parts: SEQ-9 & SEQ-24.
 * [Enhancement] Allow the new stock modules to be stackable.
-* [Enhancement #376] New stock ground lights won't align properly on deploy #376
+* [Enhancement #376] The new stock ground lights won't align properly on deploy.
 * [Fix #374] Some stock science parts cannot be added into the KIS inventory.
 * [Fix #375] Make the dropped KIS parts visible to the stock inventory system.
 
