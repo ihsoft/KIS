@@ -1,6 +1,7 @@
 # 1.27 (pre-release):
 * [Enhancement] Check for colliders when node attaching a part.
 * [Fix #374] Some stock science parts cannot be added into the KIS inventory.
+* [Fix #375] Make the dropped KIS parts visible to the stock inventory system.
 
 # 1.26 (July 18th, 2020):
 * [Change] Switch to `MiniAVC-V2`.

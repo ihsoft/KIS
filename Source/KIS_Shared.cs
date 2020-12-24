@@ -116,7 +116,7 @@ public static class KIS_Shared {
   public static void RenameAssemblyVessel(Part part, Vessel sourceVessel = null) {
     if (sourceVessel == null || part.vessel.parts.Count == 1) {
       // Make a lone part vessel name.
-      part.vessel.vesselType = VesselType.Unknown;
+      part.vessel.vesselType = VesselType.DroppedPart;
       part.vessel.vesselName = part.partInfo.title;
       ModuleKISInventory inv = part.GetComponent<ModuleKISInventory>();
       if (inv && inv.invName.Length > 0) {
@@ -1066,6 +1066,7 @@ public static class KIS_Shared {
       DebugEx.Warning("Part {0} has died before fully instantiating", newPart);
       yield break;
     }
+    newVessel.vesselType = VesselType.DroppedPart;
 
     if (onPartReady != null) {
       onPartReady(newPart);
