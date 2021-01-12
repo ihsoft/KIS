@@ -696,7 +696,8 @@ public sealed class KIS_Item {
     var lastMass = totalSlotMass;
     var lastCost = totalSlotCost;
     while (equippedGameObj != null && evaTransform != null) {
-      if (carried && lastUpdated + 0.1f < Time.unscaledTime) {
+      // The carried parts may have their content changed if equipped in mode "part". 
+      if (carried && equippedPart != null && lastUpdated + 0.1f < Time.unscaledTime) {
         lastUpdated = Time.unscaledTime;
         CaptureItemStateFromPart(equippedPart);
         if (!Mathd.AreSame(lastMass, totalSlotMass) || !Mathd.AreSame(lastCost, totalSlotCost)) {
