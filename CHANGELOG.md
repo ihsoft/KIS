@@ -1,3 +1,6 @@
+# 1.28 (pre-release):
+* [Fix #380] Model equippable parts cannot be carried.
+
 # 1.27 (December 23rd, 2020):
 * [Enhancement] Check for colliders when node attaching a part.
 * [Enhancement] Add KIS inventory to the stock inventory parts: SEQ-9 & SEQ-24.
