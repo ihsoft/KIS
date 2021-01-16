@@ -1,4 +1,5 @@
 # 1.28 (pre-release):
+* [Fix #379] KIS functionality interferes with the stock construction mode.
 * [Fix #380] Model equippable parts cannot be carried.
 * [Fix #381] Hide UI command doesn't play well with KIS.
 

@@ -251,15 +251,24 @@ sealed class KISAddonPointer : MonoBehaviour {
   #region MonoBehaviour methods
   void Awake() {
     GameEvents.onHideUI.Add(HideUI);
+    GameEvents.OnEVAConstructionMode.Add(OnConstructionModeChange);
   }
 
   void OnDestroy() {
     GameEvents.onHideUI.Remove(HideUI);
+    GameEvents.OnEVAConstructionMode.Remove(OnConstructionModeChange);
   }
 
   void HideUI() {
     DebugEx.Info("Stop KIS behavior due to HIDE UI command");
     CancelPointer(null);
+  }
+
+  void OnConstructionModeChange(bool open) {
+    if (open) {
+      DebugEx.Info("Stop KIS behavior due to construct mode");
+      CancelPointer(null);
+    }
   }
   #endregion
 

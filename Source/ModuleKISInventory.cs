@@ -1216,6 +1216,7 @@ public class ModuleKISInventory : PartModule,
 
   void OnGUI() {
     if (!showGui
+        || EVAConstructionModeController.Instance != null && EVAConstructionModeController.Instance.IsOpen
         || !UIMasterController.Instance.IsUIShowing) {
       return;
     }
@@ -1898,6 +1899,9 @@ public class ModuleKISInventory : PartModule,
   }
 
   void UpdateKey() {
+    if (EVAConstructionModeController.Instance != null && EVAConstructionModeController.Instance.IsOpen) {
+      return;
+    }
     if (invType != InventoryType.Eva
         || !HighLogic.LoadedSceneIsFlight
         || FlightGlobals.ActiveVessel != part.vessel
