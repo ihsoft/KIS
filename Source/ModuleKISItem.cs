@@ -490,12 +490,13 @@ public class ModuleKISItem : PartModule,
   // Resets item state when joint is broken.
   // A callback from MonoBehaviour.
   void OnJointBreak(float breakForce) {
-    if (staticAttached) {
-      HostedDebugLog.Warning(this, "A static joint has just been broken! Force: {0}", breakForce);
-    } else {
-      HostedDebugLog.Warning(this, "A fixed joint has just been broken! Force: {0}", breakForce);
-    }
-    GroundDetach();
+    AsyncCall.CallOnFixedUpdate(this, () => {
+      // Verify if it was our joint broken.
+      if (staticAttached && staticAttachJoint == null) {
+        HostedDebugLog.Warning(this, "A static joint has just been broken! Force: {0}", breakForce);
+        GroundDetach();
+      }
+    });
   }
   #endregion
 }
