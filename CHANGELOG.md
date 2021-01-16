@@ -1,3 +1,10 @@
+# 1.28 (January 15th, 2021):
+* [Fix #378] Dropped parts cannot be moved or trigger physics.
+* [Fix #379] KIS functionality interferes with the stock construction mode.
+* [Fix #380] Model equippable parts cannot be carried.
+* [Fix #381] Hide UI command doesn't play well with KIS.
+* [Fix #382] Static attach doesn't verify which joint is broken.
+
 # 1.27 (December 23rd, 2020):
 * [Enhancement] Check for colliders when node attaching a part.
 * [Enhancement] Add KIS inventory to the stock inventory parts: SEQ-9 & SEQ-24.

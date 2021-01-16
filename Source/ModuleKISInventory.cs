@@ -20,6 +20,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using KSP.UI;
 using UnityEngine;
 
 namespace KIS {
@@ -1214,7 +1215,9 @@ public class ModuleKISInventory : PartModule,
   }
 
   void OnGUI() {
-    if (!showGui) {
+    if (!showGui
+        || EVAConstructionModeController.Instance != null && EVAConstructionModeController.Instance.IsOpen
+        || !UIMasterController.Instance.IsUIShowing) {
       return;
     }
 
@@ -1896,6 +1899,9 @@ public class ModuleKISInventory : PartModule,
   }
 
   void UpdateKey() {
+    if (EVAConstructionModeController.Instance != null && EVAConstructionModeController.Instance.IsOpen) {
+      return;
+    }
     if (invType != InventoryType.Eva
         || !HighLogic.LoadedSceneIsFlight
         || FlightGlobals.ActiveVessel != part.vessel

@@ -248,6 +248,30 @@ sealed class KISAddonPointer : MonoBehaviour {
   }
   private static OnPointerState SendPointerState;
 
+  #region MonoBehaviour methods
+  void Awake() {
+    GameEvents.onHideUI.Add(HideUI);
+    GameEvents.OnEVAConstructionMode.Add(OnConstructionModeChange);
+  }
+
+  void OnDestroy() {
+    GameEvents.onHideUI.Remove(HideUI);
+    GameEvents.OnEVAConstructionMode.Remove(OnConstructionModeChange);
+  }
+
+  void HideUI() {
+    DebugEx.Info("Stop KIS behavior due to HIDE UI command");
+    CancelPointer(null);
+  }
+
+  void OnConstructionModeChange(bool open) {
+    if (open) {
+      DebugEx.Info("Stop KIS behavior due to construct mode");
+      CancelPointer(null);
+    }
+  }
+  #endregion
+
   public delegate void OnPointerState(PointerTarget pTarget, PointerState pState,
                                       Part hoverPart, AttachNode hoverNode);
 
@@ -295,7 +319,7 @@ sealed class KISAddonPointer : MonoBehaviour {
     DebugEx.Fine("StopPointer()");
     running = false;
     ResetMouseOver();
-    SendPointerState(PointerTarget.Nothing, PointerState.OnPointerStopped, null, null);
+    SendPointerState?.Invoke(PointerTarget.Nothing, PointerState.OnPointerStopped, null, null);
     if (unlockUI) {
       UnlockUI();
     }
@@ -679,15 +703,25 @@ sealed class KISAddonPointer : MonoBehaviour {
     }
   }
 
+  /// <summary>Cancels the drag mode if one was active.</summary>
+  public static void CancelPointer(MonoBehaviour waitForObject) {
+    if (waitForObject == null) {
+      StopPointer();
+      SendPointerClick?.Invoke(PointerTarget.Nothing, Vector3.zero, Quaternion.identity, null, null);
+    } else {
+      // Delay UI unlocking to prevent key bindings side effects.
+      StopPointer(unlockUI: false);
+      SendPointerClick?.Invoke(PointerTarget.Nothing, Vector3.zero, Quaternion.identity, null, null);
+      AsyncCall.CallOnEndOfFrame(waitForObject, UnlockUI);
+    }
+  }
+
   /// <summary>Handles keyboard input.</summary>
   private void UpdateKey() {
     if (isRunning) {
       if (KIS_Shared.IsKeyUp(KeyCode.Escape) || KIS_Shared.IsKeyDown(KeyCode.Return)) {
         DebugEx.Fine("Cancel key pressed, stop eva attach mode");
-        StopPointer(unlockUI: false);
-        SendPointerClick(PointerTarget.Nothing, Vector3.zero, Quaternion.identity, null, null);
-        // Delay unlocking to not let ESC be handled by the game.
-        AsyncCall.CallOnEndOfFrame(this, UnlockUI);
+        CancelPointer(this);
       }
       if (GameSettings.Editor_toggleSymMethod.GetKeyDown()) {  // "R" by default.
         if (pointerTarget != PointerTarget.PartMount && attachNodes.Count() > 1) {

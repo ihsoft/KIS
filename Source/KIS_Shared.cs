@@ -928,6 +928,14 @@ public static class KIS_Shared {
   /// </param>
   public static void PlaceVessel(
       Vessel movingVessel, Vector3 newPosition, Quaternion newRotation, Vessel refVessel) {
+    // Find and destroy static attach joints that game applies to fix the vessels on the ground.
+    foreach (var joint in movingVessel.rootPart.gameObject.GetComponents<Joint>()) {
+      if (joint.connectedBody == null) {
+        DebugEx.Fine("Dropping vessel static attach joint");
+        // The joint will be automatically re-created once the vessel is moved.
+        GameObject.DestroyImmediate(joint);
+      }
+    }
     movingVessel.SetPosition(newPosition, usePristineCoords: true);
     movingVessel.SetRotation(newRotation);
     var refVelocity = Vector3.zero;

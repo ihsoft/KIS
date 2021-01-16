@@ -226,15 +226,8 @@ public sealed class KIS_Item {
     }
   }
 
-  public bool carried {
-    get {
-      if (carriable && inventory.invType == ModuleKISInventory.InventoryType.Eva
-          && HighLogic.LoadedSceneIsFlight) {
-        return true;
-      }
-      return false;
-    }
-  }
+  public bool carried =>
+      carriable && inventory.invType == ModuleKISInventory.InventoryType.Eva && HighLogic.LoadedSceneIsFlight;
 
   /// <summary>Creates an item, restored form the save file.</summary>
   /// <param name="itemNode">The item config node to load the data from.</param>
@@ -696,7 +689,8 @@ public sealed class KIS_Item {
     var lastMass = totalSlotMass;
     var lastCost = totalSlotCost;
     while (equippedGameObj != null && evaTransform != null) {
-      if (carried && lastUpdated + 0.1f < Time.unscaledTime) {
+      // The carried parts may have their content changed if equipped in mode "part". 
+      if (carried && equippedPart != null && lastUpdated + 0.1f < Time.unscaledTime) {
         lastUpdated = Time.unscaledTime;
         CaptureItemStateFromPart(equippedPart);
         if (!Mathd.AreSame(lastMass, totalSlotMass) || !Mathd.AreSame(lastCost, totalSlotCost)) {
@@ -733,8 +727,7 @@ public sealed class KIS_Item {
     // Don't trust the part's mass. It can be affected by too many factors.
     _itemDryMass = copyFrom.partInfo.partPrefab.mass
         + copyFrom.GetModuleMass(copyFrom.partInfo.partPrefab.mass);
-    _itemDryCost = copyFrom.partInfo.cost
-        + copyFrom.GetModuleCosts(copyFrom.partInfo.cost);
+    _itemDryCost = copyFrom.partInfo.cost + copyFrom.GetModuleCosts(copyFrom.partInfo.cost);
     _resourceMass = 0;
     _resourceCost = 0;
     foreach (var resource in copyFrom.Resources) {
