@@ -20,6 +20,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using KSP.UI;
 using UnityEngine;
 
 namespace KIS {
@@ -1214,7 +1215,8 @@ public class ModuleKISInventory : PartModule,
   }
 
   void OnGUI() {
-    if (!showGui) {
+    if (!showGui
+        || !UIMasterController.Instance.IsUIShowing) {
       return;
     }
 

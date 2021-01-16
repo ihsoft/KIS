@@ -1,5 +1,6 @@
 # 1.28 (pre-release):
 * [Fix #380] Model equippable parts cannot be carried.
+* [Fix #381] Hide UI command doesn't play well with KIS.
 
 # 1.27 (December 23rd, 2020):
 * [Enhancement] Check for colliders when node attaching a part.
