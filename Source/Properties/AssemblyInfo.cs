@@ -9,7 +9,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration ("")]
 [assembly: AssemblyCompany ("Kerbal Systems")]
 [assembly: AssemblyProduct ("KIS")]
-[assembly: AssemblyCopyright ("Copyright (C) Kerbal Systems 2015-2020")]
+[assembly: AssemblyCopyright ("Copyright (C) Kerbal Systems 2015-2021")]
 [assembly: AssemblyTrademark ("")]
 [assembly: AssemblyCulture ("")]
 // Setting ComVisible to false makes the types in this assembly not visible 
@@ -27,6 +27,6 @@ using System.Runtime.InteropServices;
 //
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
-[assembly: AssemblyVersion ("1.28.*")]
-[assembly: AssemblyInformationalVersion ("1.28 for KSP v1.11+")]
-[assembly: KSPAssembly ("KIS", 1, 28)]
+[assembly: AssemblyVersion ("1.29.*")]
+[assembly: AssemblyInformationalVersion ("1.29 for KSP v1.12+")]
+[assembly: KSPAssembly ("KIS", 1, 29)]
