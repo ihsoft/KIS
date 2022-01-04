@@ -36,7 +36,7 @@ class SpawnItemDialog : MonoBehaviour, IHasGUI {
   /// <param name="inventory">The inventory to bound the dialog to.</param>
   public static void ShowDialog(ModuleKISInventory inventory) {
     if (dialog != null) {
-      Object.Destroy(dialog);
+      Destroy(dialog);
     }
     dialog = new GameObject("KisDebug-ItemSpawnDialog");
     var dlg = dialog.AddComponent<SpawnItemDialog>();
@@ -99,7 +99,7 @@ class SpawnItemDialog : MonoBehaviour, IHasGUI {
     }
     
     if (GUILayout.Button("Close")) {
-      Object.Destroy(gameObject);
+      Destroy(gameObject);
     }
     GUI.DragWindow(new Rect(0, 0, 10000, 30));
   }
