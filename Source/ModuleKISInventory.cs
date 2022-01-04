@@ -680,6 +680,10 @@ public class ModuleKISInventory : PartModule,
   // GUI
   public bool showGui { get; private set; }
   public Rect guiMainWindowPos { get; private set; }
+
+  /// <summary>The inventory position and size with respect to the UI scale.</summary>
+  /// <remarks>Use it to check for the mouse hits and the screen controls positioning.</remarks>
+  public Rect guiMainWindowScaledPos => new(guiMainWindowPos.position, guiMainWindowPos.size * GameSettings.UI_SCALE);
   #endregion
 
   #region Local methods and properties
@@ -1285,22 +1289,22 @@ public class ModuleKISInventory : PartModule,
 
     // Disable Click through
     if (HighLogic.LoadedSceneIsEditor) {
-      if (guiMainWindowPos.Contains(Event.current.mousePosition) && !clickThroughLocked) {
+      if (guiMainWindowScaledPos.Contains(Event.current.mousePosition) && !clickThroughLocked) {
         InputLockManager.SetControlLock(
             ControlTypes.EDITOR_PAD_PICK_PLACE, "KISInventoryEditorLock");
         clickThroughLocked = true;
       }
-      if (!guiMainWindowPos.Contains(Event.current.mousePosition) && clickThroughLocked) {
+      if (!guiMainWindowScaledPos.Contains(Event.current.mousePosition) && clickThroughLocked) {
         InputLockManager.RemoveControlLock("KISInventoryEditorLock");
         clickThroughLocked = false;
       }
     } else if (HighLogic.LoadedSceneIsFlight) {
-      if (guiMainWindowPos.Contains(Event.current.mousePosition) && !clickThroughLocked) {
+      if (guiMainWindowScaledPos.Contains(Event.current.mousePosition) && !clickThroughLocked) {
         InputLockManager.SetControlLock(
             ControlTypes.CAMERACONTROLS | ControlTypes.MAP, "KISInventoryFlightLock");
         clickThroughLocked = true;
       }
-      if (!guiMainWindowPos.Contains(Event.current.mousePosition) && clickThroughLocked) {
+      if (!guiMainWindowScaledPos.Contains(Event.current.mousePosition) && clickThroughLocked) {
         InputLockManager.RemoveControlLock("KISInventoryFlightLock");
         clickThroughLocked = false;
       }

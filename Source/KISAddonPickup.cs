@@ -1220,7 +1220,7 @@ sealed class KISAddonPickup : MonoBehaviour {
       if (!inventory.showGui) {
         continue;
       }
-      if (inventory.guiMainWindowPos.Contains(Event.current.mousePosition)) {
+      if (inventory.guiMainWindowScaledPos.Contains(Event.current.mousePosition)) {
         hoverInventory = true;
         break;
       }
