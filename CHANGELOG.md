@@ -2,6 +2,7 @@
 * [Enhancement] Support game's UI scale in all dialogs.
 * [Fix] Total mass is not ajdusted when fuel is expended from the EVA tank.
 * [Fix] Recalculate the resources mass on load to fix wrong state of the EVA tank.
+* [Fix #394] Refuel tank throws error on refuel action.
 
 # 1.28 (January 15th, 2021):
 * [Fix #378] Dropped parts cannot be moved or trigger physics.

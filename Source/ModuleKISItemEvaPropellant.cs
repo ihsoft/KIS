@@ -8,6 +8,8 @@ using KSPDev.GUIUtils;
 using KSPDev.GUIUtils.TypeFormatters;
 using KSPDev.ResourceUtils;
 using System;
+using System.Linq;
+using System.Reflection;
 using KSPDev.LogUtils;
 
 namespace KIS {
@@ -152,9 +154,38 @@ public sealed class ModuleKISItemEvaPropellant : ModuleKISItem {
   /// </summary>
   /// <param name="item">Item to get fuel from.</param>
   void RefillEvaPack(KIS_Item item) {
-    var evaFuelResource = item.inventory.part.Resources.Get(StockResourceNames.EvaPropellant);
-    var needsFuel = evaFuelResource.maxAmount - evaFuelResource.amount;
-    if (needsFuel < double.Epsilon) {
+    var p = item.inventory.part;
+    if (!p.isVesselEVA) {
+      HostedDebugLog.Error(this, "Cannot refill non-EVA kerbal");
+      return;
+    }
+    var stockInventory = p.FindModuleImplementing<ModuleInventoryPart>();
+    if (stockInventory == null) {
+      HostedDebugLog.Error(this, "Cannot find stock inventory module");
+      return;
+    }
+    var evaModule = p.FindModuleImplementing<KerbalEVA>();
+    var propellantResourceField = evaModule.GetType()
+        .GetField("propellantResource", BindingFlags.Instance | BindingFlags.NonPublic);
+    if (propellantResourceField == null) {
+      HostedDebugLog.Error(this, "Cannot access internal KerbalEVA logic");
+      return;
+    }
+
+    var jetpack = stockInventory.storedParts.Values
+        .FirstOrDefault(i => i is { partName: "evaJetpack" });
+    if (jetpack == null) {
+      UISounds.PlayBipWrong();
+      return;
+    }
+    var evaPropellant = jetpack.snapshot.resources
+        .FirstOrDefault(r => r.resourceName == StockResourceNames.EvaPropellant);
+    if (evaPropellant == null) {
+      HostedDebugLog.Error(this, "Cannot find EVA propellant resource in jetpack");
+      return;
+    }
+    var needAmount = evaPropellant.maxAmount - evaPropellant.amount;
+    if (needAmount <= double.Epsilon) {
       ScreenMessaging.ShowPriorityScreenMessage(NoNeedToRefillJetpackMsg);
       return;
     }
@@ -164,10 +195,13 @@ public sealed class ModuleKISItemEvaPropellant : ModuleKISItem {
       UISounds.PlayBipWrong();
       return;
     }
-    var canRefuel = Math.Min(needsFuel, canisterFuelResource.amount);
+    var canRefuel = Math.Min(needAmount, canisterFuelResource.amount);
     item.UpdateResource(_mainResourceName, -canRefuel, isAmountRelative: true);
-    evaFuelResource.amount += canRefuel;
-    if (canRefuel < needsFuel) {
+    evaPropellant.amount += canRefuel;
+    evaPropellant.UpdateConfigNodeAmounts();
+    var propellantResource = propellantResourceField.GetValue(evaModule) as PartResource;
+    p.TransferResource(propellantResource, canRefuel, p);
+    if (canRefuel < needAmount) {
       ScreenMessaging.ShowPriorityScreenMessage(JetpackPartiallyRefueledMsg.Format(canRefuel));
     } else {
       ScreenMessaging.ShowPriorityScreenMessage(JetpackFullyRefueledMsg);
