@@ -26,8 +26,6 @@ sealed class KISAddonCursor : MonoBehaviour {
   const int ActionIconSize = 24;
   // It's quare.
   const int HintFontSize = 10;
-  // A gap between action icon and the text.
-  static Color hintBackground = new Color(0.0f, 0.0f, 0.0f, 0.5f);
   HintOverlay hintOverlay;
 
   public static void AbortPartDetection() {
@@ -83,7 +81,15 @@ sealed class KISAddonCursor : MonoBehaviour {
   }
 
   void Awake() {
-    hintOverlay = new HintOverlay(HintFontSize, 3, Color.white, hintBackground);
+    hintOverlay = new HintOverlay(
+        () => HighLogic.Skin,
+        () => new GUIStyle(GUI.skin.box) {
+            padding = GUI.skin.button.padding,
+            margin = GUI.skin.button.margin,
+            alignment = TextAnchor.MiddleLeft,
+            fontSize = HintFontSize,
+        },
+        adjustGuiScale: true);
   }
 
   void Update() {

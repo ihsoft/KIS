@@ -23,6 +23,9 @@ class SpawnItemDialog : MonoBehaviour, IHasGUI {
   Rect guiMainWindowPos;
   AvailablePart[] foundMatches = {};
   GuiActionsList guiActionList = new GuiActionsList();
+
+  /// <summary> The controller of the game's UI scale.</summary>
+  GuiScale _guiScale;
   #endregion
 
   /// <summary>Presents the span item dialog.</summary>
@@ -44,8 +47,11 @@ class SpawnItemDialog : MonoBehaviour, IHasGUI {
   #region IHasGUI implementation
   /// <inheritdoc/>
   public void OnGUI() {
-    guiMainWindowPos = GUILayout.Window(
-        GetInstanceID(), guiMainWindowPos, GuiMain, "KIS spawn item dialog", GUILayout.Height(0));
+    using (new GuiMatrixScope()) {
+      _guiScale.UpdateMatrix();
+      guiMainWindowPos = GUILayout.Window(
+          GetInstanceID(), guiMainWindowPos, GuiMain, "KIS spawn item dialog", GUILayout.Height(0));
+    }
   }
   #endregion
 
@@ -133,6 +139,7 @@ class SpawnItemDialog : MonoBehaviour, IHasGUI {
     createQuantity = "1";
     GuiUpdateSearch(searchText);
     guiMainWindowPos = new Rect(100, 100, 500, 0);
+    _guiScale = new GuiScale(getPivotFn: () => new Vector2(guiMainWindowPos.x, guiMainWindowPos.y));
   }
   #endregion
 }

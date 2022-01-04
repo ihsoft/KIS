@@ -1,4 +1,5 @@
 # 1.29 (pre-release):
+* [Enhancement] Support game's UI scale in all dialogs.
 * [Fix] Total mass is not ajdusted when fuel is expended from the EVA tank.
 
 # 1.28 (January 15th, 2021):
