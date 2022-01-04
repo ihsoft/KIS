@@ -1,4 +1,5 @@
 # 1.29 (pre-release):
+* [Fix] Total mass is not ajdusted when fuel is expended from the EVA tank.
 
 # 1.28 (January 15th, 2021):
 * [Fix #378] Dropped parts cannot be moved or trigger physics.

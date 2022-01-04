@@ -371,6 +371,13 @@ public sealed class KIS_Item {
     var res = KISAPI.PartNodeUtils.UpdateResource(
         partNode, name, amount, isAmountRelative: isAmountRelative);
     if (res.HasValue) {
+      _resourceMass = 0;
+      _resourceCost = 0;
+      var resources = KISAPI.PartNodeUtils.GetResources(partNode);
+      foreach (var resource in resources) {
+        _resourceMass += (float)resource.amount * resource.definition.density;
+        _resourceCost += (float)resource.amount * resource.definition.unitCost;
+      }
       HostedDebugLog.Fine(
           inventory, "Updated item resource: name={0}, newAmount={1}", name, res);
       inventory.RefreshContents();
