@@ -1230,14 +1230,15 @@ sealed class KISAddonPickup : MonoBehaviour {
 
   void OnGUI() {
     if (draggedPart) {
-      var mousePosition = Input.mousePosition;
-      mousePosition.y = Screen.height - mousePosition.y;
-      GUI.depth = 0;
-      GUI.DrawTexture(new Rect(mousePosition.x - (draggedIconSize / 2),
-                               mousePosition.y - (draggedIconSize / 2),
-                               draggedIconSize,
-                               draggedIconSize),
-                      icon.texture, ScaleMode.ScaleToFit);
+      var mousePosition2 = new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y);
+      using (new GuiMatrixScope()) {
+        new GuiScale(getPivotFn: () => mousePosition2, highFps: true).UpdateMatrix();
+        GUI.depth = 0;
+        GUI.DrawTexture(
+            new Rect(
+                mousePosition2.x - (draggedIconSize / 2), mousePosition2.y - (draggedIconSize / 2), draggedIconSize,
+                draggedIconSize), icon.texture, ScaleMode.ScaleToFit);
+      }
     }
   }
 
