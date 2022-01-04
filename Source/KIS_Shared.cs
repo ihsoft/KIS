@@ -784,7 +784,7 @@ public static class KIS_Shared {
     // HACK: As of KSP 1.0.5 some parts (e.g docking ports) can be attached by both a
     // surface node and by a stack node which looks like an editor bug in some corner case.
     // In this case decouple() will only clear the surface node leaving the stack one
-    // refering the parent. This misconfiguration will badly affect all further KIS
+    // referring the parent. This misconfiguration will badly affect all further KIS
     // operations on the part. Do a cleanup job here to workaround this bug.
     var orphanNode = assemblyRoot.FindAttachNodeByPart(formerParent);
     if (orphanNode != null) {
@@ -1035,9 +1035,9 @@ public static class KIS_Shared {
     // Re-attach physical children to the new physical parent since former parent is now
     // physicsless (no RB means no joint).
     var physicalChildren = new List<Part>();
-    p.FindNonPhysicslessChildren(physicalChildren);
+    p.FindNonPhysicslessChildren(ref physicalChildren);
     foreach (var physicalChild in physicalChildren) {
-      DebugEx.Info("Re-create joint for phisics child {0}", physicalChild);
+      DebugEx.Info("Re-create joint for physics child {0}", physicalChild);
       if (physicalChild.attachJoint) {
         physicalChild.attachJoint.DestroyJoint();
         physicalChild.attachJoint = null;
