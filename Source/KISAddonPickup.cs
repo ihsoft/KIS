@@ -370,6 +370,9 @@ sealed class KISAddonPickup : MonoBehaviour {
   bool jetpackLock;
   bool delayedButtonUp;
 
+  GuiScale _guiScale;
+  Vector2 _mousePosition;
+
   /// <summary>Mouse/keyboard event that grabs a part from the editor's panel.</summary>
   /// <seealso cref="editorPartGrabAction"/>
   static Event editorPartGrabEvent;
@@ -523,6 +526,7 @@ sealed class KISAddonPickup : MonoBehaviour {
     }
     GameEvents.onVesselChange.Add(new EventData<Vessel>.OnEvent(this.OnVesselChange));
     ConfigAccessor.ReadFieldsInType(typeof(KISAddonPickup), instance: this);
+    _guiScale = new GuiScale(getPivotFn: () => _mousePosition);
   }
 
   public void Update() {
@@ -1230,13 +1234,13 @@ sealed class KISAddonPickup : MonoBehaviour {
 
   void OnGUI() {
     if (draggedPart) {
-      var mousePosition2 = new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y);
+      _mousePosition = new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y);
       using (new GuiMatrixScope()) {
-        new GuiScale(getPivotFn: () => mousePosition2, highFps: true).UpdateMatrix();
+        _guiScale.UpdateMatrix();
         GUI.depth = 0;
         GUI.DrawTexture(
             new Rect(
-                mousePosition2.x - (draggedIconSize / 2), mousePosition2.y - (draggedIconSize / 2), draggedIconSize,
+                _mousePosition.x - (draggedIconSize / 2), _mousePosition.y - (draggedIconSize / 2), draggedIconSize,
                 draggedIconSize), icon.texture, ScaleMode.ScaleToFit);
       }
     }
