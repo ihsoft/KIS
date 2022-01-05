@@ -679,11 +679,19 @@ public class ModuleKISInventory : PartModule,
 
   // GUI
   public bool showGui { get; private set; }
-  public Rect guiMainWindowPos { get; private set; }
+
+  public Rect guiMainWindowPos {
+    get => _guiMainWindowPos;
+    private set {
+      _guiMainWindowPos = value;
+      guiMainWindowRect = new Rect(guiMainWindowPos.position, guiMainWindowPos.size * GameSettings.UI_SCALE);
+    }
+  }
+  Rect _guiMainWindowPos;
 
   /// <summary>The inventory position and size with respect to the UI scale.</summary>
   /// <remarks>Use it to check for the mouse hits and the screen controls positioning.</remarks>
-  public Rect guiMainWindowScaledPos => new(guiMainWindowPos.position, guiMainWindowPos.size * GameSettings.UI_SCALE);
+  public Rect guiMainWindowRect { get; private set; }
   #endregion
 
   #region Local methods and properties
@@ -1289,22 +1297,22 @@ public class ModuleKISInventory : PartModule,
 
     // Disable Click through
     if (HighLogic.LoadedSceneIsEditor) {
-      if (guiMainWindowScaledPos.Contains(Event.current.mousePosition) && !clickThroughLocked) {
+      if (guiMainWindowRect.Contains(Event.current.mousePosition) && !clickThroughLocked) {
         InputLockManager.SetControlLock(
             ControlTypes.EDITOR_PAD_PICK_PLACE, "KISInventoryEditorLock");
         clickThroughLocked = true;
       }
-      if (!guiMainWindowScaledPos.Contains(Event.current.mousePosition) && clickThroughLocked) {
+      if (!guiMainWindowRect.Contains(Event.current.mousePosition) && clickThroughLocked) {
         InputLockManager.RemoveControlLock("KISInventoryEditorLock");
         clickThroughLocked = false;
       }
     } else if (HighLogic.LoadedSceneIsFlight) {
-      if (guiMainWindowScaledPos.Contains(Event.current.mousePosition) && !clickThroughLocked) {
+      if (guiMainWindowRect.Contains(Event.current.mousePosition) && !clickThroughLocked) {
         InputLockManager.SetControlLock(
             ControlTypes.CAMERACONTROLS | ControlTypes.MAP, "KISInventoryFlightLock");
         clickThroughLocked = true;
       }
-      if (!guiMainWindowScaledPos.Contains(Event.current.mousePosition) && clickThroughLocked) {
+      if (!guiMainWindowRect.Contains(Event.current.mousePosition) && clickThroughLocked) {
         InputLockManager.RemoveControlLock("KISInventoryFlightLock");
         clickThroughLocked = false;
       }
