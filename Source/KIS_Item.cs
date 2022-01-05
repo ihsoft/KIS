@@ -284,21 +284,7 @@ public sealed class KIS_Item {
                       this.itemDryMass, this.itemDryCost);
     }
 
-    // COMPATIBILITY: Set/restore the resources cost and mass.
-    // TODO(ihsoft): This code is only needed for the pre-1.17 KIS version saves. Drop it one day.  
-    var resourceNodes = PartNodeUtils.GetModuleNodes(partNode, "RESOURCE");
-    if (resourceNodes.Any()
-        && (this.itemResourceMass < float.Epsilon || this.itemResourceCost < float.Epsilon)) {
-      var oldResourceMass = this.itemResourceMass;
-      foreach (var resourceNode in resourceNodes) {
-        var resource = new ProtoPartResourceSnapshot(resourceNode);
-        this._resourceMass += (float)resource.amount * resource.definition.density;
-        this._resourceCost += (float)resource.amount * resource.definition.unitCost;
-      }
-      DebugEx.Warning("Calculated values for a pre 1.17 version save:"
-                      + " oldResourceMass={0}, newResourceMass={1}, resourceCost={2}",
-                      oldResourceMass, this.itemResourceMass, this.itemResourceCost);
-    }
+    RecalculateResources();
   }
 
   /// <summary>Creates a new part from scene.</summary>
@@ -371,6 +357,7 @@ public sealed class KIS_Item {
     var res = KISAPI.PartNodeUtils.UpdateResource(
         partNode, name, amount, isAmountRelative: isAmountRelative);
     if (res.HasValue) {
+      RecalculateResources();
       HostedDebugLog.Fine(
           inventory, "Updated item resource: name={0}, newAmount={1}", name, res);
       inventory.RefreshContents();
@@ -746,6 +733,18 @@ public sealed class KIS_Item {
     // Fix dry mass/cost since it's reported by the container modules.
     _itemDryMass -= _contentMass;
     _itemDryCost -= _contentCost;
+  }
+
+  /// <summary>Updates the resource stats to match tio teh current item state.</summary>
+  /// <remarks>Call it after the item state has changed.</remarks>
+  void RecalculateResources() {
+    _resourceMass = 0;
+    _resourceCost = 0;
+    var resources = KISAPI.PartNodeUtils.GetResources(partNode);
+    foreach (var resource in resources) {
+      _resourceMass += (float)resource.amount * resource.definition.density;
+      _resourceCost += (float)resource.amount * resource.definition.unitCost;
+    }
   }
   #endregion
 }

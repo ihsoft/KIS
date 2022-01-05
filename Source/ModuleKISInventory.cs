@@ -679,7 +679,19 @@ public class ModuleKISInventory : PartModule,
 
   // GUI
   public bool showGui { get; private set; }
-  public Rect guiMainWindowPos { get; private set; }
+
+  public Rect guiMainWindowPos {
+    get => _guiMainWindowPos;
+    private set {
+      _guiMainWindowPos = value;
+      guiMainWindowRect = new Rect(guiMainWindowPos.position, guiMainWindowPos.size * GameSettings.UI_SCALE);
+    }
+  }
+  Rect _guiMainWindowPos;
+
+  /// <summary>The inventory position and size with respect to the UI scale.</summary>
+  /// <remarks>Use it to check for the mouse hits and the screen controls positioning.</remarks>
+  public Rect guiMainWindowRect { get; private set; }
   #endregion
 
   #region Local methods and properties
@@ -737,6 +749,17 @@ public class ModuleKISInventory : PartModule,
 
   /// <summary>Minimum delay between the inventory range checking calls.</summary>
   const float MenuRangeCheckThreshold = 0.1f;  // 100ms
+
+  /// <summary> The controller of the inventory UI scale.</summary>
+  GuiScale _guiMainWindowScale;
+
+  /// <summary> The controller of the tooltip UI scale.</summary>
+  GuiScale _guiTooltipScale;
+  Rect _tooltipPosition;
+
+  /// <summary> The controller of the context menu UI scale.</summary>
+  GuiScale _guiContextMenuScale;
+  Rect _contextMenuPosition;
   #endregion
 
   #region GUI styles
@@ -910,6 +933,9 @@ public class ModuleKISInventory : PartModule,
     if (HighLogic.LoadedSceneIsEditor) {
       GameEvents.onEditorVariantApplied.Add(OnPartVariandChanged);
     }
+    _guiMainWindowScale = new GuiScale(getPivotFn: () => new Vector2(guiMainWindowPos.x, guiMainWindowPos.y));
+    _guiTooltipScale = new GuiScale(getPivotFn: () => new Vector2(_tooltipPosition.x, _tooltipPosition.y));
+    _guiContextMenuScale = new GuiScale(getPivotFn: () => new Vector2(_contextMenuPosition.x, _contextMenuPosition.y));
     LocalizeModule();
   }
 
@@ -1241,49 +1267,52 @@ public class ModuleKISInventory : PartModule,
       title = ContainerInventoryWindowTitle.Format(part.partInfo.title, invName);
     }
 
-    guiMainWindowPos = GUILayout.Window(GetInstanceID(), guiMainWindowPos, GuiMain, title);
+    using (new GuiMatrixScope()) {
+      _guiMainWindowScale.UpdateMatrix();
+      guiMainWindowPos = GUILayout.Window(GetInstanceID(), guiMainWindowPos, GuiMain, title);
+    }
 
-    if (tooltipItem != null) {
-      if (contextItem == null) {
-        GUILayout.Window(GetInstanceID() + 780,
-                         new Rect(Event.current.mousePosition.x + 5,
-                                  Event.current.mousePosition.y + 5, 400, 1),
-                         GuiTooltip, tooltipItem.availablePart.title);
+    if (tooltipItem != null && contextItem == null) {
+      using (new GuiMatrixScope()) {
+        _tooltipPosition = new Rect(Event.current.mousePosition.x + 5, Event.current.mousePosition.y + 5, 400, 1);
+        _guiTooltipScale.UpdateMatrix();
+        GUILayout.Window(GetInstanceID() + 780, _tooltipPosition, GuiTooltip, tooltipItem.availablePart.title);
       }
     }
     if (contextItem != null) {
-      var contextRelativeRect = new Rect(
-          guiMainWindowPos.x + contextRect.x + (contextRect.width / 2),
-          guiMainWindowPos.y + contextRect.y + (contextRect.height / 2),
-          0, 0);
-      GUILayout.Window(
-          GetInstanceID() + 781, contextRelativeRect, GuiContextMenu, ItemActionMenuWindowTitle);
-      if (contextClick) {
-        contextClick = false;
-        splitQty = 1;
-      } else if (Event.current.type == EventType.MouseDown) {
-        contextItem = null;
+      using (new GuiMatrixScope()) {
+        _contextMenuPosition = new Rect(
+            guiMainWindowPos.x + contextRect.x + (contextRect.width / 2),
+            guiMainWindowPos.y + contextRect.y + (contextRect.height / 2), 0, 0);
+        _guiContextMenuScale.UpdateMatrix();
+        GUILayout.Window(GetInstanceID() + 781, _contextMenuPosition, GuiContextMenu, ItemActionMenuWindowTitle);
+        if (contextClick) {
+          contextClick = false;
+          splitQty = 1;
+        } else if (Event.current.type == EventType.MouseDown) {
+          contextItem = null;
+        }
       }
     }
 
     // Disable Click through
     if (HighLogic.LoadedSceneIsEditor) {
-      if (guiMainWindowPos.Contains(Event.current.mousePosition) && !clickThroughLocked) {
+      if (guiMainWindowRect.Contains(Event.current.mousePosition) && !clickThroughLocked) {
         InputLockManager.SetControlLock(
             ControlTypes.EDITOR_PAD_PICK_PLACE, "KISInventoryEditorLock");
         clickThroughLocked = true;
       }
-      if (!guiMainWindowPos.Contains(Event.current.mousePosition) && clickThroughLocked) {
+      if (!guiMainWindowRect.Contains(Event.current.mousePosition) && clickThroughLocked) {
         InputLockManager.RemoveControlLock("KISInventoryEditorLock");
         clickThroughLocked = false;
       }
     } else if (HighLogic.LoadedSceneIsFlight) {
-      if (guiMainWindowPos.Contains(Event.current.mousePosition) && !clickThroughLocked) {
+      if (guiMainWindowRect.Contains(Event.current.mousePosition) && !clickThroughLocked) {
         InputLockManager.SetControlLock(
             ControlTypes.CAMERACONTROLS | ControlTypes.MAP, "KISInventoryFlightLock");
         clickThroughLocked = true;
       }
-      if (!guiMainWindowPos.Contains(Event.current.mousePosition) && clickThroughLocked) {
+      if (!guiMainWindowRect.Contains(Event.current.mousePosition) && clickThroughLocked) {
         InputLockManager.RemoveControlLock("KISInventoryFlightLock");
         clickThroughLocked = false;
       }

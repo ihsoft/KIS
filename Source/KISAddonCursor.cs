@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using KSPDev.LogUtils;
 using UnityEngine;
 
 namespace KIS {
@@ -24,11 +25,10 @@ sealed class KISAddonCursor : MonoBehaviour {
 
   // Cursor hint text settings.
   const int ActionIconSize = 24;
-  // It's quare.
   const int HintFontSize = 10;
-  // A gap between action icon and the text.
-  static Color hintBackground = new Color(0.0f, 0.0f, 0.0f, 0.5f);
   HintOverlay hintOverlay;
+  Vector2 _mousePosition;
+  GuiScale _guiMainScale;
 
   public static void AbortPartDetection() {
     StartPartDetection(null, null, null, null);
@@ -83,7 +83,16 @@ sealed class KISAddonCursor : MonoBehaviour {
   }
 
   void Awake() {
-    hintOverlay = new HintOverlay(HintFontSize, 3, Color.white, hintBackground);
+    hintOverlay = new HintOverlay(
+        () => HighLogic.Skin,
+        () => new GUIStyle(GUI.skin.box) {
+            padding = GUI.skin.button.padding,
+            margin = GUI.skin.button.margin,
+            alignment = TextAnchor.MiddleLeft,
+            fontSize = HintFontSize,
+        },
+        adjustGuiScale: true);
+    _guiMainScale = new GuiScale(getPivotFn: () => _mousePosition);
   }
 
   void Update() {
@@ -129,14 +138,14 @@ sealed class KISAddonCursor : MonoBehaviour {
   void OnGUI() {
     if (cursorShow
         && (!KISAddonPointer.isRunning || !Input.GetKey(KISAddonConfig.hideHintKey))) {
-      var mousePosition = Input.mousePosition;
-      mousePosition.y = Screen.height - mousePosition.y;
-      // Display action icon.
-      GUI.DrawTexture(
-          new Rect(mousePosition.x - ActionIconSize / 2,
-                  mousePosition.y - ActionIconSize / 2,
-                  ActionIconSize, ActionIconSize),
-          cursorTexture, ScaleMode.ScaleToFit);
+      _mousePosition = new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y);
+      using (new GuiMatrixScope()) {
+        _guiMainScale.UpdateMatrix();
+        GUI.DrawTexture(
+            new Rect(
+                _mousePosition.x - ActionIconSize / 2, _mousePosition.y - ActionIconSize / 2, ActionIconSize,
+                ActionIconSize), cursorTexture, ScaleMode.ScaleToFit);
+      }
 
       if (KISAddonConfig.showHintText) {
         // Compile the whole hint text.
