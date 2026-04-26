@@ -883,7 +883,6 @@ sealed class KISAddonPointer : MonoBehaviour {
     allModelRenderers.Clear();
 
     // On large assemblies memory consumption can be significant. Reclaim it.
-    Resources.UnloadUnusedAssets();
     DebugEx.Fine("Pointer destroyed");
   }
 }
