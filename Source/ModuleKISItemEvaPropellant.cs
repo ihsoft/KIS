@@ -191,7 +191,7 @@ public sealed class ModuleKISItemEvaPropellant : ModuleKISItem {
     var canProvide = Math.Min(needAmount, canisterFuelResource.amount);
 
     var storedResources = stockInventory.storedParts.Values.SelectMany(x => x.snapshot.resources)
-        .Where(x => x.resourceName == StockResourceNames.EvaPropellant)
+        .Where(x => x.resourceName == propellantResource.resourceName)
         .ToArray();
     if (storedResources.Length == 0) {
       UISounds.PlayBipWrong();
