@@ -729,20 +729,30 @@ public static class KIS_Shared {
     foreach (var node in nodes) {
       var undockEvent = PartModuleUtils.GetEvent(node, node.Undock);
       var decoupleEvent = PartModuleUtils.GetEvent(node, node.Decouple);
+      var otherNode = node.otherNode;
+      var referenceNode = node.referenceNode;
+      BaseEvent separationEvent;
+      string message;
+      if (undockEvent != null && undockEvent.active && undockEvent.guiActive
+          && otherNode != null && otherNode.part == tgtPart) {
+        separationEvent = undockEvent;
+        message = "Undock from: {0}";
+      } else if (decoupleEvent != null && decoupleEvent.active && decoupleEvent.guiActive
+                 && referenceNode != null && referenceNode.attachedPart == tgtPart) {
+        separationEvent = decoupleEvent;
+        message = "Decouple from: {0}";
+      } else {
+        continue;
+      }
       var oldUndockForce = node.undockEjectionForce;
       node.undockEjectionForce = 0;
-      if (undockEvent.active && undockEvent.guiActive
-          && node.otherNode.part == tgtPart) {
-        HostedDebugLog.Info(node, "Undock from: {0}", tgtPart);
-        undockEvent.Invoke();
+      try {
+        HostedDebugLog.Info(node, message, tgtPart);
+        separationEvent.Invoke();
         changedNodes = true;
-      } else if (decoupleEvent.active && decoupleEvent.guiActive
-                 && node.referenceNode.attachedPart == tgtPart) {
-        HostedDebugLog.Info(node, "Decouple from: {0}", tgtPart);
-        decoupleEvent.Invoke();
-        changedNodes = true;
+      } finally {
+        node.undockEjectionForce = oldUndockForce;
       }
-      node.undockEjectionForce = oldUndockForce;
     }
     return changedNodes;
   }
